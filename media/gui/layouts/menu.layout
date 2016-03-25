@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout >
+    <Window Type="DefaultWindow" Name="RootMenu" >
+        <Property Name="Text" >Options
+
+
+</Property>
+        <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1.00098,0},{1,0}}" />
+        <Window Type="DefaultWindow" Name="RootMenu/options" >
+            <Property Name="AlwaysOnTop" Value="True" />
+            <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{1,0}}" />
+            <Window Type="TaharezLook/StaticText" Name="RootMenu/fundo" >
+                <Property Name="Alpha" Value="0.6" />
+                <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{1,0}}" />
+                <Property Name="VerticalAlignment" Value="Bottom" />
+            </Window>
+            <Window Type="DefaultWindow" Name="RootMenu/options/status_window" >
+                <Property Name="Visible" Value="False" />
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0,0},{0.1,0},{1,0},{1,0}}" />
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/hp_label" >
+                    <Property Name="Text" Value="HP" />
+                    <Property Name="HorzExtent" Value="24" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.38,0},{0.1,0},{0.49,0},{0.15,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/hp" >
+                    <Property Name="Text" Value="000000 / 000000" />
+                    <Property Name="HorzExtent" Value="148" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.51,0},{0.1,0},{0.7,0},{0.15,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/ap_label" >
+                    <Property Name="Text" Value="AP" />
+                    <Property Name="HorzExtent" Value="23" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.38,0},{0.16,0},{0.49,0},{0.21,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/ap" >
+                    <Property Name="Text" Value="000000 / 000000" />
+                    <Property Name="HorzExtent" Value="148" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.51,0},{0.16,0},{0.7,0},{0.21,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/attack_label" >
+                    <Property Name="Text" Value="Attack" />
+                    <Property Name="HorzExtent" Value="60" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.38,0},{0.22,0},{0.49,0},{0.27,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/attack" >
+                    <Property Name="Text" Value="00000" />
+                    <Property Name="HorzExtent" Value="55" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.51,0},{0.22,0},{0.7,0},{0.27,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/deffense_label" >
+                    <Property Name="Text" Value="Deffense" />
+                    <Property Name="HorzExtent" Value="81" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.38,0},{0.28,0},{0.49,0},{0.33,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/deffense" >
+                    <Property Name="Text" Value="00000" />
+                    <Property Name="HorzExtent" Value="55" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.51,0},{0.28,0},{0.7,0},{0.333,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/velocity_label" >
+                    <Property Name="Text" Value="Velocity" />
+                    <Property Name="HorzExtent" Value="72" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.38,0},{0.34,0},{0.49,0},{0.39,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/status_window/velocity" >
+                    <Property Name="Text" Value="00000" />
+                    <Property Name="HorzExtent" Value="55" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.51,0},{0.34,0},{0.7,0},{0.39,0}}" />
+                </Window>
+            </Window>
+            <Window Type="DefaultWindow" Name="RootMenu/options/skills_window" >
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0,0},{0.1,0},{1,0},{1,0}}" />
+                <Window Type="TaharezLook/FrameWindow" Name="RootMenu/options/skills_window/details" >
+                    <Property Name="Text" >Details
+</Property>
+                    <Property Name="TitlebarFont" Value="DejaVuSans-10" />
+                    <Property Name="TitlebarEnabled" Value="True" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.5,0},{0.2,0},{0.9,0},{0.6,0}}" />
+                    <Window Type="TaharezLook/StaticText" Name="RootMenu/options/skills_window/details/statsLabel" >
+                        <Property Name="Text" >Damage:
+Energy Balls:
+Ap:
+Level:
+Experience:
+Next Level:</Property>
+                        <Property Name="HorzExtent" Value="115" />
+                        <Property Name="VertExtent" Value="122.663" />
+                        <Property Name="HorzFormatting" Value="RightAligned" />
+                        <Property Name="VertFormatting" Value="TopAligned" />
+                        <Property Name="UnifiedAreaRect" Value="{{0.01,0},{0.01,0},{0.395,0},{0.99,0}}" />
+                    </Window>
+                    <Window Type="TaharezLook/StaticText" Name="RootMenu/options/skills_window/details/statsValue" >
+                        <Property Name="Text" >
+
+</Property>
+                        <Property Name="VertFormatting" Value="TopAligned" />
+                        <Property Name="UnifiedAreaRect" Value="{{0.405,0},{0.01,0},{0.99,0},{0.99,0}}" />
+                    </Window>
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/skills_window/movesListLabel" >
+                    <Property Name="UnifiedAreaRect" Value="{{0.1,0},{0.1,0},{0.45,0},{0.7,0}}" />
+                </Window>
+            </Window>
+            <Window Type="DefaultWindow" Name="RootMenu/options/inventory_window" >
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0,0},{0.1,0},{1,0},{1,0}}" />
+                <Window Type="TaharezLook/StaticImage" Name="RootMenu/options/inventory_window/background_inventory" >
+                    <Property Name="UnifiedAreaRect" Value="{{0.05,0},{0.1,0},{0.55,0},{0.95,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/inventory_window/headLabel" >
+                    <Property Name="Text" Value="Head" />
+                    <Property Name="HorzExtent" Value="46" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.65,0},{0.1,0},{0.78,0},{0.15,0}}" />
+                </Window>
+                <Window Type="TaharezLook/Combobox" Name="RootMenu/options/inventory_window/headCombo" >
+                    <Property Name="UnifiedAreaRect" Value="{{0.8,0},{0.1,0},{0.99,0},{0.3,0}}" />
+                    <Property Name="MaxEditTextLength" Value="1073741823" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/inventory_window/bodyLabel" >
+                    <Property Name="Text" Value="Body" />
+                    <Property Name="HorzExtent" Value="44" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.65,0},{0.16,0},{0.78,0},{0.21,0}}" />
+                </Window>
+                <Window Type="TaharezLook/Combobox" Name="RootMenu/options/inventory_window/bodyCombo" >
+                    <Property Name="UnifiedAreaRect" Value="{{0.8,0},{0.16,0},{0.99,0},{0.36,0}}" />
+                    <Property Name="MaxEditTextLength" Value="1073741823" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/inventory_window/rightArmLabel" >
+                    <Property Name="Text" Value="Right Arm" />
+                    <Property Name="HorzExtent" Value="89" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.65,0},{0.22,0},{0.78,0},{0.27,0}}" />
+                </Window>
+                <Window Type="TaharezLook/Combobox" Name="RootMenu/options/inventory_window/rightArmCombo" >
+                    <Property Name="UnifiedAreaRect" Value="{{0.8,0},{0.22,0},{0.99,0},{0.42,0}}" />
+                    <Property Name="MaxEditTextLength" Value="1073741823" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/inventory_window/leftArmLabel" >
+                    <Property Name="Text" Value="Left Arm" />
+                    <Property Name="HorzExtent" Value="78" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.65,0},{0.28,0},{0.78,0},{0.33,0}}" />
+                </Window>
+                <Window Type="TaharezLook/Combobox" Name="RootMenu/options/inventory_window/leftArmCombo" >
+                    <Property Name="UnifiedAreaRect" Value="{{0.8,0},{0.28,0},{0.99,0},{0.48,0}}" />
+                    <Property Name="MaxEditTextLength" Value="1073741823" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootMenu/options/inventory_window/legsLabel" >
+                    <Property Name="Text" Value="Legs" />
+                    <Property Name="HorzExtent" Value="41" />
+                    <Property Name="VertExtent" Value="20.4438" />
+                    <Property Name="HorzFormatting" Value="RightAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.65,0},{0.34,0},{0.78,0},{0.39,0}}" />
+                </Window>
+                <Window Type="TaharezLook/Combobox" Name="RootMenu/options/inventory_window/legsCombo" >
+                    <Property Name="UnifiedAreaRect" Value="{{0.8,0},{0.34,0},{0.99,0},{0.54,0}}" />
+                    <Property Name="MaxEditTextLength" Value="1073741823" />
+                </Window>
+            </Window>
+            <Window Type="DefaultWindow" Name="RootMenu/options/help_window" >
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0,0},{0.1,0},{1,0},{1,0}}" />
+                <Window Type="TaharezLook/FrameWindow" Name="RootMenu/options/help_window/button_frame" >
+                    <Property Name="Text" Value="Buttons" />
+                    <Property Name="TitlebarFont" Value="DejaVuSans-10" />
+                    <Property Name="TitlebarEnabled" Value="True" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.2,0},{0.2,0},{0.8,0},{0.8,0}}" />
+                    <Window Type="TaharezLook/StaticText" Name="RootMenu/options/help_window/button_frame/text" >
+                        <Property Name="Text" >WASD - Movement Buttons;
+ 
+QE - Camera Rotation
+ 
+
+U - Kick
+ 
+O - Punch
+ 
+I - Jyn
+ 
+P - Defense
+ 
+PAGE UP/DOWN - Zoom In/Out
+ 
+Esc - Pause Menu</Property>
+                        <Property Name="HorzExtent" Value="267" />
+                        <Property Name="VertExtent" Value="306.658" />
+                        <Property Name="AlwaysOnTop" Value="True" />
+                        <Property Name="UnifiedAreaRect" Value="{{0.05,0},{0.05,0},{0.95,0},{0.95,0}}" />
+                    </Window>
+                </Window>
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootMenu/options/status" >
+                <Property Name="Text" Value="Status" />
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{0.2,0},{0.101302,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootMenu/options/inventory" >
+                <Property Name="Text" Value="Inventory" />
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0.2,0},{0,0},{0.4,0},{0.1,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootMenu/options/skills" >
+                <Property Name="Text" Value="Skills" />
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0.4,0},{0,0},{0.6,0},{0.1,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootMenu/options/help" >
+                <Property Name="Text" Value="Help" />
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0.6,0},{0,0},{0.8,0},{0.1,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootMenu/options/quit" >
+                <Property Name="Text" Value="Quit" />
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0.8,0},{0,0},{1,0},{0.1,0}}" />
+            </Window>
+            <Window Type="TaharezLook/StaticText" Name="RootMenu/options/clock" >
+                <Property Name="Text" Value="Time: 00:00" />
+                <Property Name="HorzExtent" Value="105" />
+                <Property Name="VertExtent" Value="20.4438" />
+                <Property Name="AlwaysOnTop" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0.87,0},{0.95,0},{0.99,0},{0.99,0}}" />
+            </Window>
+        </Window>
+    </Window>
+</GUILayout>

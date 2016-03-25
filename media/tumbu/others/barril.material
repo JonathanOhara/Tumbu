@@ -1,0 +1,12 @@
+material from-nxogre.org{
+  technique  {
+    pass    {      
+      texture_unit ambient_tex{
+      }
+    }
+  }
+}
+
+material barrel-from-nxogre.org : from-nxogre.org{
+    set_texture_alias ambient_tex barril.png
+}

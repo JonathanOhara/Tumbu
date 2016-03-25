@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout >
+    <Window Type="DefaultWindow" Name="RootConversation" >
+        <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{1,0}}" />
+        <Window Type="DefaultWindow" Name="RootConversation/Main" >
+            <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{1,0}}" />
+            <Window Type="TaharezLook/FrameWindow" Name="RootConversation/Main/conversationTop" >
+                <Property Name="Text" Value="Character One" />
+                <Property Name="TitlebarFont" Value="DejaVuSans-10" />
+                <Property Name="TitlebarEnabled" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0.01,0},{0.01,0},{0.99,0},{0.2,0}}" />
+                <Window Type="TaharezLook/StaticImage" Name="RootConversation/Main/conversationTop/image" >
+                    <Property Name="Image" Value="set:RobotFaces image:robot001" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.01,0},{0.05,0},{0.16,0},{0.99,0}}" />
+                    <Property Name="MousePassThroughEnabled" Value="True" />
+                </Window>
+                <Window Type="TaharezLook/Button" Name="RootConversation/Main/conversationTop/moreButton" >
+                    <Property Name="Text" Value="Press Space..." />
+                    <Property Name="AlwaysOnTop" Value="True" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.81,0},{0.8,0},{0.99,0},{0.99,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootConversation/Main/conversationTop/text" >
+                    <Property Name="VertFormatting" Value="TopAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.17,0},{0.05,0},{0.99,0},{0.99,0}}" />
+                </Window>
+            </Window>
+            <Window Type="TaharezLook/FrameWindow" Name="RootConversation/Main/conversationBottom" >
+                <Property Name="Text" Value="Character Two" />
+                <Property Name="TitlebarFont" Value="DejaVuSans-10" />
+                <Property Name="TitlebarEnabled" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0.01,0},{0.8,0},{0.99,0},{0.99,0}}" />
+                <Window Type="TaharezLook/StaticImage" Name="RootConversation/Main/conversationBottom/image" >
+                    <Property Name="Image" Value="set:RobotFaces image:robot002" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.01,0},{0.05,0},{0.16,0},{0.99,0}}" />
+                </Window>
+                <Window Type="TaharezLook/StaticText" Name="RootConversation/Main/conversationBottom/text" >
+                    <Property Name="VertFormatting" Value="TopAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.17,0},{0.05,0},{0.99,0},{0.99,0}}" />
+                </Window>
+                <Window Type="TaharezLook/Button" Name="RootConversation/Main/conversationBottom/moreButton" >
+                    <Property Name="Text" Value="Press Space..." />
+                    <Property Name="AlwaysOnTop" Value="True" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.81,0},{0.8,0},{0.99,0},{0.99,0}}" />
+                </Window>
+            </Window>
+        </Window>
+    </Window>
+</GUILayout>

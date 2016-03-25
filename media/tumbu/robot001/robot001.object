@@ -1,0 +1,53 @@
+robot001 set{
+	name Lesser
+}
+
+robot001 head{
+	hp 20
+	ap 20
+	attack 2
+	defense 2
+	velocity 2
+	
+	position 0.0 1.725 0.02
+}
+
+robot001 body{
+	hp 20
+	ap 20
+	attack 2
+	defense 2
+	velocity 2
+	
+	position 0 1.254 0.0
+}
+
+robot001 rightArm{
+	hp 20
+	ap 20
+	attack 2
+	defense 2
+	velocity 2
+
+	position -0.22 1.2 0.0
+}
+
+robot001 leftArm{
+	hp 20
+	ap 20
+	attack 2
+	defense 2
+	velocity 2
+	
+	position 0.22 1.2 0.0
+}
+
+robot001 legs{
+	hp 20
+	ap 20
+	attack 2
+	defense 2
+	velocity 2
+	
+	position 0.0 0.535 0.092
+}

@@ -1,0 +1,56 @@
+import * from "robots.material"
+
+material headUV_002/TEXFACE/headUV_002.tga : base_material{
+    set_texture_alias diffuseMap headUV_002.tga
+    set_texture_alias specMap SMheadUV_002.tga
+    set_texture_alias normalMap NMheadUV_002.tga
+    // set_texture_alias aoMap AOheadUV_002.tga
+
+    set $diffuseCol "1 1 1 1"
+    set $specularCol "1 1 1"
+    set $shininess "64"
+}
+
+material bodyUV_002/TEXFACE/bodyUV_002.tga : base_material{
+    set_texture_alias diffuseMap bodyUV_002.tga
+    set_texture_alias specMap SMbodyUV_002.tga
+    set_texture_alias normalMap NMbodyUV_002.tga
+    // set_texture_alias aoMap AObodyUV_002.tga
+
+    set $diffuseCol "0.8 0.8 0.8 0.1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
+}
+
+material leftArmUV_002/TEXFACE/leftArmUV_002.tga : base_material{
+    set_texture_alias diffuseMap leftArmUV_002.tga
+    set_texture_alias specMap SMleftArmUV_002.tga
+    set_texture_alias normalMap NMleftArmUV_002.tga
+    // set_texture_alias aoMap AOleftArmUV_002.tga
+
+    set $diffuseCol "0.8 0.8 0.8 0.1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
+}
+
+material rightArmUV_002/TEXFACE/rightArmUV_002.tga : base_material{
+    set_texture_alias diffuseMap rightArmUV_002.tga
+    set_texture_alias specMap SMrightArmUV_002.tga
+    set_texture_alias normalMap NMrightArmUV_002.tga
+    // set_texture_alias aoMap AOrightArmUV_002.tga
+
+    set $diffuseCol "0.8 0.8 0.8 0.1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
+}
+
+material legsUV_002/TEXFACE/legsUV_002.tga : base_material{
+    set_texture_alias diffuseMap legsUV_002.tga
+    set_texture_alias specMap SMlegsUV_002.tga
+    set_texture_alias normalMap NMlegsUV_002.tga
+    // set_texture_alias aoMap AOlegsUV_002.tga
+
+    set $diffuseCol "0.8 0.8 0.8 0.1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
+}

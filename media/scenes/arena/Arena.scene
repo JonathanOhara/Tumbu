@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<scene formatVersion="1.0.0" generator="Ogitor SceneBuilder 0.4.4">
+    <resourceLocations>
+        <resourceLocation type="FileSystem" name="../../tumbu/gym" />
+        <resourceLocation type="FileSystem" name="../../materials/scripts" />
+        <resourceLocation type="FileSystem" name="../../tumbu/arena" />
+        <resourceLocation type="FileSystem" name="../../materials/textures" />
+    </resourceLocations>
+    <environment>
+        <scenemanager name="SceneManager" id="988525056" type="OctreeSceneManager" />
+        <colourAmbient r="0.5" g="0.5" b="0.5" a="1" />
+        <skyDome active="true" material="Tumbu/MorningSky" />
+        <fog mode="none" start="0" end="1000" density="0">
+            <colour r="0.5" g="0.5" b="0.5" a="1" />
+        </fog>
+        <viewport name="Viewport1" id="2000000002" index="1">
+            <colour r="0" g="0" b="0" a="1" />
+        </viewport>
+        <camera name="intViewCamera1" viewMode="0" polyMode="3" fov="1">
+            <clipping near="1" far="3000" />
+            <position x="-9.23693" y="11.011" z="19.8446" />
+            <rotation qw="-0.996782" qx="0.0746108" qy="0.0291098" qz="0.00348937" />
+        </camera>
+    </environment>
+    <terrain worldSize="196" mapSize="513" pagenameprefix="Page" colourmapEnabled="false" colourMapTextureSize="128" tuningCompositeMapDistance="2000" tuningMaxPixelError="0" tuningMinBatchSize="33" tuningMaxBatchSize="65" tuningSkirtSize="10" tuningUseRayBoxDistancealculation="false">
+        <terrainPages>
+            <terrainPage name="Page_00000000.ogt" pageX="0" pageY="0" />
+        </terrainPages>
+    </terrain>
+    <nodes>
+        <node name="demoScene" id="151554912">
+            <position x="0" y="0" z="0" />
+            <rotation qw="1" qx="0" qy="0" qz="0" />
+            <scale x="1" y="1" z="1" />
+            <node name="arenaSceneNode" id="284218880">
+                <position x="0" y="0" z="0" />
+                <rotation qw="1" qx="0" qy="0" qz="0" />
+                <scale x="1" y="1" z="1" />
+                <node name="arenaEntity" id="217535936">
+                    <position x="0" y="0" z="0" />
+                    <rotation qw="1" qx="0" qy="0" qz="0" />
+                    <scale x="1" y="1" z="1" />
+                    <entity name="arenaEntity" meshFile="arena.mesh" castShadows="true">
+                        <subentity index="0" materialName="arenaMaterial/TEXFACE/gym_arena.png" />
+                    </entity>
+                </node>
+            </node>
+            <node name="coliseumSceneNode" id="79012424">
+                <position x="0" y="0" z="0" />
+                <rotation qw="1" qx="0" qy="0" qz="0" />
+                <scale x="1" y="1" z="1" />
+                <node name="coliseumEntity" id="64424576">
+                    <position x="0" y="0" z="0" />
+                    <rotation qw="1" qx="0" qy="0" qz="0" />
+                    <scale x="1" y="1" z="1" />
+                    <entity name="coliseumEntity" meshFile="coliseum.mesh" castShadows="true">
+                        <subentity index="0" materialName="coliseumMaterial" />
+                    </entity>
+                </node>
+            </node>
+            <light name="skyXSpotLight" id="762047168" type="directional" castShadows="true">
+                <position x="0" y="300" z="0" />
+                <directionVector x="0" y="-1" z="0" />
+                <colourDiffuse r="1" g="1" b="1" a="1" />
+                <colourSpecular r="0.996078" g="0.886275" b="0.454902" a="1" />
+            </light>
+        </node>
+    </nodes>
+</scene>

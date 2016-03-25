@@ -1,0 +1,53 @@
+robot002 set{
+	name Amber
+}
+
+robot002 head{
+	hp 20
+	ap 25
+	attack 3 
+	defense 2
+	velocity 3
+	
+	position 0 1.705 0.0
+}
+
+robot002 body{
+	hp 20
+	ap 25
+	attack 3
+	defense 2
+	velocity 3
+	
+	position 0 1.263 0.0
+}
+
+robot002 rightArm{
+	hp 20
+	ap 25
+	attack 3
+	defense 2
+	velocity 3
+
+	position -0.233 1.2 0.0
+}
+
+robot002 leftArm{
+	hp 20
+	ap 25
+	attack 3
+	defense 2
+	velocity 3
+	
+	position 0.233 1.2 0.0
+}
+
+robot002 legs{
+	hp 10
+	ap 10
+	attack 3
+	defense 2
+	velocity 3
+	
+	position 0.0 0.529 0.09
+}

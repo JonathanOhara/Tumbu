@@ -1,0 +1,29 @@
+camera configuration{
+	cameraZDistance 1.5
+	cameraHeight 0.2
+	cameraTranslate 9.0
+	maxBoundPitch 20
+	minBoundPitch -55
+	minBoundZoom 1.6
+	maxBoundZoom 2.5
+}
+
+original configuration{
+	cameraZDistance 15.0
+	cameraHeight 2.0
+	cameraTranslate 9.0
+	maxBoundPitch 25
+	minBoundPitch -60
+	minBoundZoom 8
+	maxBoundZoom 25
+}
+
+my configuration{
+	cameraZDistance 0.8
+	cameraHeight 0.25
+	cameraTranslate 9
+	maxBoundPitch 20
+	minBoundPitch -60
+	minBoundZoom 0.75
+	maxBoundZoom 2
+}

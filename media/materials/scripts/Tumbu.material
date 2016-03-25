@@ -1,0 +1,48 @@
+material Tumbu/MorningSky
+{
+	technique
+	{
+		pass
+		{
+			lighting off
+			depth_write off
+			polygon_mode_overrideable false
+			texture_unit
+			{
+				texture clouds.jpg
+				scroll_anim 0.15 0
+			}
+		}
+	}
+}
+material Tumbu/NightSky
+{
+	technique
+	{
+		pass
+		{
+			lighting off
+			depth_write off
+
+			texture_unit
+			{
+				texture night.jpg
+				scroll_anim 0.10 0
+			}
+		}
+	}
+}
+material Tumbu/Rockwall
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture rockwall.tga
+				scale 0.1 0.1
+			}
+		}
+	}
+}

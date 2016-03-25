@@ -1,0 +1,53 @@
+robot004 set{
+	name Guardian
+}
+
+robot004 head{
+	hp 30
+	ap 30
+	attack 6 
+	defense 6
+	velocity 5
+	
+	position 0.0 1.76 0.0
+}
+
+robot004 body{
+	hp 30
+	ap 30
+	attack 6
+	defense 6
+	velocity 5
+	
+	position 0.0 1.283 0.0		
+}
+
+robot004 rightArm{
+	hp 30
+	ap 30
+	attack 6
+	defense 6
+	velocity 5
+
+	position -0.33 1.229 0.0
+}
+
+robot004 leftArm{
+	hp 30
+	ap 30
+	attack 6
+	defense 6
+	velocity 5	
+	
+	position 0.33 1.228 0.0
+}
+
+robot004 legs{
+	hp 30
+	ap 30
+	attack 6
+	defense 6
+	velocity 5
+	
+	position 0.0 0.529 -0.009	
+}

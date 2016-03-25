@@ -1,0 +1,337 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Robot">
+      <UniqueIdentifier>{11c2f8fb-f726-4d9a-b306-41d149ca456e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Robot">
+      <UniqueIdentifier>{93d8ffb0-bf6d-45a5-ab98-78e0ac6edd68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GUI">
+      <UniqueIdentifier>{7235f4ce-04d5-4d58-8026-4bdf70405d3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GUI">
+      <UniqueIdentifier>{6154f7b4-ffd3-4d9d-a2f8-eeb6d3eec1ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\AI">
+      <UniqueIdentifier>{bef7ef6c-b2a4-4431-9626-9af960af9de5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\AI">
+      <UniqueIdentifier>{00a92f55-10c1-40a4-9117-8b240270117b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Structure">
+      <UniqueIdentifier>{0ca779bd-07f3-4432-92be-7fa379fa5dc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Structure">
+      <UniqueIdentifier>{2ffabaa5-7278-4f4c-9b08-434a7ec890c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Scenes">
+      <UniqueIdentifier>{75345381-5db6-4d1d-9d96-1ab3c616178a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scenes">
+      <UniqueIdentifier>{43ef2df8-6714-497a-905b-cad3cf12aff3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Sound">
+      <UniqueIdentifier>{fb151f53-9db5-46ca-99f3-d5031c254c50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Sound">
+      <UniqueIdentifier>{4211e3f1-7b73-4d08-8679-dc0c1d4b3073}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Skill">
+      <UniqueIdentifier>{fe824b6a-1127-4cb1-84f7-2c4cf7111fe5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Skill">
+      <UniqueIdentifier>{15d4fd19-bf90-42bd-8f72-2265d429c966}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physic">
+      <UniqueIdentifier>{e8d01fa1-e9f4-4ffc-807d-ee8ad2dcbf0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physic">
+      <UniqueIdentifier>{1aec0964-3b76-4ea3-ac8c-3e4b616f8fb3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\TUMBU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="res\Resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CharacterEnemy.h">
+      <Filter>Header Files\Robot</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Character.h">
+      <Filter>Header Files\Robot</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Part.h">
+      <Filter>Header Files\Robot</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GUI.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Conversation.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SpecialManager.h">
+      <Filter>Header Files\Skill</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SpecialInterface.h">
+      <Filter>Header Files\Skill</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SpecialJyn.h">
+      <Filter>Header Files\Skill</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EnergyParticle.h">
+      <Filter>Header Files\Skill</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SpecialPunch.h">
+      <Filter>Header Files\Skill</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SpecialKick.h">
+      <Filter>Header Files\Skill</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RobotAI.h">
+      <Filter>Header Files\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AIManager.h">
+      <Filter>Header Files\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RobotDefensiveAI.h">
+      <Filter>Header Files\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Dialog.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\BaseApplication.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Camera.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ConfigScript.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameObject.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Sky.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Util.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Alert.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Confirm.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ShowPart.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CutScene.h">
+      <Filter>Header Files\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StartScreen.h">
+      <Filter>Header Files\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SoundManager.h">
+      <Filter>Header Files\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Sound.h">
+      <Filter>Header Files\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Skill.h">
+      <Filter>Header Files\Skill</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Log.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LogManager.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml.hpp">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Robot.h">
+      <Filter>Header Files\Robot</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SkillHit.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SkillHitManager.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Tutorial.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Clock.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Demo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Enums.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SimpleRigidBody.h">
+      <Filter>Header Files\Physic</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CollisionDetectionListener.h">
+      <Filter>Header Files\Physic</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DotSceneLoader.h">
+      <Filter>Header Files\Structure</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\TUMBU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Robot.cpp">
+      <Filter>Source Files\Robot</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CharacterEnemy.cpp">
+      <Filter>Source Files\Robot</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Character.cpp">
+      <Filter>Source Files\Robot</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Part.cpp">
+      <Filter>Source Files\Robot</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Conversation.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GUI.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SpecialManager.cpp">
+      <Filter>Source Files\Skill</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SpecialInterface.cpp">
+      <Filter>Source Files\Skill</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SpecialJyn.cpp">
+      <Filter>Source Files\Skill</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EnergyParticle.cpp">
+      <Filter>Source Files\Skill</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SpecialPunch.cpp">
+      <Filter>Source Files\Skill</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SpecialKick.cpp">
+      <Filter>Source Files\Skill</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RobotAI.cpp">
+      <Filter>Source Files\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AIManager.cpp">
+      <Filter>Source Files\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RobotDefensiveAI.cpp">
+      <Filter>Source Files\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Dialog.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BaseApplication.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Util.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConfigScript.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameObject.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Sky.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Alert.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Confirm.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ShowPart.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CutScene.cpp">
+      <Filter>Source Files\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StartScreen.cpp">
+      <Filter>Source Files\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SoundManager.cpp">
+      <Filter>Source Files\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Sound.cpp">
+      <Filter>Source Files\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Skill.cpp">
+      <Filter>Source Files\Skill</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Log.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LogManager.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DotSceneLoader.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkillHit.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkillHitManager.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Tutorial.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Clock.cpp">
+      <Filter>Source Files\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Demo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SimpleRigidBody.cpp">
+      <Filter>Source Files\Physic</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CollisionDetectionListener.cpp">
+      <Filter>Source Files\Physic</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\TUMBU.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\TUMBU.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

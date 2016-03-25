@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<Imageset Name="RobotFaces" Imagefile="RobotFaces.png" NativeHorzRes="800" NativeVertRes="600" AutoScaled="true">
+	<Image Name="robot001" XPos="000" YPos="0" Width="200" Height="175" />
+	<Image Name="robot002" XPos="200" YPos="0" Width="200" Height="175" />
+	<Image Name="robot003" XPos="400" YPos="0" Width="200" Height="175" />
+	<Image Name="robot004" XPos="600" YPos="0" Width="200" Height="175" />
+	<Image Name="robot005" XPos="800" YPos="0" Width="200" Height="175" />
+</Imageset>

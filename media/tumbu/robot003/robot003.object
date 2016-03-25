@@ -1,0 +1,53 @@
+robot003 set{
+	name Buzzy
+}
+
+robot003 head{
+	hp 30
+	ap 20
+	attack 5 
+	defense 5
+	velocity 3
+	
+	position 0 1.75 0.073
+}
+
+robot003 body{
+	hp 30
+	ap 20
+	attack 5
+	defense 5
+	velocity 3
+	
+	position 0 1.318 0.027
+}
+
+robot003 rightArm{
+	hp 30
+	ap 20
+	attack 5
+	defense 5
+	velocity 3
+
+	position -0.319 1.256 0.0
+}
+
+robot003 leftArm{
+	hp 30
+	ap 20
+	attack 5
+	defense 5	
+	velocity 3
+	
+	position 0.319 1.254 0.0
+}
+
+robot003 legs{
+	hp 30
+	ap 20
+	attack 5
+	defense 5
+	velocity 3
+	
+	position 0.0 0.535 0.068
+}

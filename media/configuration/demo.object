@@ -1,0 +1,255 @@
+demo configuration{
+	enemies 16
+}
+
+demo hero1{
+	hp 100
+	ap 200
+	attack 10
+	defense 10
+	velocity 10
+	
+	head robot001
+	body robot001
+	rightArm robot001
+	leftArm robot001
+	legs robot001
+}
+
+demo enemy2{
+	hp 30
+	ap 100
+	attack 1
+	defense 1
+	velocity 1
+	
+	head robot002
+	body robot002
+	rightArm robot002
+	leftArm robot002
+	legs robot002
+}
+	
+demo enemy2{
+	hp 30
+	ap 100
+	attack 1
+	defense 1
+	velocity 1
+	
+	head robot002
+	body robot002
+	rightArm robot002
+	leftArm robot002
+	legs robot002
+}
+
+demo enemy3{
+	hp 35
+	ap 125
+	attack 3
+	defense 2
+	velocity 2
+	
+	head robot002
+	body robot002
+	rightArm robot002
+	leftArm robot002
+	legs robot003
+}
+
+demo enemy4{
+	hp 40
+	ap 150
+	attack 3
+	defense 3
+	velocity 3
+	
+	head robot002
+	body robot002
+	rightArm robot002
+	leftArm robot003
+	legs robot003
+}
+
+demo enemy5{
+	hp 45
+	ap 175
+	attack 4
+	defense 3
+	velocity 3
+	
+	head robot002
+	body robot002
+	rightArm robot003
+	leftArm robot003
+	legs robot003
+}
+
+demo enemy6{
+	hp 50
+	ap 200
+	attack 4
+	defense 4
+	velocity 4
+	
+	head robot002
+	body robot003
+	rightArm robot003
+	leftArm robot003
+	legs robot003
+}
+
+demo enemy7{
+	hp 55
+	ap 220
+	attack 5
+	defense 5
+	velocity 5
+	
+	head robot003
+	body robot003
+	rightArm robot003
+	leftArm robot003
+	legs robot003
+}
+
+demo enemy8{
+	hp 60
+	ap 250
+	attack 5
+	defense 5
+	velocity 5
+	
+	head robot003
+	body robot003
+	rightArm robot003
+	leftArm robot003
+	legs robot004
+}
+
+demo enemy9{
+	hp 65
+	ap 275
+	attack 6
+	defense 6
+	velocity 6
+	
+	head robot003
+	body robot003
+	rightArm robot003
+	leftArm robot004
+	legs robot004
+}
+
+demo enemy10{
+	hp 70
+	ap 300
+	attack 6
+	defense 6
+	velocity 6
+	
+	head robot003
+	body robot003
+	rightArm robot004
+	leftArm robot004
+	legs robot004
+}
+
+demo enemy11{
+	hp 75
+	ap 325
+	attack 7
+	defense 7
+	velocity 7
+	
+	head robot003
+	body robot004
+	rightArm robot004
+	leftArm robot004
+	legs robot004
+}
+
+demo enemy12{
+	hp 80
+	ap 350
+	attack 7
+	defense 7
+	velocity 7
+	
+	head robot004
+	body robot004
+	rightArm robot004
+	leftArm robot004
+	legs robot004
+}
+
+demo enemy13{
+	hp 85
+	ap 375
+	attack 8
+	defense 8
+	velocity 8
+	
+	head robot004
+	body robot004
+	rightArm robot004
+	leftArm robot004
+	legs robot005
+}
+
+demo enemy14{
+	hp 90
+	ap 400
+	attack 8
+	defense 8
+	velocity 8
+	
+	head robot004
+	body robot004
+	rightArm robot004
+	leftArm robot005
+	legs robot005
+}
+
+demo enemy15{
+	hp 95
+	ap 425
+	attack 9
+	defense 9
+	velocity 9
+	
+	head robot004
+	body robot004
+	rightArm robot005
+	leftArm robot005
+	legs robot005
+}
+
+demo enemy16{
+	hp 100
+	ap 450
+	attack 9
+	defense 9
+	velocity 9
+	
+	head robot004
+	body robot005
+	rightArm robot005
+	leftArm robot005
+	legs robot005
+}
+
+demo enemy17{
+	hp 200
+	ap 1000
+	attack 20
+	defense 20
+	velocity 20
+	
+	head robot005
+	body robot005
+	rightArm robot005
+	leftArm robot005
+	legs robot005
+}

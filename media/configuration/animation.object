@@ -1,0 +1,55 @@
+animation walk{
+	loop true
+}
+
+animation right_punch{
+	loop false
+}
+
+animation guard{
+	loop false
+}
+
+animation no_pose{
+	loop false
+}
+
+animation pre_special_jyn{
+	loop false
+}
+
+animation pos_special_jyn{
+	loop false
+}
+
+animation left_punch{
+	loop false
+}
+
+animation right_kick{
+	loop false
+}
+
+animation run{
+	loop true
+}
+
+animation dash_back{
+	loop false
+}
+
+animation dash_left{
+	loop false
+}
+
+animation dash_right{
+	loop false
+}
+
+animation left_up_deflect{
+	loop false
+}
+
+animation right_up_deflect{
+	loop false
+}

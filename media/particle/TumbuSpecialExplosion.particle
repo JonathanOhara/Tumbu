@@ -1,0 +1,35 @@
+particle_system TumbuSpecialExplosion{
+	quota	25
+	material	PE/ringflare
+	particle_width	3
+	particle_height	3
+	cull_each	false
+	renderer	billboard
+	billboard_type	oriented_self
+
+	emitter Point{
+		angle	50
+		colour	1 1 0 1
+		colour_range_start	1 1 0 1
+		colour_range_end	0.3 1 0.3 1
+		direction	0 1 0
+		emission_rate	50
+		position	0 0 0
+		velocity	4
+		velocity_min	4
+		velocity_max	4
+		time_to_live	1
+		time_to_live_min	1
+		time_to_live_max	1
+		duration	1
+		duration_min	1
+		duration_max	1
+	}
+
+	affector ColourFader{
+		red	1
+		green	0.4
+		blue	0.1
+		alpha	0.5
+	}
+}

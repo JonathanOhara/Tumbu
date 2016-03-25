@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout >
+    <Window Type="DefaultWindow" Name="RootStartScreen" >
+        <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{1,0}}" />
+        <Window Type="DefaultWindow" Name="RootStartScreen/StartMenu" >
+            <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{1,0}}" />
+            <Window Type="TaharezLook/Button" Name="RootStartScreen/StartMenu/campaignButton" >
+                <Property Name="Text" Value="Play Demo" />
+                <Property Name="UnifiedAreaRect" Value="{{0.35,0},{0.8,0},{0.65,0},{0.84,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootStartScreen/StartMenu/optionsButton" >
+                <Property Name="Text" Value="Options" />
+                <Property Name="UnifiedAreaRect" Value="{{0.375,0},{0.85,0},{0.625,0},{0.89,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootStartScreen/StartMenu/exitButton" >
+                <Property Name="Font" Value="DejaVuSans-10" />
+                <Property Name="Text" Value="Exit" />
+                <Property Name="UnifiedAreaRect" Value="{{0.4,0},{0.9,0},{0.6,0},{0.94,0}}" />
+            </Window>
+        </Window>
+        <Window Type="DefaultWindow" Name="RootStartScreen/OptionsMenu" >
+            <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{0.998736,0}}" />
+            <Window Type="TaharezLook/Button" Name="RootStartScreen/OptionsMenu/okButton" >
+                <Property Name="Text" Value="Ok" />
+                <Property Name="UnifiedAreaRect" Value="{{0.25,0},{0.8,0},{0.4,0},{0.84,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootStartScreen/OptionsMenu/defaultButton" >
+                <Property Name="Text" Value="Default" />
+                <Property Name="UnifiedAreaRect" Value="{{0.42,0},{0.8,0},{0.57,0},{0.84,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Button" Name="RootStartScreen/OptionsMenu/cancelButton" >
+                <Property Name="Text" Value="Cancel" />
+                <Property Name="UnifiedAreaRect" Value="{{0.59,0},{0.8,0},{0.74,0},{0.84,0}}" />
+            </Window>
+            <Window Type="TaharezLook/StaticText" Name="RootStartScreen/OptionsMenu/skyLabel" >
+                <Property Name="Text" Value="Sky" />
+                <Property Name="HorzExtent" Value="31" />
+                <Property Name="VertExtent" Value="20.4438" />
+                <Property Name="UnifiedAreaRect" Value="{{0.3,0},{0.1,0},{0.48,0},{0.14,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Combobox" Name="RootStartScreen/OptionsMenu/skyCombo" >
+                <Property Name="UnifiedAreaRect" Value="{{0.52,0},{0.1,0},{0.7,0},{0.225,0}}" />
+                <Property Name="MaxEditTextLength" Value="1073741823" />
+            </Window>
+            <Window Type="TaharezLook/StaticText" Name="RootStartScreen/OptionsMenu/shadowsLabel" >
+                <Property Name="Text" Value="Shadows" />
+                <Property Name="HorzExtent" Value="78" />
+                <Property Name="VertExtent" Value="20.4438" />
+                <Property Name="UnifiedAreaRect" Value="{{0.3,0},{0.15,0},{0.48,0},{0.19,0}}" />
+            </Window>
+            <Window Type="TaharezLook/Combobox" Name="RootStartScreen/OptionsMenu/shadowsCombo" >
+                <Property Name="UnifiedAreaRect" Value="{{0.52,0},{0.15,0},{0.7,0},{0.3,0}}" />
+                <Property Name="MaxEditTextLength" Value="1073741823" />
+            </Window>
+        </Window>
+    </Window>
+</GUILayout>

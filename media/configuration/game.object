@@ -1,0 +1,11 @@
+game robot{
+	runSpeed 51
+	turnSpeed 500.0
+	
+	restitution 0.1
+	friction 0.8
+	mass 60
+	
+	hpRegenerationPerSecond 0.1
+	apRegenerationPerSecond 2.5
+}

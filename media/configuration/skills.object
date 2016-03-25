@@ -1,0 +1,48 @@
+skill punch{
+	name Punch
+	
+	damage 10
+	ap 25
+	energyBalls 1
+	
+	experience_multiplier 1
+	
+	one_lv_up_damage 2
+	one_lv_up_ap 0
+	one_lv_up_energyBalls 0
+}
+
+skill kick{
+	name Kick
+
+	damage 12
+	ap 30
+	energyBalls 1
+
+	experience_multiplier 1.1
+	
+	one_lv_up_damage 3
+	one_lv_up_ap 0
+	one_lv_up_energyBalls 0
+}
+
+skill jyn{
+	name Jyn
+	damage 30
+	ap 60
+	energyBalls 10
+
+	experience_multiplier 1.5
+	
+	one_lv_up_damage 2
+	one_lv_up_ap 0
+	one_lv_up_energyBalls 2
+}
+
+skill experience{
+	level2 11
+	level3 65
+	level4 150
+	level5 280
+	level6 999999
+}

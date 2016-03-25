@@ -1,0 +1,223 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6DAFE280-7430-4613-9897-4EC64B68614D}</ProjectGuid>
+    <RootNamespace>TUMBU</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bin\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">obj\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bin\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">D:\OgreSDK\addons\vld\include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">D:\OgreSDK\addons\vld\lib;D:\OgreSDK\addons\vld\lib\Win32;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>include;$(OGRE_HOME)\include;$(OGRE_HOME)\include\OGRE;$(OGRE_HOME)\include\OIS;$(OGRE_HOME)\include\CEGUI;$(OGRE_HOME)\addons\skyx\SkyX\SkyX;$(OGRE_HOME)\boost_1_44;$(OGRE_BULLET_HOME)\Collisions\include\;$(OGRE_BULLET_HOME)\Dynamics\include\;$(BULLET_HOME)\src;$(OGREAL_SDK)\include;$(OPENAL_SDK)\include;$(LIB_OGG_HOME)\include;$(LIB_VORBIS_HOME)\include;$(CEGUI_HOME)\cegui\include;$(PAGED_GEOMETRY_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;PRECOMP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
+      <AdditionalLibraryDirectories>$(OGRE_HOME)\lib\$(Configuration);$(OGRE_HOME)\boost_1_44\lib;$(BULLET_HOME)\lib\$(ConfigurationName);$(OGRE_BULLET_HOME)\lib\$(ConfigurationName);$(OPENAL_SDK)\libs\Win32;$(OGREAL_SDK)\lib\$(ConfigurationName);$(LIB_OGG_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(LIB_VORBIS_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(CEGUI_HOME)\lib;$(SKYX_HOME)\SkyX\SkyX\bin;$(PAGED_GEOMETRY_HOME)\lib\$(Configuration)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)TUMBU.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>OgreMain_d.lib;OIS_d.lib;OgrePaging_d.lib;OgreTerrain_d.lib;CEGUIBase_d.lib;CEGUIOgreRenderer_d.lib;SkyX_d.lib;OgreBulletCollisions_d.lib;OgreBulletDynamics_d.lib;bulletcollision.lib;bulletdynamics.lib;LinearMath.lib;GIMPACTutils.lib;ConvexDecomposition.lib;OpenAL32.lib;OgreAL.lib;PagedGeometry.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup %(AdditionalOptions)</AdditionalOptions>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <EntryPointSymbol>WinMainCRTStartup</EntryPointSymbol>
+    </Link>
+    <PostBuildEvent>
+      <Message>Copying exe to samples bin directory ...</Message>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>include;$(OGRE_HOME)\include;$(OGRE_HOME)\include\OGRE;$(OGRE_HOME)\include\OIS;$(OGRE_HOME)\include\CEGUI;$(OGRE_HOME)\addons\skyx\SkyX\SkyX;$(OGRE_HOME)\boost_1_44;$(OGRE_BULLET_HOME)\Collisions\include\;$(OGRE_BULLET_HOME)\Dynamics\include\;$(BULLET_HOME)\src;$(OGREAL_SDK)\include;$(OPENAL_SDK)\include;$(LIB_OGG_HOME)\include;$(LIB_VORBIS_HOME)\include;$(CEGUI_HOME)\cegui\include;$(PAGED_GEOMETRY_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;PRECOMP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>OgreMain.lib;OIS.lib;OgrePaging.lib;OgreTerrain.lib;CEGUIBase.lib;CEGUIOgreRenderer.lib;SkyX.lib;OgreBulletCollisions.lib;OgreBulletDynamics.lib;bulletcollision.lib;bulletdynamics.lib;LinearMath.lib;GIMPACTutils.lib;ConvexDecomposition.lib;OpenAL32.lib;OgreAL.lib;PagedGeometry.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
+      <AdditionalLibraryDirectories>$(OGRE_HOME)\lib\$(Configuration);$(OGRE_HOME)\boost_1_44\lib;$(BULLET_HOME)\lib\$(ConfigurationName);$(OGRE_BULLET_HOME)\lib\$(ConfigurationName);$(OPENAL_SDK)\libs\Win32;$(OGREAL_SDK)\lib\$(ConfigurationName);$(LIB_OGG_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(LIB_VORBIS_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(CEGUI_HOME)\lib;$(SKYX_HOME)\SkyX\SkyX\bin;$(PAGED_GEOMETRY_HOME)\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+    <PostBuildEvent>
+      <Message>Copying exe to samples bin directory ...</Message>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\AIManager.h" />
+    <ClInclude Include="include\Alert.h" />
+    <ClInclude Include="include\BaseApplication.h" />
+    <ClInclude Include="include\Camera.h" />
+    <ClInclude Include="include\Character.h" />
+    <ClInclude Include="include\CharacterEnemy.h" />
+    <ClInclude Include="include\Clock.h" />
+    <ClInclude Include="include\CollisionDetectionListener.h" />
+    <ClInclude Include="include\ConfigScript.h" />
+    <ClInclude Include="include\Confirm.h" />
+    <ClInclude Include="include\Conversation.h" />
+    <ClInclude Include="include\CutScene.h" />
+    <ClInclude Include="include\Demo.h" />
+    <ClInclude Include="include\Dialog.h" />
+    <ClInclude Include="include\DotSceneLoader.h" />
+    <ClInclude Include="include\EnergyParticle.h" />
+    <ClInclude Include="include\Enums.h" />
+    <ClInclude Include="include\GameObject.h" />
+    <ClInclude Include="include\GUI.h" />
+    <ClInclude Include="include\Log.h" />
+    <ClInclude Include="include\LogManager.h" />
+    <ClInclude Include="include\Part.h" />
+    <ClInclude Include="include\rapidxml.hpp" />
+    <ClInclude Include="include\Robot.h" />
+    <ClInclude Include="include\RobotAI.h" />
+    <ClInclude Include="include\RobotDefensiveAI.h" />
+    <ClInclude Include="include\ShowPart.h" />
+    <ClInclude Include="include\SimpleRigidBody.h" />
+    <ClInclude Include="include\Skill.h" />
+    <ClInclude Include="include\SkillHit.h" />
+    <ClInclude Include="include\SkillHitManager.h" />
+    <ClInclude Include="include\Sound.h" />
+    <ClInclude Include="include\SoundManager.h" />
+    <ClInclude Include="include\SpecialInterface.h" />
+    <ClInclude Include="include\SpecialJyn.h" />
+    <ClInclude Include="include\SpecialKick.h" />
+    <ClInclude Include="include\SpecialManager.h" />
+    <ClInclude Include="include\SpecialPunch.h" />
+    <ClInclude Include="include\StartScreen.h" />
+    <ClInclude Include="include\Tutorial.h" />
+    <ClInclude Include="res\Resource.h" />
+    <ClInclude Include="include\Sky.h" />
+    <ClInclude Include="include\TUMBU.h" />
+    <ClInclude Include="include\Util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\AIManager.cpp" />
+    <ClCompile Include="src\Alert.cpp" />
+    <ClCompile Include="src\CharacterEnemy.cpp" />
+    <ClCompile Include="src\BaseApplication.cpp" />
+    <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Character.cpp" />
+    <ClCompile Include="src\Clock.cpp" />
+    <ClCompile Include="src\CollisionDetectionListener.cpp" />
+    <ClCompile Include="src\ConfigScript.cpp" />
+    <ClCompile Include="src\Confirm.cpp" />
+    <ClCompile Include="src\Conversation.cpp" />
+    <ClCompile Include="src\CutScene.cpp" />
+    <ClCompile Include="src\Demo.cpp" />
+    <ClCompile Include="src\Dialog.cpp" />
+    <ClCompile Include="src\DotSceneLoader.cpp" />
+    <ClCompile Include="src\EnergyParticle.cpp" />
+    <ClCompile Include="src\GameObject.cpp" />
+    <ClCompile Include="src\GUI.cpp" />
+    <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\LogManager.cpp" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Part.cpp" />
+    <ClCompile Include="src\Robot.cpp" />
+    <ClCompile Include="src\RobotAI.cpp" />
+    <ClCompile Include="src\RobotDefensiveAI.cpp" />
+    <ClCompile Include="src\ShowPart.cpp" />
+    <ClCompile Include="src\SimpleRigidBody.cpp" />
+    <ClCompile Include="src\Skill.cpp" />
+    <ClCompile Include="src\SkillHit.cpp" />
+    <ClCompile Include="src\SkillHitManager.cpp" />
+    <ClCompile Include="src\Sky.cpp" />
+    <ClCompile Include="src\Sound.cpp" />
+    <ClCompile Include="src\SoundManager.cpp" />
+    <ClCompile Include="src\SpecialInterface.cpp" />
+    <ClCompile Include="src\SpecialJyn.cpp" />
+    <ClCompile Include="src\SpecialKick.cpp" />
+    <ClCompile Include="src\SpecialManager.cpp" />
+    <ClCompile Include="src\SpecialPunch.cpp" />
+    <ClCompile Include="src\StartScreen.cpp" />
+    <ClCompile Include="src\TUMBU.cpp" />
+    <ClCompile Include="src\Tutorial.cpp" />
+    <ClCompile Include="src\Util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\TUMBU.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\TUMBU.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
