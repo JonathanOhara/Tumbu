@@ -18,9 +18,9 @@ if (-not (Test-Path $runtimeDir)) { throw "Runtime DLL folder $runtimeDir not fo
 Get-ChildItem $runtimeDir -Filter *.dll | Where-Object { -not (Test-Path (Join-Path $binDir $_.Name)) } |
     Copy-Item -Destination $binDir
 
-# Configs: plugins cfg from the runtime set; resource cfg always refreshed from the repo root tumbu.cfg.
+# Configs are owned by the repo root and refreshed on every run (plugins list + resource locations).
 $suffix = if ($Configuration -eq 'Debug') { '_d' } else { '' }
-if (-not (Test-Path "$binDir\plugins$suffix.cfg")) { Copy-Item "$runtimeDir\plugins$suffix.cfg" $binDir }
+Copy-Item "$root\plugins$suffix.cfg" "$binDir\plugins$suffix.cfg" -Force
 Copy-Item "$root\tumbu.cfg" "$binDir\tumbu$suffix.cfg" -Force
 
 # Per-user folder for ogre.cfg / ogre.log / cegui.log (the game throws without it).
