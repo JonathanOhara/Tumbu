@@ -1,4 +1,5 @@
 #include "ConfigScript.h"
+#include <OgreLogManager.h>
  
 #include <OgreScriptLoader.h>
 #include <OgreScriptLoader.h>
@@ -36,7 +37,11 @@ ConfigScriptLoader::~ConfigScriptLoader()
         delete i->second;
     }
     scriptList.clear();
- 
+    for (size_t d = 0; d < duplicateScripts.size(); d++){
+        delete duplicateScripts[d];
+    }
+    duplicateScripts.clear();
+
     //Unregister with resource group manager
     if (ResourceGroupManager::getSingletonPtr())
         ResourceGroupManager::getSingleton()._unregisterScriptLoader(this);
@@ -80,8 +85,10 @@ void ConfigScriptLoader::parseScript(DataStreamPtr &stream, const String &groupN
  
     //Get first token
     _nextToken();
-    if (tok == TOKEN_EOF)
+    if (tok == TOKEN_EOF){
+        delete[] parseBuff;
         return;
+    }
  
     //Parse the script
     _parseNodes(0);
@@ -206,7 +213,11 @@ void ConfigScriptLoader::_parseNodes(ConfigNode *parent)
                     else
                         key = newNode->getName() + ' ' + newNode->getValues().front();
  
-                    scriptList.insert(ScriptItem(key, newNode));
+                    // The first definition of a name wins (as before); later ones are kept aside only to be freed.
+                if (!scriptList.insert(ScriptItem(key, newNode)).second){
+                    LogManager::getSingleton().logWarning("ConfigScript: duplicate definition of '" + key + "' ignored");
+                    duplicateScripts.push_back(newNode);
+                }
                 }
  
                 //Skip any blank spaces

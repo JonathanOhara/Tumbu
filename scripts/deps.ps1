@@ -86,8 +86,22 @@ function Repair-CaelumShaders([string]$mediaDir) {
     }
 }
 
+# Ogre 14.6 bug: Terrain::prepare() allocates mDeltaData, and for version-1 terrain files (like the arena's
+# 2011 Ogitor page) allocates it again before reading, leaking 4 * size^2 bytes (1 MB) on every terrain load.
+function Repair-OgreSource([string]$sourceDir) {
+    $file = Join-Path $sourceDir 'Components\Terrain\src\OgreTerrain.cpp'
+    $text = [IO.File]::ReadAllText($file)
+    $leak = "            // Load delta data`n            mDeltaData = OGRE_ALLOC_T(float, numVertices, MEMCATEGORY_GEOMETRY);`n"
+    if ($text.Contains($leak)) {
+        $text = $text.Replace($leak, "            // Load delta data (TUMBU patch: the buffer was already allocated above; allocating again leaked it)`n")
+        [IO.File]::WriteAllText($file, $text)
+        Write-Host "Ogre: patched the terrain delta-data leak in OgreTerrain.cpp" -ForegroundColor DarkGray
+    }
+}
+
 if ($Only -in 'all', 'ogre') {
     $dir = Get-Source "ogre-$OgreVersion" "https://github.com/OGRECave/ogre/archive/refs/tags/v$OgreVersion.tar.gz" "ogre-$OgreVersion"
+    Repair-OgreSource $dir
     Build-CMake 'ogre' $dir @(
         # Ogre downloads and builds SDL2, Bullet, FreeType and pugixml into $ogreDeps (only if it doesn't exist).
         '-DOGRE_BUILD_DEPENDENCIES=ON', "-DOGRE_DEPENDENCIES_DIR=$ogreDeps", '-DCMAKE_BUILD_TYPE=Release',

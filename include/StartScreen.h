@@ -14,6 +14,7 @@ public:
 protected:
 private:
 
+	Ogre::MaterialPtr material;
 	Ogre::Rectangle2D* rect;
 	Ogre::SceneNode* startScreenNode;
 	Ogre::Real timeCount;

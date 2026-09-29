@@ -1,7 +1,8 @@
 #include "TUMBU.h"
 #include <chrono>
 #include <thread>
-#ifdef TUMBU_DEBUG
+// Visual Leak Detector (optional): used by RelWithDebInfo builds when its headers are on the include path.
+#if defined(TUMBU_DEBUG) && __has_include(<vld.h>)
 #include <vld.h>
 #endif
 TUMBU* TUMBU::instance = NULL;
@@ -50,6 +51,14 @@ void TUMBU::destroyScene(void){
 
 	removeAllKeyListeners();
 	removeAllMouseListeners();
+
+	// Closing the game during a match: the match goes first, it still uses the sound, AI and GUI managers.
+	if( demo != NULL ){
+		Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Demo...");
+		mRoot->removeFrameListener( demo );
+		delete demo;
+		demo = NULL;
+	}
 
 	if( devTest != NULL ){
 		mRoot->removeFrameListener( devTest );
@@ -248,6 +257,7 @@ void TUMBU::finishDemo(void){
 
 	mRoot->removeFrameListener( demo );
 	delete demo;
+	demo = NULL;
 	activeScene = NULL;
 
 	mSceneMgr->destroyAllEntities();

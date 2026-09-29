@@ -6,6 +6,7 @@
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <psapi.h>
 #else
 #include <unistd.h>
 #endif
@@ -16,6 +17,7 @@ bool DevTest::guiTour = false;
 int DevTest::fpsCap = 0;
 Ogre::Real DevTest::quitAfter = 0;
 int DevTest::startHour = -1;
+int DevTest::cycles = 0;
 //-------------------------------------------------------------------------------------
 void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	Ogre::StringVector args = Ogre::StringUtil::split( commandLine, " \t" );
@@ -31,6 +33,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			guiTour = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-fpscap=" ) ){
 			fpsCap = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
+			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
 			startHour = Ogre::StringConverter::parseInt( arg.substr( 6 ) ) % 24;
 		}else if( Ogre::StringUtil::startsWith( arg, "-quitafter=" ) ){
@@ -44,7 +48,7 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 }
 //-------------------------------------------------------------------------------------
 bool DevTest::isEnabled(void){
-	return autoplay || guiTour || fpsCap > 0;
+	return autoplay || guiTour || cycles > 0 || fpsCap > 0;
 }
 //-------------------------------------------------------------------------------------
 DevTest::DevTest(void){
@@ -56,6 +60,8 @@ DevTest::DevTest(void){
 	walkDone	= false;
 	tourStep	= 0;
 	tourTimer	= 0;
+	cycle		= 0;
+	kills		= 0;
 	frameTimer.reset();
 
 	log( "enabled: autoplay=" + Ogre::StringConverter::toString( autoplay ) +
@@ -71,6 +77,10 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 	limitFrameRate();
 	frames++;
 
+	if( cycles > 0 ){
+		runCycles( evt );
+		return true;
+	}
 	if( guiTour ){
 		runGuiTour( evt );
 		return true;
@@ -257,18 +267,48 @@ void DevTest::runGuiTour( const Ogre::FrameEvent &evt ){
 			tourStep++; tourTimer = 0;
 		}
 		break;
-	case 8:
+	case 8: // pause menu Quit: back to the start screen
 		if( tourTimer > 0.5f ){
 			screenshot( "pause-help" );
-			pressKey( TumbuInput::KEY_ESCAPE );
+			tourStep++; tourTimer = 0;
+			click( "QuitTab" );
+		}
+		break;
+	case 9: // start screen again: play a second match
+		if( state == TumbuEnums::START_SCREEN && tourTimer > 1.0f ){
+			tourStep++; tourTimer = 0;
+			screenshot( "back-to-menu" );
+			click( "PlayButton" );
+		}
+		break;
+	case 10: // dismiss the intro dialogs again
+		if( state == TumbuEnums::IN_DIALOG ){
+			if( tourTimer > 0.3f ){
+				pressKey( isVisible( "ConfirmWindow" ) ? TumbuInput::KEY_ESCAPE : TumbuInput::KEY_SPACE );
+				tourTimer = 0;
+			}
+		}else if( state == TumbuEnums::PLAYING && tourTimer > 0.3f ){
 			tourStep++; tourTimer = 0;
 		}
 		break;
-	case 9:
+	case 11:
+		if( tourTimer > 1.5f ){
+			tourStep++; tourTimer = 0;
+			screenshot( "second-match" );
+			pressKey( TumbuInput::KEY_ESCAPE );
+		}
+		break;
+	case 12:
 		if( tourTimer > 0.5f ){
+			tourStep++; tourTimer = 0;
+			click( "QuitTab" );
+		}
+		break;
+	case 13: // leave through the start screen's Exit button
+		if( state == TumbuEnums::START_SCREEN && tourTimer > 1.0f ){
 			log( "GUI tour finished" );
 			tourStep++;
-			tumbu->shutdown();
+			click( "ExitButton" );
 		}
 		break;
 	}
@@ -280,22 +320,50 @@ void DevTest::screenshot( const Ogre::String &name ){
 	log( "screenshot " + file );
 }
 //-------------------------------------------------------------------------------------
+// Simulated input goes through the same dispatch as SDL events (BaseApplication → every listener).
+static OgreBites::InputListener* input(void){
+	return TUMBU::getInstance();
+}
+//-------------------------------------------------------------------------------------
 void DevTest::pressKey( int key ){
 	OgreBites::KeyboardEvent evt;
 	evt.type = OgreBites::KEYDOWN;
 	evt.keysym.sym = key;
 	evt.keysym.mod = 0;
 	evt.repeat = 0;
-	GUI::getInstance()->keyPressed( evt );
+	input()->keyPressed( evt );
 }
 //-------------------------------------------------------------------------------------
 void DevTest::click( const Ogre::String &buttonName ){
+	// A real click through the game's input dispatch (every listener, then MyGUI), so a button the mouse cannot
+	// reach fails here too.
 	MyGUI::Button *button = MyGUI::Gui::getInstance().findWidget<MyGUI::Button>( buttonName, false );
-	if( button != NULL ){
-		button->eventMouseButtonClick( button );
-	}else{
+	if( button == NULL ){
 		log( "click: no button " + buttonName );
+		return;
 	}
+	MyGUI::IntCoord coord = button->getAbsoluteCoord();
+	OgreBites::MouseMotionEvent move;
+	move.type = OgreBites::MOUSEMOTION;
+	move.x = coord.left + coord.width / 2;
+	move.y = coord.top + coord.height / 2;
+	move.xrel = move.yrel = 0;
+	move.windowID = 0;
+	input()->mouseMoved( move );
+	if( MyGUI::InputManager::getInstance().getMouseFocusWidget() != button ){
+		log( "click: the mouse cannot reach " + buttonName );
+		return;
+	}
+	OgreBites::MouseButtonEvent press;
+	press.type = OgreBites::MOUSEBUTTONDOWN;
+	press.x = move.x;
+	press.y = move.y;
+	press.button = OgreBites::BUTTON_LEFT;
+	press.clicks = 1;
+	input()->mousePressed( press );
+	OgreBites::MouseButtonEvent release = press;
+	release.type = OgreBites::MOUSEBUTTONUP;
+	input()->mouseReleased( release );
 }
 //-------------------------------------------------------------------------------------
 bool DevTest::isVisible( const Ogre::String &widgetName ){
@@ -303,3 +371,134 @@ bool DevTest::isVisible( const Ogre::String &widgetName ){
 	return widget != NULL && widget->getVisible();
 }
 //-------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
+static size_t countWidgets( MyGUI::Widget *widget ){
+	size_t count = 1;
+	for( size_t i = 0; i < widget->getChildCount(); i++ ){
+		count += countWidgets( widget->getChildAt( i ) );
+	}
+	return count;
+}
+//-------------------------------------------------------------------------------------
+static size_t countWidgets(void){
+	size_t count = 0;
+	for( MyGUI::Widget *root : MyGUI::Gui::getInstance().getRootWidgets() ){
+		count += countWidgets( root );
+	}
+	return count;
+}
+//-------------------------------------------------------------------------------------
+static size_t countResources( Ogre::ResourceManager &manager ){
+	size_t count = 0;
+	Ogre::ResourceManager::ResourceMapIterator it = manager.getResourceIterator();
+	while( it.hasMoreElements() ){
+		it.getNext();
+		count++;
+	}
+	return count;
+}
+//-------------------------------------------------------------------------------------
+static size_t countNodes( Ogre::Node *node ){
+	size_t count = 1;
+	for( Ogre::Node *child : node->getChildren() ){
+		count += countNodes( child );
+	}
+	return count;
+}
+//-------------------------------------------------------------------------------------
+void DevTest::logMemory( const Ogre::String &label ){
+	Ogre::String memory = "?";
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+	PROCESS_MEMORY_COUNTERS_EX counters;
+	if( GetProcessMemoryInfo( GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*) &counters, sizeof( counters ) ) ){
+		memory = Ogre::StringConverter::toString( (unsigned long) ( counters.PrivateUsage / 1024 ) ) + "KB";
+	}
+	// Bytes really in use on the heap malloc/new use (private bytes also count fragmentation and driver memory).
+	HANDLE heap = GetProcessHeap();
+	PROCESS_HEAP_ENTRY entry = {};
+	unsigned long long busyBytes = 0, busyBlocks = 0;
+	if( HeapLock( heap ) ){
+		while( HeapWalk( heap, &entry ) ){
+			if( entry.wFlags & PROCESS_HEAP_ENTRY_BUSY ){
+				busyBytes += entry.cbData;
+				busyBlocks++;
+			}
+		}
+		HeapUnlock( heap );
+		memory += " heap=" + Ogre::StringConverter::toString( (unsigned long) ( busyBytes / 1024 ) ) + "KB/" + Ogre::StringConverter::toString( (unsigned long) busyBlocks );
+	}
+#endif
+	Ogre::SceneManager *sceneMgr = TUMBU::getInstance()->mSceneMgr;
+	log( "memory " + label +
+		" private=" + memory +
+		" nodes=" + Ogre::StringConverter::toString( countNodes( sceneMgr->getRootSceneNode() ) ) +
+		" entities=" + Ogre::StringConverter::toString( sceneMgr->getMovableObjects( "Entity" ).size() ) +
+		" particles=" + Ogre::StringConverter::toString( sceneMgr->getMovableObjects( "ParticleSystem" ).size() ) +
+		" lights=" + Ogre::StringConverter::toString( sceneMgr->getMovableObjects( "Light" ).size() ) +
+		" materials=" + Ogre::StringConverter::toString( countResources( Ogre::MaterialManager::getSingleton() ) ) +
+		" textures=" + Ogre::StringConverter::toString( countResources( Ogre::TextureManager::getSingleton() ) ) +
+		" meshes=" + Ogre::StringConverter::toString( countResources( Ogre::MeshManager::getSingleton() ) ) +
+		" skeletons=" + Ogre::StringConverter::toString( countResources( Ogre::SkeletonManager::getSingleton() ) ) +
+		" programs=" + Ogre::StringConverter::toString( countResources( Ogre::GpuProgramManager::getSingleton() ) ) +
+		" compositors=" + Ogre::StringConverter::toString( countResources( Ogre::CompositorManager::getSingleton() ) ) +
+		" widgets=" + Ogre::StringConverter::toString( countWidgets() ) );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::runCycles( const Ogre::FrameEvent &evt ){
+	TUMBU* tumbu = TUMBU::getInstance();
+	TumbuEnums::GameState state = tumbu->getGameState();
+	tourTimer += evt.timeSinceLastFrame;
+
+	switch( tourStep ){
+	case 0: // start screen
+		if( state == TumbuEnums::START_SCREEN && frames > 30 && tourTimer > 0.5f ){
+			tourStep++; tourTimer = 0;	// advance first: actions may render frames (re-entering here)
+			logMemory( "cycle " + Ogre::StringConverter::toString( cycle ) + " menu" );
+			click( "PlayButton" );
+		}
+		break;
+	case 1: // intro dialogs (no tutorial)
+	case 3: // dialogs after a kill (won part, next enemy)
+		if( state == TumbuEnums::IN_DIALOG ){
+			if( tourTimer > 0.05f ){
+				tourTimer = 0;
+				pressKey( isVisible( "ConfirmWindow" ) ? TumbuInput::KEY_ESCAPE : TumbuInput::KEY_SPACE );
+			}
+		}else if( state == TumbuEnums::PLAYING && tourTimer > 0.2f ){
+			if( tourStep == 3 ) kills++;
+			tourStep = 2; tourTimer = 0;
+		}
+		break;
+	case 2: // fight a moment, then defeat the enemy (respawn path) or leave the match
+		if( state == TumbuEnums::PLAYING && tourTimer > 1.0f ){
+			tourTimer = 0;
+			if( kills < 3 && tumbu->getDemo() != NULL ){
+				tourStep = 3;
+				tumbu->getDemo()->enemy->hp = 0;
+			}else{
+				tourStep = 4;
+				pressKey( TumbuInput::KEY_ESCAPE );
+			}
+		}
+		break;
+	case 4: // pause menu → Quit
+		if( tourTimer > 0.3f ){
+			tourStep++; tourTimer = 0;
+			click( "QuitTab" );
+		}
+		break;
+	case 5: // back on the start screen
+		if( state == TumbuEnums::START_SCREEN && tourTimer > 0.5f ){
+			cycle++; kills = 0; tourTimer = 0;
+			if( cycle < cycles ){
+				tourStep = 0;
+			}else{
+				tourStep = 6;
+				logMemory( "cycle " + Ogre::StringConverter::toString( cycle ) + " menu" );
+				log( "cycles finished" );
+				click( "ExitButton" );
+			}
+		}
+		break;
+	}
+}

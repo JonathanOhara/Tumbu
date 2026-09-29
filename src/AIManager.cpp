@@ -38,18 +38,19 @@ void AIManager::reset(void){
 bool AIManager::frameRenderingQueued(const Ogre::FrameEvent& evt){
 	if( active && TUMBU::getInstance()->isPlaying() ){
 		itAiList = aiList.begin();
-		itAiListEnd = aiList.end();
-		while ( itAiList != itAiListEnd ){
+		while ( itAiList != aiList.end() ){
 			_robotAI = (*itAiList);
 
 			_robotAI->simulateKeyPressed();
 			_robotAI->update( evt.timeSinceLastFrame );
-		
+
 			if( _robotAI->getAIStatus() == RobotAI::TO_DELETE ){
-				destroyRobotAI( _robotAI );
+				// Erase through the loop's own iterator (erasing elsewhere would invalidate it).
+				itAiList = aiList.erase( itAiList );
+				delete _robotAI;
+			}else{
+				itAiList++;
 			}
-			
-			itAiList++;
 		}
 	}
 	return true;
@@ -63,6 +64,7 @@ void AIManager::destroyRobotAI( RobotAI* robotAI ){
 		_robotAI = (*itAiList);
 		if( robotAI == _robotAI ){
 			aiList.erase( itAiList );
+			delete _robotAI;
 			break;
 		}
 		itAiList++;

@@ -29,6 +29,8 @@ public:
 	Sound* createSoundNode( Ogre::SceneNode* father, Ogre::String nodeName, Ogre::String musicName, Ogre::String musicFile,
 		bool loop, bool stream, bool useIdIncrement );
 	void destroySound( Sound *sound );
+	/// Destroys every sound whose scene node is `node` or below it (call before destroying the node).
+	void destroySoundsUnder( Ogre::SceneNode *node );
 	void printAllSounds();
 
 	std::list<Sound*> soundList;

@@ -127,6 +127,27 @@ void SoundManager::destroySound( Sound *sound ){
 	}
 }
 //-------------------------------------------------------------------------------------
+void SoundManager::destroySoundsUnder( Ogre::SceneNode *node ){
+	// Sounds attached below a node that is about to be destroyed (a robot's punch/kick sounds that are still
+	// waiting or playing): without this they would keep a dangling node and never be deleted.
+	std::list<Sound*>::iterator it = soundList.begin();
+	while( it != soundList.end() ){
+		bool under = false;
+		for( Ogre::Node *n = (*it)->getSoundNode(); n != NULL; n = n->getParent() ){
+			if( n == node ){
+				under = true;
+				break;
+			}
+		}
+		if( under ){
+			delete *it;
+			it = soundList.erase( it );
+		}else{
+			++it;
+		}
+	}
+}
+//-------------------------------------------------------------------------------------
 void SoundManager::printAllSounds(){
 }
 //-------------------------------------------------------------------------------------

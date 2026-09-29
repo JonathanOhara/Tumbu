@@ -14,17 +14,17 @@ Physics::RigidBody* Util::createBarrel(int barrelIndex, Ogre::SceneManager* mSce
 
 	Ogre::SceneNode* node;
 	Ogre::Entity *entity;
-	Ogre::String* nome;
+	Ogre::String nome;
 	Ogre::Vector3 size;
 
 	size = Ogre::Vector3::ZERO;
 	node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 
-	nome = new Ogre::String( "barrel_number_" );
-	nome->append( Ogre::StringConverter::toString( barrelIndex ) );
+	nome = "barrel_number_";
+	nome.append( Ogre::StringConverter::toString( barrelIndex ) );
 	
 	// Criando o barril
-	entity = mSceneMgr->createEntity(*nome, "barril.mesh");            
+	entity = mSceneMgr->createEntity(nome, "barril.mesh");
 	node->attachObject(entity);
 	node->setScale(1, 1, 1);
 
@@ -57,6 +57,7 @@ void Util::updateShapeFromEntity ( Robot* charUp, Part* part ){
 	Physics::AnimatedMeshToShapeConverter* animConverter = new Physics::AnimatedMeshToShapeConverter(part->entity);
 
 	Physics::CollisionShape* shape = animConverter->createConvex();
+	delete animConverter;
 	
 	charUp->charShape = new Physics::CompoundCollisionShape();
 

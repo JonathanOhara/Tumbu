@@ -103,6 +103,7 @@ protected:
 
 private:
 	std::vector<OgreBites::InputListener*> listenersSnapshot(void) const;
+	bool isListening( OgreBites::InputListener *listener ) const;
 	void addInputListenerByName( OgreBites::InputListener *listener, const std::string& instanceName );
 	void removeInputListenerByName( const std::string& instanceName );
 	void removeInputListenerByPointer( OgreBites::InputListener *listener );

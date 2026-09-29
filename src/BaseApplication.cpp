@@ -219,6 +219,16 @@ void BaseApplication::windowResized( Ogre::RenderWindow* rw ){
 	OgreBites::ApplicationContext::windowResized( rw );
 }
 //------------------------------------------------------------------------------------- input dispatch
+bool BaseApplication::isListening( OgreBites::InputListener *listener ) const{
+	// A handler can end the match (Quit, Game Over) and delete listeners that are still in the snapshot.
+	for( std::map<std::string, OgreBites::InputListener*>::const_iterator it = mInputListeners.begin(); it != mInputListeners.end(); ++it ){
+		if( it->second == listener ){
+			return true;
+		}
+	}
+	return false;
+}
+//-------------------------------------------------------------------------------------
 std::vector<OgreBites::InputListener*> BaseApplication::listenersSnapshot(void) const{
 	// Listeners may add/remove listeners while handling an event, so iterate over a copy.
 	std::vector<OgreBites::InputListener*> listeners;
@@ -269,7 +279,7 @@ bool BaseApplication::keyPressed( const OgreBites::KeyboardEvent &evt ){
 
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->keyPressed( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->keyPressed( evt );
 	}
 	return true;
 }
@@ -277,7 +287,7 @@ bool BaseApplication::keyPressed( const OgreBites::KeyboardEvent &evt ){
 bool BaseApplication::keyReleased( const OgreBites::KeyboardEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->keyReleased( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->keyReleased( evt );
 	}
 	return true;
 }
@@ -285,7 +295,7 @@ bool BaseApplication::keyReleased( const OgreBites::KeyboardEvent &evt ){
 bool BaseApplication::mouseMoved( const OgreBites::MouseMotionEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->mouseMoved( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->mouseMoved( evt );
 	}
 	return true;
 }
@@ -293,7 +303,7 @@ bool BaseApplication::mouseMoved( const OgreBites::MouseMotionEvent &evt ){
 bool BaseApplication::mouseWheelRolled( const OgreBites::MouseWheelEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->mouseWheelRolled( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->mouseWheelRolled( evt );
 	}
 	return true;
 }
@@ -301,7 +311,7 @@ bool BaseApplication::mouseWheelRolled( const OgreBites::MouseWheelEvent &evt ){
 bool BaseApplication::mousePressed( const OgreBites::MouseButtonEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->mousePressed( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->mousePressed( evt );
 	}
 	return true;
 }
@@ -309,7 +319,7 @@ bool BaseApplication::mousePressed( const OgreBites::MouseButtonEvent &evt ){
 bool BaseApplication::mouseReleased( const OgreBites::MouseButtonEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->mouseReleased( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->mouseReleased( evt );
 	}
 	return true;
 }
@@ -317,7 +327,7 @@ bool BaseApplication::mouseReleased( const OgreBites::MouseButtonEvent &evt ){
 bool BaseApplication::textInput( const OgreBites::TextInputEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->textInput( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->textInput( evt );
 	}
 	return true;
 }
@@ -325,7 +335,7 @@ bool BaseApplication::textInput( const OgreBites::TextInputEvent &evt ){
 bool BaseApplication::axisMoved( const OgreBites::AxisEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->axisMoved( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->axisMoved( evt );
 	}
 	return true;
 }
@@ -333,7 +343,7 @@ bool BaseApplication::axisMoved( const OgreBites::AxisEvent &evt ){
 bool BaseApplication::buttonPressed( const OgreBites::ButtonEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->buttonPressed( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->buttonPressed( evt );
 	}
 	return true;
 }
@@ -341,7 +351,7 @@ bool BaseApplication::buttonPressed( const OgreBites::ButtonEvent &evt ){
 bool BaseApplication::buttonReleased( const OgreBites::ButtonEvent &evt ){
 	std::vector<OgreBites::InputListener*> listeners = listenersSnapshot();
 	for( size_t i = 0; i < listeners.size(); i++ ){
-		listeners[i]->buttonReleased( evt );
+		if( isListening( listeners[i] ) ) listeners[i]->buttonReleased( evt );
 	}
 	return true;
 }

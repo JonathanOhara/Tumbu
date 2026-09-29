@@ -2,7 +2,10 @@
 <!-- Start screen menu and its options window. Positions are relative to the screen (left top width height). -->
 <MyGUI type="Layout" version="3.2.0">
 	<Widget type="Widget" skin="PanelEmpty" position_real="0 0 1 1" layer="Back" name="StartMenu">
+		<!-- The full-screen panel itself ignores the mouse but lets its buttons get it: without InheritsPick,
+		     NeedMouse=false would hide every child from the mouse too. -->
 		<Property key="NeedMouse" value="false"/>
+		<Property key="InheritsPick" value="true"/>
 		<Widget type="Button" skin="Button" position_real="0.35 0.80 0.30 0.05" name="PlayButton">
 			<Property key="Caption" value="Play Demo"/>
 			<Property key="FontName" value="Tumbu.Button"/>

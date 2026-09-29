@@ -4,7 +4,7 @@ StartScreen::StartScreen(Ogre::SceneManager* mSceneMgr){
 	sceneManager = mSceneMgr;
 	timeCount = 0;
 	// Create background material
-	Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create("Background_Shyds", "General");
+	material = Ogre::MaterialManager::getSingleton().create("Background_Shyds", "General");
 	material->getTechnique(0)->getPass(0)->createTextureUnitState("shyds logo.png");
 	material->getTechnique(0)->getPass(0)->setDepthCheckEnabled(false);
 	material->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
@@ -32,6 +32,10 @@ StartScreen::~StartScreen(void){
 	sceneManager->destroySceneNode(startScreenNode);
 
 	delete rect;
+
+	// The start screen is created again when a match ends, and the material name must be free by then.
+	Ogre::MaterialManager::getSingleton().remove( material );
+	material.reset();
 }
 //-------------------------------------------------------------------------------------
 bool StartScreen::frameRenderingQueued(const Ogre::FrameEvent &evt){

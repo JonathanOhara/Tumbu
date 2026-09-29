@@ -33,6 +33,7 @@ private:
     Ogre::StringVector mScriptPatterns;
  
     std::unordered_map<Ogre::String, ConfigNode*> scriptList;
+    std::vector<ConfigNode*> duplicateScripts;	// same name as an earlier script: unused, freed on shutdown
  
     //Parsing
     char *parseBuff, *parseBuffEnd, *buffPtr;

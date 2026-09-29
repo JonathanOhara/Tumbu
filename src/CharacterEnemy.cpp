@@ -477,6 +477,7 @@ void CharacterEnemy::buildCharacter(){
 		rotation = robotNode->getOrientation();
 
 		delete charRigidBody;
+		delete charShape;
 	}
 
 	buildParts();

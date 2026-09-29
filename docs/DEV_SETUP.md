@@ -39,6 +39,11 @@ Paths below are the ones on Jonathan's machine in Sep 2026. Adjust them if thing
   Visual Studio. The game's CMake reads the same variable.
 - To rebuild Ogre's own dependencies from scratch, delete `ogredeps` first. Ogre only builds them when that
   folder does not exist.
+- The script patches two upstream problems in the downloaded sources:
+  - an Ogre 14.6 terrain memory leak (`Repair-OgreSource`)
+  - Caelum's shaders for Direct3D 11 (`Repair-CaelumShaders`)
+
+  Both patches are idempotent, so running the script again is safe.
 
 ### A.3 Build and run from the command line
 
@@ -115,9 +120,19 @@ quit.
 - The output goes to `%USERPROFILE%\Tumbu\devtest-<Name>.png` and `.log`. The log has
   `[DEVTEST] t=… fps=… hero=x y z enemy=x y z` every 0.5 s. The arena is about ±9 units, so any robot
   outside that range is a bug.
-- `TUMBU.exe -guitour` walks through every GUI screen (start menu, options, dialogs, HUD, ESC menu,
-  inventory) and saves `devtest-gui-*.png`.
-- The raw switches are `-autoplay`, `-walktest`, `-guitour`, `-fpscap=N`, `-quitafter=S` and `-hour=H`.
+- `TUMBU.exe -guitour` walks through every GUI screen and saves `devtest-gui-*.png`: start menu, options,
+  dialogs, HUD, ESC menu, inventory. It then quits to the menu, plays a second match and leaves with
+  Exit. Clicks are real mouse events through the game's input dispatch.
+- **Memory leak check:** `TUMBU.exe -cycles=12` plays 12 matches through the menus, with 3 enemy kills each,
+  then Quit. After each match it logs a `[DEVTEST] memory …` line to `ogre.log`.
+  - Healthy: `heap=` (bytes really allocated) stays flat from the second match on, and every object count
+    (nodes, entities, materials, textures, meshes, widgets) returns to the same value each time.
+  - `private=` (Windows' figure) moves around by a few MB. That's driver memory and fragmentation, not a
+    leak.
+- The raw switches are `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-fpscap=N`, `-quitafter=S` and
+  `-hour=H`.
+- **Crash reports:** when the game crashes, the call stack is written to `%USERPROFILE%\Tumbu\crash.log`
+  and to `ogre.log`. Build RelWithDebInfo to get file and line numbers for the game's code.
 - The reported FPS follows VSync, so it equals the monitor's current refresh rate. Windows can switch a
   144 Hz screen to 60 Hz; check it in Settings → Display → Advanced display.
 
@@ -133,6 +148,7 @@ quit.
 | The High sky is black, flat yellow or missing | Caelum's media must come from `deps.ps1`, which patches its shaders for Direct3D 11 (`Repair-CaelumShaders`). Rerun `.\scripts\deps.ps1 -Only caelum`, then build. |
 | A mesh fails with "unsupported mesh version" | It is an Ogre 1.7 mesh. Upgrade it with `scripts\upgrade-meshes.ps1`. |
 | Crash right at start | Delete `%USERPROFILE%\Tumbu\ogre.cfg` and pick Direct3D 11 again. Then check `ogre.log`. |
+| Any other crash | Read `%USERPROFILE%\Tumbu\crash.log` (the call stack). Reproduce it in a RelWithDebInfo build for file:line. |
 
 Harmless log noise: `city_6_*.dds` not found. It is a terrain layer in `Arena.scene` that was never in the
 project.

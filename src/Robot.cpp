@@ -52,6 +52,9 @@ Robot::Robot(void){
 
 	charRigidBody = NULL;
 	charShape = NULL;
+
+	robotNode = NULL;
+	robotPhysicsNode = NULL;
 }
 //-------------------------------------------------------------------
 Robot::~Robot(void){
@@ -104,13 +107,18 @@ Robot::~Robot(void){
 	legsList.clear();
 	enemyList.clear();
 
-	/*
-	robotNode->removeAndDestroyAllChildren();
-	TUMBU::getInstance()->mSceneMgr->destroySceneNode( robotNode );
-
-	cout << "FIM Classe pai" << endl;
-	SoundManager::getInstance()->printAllSounds();
-	*/
+	// The robot's nodes (parts, sound, specials are already gone). Each defeated enemy used to leave its
+	// nodes in the scene until the match ended.
+	Ogre::SceneManager *sceneMgr = TUMBU::getInstance()->mSceneMgr;
+	if( robotNode != NULL ){
+		SoundManager::getInstance()->destroySoundsUnder( robotNode );	// punch/kick sounds still pending
+		robotNode->removeAndDestroyAllChildren();
+		sceneMgr->destroySceneNode( robotNode );
+	}
+	if( robotPhysicsNode != NULL ){
+		robotPhysicsNode->removeAndDestroyAllChildren();
+		sceneMgr->destroySceneNode( robotPhysicsNode );
+	}
 }
 //-------------------------------------------------------------------
 void Robot::setHorizontalVelocity( const Ogre::Vector3 &direction, Ogre::Real speed ){

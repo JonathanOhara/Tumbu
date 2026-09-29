@@ -30,20 +30,6 @@ demo enemy2{
 	legs robot002
 }
 	
-demo enemy2{
-	hp 30
-	ap 100
-	attack 1
-	defense 1
-	velocity 1
-	
-	head robot002
-	body robot002
-	rightArm robot002
-	leftArm robot002
-	legs robot002
-}
-
 demo enemy3{
 	hp 35
 	ap 125

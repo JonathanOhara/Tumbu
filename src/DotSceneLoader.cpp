@@ -58,7 +58,7 @@ void DotSceneLoader::parseDotScene(const Ogre::String &SceneName, const Ogre::St
     // Validate the File
     if( getAttrib(XMLRoot, "formatVersion", "") == ""){
         Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] Error: Invalid .scene File. Missing <scene>" );
-        delete scene;
+        free( scene );	// strdup allocates with malloc
         return;
     }
 
@@ -72,7 +72,7 @@ void DotSceneLoader::parseDotScene(const Ogre::String &SceneName, const Ogre::St
 
 	TUMBU::getInstance()->renderOneFrame();
 
-    delete scene;
+    free( scene );	// strdup allocates with malloc
 }
 
 void DotSceneLoader::processScene(rapidxml::xml_node<>* XMLRoot){

@@ -44,6 +44,8 @@ Camera::Camera( Ogre::Camera* camera, Ogre::SceneNode* mChaseNode){
 Camera::~Camera(void){
 	mCameraNode->removeAndDestroyAllChildren();
 	mCamera->getSceneManager()->destroySceneNode(mCameraNode);
+	mCameraPivot->removeAndDestroyAllChildren();	// with the goal node
+	mCamera->getSceneManager()->destroySceneNode(mCameraPivot);
 }
 //-------------------------------------------------------------------------------------
 void Camera::initiateCameraPosition(void){
