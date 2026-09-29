@@ -6,10 +6,9 @@
 using namespace Ogre;
  
 #include <vector>
-#include <hash_map>
+#include <unordered_map>
 
 using namespace std;
-using namespace stdext;
  
 ConfigScriptLoader *ConfigScriptLoader::singletonPtr = NULL;
  
@@ -32,7 +31,7 @@ ConfigScriptLoader::~ConfigScriptLoader()
     singletonPtr = NULL;
  
     //Delete all scripts
-    stdext::hash_map<String, ConfigNode*>::iterator i;
+    std::unordered_map<String, ConfigNode*>::iterator i;
     for (i = scriptList.begin(); i != scriptList.end(); i++){
         delete i->second;
     }
@@ -55,7 +54,7 @@ const StringVector &ConfigScriptLoader::getScriptPatterns() const
  
 ConfigNode *ConfigScriptLoader::getConfigScript(const String &type, const String &name)
 {
-    stdext::hash_map<String, ConfigNode*>::iterator i;
+    std::unordered_map<String, ConfigNode*>::iterator i;
  
     String key = type + ' ' + name;
     i = scriptList.find(key);

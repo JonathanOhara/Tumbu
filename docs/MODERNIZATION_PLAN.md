@@ -25,7 +25,7 @@ through the git tag `legacy-2011`.
 Phase A runs on the legacy toolchain (`scripts/build.ps1`). Phase B uses the new CMake build.
 
 - [x] **A1** Frame-rate-independent movement (hero crawls and enemy flies away at high FPS)
-- [ ] **A2** Code cleanups that both compilers accept (uninitialised pointers, `delete[]`, header qualification, `hash_map`)
+- [x] **A2** Code cleanups that both compilers accept (uninitialised pointers, `delete[]`, header qualification, `hash_map`)
 - [ ] **A3** Remove PagedGeometry
 - [ ] **A4** Port `general.cg` to HLSL + GLSL and drop the Cg plugin
 - [ ] **A5** Remove SkyX (the skydome serves both quality levels until Caelum is added)

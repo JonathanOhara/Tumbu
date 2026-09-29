@@ -3,7 +3,7 @@
  
 #include <OgreScriptLoader.h>
 #include <OgreStringConverter.h>
-#include <hash_map>
+#include <unordered_map>
 #include <vector>
  
 class ConfigNode;
@@ -30,7 +30,7 @@ private:
     Ogre::Real mLoadOrder;
     Ogre::StringVector mScriptPatterns;
  
-    stdext::hash_map<Ogre::String, ConfigNode*> scriptList;
+    std::unordered_map<Ogre::String, ConfigNode*> scriptList;
  
     //Parsing
     char *parseBuff, *parseBuffEnd, *buffPtr;

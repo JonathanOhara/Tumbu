@@ -18,6 +18,11 @@ Demo::Demo(){
 	tutorial					= NULL;
 
 	terrainRigidBody			= NULL;
+	camera						= NULL;
+	mLoader						= NULL;
+	pDataConvert				= NULL;
+	physicWorld					= NULL;
+	sky							= NULL;
 }
 //-------------------------------------------------------------------------------------
 Demo::~Demo(void){
@@ -84,7 +89,7 @@ Demo::~Demo(void){
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Terrain...");
 	if ( terrainRigidBody != NULL ){
 		delete terrainRigidBody;
-		delete pDataConvert;
+		delete[] pDataConvert;
 	}
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Phycs...");
 	if ( physicWorld != NULL ){
@@ -397,7 +402,7 @@ void Demo::createTerrainPhysic(void){
 			Ogre::Quaternion::IDENTITY.w)
 		);
 
-	terrainRigidBody = new SimpleRigidBody( mSceneMgr, TumbuEnums::PhysicObjectTag::TERRAIN );
+	terrainRigidBody = new SimpleRigidBody( mSceneMgr, TumbuEnums::TERRAIN );
 
 	terrainRigidBody->setOgreBulletRigidBody( defaultTerrainBody );
 	terrainRigidBody->shape = mTerrainShape;

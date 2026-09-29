@@ -42,8 +42,8 @@ public:
 	void renderOneFrame(void);
 	Ogre::Root* getRoot(void);
 
-	SimpleRigidBody* TUMBU::createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld* physicWorld, const Ogre::String &instanceName, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag);
-	SimpleRigidBody* TUMBU::createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld* physicWorld, Ogre::Entity* entity, Ogre::SceneNode* node, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag);
+	SimpleRigidBody* createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld* physicWorld, const Ogre::String &instanceName, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag);
+	SimpleRigidBody* createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld* physicWorld, Ogre::Entity* entity, Ogre::SceneNode* node, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag);
 	
 	/*************************************************************/
 	/******************** GETTERS AND SETTERS ********************/
