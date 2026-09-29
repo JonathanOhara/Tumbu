@@ -105,6 +105,11 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   - The `DepthComposer.material` "groundFog… does not exist" log errors are harmless.
 - **Patched Ogre bug:** `deps.ps1` (`Repair-OgreSource`) patches `OgreTerrain.cpp`. For version-1 terrain
   files (our 2011 Ogitor page), `Terrain::prepare` allocated the delta buffer twice, leaking 1 MB per match.
+- **Patched Caelum bug:** `Repair-CaelumSource` makes its dome mesh lookup use the Caelum group. Otherwise
+  the second match with the High sky threw "CaelumSphericDome already exists".
+- **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
+  `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
+  particles render white.
 
 ### Object lifetime rules (each one was a real leak or crash)
 
@@ -120,6 +125,11 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   because the start screen is built again after every match.
 - Never let an exception escape a destructor (Ogre throws on bad node operations): that is
   `std::terminate`.
+- **Errors:**
+  - Don't swallow them. There is no `catch(...)` in the game code (the crash reporter aside); catch
+    `Ogre::Exception` only where recovery makes sense, and log `e.getDescription()`.
+  - Output goes to the Ogre log (`LogManager::logMessage` / `logError`), never `printf` or `cout`.
+  - A fatal error exits with code 1.
 
 ## Runtime layout
 

@@ -417,28 +417,21 @@ Demo* TUMBU::getDemo(){
 }
 //-------------------------------------------------------------------------------------
 void TUMBU::printSceneHierarchy(void){
-	cout << "Scene Node Hierarchy" << endl;
-
+	// Debug key F12 (RelWithDebInfo): the scene graph goes to ogre.log.
+	Ogre::String tree = "Scene node hierarchy:\nRoot\n";
 	int children = mSceneMgr->getRootSceneNode()->numChildren();
-	cout << "Root " << endl;
 	for( int i = 0; i < children; i++ ){
-		printSceneChildren( static_cast <Ogre::SceneNode*> ( mSceneMgr->getRootSceneNode()->getChild( i ) ), 1 );
+		printSceneChildren( static_cast <Ogre::SceneNode*> ( mSceneMgr->getRootSceneNode()->getChild( i ) ), 1, tree );
 	}
+	Ogre::LogManager::getSingleton().logMessage( tree );
 }
 //-------------------------------------------------------------------------------------
-void TUMBU::printSceneChildren( Ogre::SceneNode* node, int level ){
-
-	
-	for( int i = 0; i < level ; i++){
-		cout << "-";
-	}
-
-	cout << ">";
-	cout << node->getName() << endl;
+void TUMBU::printSceneChildren( Ogre::SceneNode* node, int level, Ogre::String &tree ){
+	tree += Ogre::String( level, '-' ) + ">" + node->getName() + "\n";
 
 	int children = node->numChildren();
 	for( int i = 0; i < children; i++ ){
-		printSceneChildren( static_cast <Ogre::SceneNode*> ( node->getChild( i ) ), level + 1 );
+		printSceneChildren( static_cast <Ogre::SceneNode*> ( node->getChild( i ) ), level + 1, tree );
 	}
 }
 //-------------------------------------------------------------------------------------

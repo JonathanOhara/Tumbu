@@ -1,3 +1,5 @@
+// Particle materials. "diffuse vertexcolour" makes the shader generator (Ogre 14) use each particle's colour
+// (the red energy balls, the explosion fade); fixed-function D3D9 did that implicitly for unlit passes.
 material PE/lensflare
 {
 	technique
@@ -5,6 +7,7 @@ material PE/lensflare
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			depth_write off
 			scene_blend add
 
@@ -23,6 +26,7 @@ material PE/bigFlame
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			depth_write off
 			scene_blend add
 
@@ -41,6 +45,7 @@ material PE/smoke
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			depth_write off
 			scene_blend alpha_blend
 
@@ -59,6 +64,7 @@ material PE/explosion
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			depth_write off
 			scene_blend add
 
@@ -77,6 +83,7 @@ material PE/ringflare
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			depth_write off
 			scene_blend add
 
@@ -95,6 +102,7 @@ material PE/ringflare2
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			depth_write off
 			scene_blend add
 
@@ -113,6 +121,7 @@ material PE/Flare
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			scene_blend add
 			depth_write off
 
@@ -131,6 +140,7 @@ material PE/Streak
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			depth_write off
 			scene_blend add
 
@@ -149,6 +159,7 @@ material PE/energy
 		pass
 		{
 			lighting off
+			diffuse vertexcolour
 			depth_write off
 			scene_blend add
 

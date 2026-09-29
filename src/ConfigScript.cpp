@@ -17,7 +17,7 @@ ConfigScriptLoader::ConfigScriptLoader()
 {
     //Init singleton
     if (singletonPtr)
-        cout << "Multiple ConfigScriptManager objects are not allowed" <<  " ConfigScriptManager::ConfigScriptManager()" << endl;
+        LogManager::getSingleton().logError("ConfigScript: Multiple ConfigScriptManager objects are not allowed");
 
     singletonPtr = this;
  
@@ -94,7 +94,7 @@ void ConfigScriptLoader::parseScript(DataStreamPtr &stream, const String &groupN
     _parseNodes(0);
  
     if (tok == TOKEN_CloseBrace)
-        cout << "Parse Error: Closing brace out of place" << " ConfigScript::load()" << endl;
+        LogManager::getSingleton().logError("ConfigScript: Parse Error: Closing brace out of place");
  
     //Delete the buffer
     delete[] parseBuff;
@@ -143,7 +143,7 @@ void ConfigScriptLoader::_nextToken()
  
     //Text token
     if (ch < 32 || ch > 122)    //Verify valid char
-        cout << "Parse Error: Invalid character" << " ConfigScript::load()" << endl;
+        LogManager::getSingleton().logError("ConfigScript: Parse Error: Invalid character");
  
     tokVal = "";
     tok = TOKEN_Text;
@@ -236,7 +236,7 @@ void ConfigScriptLoader::_parseNodes(ConfigNode *parent)
  
                     //Check for matching closing brace
                     if (tok != TOKEN_CloseBrace)
-                        cout << "Parse Error: Expecting closing brace" << " ConfigScript::load()" << endl;
+                        LogManager::getSingleton().logError("ConfigScript: Parse Error: Expecting closing brace");
                 } else {
                     //If it's not a opening brace, back up so the system will parse it properly
                     _prevToken();
@@ -246,7 +246,7 @@ void ConfigScriptLoader::_parseNodes(ConfigNode *parent)
  
             //Out of place brace
             case TOKEN_OpenBrace:
-                cout << "Parse Error: Opening brace out of plane" << "ConfigScript::load()" << endl;
+                LogManager::getSingleton().logError("ConfigScript: Parse Error: Opening brace out of place");
                 break;
  
             //Return if end of nodes have been reached

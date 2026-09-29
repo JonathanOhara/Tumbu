@@ -131,83 +131,60 @@ void Demo::collisionDetection(void){
 	std::string rigidName,
 				rigid2Name;
 
-	btVector3	
-		collisionPointA,
-		collisionPointB;
-
 	getPhysicWorld()->getBulletCollisionWorld()->performDiscreteCollisionDetection();
 
 	const unsigned int numManifolds = getPhysicWorld()->getBulletCollisionWorld()->getDispatcher()->getNumManifolds();
 	for (unsigned int i = 0; i < numManifolds; i++){
-		try{
-			contactManifold =  getPhysicWorld()->getBulletCollisionWorld()->getDispatcher()->getManifoldByIndexInternal(i);
-	
-			rigid = contactManifold->getBody0();
-			rigid2 = contactManifold->getBody1();
+		contactManifold =  getPhysicWorld()->getBulletCollisionWorld()->getDispatcher()->getManifoldByIndexInternal(i);
 
-			if( getPhysicWorld()->findObject( rigid ) == NULL || getPhysicWorld()->findObject( rigid2 ) == NULL ){
-				continue;
+		rigid = contactManifold->getBody0();
+		rigid2 = contactManifold->getBody1();
+
+		if( getPhysicWorld()->findObject( rigid ) == NULL || getPhysicWorld()->findObject( rigid2 ) == NULL ){
+			continue;
+		}
+
+		rigidName  = getPhysicWorld()->findObject( rigid )->getName();
+		rigid2Name = getPhysicWorld()->findObject( rigid2 )->getName();
+		listener1 = TUMBU::getInstance()->getCollisionListenerByName( rigidName );
+		listener2 = TUMBU::getInstance()->getCollisionListenerByName( rigid2Name );
+
+		if( listener1 != NULL && listener2 != NULL ){
+
+			int numContacts = contactManifold->getNumContacts();
+		
+			if( numContacts > 0 ){
+				listener1->collisionPosition = Physics::BtOgreConverter::to( contactManifold->getContactPoint(0).getPositionWorldOnA() );
+				listener2->collisionPosition = Physics::BtOgreConverter::to( contactManifold->getContactPoint(0).getPositionWorldOnB() );
+
+				listener2->rigidBodyName = rigid2Name;
+				listener1->collision( listener2 );
+				listener2->rigidBodyName = "";
+
+				listener1->rigidBodyName = rigidName;
+				listener2->collision( listener1 );
+				listener1->rigidBodyName = "";
+
+				listener1->collisionPosition = Ogre::Vector3::ZERO;
+				listener2->collisionPosition = Ogre::Vector3::ZERO;
 			}
-
-			rigidName  = getPhysicWorld()->findObject( rigid )->getName();
-			rigid2Name = getPhysicWorld()->findObject( rigid2 )->getName();
-			listener1 = TUMBU::getInstance()->getCollisionListenerByName( rigidName );
-			listener2 = TUMBU::getInstance()->getCollisionListenerByName( rigid2Name );
-
-			if( listener1 != NULL && listener2 != NULL ){
-
-				int numContacts = contactManifold->getNumContacts();
-			
-				if( numContacts > 0 ){
-	/*
-					cout << " listener 1 =  " << listener1->rigidBodyName << " 2 - " << listener2->rigidBodyName << " contacts = " << numContacts << endl;
-
-					for (int j=0;j<numContacts;j++){
-						btManifoldPoint& pt = contactManifold->getContactPoint(j);
-						if (pt.getDistance()<0.f)
-						{
-							const btVector3& ptA = pt.getPositionWorldOnA();
-							const btVector3& ptB = pt.getPositionWorldOnB();
-							const btVector3& normalOnB = pt.m_normalWorldOnB;
-						}
-					}
-	*/
-					listener1->collisionPosition = Physics::BtOgreConverter::to( contactManifold->getContactPoint(0).getPositionWorldOnA() );
-					listener2->collisionPosition = Physics::BtOgreConverter::to( contactManifold->getContactPoint(0).getPositionWorldOnB() );
-
-					listener1->collisionPosition = Physics::BtOgreConverter::to( collisionPointA );
-					listener2->collisionPosition = Physics::BtOgreConverter::to( collisionPointB );
-
-					listener2->rigidBodyName = rigid2Name;
-					listener1->collision( listener2 );
-					listener2->rigidBodyName = "";
-
-					listener1->rigidBodyName = rigidName;
-					listener2->collision( listener1 );
-					listener1->rigidBodyName = "";
-
-					listener1->collisionPosition = Ogre::Vector3::ZERO;
-					listener2->collisionPosition = Ogre::Vector3::ZERO;
-				}
-			}
-		}catch(...){}
+		}
 	}
 }
 //-------------------------------------------------------------------------------------
 void Demo::initializeDemo(){
 
-	printf("Carregando Scripts\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Loading scripts" );
 	gui->startLoad("Loading Scripts...");
 	initialiseGameResources();
 
-	printf("Carregando Cena\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Loading scene" );
 	gui->startLoad("Loading Scene...");
 	tumbu->renderOneFrame();
 	mLoader = new DotSceneLoader();
 	tumbu->renderOneFrame();
 	mLoader->parseDotScene("Arena.scene", "General", mSceneMgr);
 
-	printf("Carregando Cena\n");
 	gui->startLoad("Loading Scene...");
 	tumbu->renderOneFrame();
 	demoScene = mSceneMgr->getSceneNode("demoScene");
@@ -215,43 +192,43 @@ void Demo::initializeDemo(){
 	tumbu->setActiveSceneNode( demoScene );
 	tumbu->renderOneFrame();
 
-	printf("Inicializando luzes\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating lights" );
 	gui->startLoad("Loading Lights...");
 	tumbu->renderOneFrame();
 	createLightEffects();
  
-	printf("Inicializando coisas fisica\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating physics" );
 	gui->startLoad("Loading Physics...");
 	tumbu->renderOneFrame();
 	initializePhysicsStuff();
 
-	printf("Inicializando SKY\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating sky" );
 	gui->startLoad("Loading Sky...");
 	tumbu->renderOneFrame();
 	createSky();
 
 
-	printf("Inicializando terreno\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating terrain physics" );
 	gui->startLoad("Loading Terrain...");
 	tumbu->renderOneFrame();
 	createTerrainPhysic();
 
-	printf("Inicializando arena\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating arena physics" );
 	gui->startLoad("Loading Terrain...");
 	tumbu->renderOneFrame();
 	createArena();
 
-	printf("Criando personagem principal\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating hero" );
 	gui->startLoad("Loading Character...");
 	tumbu->renderOneFrame();
 	createMainCharacter();
 
-	printf("Criando personagem outro\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating enemy" );
 	gui->startLoad("Loading Character...");
 	tumbu->renderOneFrame();
 	createEnemyCharacter();
 
-	printf("Inicializando Camera\n");
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating camera" );
 	gui->startLoad("Loading Camera...");
 	tumbu->renderOneFrame();
 	setupCamera();
@@ -374,12 +351,6 @@ void Demo::createTerrainPhysic(void){
 		terrainPosition.y + (pTerrain->getMaxHeight()-1.5f)/2,
 		terrainPosition.z
 	);
-
-	/*
-	cout << "MAX HEIGHT " << pTerrain->getMaxHeight() << endl;
-	cout << "MIN HEIGHT " << pTerrain->getMinHeight() << endl;
-	cout << "Y: " << position.y << endl;
-	*/
 
 	pTerrainNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("terrain_node");
 	defaultTerrainBody->setStaticShape (pTerrainNode, mTerrainShape, terrainBodyRestitution, terrainBodyFriction, position);

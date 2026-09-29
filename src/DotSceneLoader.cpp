@@ -239,7 +239,6 @@ void DotSceneLoader::processEnvironment(rapidxml::xml_node<>* XMLNode){
 
 void DotSceneLoader::processTerrain(rapidxml::xml_node<>* XMLNode){
 	Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] Process Terrain" );
-//	printSceneHierarchy();
 
     Ogre::Real worldSize = getAttribReal(XMLNode, "worldSize");
     int mapSize = Ogre::StringConverter::parseInt(XMLNode->first_attribute("mapSize")->value());
@@ -638,9 +637,9 @@ void DotSceneLoader::processLookTarget(rapidxml::xml_node<>* XMLNode, Ogre::Scen
 
         pParent->lookAt(position, relativeTo, localDirection);
     }
-    catch(Ogre::Exception &/*e*/)
+    catch(Ogre::Exception &e)
     {
-        Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Error processing a look target!");
+        Ogre::LogManager::getSingleton().logError("[DotSceneLoader] Error processing a look target: " + e.getDescription());
     }
 }
 
@@ -669,9 +668,9 @@ void DotSceneLoader::processTrackTarget(rapidxml::xml_node<>* XMLNode, Ogre::Sce
         Ogre::SceneNode *pTrackNode = mSceneMgr->getSceneNode(nodeName);
         pParent->setAutoTracking(true, pTrackNode, localDirection, offset);
     }
-    catch(Ogre::Exception &/*e*/)
+    catch(Ogre::Exception &e)
     {
-        Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Error processing a track target!");
+        Ogre::LogManager::getSingleton().logError("[DotSceneLoader] Error processing a track target: " + e.getDescription());
     }
 }
 
@@ -765,8 +764,8 @@ void DotSceneLoader::processSubEntity(rapidxml::xml_node<>* XMLNode, Ogre::Entit
 			index = Ogre::StringConverter::parseInt(sIndex);
 			try{
 				pEntity->getSubEntity(index)->setMaterialName(materialName);
-			} catch (...){
-				Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Subentity material index invalid!");
+			} catch (Ogre::Exception &e){
+				Ogre::LogManager::getSingleton().logError("[DotSceneLoader] Cannot set material " + materialName + " on subentity " + sIndex + ": " + e.getDescription());
 			}
 		}
 		pElement = pElement->next_sibling("subentity");
@@ -786,9 +785,9 @@ void DotSceneLoader::processParticleSystem(rapidxml::xml_node<>* XMLNode, Ogre::
         Ogre::ParticleSystem *pParticles = mSceneMgr->createParticleSystem(name, file);
         pParent->attachObject(pParticles);
     }
-    catch(Ogre::Exception &/*e*/)
+    catch(Ogre::Exception &e)
     {
-        Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Error creating a particle system!");
+        Ogre::LogManager::getSingleton().logError("[DotSceneLoader] Error creating particle system " + name + ": " + e.getDescription());
     }
 }
 
@@ -1074,28 +1073,4 @@ void DotSceneLoader::processUserDataReference(rapidxml::xml_node<>* XMLNode, Ogr
 {
     Ogre::String str = XMLNode->first_attribute("id")->value();
     pEntity->setUserAny(Ogre::Any(str));
-}
-//-------------------------------------------------------------------------------------
-void DotSceneLoader::printSceneHierarchy(void){
-	cout << "Scene Node Hierarchy" << endl;
-
-	int children = mSceneMgr->getRootSceneNode()->numChildren();
-	cout << "Root " << endl;
-	for( int i = 0; i < children; i++ ){
-		printSceneChildren( static_cast <Ogre::SceneNode*> ( mSceneMgr->getRootSceneNode()->getChild( i ) ), 1 );
-	}
-}
-//-------------------------------------------------------------------------------------
-void DotSceneLoader::printSceneChildren( Ogre::SceneNode* node, int level ){
-	for( int i = 0; i < level ; i++){
-		cout << "-";
-	}
-
-	cout << ">";
-	cout << node->getName() << endl;
-
-	int children = node->numChildren();
-	for( int i = 0; i < children; i++ ){
-		printSceneChildren( static_cast <Ogre::SceneNode*> ( node->getChild( i ) ), level + 1 );
-	}
 }

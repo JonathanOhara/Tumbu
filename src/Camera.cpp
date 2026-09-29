@@ -60,16 +60,6 @@ void Camera::initiateCameraPosition(void){
 	maxBoundZoom = cfg->findChild("maxBoundZoom")->getValueF();
 	minBoundZoom = cfg->findChild("minBoundZoom")->getValueF();
 
-	/*
-	cout << "cameraZDistance " << cameraZDistance << endl;
-	cout << "cameraHeight " << cameraHeight << endl;
-	cout << "cameraTranslate " << cameraTranslate << endl;
-	cout << "maxBoundPitch " << maxBoundPitch << endl;
-	cout << "minBoundPitch " << minBoundPitch << endl;
-	cout << "maxBoundZoom " << maxBoundZoom << endl;
-	cout << "minBoundZoom " << minBoundZoom << endl;
-	*/
-
 	mCameraGoal->setPosition( 0, 0, cameraZDistance );
 
 	mCameraPivot->setFixedYawAxis(true);
@@ -278,7 +268,6 @@ bool Camera::frameRenderingQueued(const Ogre::FrameEvent &evt){
 }
 //-------------------------------------------------------------------------------------
 void Camera::updateCameraGoal(Ogre::Real deltaYaw, Ogre::Real deltaPitch, Ogre::Real deltaZoom){
-//	cout << "Yaw " << deltaYaw << endl;
 	mCameraPivot->yaw(Ogre::Degree(deltaYaw), Ogre::Node::TS_WORLD);
 
 	// bound the pitch
@@ -291,12 +280,10 @@ void Camera::updateCameraGoal(Ogre::Real deltaYaw, Ogre::Real deltaPitch, Ogre::
 	Ogre::Real dist = mCameraGoal->_getDerivedPosition().distance(mCameraPivot->_getDerivedPosition());
 	Ogre::Real distChange = deltaZoom * dist;
 
-//	cout << "dist = " << dist << " change = " << distChange << " sum = " << ( dist + distChange ) << endl;
 
 	// bound the zoom
 	if (!(dist + distChange < minBoundZoom && distChange < 0) &&
 		!(dist + distChange > maxBoundZoom && distChange > 0)) {
-//		cout << "update camera goal " << endl;
 		mCameraGoal->translate(0, 0, distChange, Ogre::Node::TS_LOCAL);
 	}
 }

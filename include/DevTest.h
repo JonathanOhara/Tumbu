@@ -46,6 +46,7 @@ private:
 	int tourStep;
 	int cycle;
 	int kills;
+	int attacks;	// attacks thrown in the current fight (-cycles)
 	Ogre::Real tourTimer;
 
 	Stage stage;

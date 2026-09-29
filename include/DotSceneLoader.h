@@ -92,8 +92,6 @@ protected:
     Ogre::Quaternion parseQuaternion(rapidxml::xml_node<>* XMLNode);
     Ogre::ColourValue parseColour(rapidxml::xml_node<>* XMLNode);
         
-	void printSceneHierarchy(void);
-	void printSceneChildren(Ogre::SceneNode* node, int level);
 
     Ogre::SceneManager *mSceneMgr;
     Ogre::SceneNode *mAttachNode;

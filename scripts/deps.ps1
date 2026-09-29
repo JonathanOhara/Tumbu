@@ -138,8 +138,23 @@ if ($Only -in 'all', 'mygui') {
     Copy-Item -Force (Join-Path $dir 'Media\Common\Themes\MyGUI_BlackBlue*') (Join-Path $media 'MyGUI_Media')
 }
 
+# Caelum on Ogre 14: generateSphericDome() looks for its dome mesh with resourceExists(name), which only
+# searches global-pool groups, never the "Caelum" group the mesh lives in. The second match with the High sky
+# then created the mesh again and Ogre threw "already exists". Look in Caelum's own group.
+function Repair-CaelumSource([string]$sourceDir) {
+    $file = Join-Path $sourceDir 'main\src\InternalUtilities.cpp'
+    $text = [IO.File]::ReadAllText($file)
+    $check = 'if (Ogre::MeshManager::getSingleton ().resourceExists (name)) {'
+    if ($text.Contains($check)) {
+        $text = $text.Replace($check, 'if (Ogre::MeshManager::getSingleton ().resourceExists (name, RESOURCE_GROUP_NAME)) {')
+        [IO.File]::WriteAllText($file, $text)
+        Write-Host "Caelum: patched the dome mesh lookup in InternalUtilities.cpp" -ForegroundColor DarkGray
+    }
+}
+
 if ($Only -in 'all', 'caelum') {
     $dir = Get-Source "caelum-$CaelumCommit" "https://github.com/OGRECave/ogre-caelum/archive/$CaelumCommit.tar.gz" "ogre-caelum-$CaelumCommit"
+    Repair-CaelumSource $dir
     Build-CMake 'caelum' $dir @("-DOGRE_DIR=$install\CMake")
     # Caelum's shaders, textures and meshes are not installed; the game ships them as CaelumMedia.
     $media = Join-Path $install 'share\Caelum\Media'

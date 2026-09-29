@@ -11,13 +11,10 @@ SpecialManager::SpecialManager( Ogre::SceneManager* _sceneMgr, Robot* _robotSpel
 	specialNode = robotSpeller->robotNode->createChildSceneNode( Ogre::String(robotSpeller->robotName).append( std::string("_specialNode") ) );
 
 	count = 0;
-	//	cout << "Node name = " << specialNode->getName() << endl;
 }
 //-------------------------------------------------------------------------------------
 SpecialManager::~SpecialManager(void){
 	try{
-//		cout << "node = " << specialNode->getName() << endl;
-//		TUMBU::getInstance()->printSceneHierarchy();
 
 		itSpecialList = specialList.begin();
 		itSpecialListEnd = specialList.end();
@@ -31,7 +28,9 @@ SpecialManager::~SpecialManager(void){
 
 		specialNode->removeAndDestroyAllChildren();
 		sceneMgr->destroySceneNode(specialNode);
-	}catch(...){
+	}catch( Ogre::Exception &e ){
+		// A destructor must not throw: report it (anything else reaches the crash report).
+		Ogre::LogManager::getSingleton().logError( "SpecialManager: cleanup failed: " + e.getFullDescription() );
 	}
 }
 //-------------------------------------------------------------------------------------

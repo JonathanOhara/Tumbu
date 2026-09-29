@@ -192,7 +192,6 @@ bool CharacterEnemy::frameRenderingQueued(const Ogre::FrameEvent &evt){
 }
 //--------------------------------------------------------------------------
 void CharacterEnemy::collision( CollisionDetectionListener *other ){
-	//cout << "CharacterEnemy::Collision " << endl;
 	//specialManager->collision( rigid, rigid2 );	
 }
 //--------------------------------------------------------------------------
@@ -321,12 +320,10 @@ void CharacterEnemy::setActiveCameraNode( Ogre::SceneNode* cameraNode ) {
 }
 //--------------------------------------------------------------------------
 float CharacterEnemy::criarDano(float dano){
-//	printf("ENEMY DANO INICIAL  = %.1f\n", dano);
 	dano = dano * ( 1 + (getMaxAttack() / 10 ) );
 	dano *= 10;
 	dano = floor( dano );
 	dano /= 10;
-//	printf("ENEMY DANO CRIADO = %.1f\n", dano);
 	return dano;
 }
 //--------------------------------------------------------------------------
@@ -339,7 +336,6 @@ float CharacterEnemy::sofrerDano(float dano){
 	dano = floor( dano );
 	dano /= 10;
 	addHp( -dano );
-//	printf("ENEMY DANO  RECEBIDO= %.1f\n", dano);
 	return dano;
 }
 //--------------------------------------------------------------------------

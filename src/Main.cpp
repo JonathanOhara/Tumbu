@@ -125,6 +125,7 @@ static void onAbort( int ){
 		int main(int argc, char *argv[])
 #endif
 		{
+			int exitCode = 0;
 			try {
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 				AddVectoredExceptionHandler( 1, onCrash );
@@ -142,22 +143,24 @@ static void onAbort( int ){
 				app->go();
 				delete app;
 			} catch( Ogre::Exception &e ) {
+				exitCode = 1;
 				if( Ogre::LogManager::getSingletonPtr() ) Ogre::LogManager::getSingletonPtr()->logError( "Fatal: " + e.getFullDescription() );
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-				if( !DevTest::isEnabled() ) MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+				if( !DevTest::isEnabled() ) MessageBox( NULL, e.getFullDescription().c_str(), "TUMBU - fatal error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-				std::cerr << "An exception has occured: " <<
+				std::cerr << "Fatal: " <<
 					e.getFullDescription().c_str() << std::endl;
 #endif
 			}catch( std::exception &e ){
+				exitCode = 1;
 				if( Ogre::LogManager::getSingletonPtr() ) Ogre::LogManager::getSingletonPtr()->logError( Ogre::String( "Fatal: " ) + e.what() );
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-				if( !DevTest::isEnabled() ) MessageBox( NULL, e.what(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+				if( !DevTest::isEnabled() ) MessageBox( NULL, e.what(), "TUMBU - fatal error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
-				std::cout<<"!!!!std::exception!!!!"<<e.what()<<std::endl;
+				std::cerr << "Fatal: " << e.what() << std::endl;
 #endif
 			}
-			return 0;
+			return exitCode;
 		}
 #ifdef __cplusplus
 	}

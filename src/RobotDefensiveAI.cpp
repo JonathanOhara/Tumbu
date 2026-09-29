@@ -65,7 +65,6 @@ void RobotDefensiveAI::makeAction(){
 	angle = dirCurrent .angleBetween( dirFacing );
 	angleValue = angle.valueRadians();
 
-//	cout << "angle " << angleValue << endl;	
 	if( angleValue >= 2.8f && angleValue <= 3.2f ){
 		if( enemy->ap >= enemy->kick->getAp() ){
 			Ogre::Real kickRandom = Ogre::Math::RangeRandom(0, 100);

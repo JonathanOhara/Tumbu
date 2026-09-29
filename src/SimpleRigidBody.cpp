@@ -12,33 +12,23 @@ SimpleRigidBody::SimpleRigidBody( Ogre::SceneManager *_sceneManager, TumbuEnums:
 }
 //-------------------------------------------------------------------------------------
 SimpleRigidBody::~SimpleRigidBody(void){
-	try{
-		if(rigidBody){
-			TUMBU::getInstance()->removeCollisionDetectionListener( this );
+	if(rigidBody){
+		TUMBU::getInstance()->removeCollisionDetectionListener( this );
+		delete rigidBody;	// also frees the Bullet body and motion state
+	}
 
-			/*
-			delete rigidBody->getBulletRigidBody()->getMotionState();
-			delete rigidBody->getBulletRigidBody();
-			*/
-			rigidBody->showDebugShape(false);
-			delete rigidBody;
-		}
+	if(shape){
+		delete shape;
+	}
 
-		if(shape){
-			delete shape;
-		}
+	if(entity){
+		sceneManager->destroyEntity( entity );
+	}
 
-		if(entity){
-			sceneManager->destroyEntity( entity );
-		}
-
-		if(node){
-			node->removeAndDestroyAllChildren();
-			sceneManager->destroySceneNode( node );
-		}
-	}catch( char * str ) {
-      cout << "Exception raised: " << str << '\n';
-   }
+	if(node){
+		node->removeAndDestroyAllChildren();
+		sceneManager->destroySceneNode( node );
+	}
 }
 //-------------------------------------------------------------------------------------
 void SimpleRigidBody::collision( CollisionDetectionListener *other ){

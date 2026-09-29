@@ -39,7 +39,6 @@ StartScreen::~StartScreen(void){
 }
 //-------------------------------------------------------------------------------------
 bool StartScreen::frameRenderingQueued(const Ogre::FrameEvent &evt){
-//	cout << "Start Screen " << endl;
 	return true;
 }
 //-------------------------------------------------------------------------------------

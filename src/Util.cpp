@@ -7,7 +7,6 @@ Util::~Util(void){
 }
 //-------------------------------------------------------------------------------------
 Physics::RigidBody* Util::createBarrel(int barrelIndex, Ogre::SceneManager* mSceneMgr, Physics::DynamicsWorld* world, Ogre::Camera* mCamera){
-//	printf("CreateBarrel()\n");
 	
 	Physics::RigidBody *defaultBody;
 	Physics::BoxCollisionShape *sceneBoxShape;

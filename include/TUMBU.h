@@ -110,7 +110,7 @@ protected:
 private:
 	void initializeGUIStuff(void);
 	void initializeUtil(void);
-	void printSceneChildren(Ogre::SceneNode* node, int level);
+	void printSceneChildren(Ogre::SceneNode* node, int level, Ogre::String &tree);
 
 	Ogre::ShadowTechnique shadowTechnique;
 	Ogre::ColourValue shadowColor;

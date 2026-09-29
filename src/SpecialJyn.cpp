@@ -73,7 +73,6 @@ SpecialJyn::~SpecialJyn(void){
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::update(const Ogre::Real time){
-//	cout << "status " << getSpecialStatus() << endl;
 
 	if ( getSpecialStatus() == SpecialInterface::CONCENTRATED ){
 		moverTodasParticulas( robotSpeller->robotNode->getPosition() );
@@ -125,7 +124,6 @@ void SpecialJyn::update(const Ogre::Real time){
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::collision( CollisionDetectionListener *other ){
-//	cout << "Other = " << other->rigidBodyName << " tag " << other->objectTag << " other pos " << other->collisionPosition << endl;
 	if( getSpecialStatus() == SpecialInterface::ATTACKING ){
 		switch( other->objectTag ){
 		case TumbuEnums::TERRAIN:
@@ -396,12 +394,6 @@ void SpecialJyn::executaPSO(Ogre::Real time){
 				newY = (particleList[i]->velocity.y * inertia) + (randomA * ( particleList[i]->bestPosition.y - particleList[i]->particle->mPosition.y )) + (randomB * ( everBestPosition.y - particleList[i]->particle->mPosition.y)),
 				newZ = (particleList[i]->velocity.z * inertia) + (randomA * ( particleList[i]->bestPosition.z - particleList[i]->particle->mPosition.z )) + (randomB * ( everBestPosition.z - particleList[i]->particle->mPosition.z));
 					
-		/*
-		printf("P x: %.4f y: %.4f z: %.4f -", particleList[i]->particle->mPosition.x, particleList[i]->particle->mPosition.y, particleList[i]->particle->mPosition.z);
-		printf("B x: %.4f y: %.4f z: %.4f -", particleList[i]->bestPosition.x, particleList[i]->bestPosition.y, particleList[i]->bestPosition.z);
-		printf("V x: %.4f y: %.4f z: %.4f -", newX, newY, newZ);
-		printf("inercia %.4f\n",inertia);
-		*/
 
 		Ogre::Vector3 newVelocidade;
 		newVelocidade.x = Ogre::Real(newX);

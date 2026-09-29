@@ -9,7 +9,6 @@ CutScene::~CutScene(void){
 }
 //-------------------------------------------------------------------------------------
 bool CutScene::frameRenderingQueued(const Ogre::FrameEvent &evt){
-//	cout << "CUT" << endl;
 	return true;
 }
 //-------------------------------------------------------------------------------------

@@ -62,6 +62,7 @@ DevTest::DevTest(void){
 	tourTimer	= 0;
 	cycle		= 0;
 	kills		= 0;
+	attacks		= 0;
 	frameTimer.reset();
 
 	log( "enabled: autoplay=" + Ogre::StringConverter::toString( autoplay ) +
@@ -238,8 +239,12 @@ void DevTest::runGuiTour( const Ogre::FrameEvent &evt ){
 			tourStep++; tourTimer = 0;
 		}
 		break;
-	case 4: // battle HUD
-		if( tourTimer > 2.0f ){
+	case 4: // battle HUD, with a Jyn charging (its red energy particles are in the shot)
+		if( attacks == 0 && tourTimer > 1.0f ){
+			attacks = 1;
+			pressKey( 'i' );
+		}else if( tourTimer > 2.0f ){
+			attacks = 0;
 			GUI::getInstance()->addLog( Log::LEVEL_UP, "GUI tour: log message", 5 );
 			tourStep++; tourTimer = 0;
 			screenshot( "hud" );
@@ -469,15 +474,24 @@ void DevTest::runCycles( const Ogre::FrameEvent &evt ){
 			tourStep = 2; tourTimer = 0;
 		}
 		break;
-	case 2: // fight a moment, then defeat the enemy (respawn path) or leave the match
-		if( state == TumbuEnums::PLAYING && tourTimer > 1.0f ){
-			tourTimer = 0;
-			if( kills < 3 && tumbu->getDemo() != NULL ){
-				tourStep = 3;
-				tumbu->getDemo()->enemy->hp = 0;
-			}else{
-				tourStep = 4;
-				pressKey( TumbuInput::KEY_ESCAPE );
+	case 2: // fight: punch, kick and Jyn (projectiles hit through the collision code), then defeat the enemy
+			// (respawn path) or leave the match
+		if( state == TumbuEnums::PLAYING ){
+			const char attackKeys[] = { 'o', 'u', 'i' };	// punch, kick, Jyn
+			if( attacks < 3 && tourTimer > 0.2f + attacks * 0.8f ){
+				pressKey( attackKeys[attacks] );
+				attacks++;
+			}else if( attacks >= 3 && tourTimer > 3.5f ){
+				tourTimer = 0;
+				attacks = 0;
+				if( kills < 3 && tumbu->getDemo() != NULL ){
+					tourStep = 3;
+					log( "fight: enemy hp " + Ogre::StringConverter::toString( tumbu->getDemo()->enemy->hp ) + " before the kill" );
+					tumbu->getDemo()->enemy->hp = 0;
+				}else{
+					tourStep = 4;
+					pressKey( TumbuInput::KEY_ESCAPE );
+				}
 			}
 		}
 		break;
