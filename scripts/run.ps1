@@ -15,8 +15,12 @@ if (-not (Test-Path $exe)) { throw "$exe not found. Run .\scripts\build.ps1 -Con
 # we link against). Override with $env:TUMBU_RUNTIME_DIR if they move.
 $runtimeDir = if ($env:TUMBU_RUNTIME_DIR) { $env:TUMBU_RUNTIME_DIR } else { "E:\WorkSpaces\workspace tcc\Tumbu\bin\$Configuration" }
 if (-not (Test-Path $runtimeDir)) { throw "Runtime DLL folder $runtimeDir not found." }
-Get-ChildItem $runtimeDir -Filter *.dll | Where-Object { -not (Test-Path (Join-Path $binDir $_.Name)) } |
+# Libraries removed during modernization (Cg shaders, SkyX) are no longer needed and are not copied.
+$obsolete = 'cg.dll', 'Plugin_CgProgramManager.dll', 'Plugin_CgProgramManager_d.dll', 'SkyX.dll', 'SkyX_d.dll'
+Get-ChildItem $runtimeDir -Filter *.dll |
+    Where-Object { $obsolete -notcontains $_.Name -and -not (Test-Path (Join-Path $binDir $_.Name)) } |
     Copy-Item -Destination $binDir
+foreach ($dll in $obsolete) { Remove-Item (Join-Path $binDir $dll) -ErrorAction SilentlyContinue }
 
 # Configs are owned by the repo root and refreshed on every run (plugins list + resource locations).
 $suffix = if ($Configuration -eq 'Debug') { '_d' } else { '' }

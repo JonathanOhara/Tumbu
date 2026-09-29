@@ -8,9 +8,6 @@
 #include "Clock.h"
 #include "TUMBU.h"
 
-#ifdef _WINDOWS
-#include <SkyX.h>
-#endif
 
 class Clock;
 
@@ -31,9 +28,6 @@ public:
 protected:
 
 private:
-#ifdef _WINDOWS
-	SkyX::SkyX* skyX;
-#endif
 	TumbuEnums::DayType dayType;
 	Ogre::Light* light;
 	Ogre::SceneManager* mSceneMgr;
@@ -41,7 +35,6 @@ private:
 	Clock* clock;
 
 	Ogre::Real 
-		skyXUpdateTime,
 		updateTime,
 		timeMultiplier;
 

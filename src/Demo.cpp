@@ -514,11 +514,6 @@ void Demo::initialiseGameResources(void){
 		Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Game");
 	}
 
-	if( tumbu->getSkyQuality() == 1 ){
-		if ( !Ogre::ResourceGroupManager::getSingleton().isResourceGroupInitialised("SkyX") == 1 ){
-			Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("SkyX");
-		}
-	}
 
 }
 //-------------------------------------------------------------------------------------

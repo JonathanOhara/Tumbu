@@ -5,7 +5,6 @@ Sky* Sky::instance = NULL;
 Sky::Sky(Ogre::SceneManager* sceneMgr){
 	mSceneMgr = sceneMgr;
 
-	skyXUpdateTime = 0;
 	updateTime = 0;
 
 	timeMultiplier = TUMBU::getInstance()->getTimeMultiplier();
@@ -21,11 +20,6 @@ Sky::Sky(Ogre::SceneManager* sceneMgr){
 Sky::~Sky(void){
 	mSceneMgr->destroyLight( light );
 	instance = NULL;
-#ifdef _WINDOWS
-	if(quality == 1){
-		delete skyX;
-	}
-#endif
 }
 //-------------------------------------------------------------------------------------
 Sky* Sky::getInstance(){
@@ -54,15 +48,10 @@ void Sky::skyLowQualityNight(){
 }
 //-------------------------------------------------------------------------------------
 void Sky::skyHighQuality(Ogre::Camera* camera){
-	quality = 1;
-	mSceneMgr->setSkyDome(false, "");
-#ifdef _WINDOWS	
-	skyX = new SkyX::SkyX(mSceneMgr, camera);	
-	skyX->create();
-	skyX->setTimeMultiplier(timeMultiplier);
-	skyX->setLightingMode(SkyX::SkyX::LM_LDR);
-	skyX->getCloudsManager()->add(SkyX::CloudLayer::Options(/* Default options */));
-#endif
+	// The high quality sky used SkyX, which is dead and was removed (modernization step A5). It will come back
+	// with Caelum; until then both quality levels use the day/night skydome.
+	Ogre::LogManager::getSingletonPtr()->logMessage( "Sky: high quality sky not available yet, using the skydome" );
+	skyLowQuality();
 }
 //-------------------------------------------------------------------------------------
 bool Sky::frameRenderingQueued(const Ogre::FrameEvent &evt){
@@ -86,12 +75,6 @@ bool Sky::frameRenderingQueued(const Ogre::FrameEvent &evt){
 				}
 			}
 		}
-#ifdef _WINDOWS
-		else if(quality == 1){
-			float time = skyX->getAtmosphereManager()->getOptions().Time.x;
-			skyX->update( evt.timeSinceLastFrame );
-		}
-#endif
 	}
 
 	return true;
