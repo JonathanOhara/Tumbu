@@ -1,9 +1,10 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Name run]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run]
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 param(
     [ValidateSet('Release', 'RelWithDebInfo')] [string]$Configuration = 'Release',
     [int]$FpsCap = 0,
+    [int]$Hour = -1,
     [double]$QuitAfter = 8,
     [switch]$NoWalk,
     [string]$Name = 'run',
@@ -19,6 +20,7 @@ if (-not (Test-Path $exe)) { throw "$exe not found. Build first (.\scripts\build
 $gameArgs = @("-quitafter=$QuitAfter")
 if (-not $NoWalk)  { $gameArgs += '-walktest' }
 if ($FpsCap -gt 0) { $gameArgs += "-fpscap=$FpsCap" }
+if ($Hour -ge 0)   { $gameArgs += "-hour=$Hour" }
 
 Remove-Item "$work\devtest.png" -ErrorAction SilentlyContinue
 $proc = Start-Process $exe -ArgumentList $gameArgs -WorkingDirectory $binDir -PassThru

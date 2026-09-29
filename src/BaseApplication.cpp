@@ -7,6 +7,34 @@
 #include "../res/resource.h"
 #endif
 //-------------------------------------------------------------------------------------
+/**
+ * The viewport renders with the shader generator scheme, and the shader generator builds its technique from
+ * the first technique with a fixed-function pass, i.e. a material's fallback. Materials that bring their own
+ * shaders (robots, Caelum) must keep them, so for those this listener answers first with their shader
+ * technique. Materials without shaders are left to the shader generator.
+ */
+class ProgrammableTechniqueResolver: public Ogre::MaterialManager::Listener{
+public:
+	Ogre::Technique* handleSchemeNotFound( unsigned short schemeIndex, const Ogre::String& schemeName,
+		Ogre::Material* originalMaterial, unsigned short lodIndex, const Ogre::Renderable* rend ){
+		for( Ogre::Technique* technique : originalMaterial->getSupportedTechniques() ){
+			if( technique->getLodIndex() != lodIndex
+				|| technique->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME ){
+				continue;
+			}
+			// The best default technique decides: fully programmable → use it as is.
+			for( Ogre::Pass* pass : technique->getPasses() ){
+				if( !pass->isProgrammable() ){
+					return NULL;
+				}
+			}
+			return technique;
+		}
+		return NULL;
+	}
+};
+static ProgrammableTechniqueResolver techniqueResolver;
+//-------------------------------------------------------------------------------------
 BaseApplication::BaseApplication(void)
 	: OgreBites::ApplicationContext("TUMBU"),
 	mSceneMgr(0),
@@ -48,6 +76,9 @@ void BaseApplication::go(void){
 	delete mCameraMan;
 	mCameraMan = NULL;
 	delete ConfigScriptLoader::getSingletonPtr();
+	if( Ogre::MaterialManager::getSingletonPtr() != NULL ){
+		Ogre::MaterialManager::getSingleton().removeListener( &techniqueResolver, Ogre::MSN_SHADERGEN );
+	}
 	closeApp();
 }
 //-------------------------------------------------------------------------------------
@@ -56,6 +87,8 @@ void BaseApplication::setup(void){
 	new ConfigScriptLoader();
 
 	OgreBites::ApplicationContext::setup();
+	// Scheme-specific listeners are asked before the shader generator's generic one.
+	Ogre::MaterialManager::getSingleton().addListener( &techniqueResolver, Ogre::MSN_SHADERGEN );
 	mRoot = getRoot();
 	mWindow = getRenderWindow();
 	addInputListener( this );
@@ -82,6 +115,10 @@ void BaseApplication::setup(void){
 }
 //-------------------------------------------------------------------------------------
 void BaseApplication::locateResources(void){
+	// The robot shaders (Game) #include OgreUnifiedShader.h from OgreInternal. Only groups in the global pool
+	// look for resources in other groups, so Game is created as one before resources.cfg fills it.
+	Ogre::ResourceGroupManager::getSingleton().createResourceGroup( "Game", true );
+
 	// resources.cfg (next to the executable) lists the game's resource groups and Ogre's own media.
 	OgreBites::ApplicationContext::locateResources();
 }

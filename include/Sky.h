@@ -9,6 +9,7 @@
 
 
 class Clock;
+namespace Caelum{ class CaelumSystem; }
 
 class Sky: public Ogre::FrameListener{
 public:
@@ -21,6 +22,7 @@ public:
 	void skyLowQualityMorning();
 	void skyLowQualityNight();
 	void skyHighQuality(Ogre::Camera* camera);
+	void updateCaelumTime(void);
 	
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
 
@@ -38,6 +40,9 @@ private:
 		timeMultiplier;
 
 	int quality;
+
+	/// Day/night sky for the "High" quality (Direct3D 11 only: Caelum has no GLSL shaders).
+	Caelum::CaelumSystem* caelum;
 
 	static Sky* instance;
 };

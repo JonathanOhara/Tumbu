@@ -1,9 +1,11 @@
 // Robot lighting programs. Each shader source is written once with OgreUnifiedShader.h and compiled as HLSL on
-// Direct3D 11 and as GLSL on OpenGL. Ported from the original 2011 Cg program (general.cg, see git history).
+// Direct3D 11 (shader model 4, see target; the default level-9 profile is too small for diffuse_ps) and as GLSL
+// on OpenGL. Ported from the original 2011 Cg program (general.cg, see git history).
 
 vertex_program ambient_vs glsl glsles hlsl
 {
     source robot_ambient.vert
+    target vs_4_0
     default_params
     {
         param_named_auto wvpMat worldviewproj_matrix
@@ -13,6 +15,7 @@ vertex_program ambient_vs glsl glsles hlsl
 fragment_program ambient_ps glsl glsles hlsl
 {
     source robot_ambient.frag
+    target ps_4_0
     default_params
     {
         param_named_auto ambient ambient_light_colour
@@ -23,6 +26,7 @@ fragment_program ambient_ps glsl glsles hlsl
 vertex_program diffuse_vs glsl glsles hlsl
 {
     source robot_diffuse.vert
+    target vs_4_0
     default_params
     {
         param_named_auto wMat world_matrix
@@ -34,6 +38,7 @@ vertex_program diffuse_vs glsl glsles hlsl
 fragment_program diffuse_ps glsl glsles hlsl
 {
     source robot_diffuse.frag
+    target ps_4_0
     default_params
     {
         param_named_auto lightDif0 light_diffuse_colour 0

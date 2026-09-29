@@ -15,6 +15,7 @@ bool DevTest::walkTest = false;
 bool DevTest::guiTour = false;
 int DevTest::fpsCap = 0;
 Ogre::Real DevTest::quitAfter = 0;
+int DevTest::startHour = -1;
 //-------------------------------------------------------------------------------------
 void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	Ogre::StringVector args = Ogre::StringUtil::split( commandLine, " \t" );
@@ -30,6 +31,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			guiTour = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-fpscap=" ) ){
 			fpsCap = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
+			startHour = Ogre::StringConverter::parseInt( arg.substr( 6 ) ) % 24;
 		}else if( Ogre::StringUtil::startsWith( arg, "-quitafter=" ) ){
 			quitAfter = Ogre::StringConverter::parseReal( arg.substr( 11 ) );
 		}

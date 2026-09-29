@@ -1,6 +1,7 @@
 #include "Clock.h"
 #include "Tumbu.h"
 #include "GUI.h"
+#include "DevTest.h"
 Clock* Clock::instance = NULL;
 //-------------------------------------------------------------------------------------
 Clock::Clock( int _minutes ){
@@ -21,9 +22,10 @@ Clock::~Clock(void){
 }
 //-------------------------------------------------------------------------------------
 Clock* Clock::getInstance(){
-	//NOTE: SkyX start at 14 hours
+	// The game starts at 13:00 (the 2011 SkyX sky started at 14:00).
 	if( instance == NULL){
-		instance = new Clock( 780 );
+		int minutes = DevTest::getStartHour() >= 0 ? DevTest::getStartHour() * 60 : 780;
+		instance = new Clock( minutes );
 	}
 	return instance;
 }

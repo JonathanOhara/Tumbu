@@ -64,6 +64,28 @@ function Build-CMake([string]$name, [string]$sourceDir, [string[]]$options) {
     }
 }
 
+# Caelum's fragment programs skip the POSITION input that their vertex programs output first. Direct3D 9
+# matched stage inputs by semantic, but Direct3D 11 matches them by register, so every input read the wrong
+# value (the sky came out flat yellow). Give each fragment program a leading POSITION input.
+function Repair-CaelumShaders([string]$mediaDir) {
+    foreach ($file in Get-ChildItem (Join-Path $mediaDir '*.cg')) {
+        $lines = [System.Collections.Generic.List[string]](Get-Content $file)
+        $changed = $false
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -notmatch '^\s*void\s+\w*(FP|_fp)\s*$') { continue }
+            $open = $i + 1
+            while ($lines[$open] -notmatch '^\s*\(') { $open++ }
+            if ($lines[$open + 1] -match ':\s*POSITION') { continue }
+            $lines.Insert($open + 1, '    in float4 d3d11Position : POSITION,')
+            $changed = $true
+        }
+        if ($changed) {
+            Set-Content -Path $file -Value $lines
+            Write-Host "Caelum: D3D11 input fix in $($file.Name)" -ForegroundColor DarkGray
+        }
+    }
+}
+
 if ($Only -in 'all', 'ogre') {
     $dir = Get-Source "ogre-$OgreVersion" "https://github.com/OGRECave/ogre/archive/refs/tags/v$OgreVersion.tar.gz" "ogre-$OgreVersion"
     Build-CMake 'ogre' $dir @(
@@ -105,6 +127,11 @@ if ($Only -in 'all', 'mygui') {
 if ($Only -in 'all', 'caelum') {
     $dir = Get-Source "caelum-$CaelumCommit" "https://github.com/OGRECave/ogre-caelum/archive/$CaelumCommit.tar.gz" "ogre-caelum-$CaelumCommit"
     Build-CMake 'caelum' $dir @("-DOGRE_DIR=$install\CMake")
+    # Caelum's shaders, textures and meshes are not installed; the game ships them as CaelumMedia.
+    $media = Join-Path $install 'share\Caelum\Media'
+    New-Item -ItemType Directory -Force $media | Out-Null
+    Copy-Item -Force (Join-Path $dir 'main\resources\*') $media
+    Repair-CaelumShaders $media
 }
 
 if ($Only -in 'all', 'miniaudio') {

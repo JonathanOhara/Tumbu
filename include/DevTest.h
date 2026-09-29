@@ -11,6 +11,7 @@
  *   -fpscap=N        limit the frame rate to N (to compare movement at different FPS)
  *   -quitafter=S     after S seconds of play, save a screenshot to <workPath>/devtest.png and quit
  *   -guitour         screenshot every GUI screen (start menu, dialogs, HUD, pause menu tabs) and quit
+ *   -hour=H          start the in-game clock at hour H (0-23) instead of 13:00, e.g. to check the night sky
  *
  * Every measurement is written to ogre.log with the prefix [DEVTEST].
  */
@@ -18,6 +19,8 @@ class DevTest: public Ogre::FrameListener{
 public:
 	static void parseCommandLine( const Ogre::String &commandLine );
 	static bool isEnabled(void);
+	/// Start hour of the in-game clock from -hour=H, or -1 when not given.
+	static int getStartHour(void){ return startHour; }
 
 	DevTest(void);
 	virtual ~DevTest(void);
@@ -52,6 +55,7 @@ private:
 	static bool guiTour;
 	static int fpsCap;
 	static Ogre::Real quitAfter;
+	static int startHour;
 };
 
 #endif // #ifndef __DevTest_h_

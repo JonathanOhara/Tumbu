@@ -15,6 +15,8 @@ public:
 	static Clock* getInstance(void);
 
 	int getMinutes();
+	/// Time of day in hours (0..24, fractional).
+	float getHours(void){ return (float) hours; }
 	void setMinutes( int _minutes );
 
 	std::string getClockFormated();
