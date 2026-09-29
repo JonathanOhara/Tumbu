@@ -21,11 +21,6 @@ namespace Ogre
     class TerrainGlobalOptions;
 }
 
-namespace Forests
-{
-    class PagedGeometry;
-    class TreeLoader3D;
-}
 
 class nodeProperty
 {
@@ -55,8 +50,6 @@ public:
     std::vector<nodeProperty> nodeProperties;
     std::vector<Ogre::String> staticObjects;
     std::vector<Ogre::String> dynamicObjects;
-    std::vector<Forests::PagedGeometry *> mPGHandles;
-    std::vector<Forests::TreeLoader3D *> mTreeHandles;
 
 protected:
     void processScene(rapidxml::xml_node<>* XMLRoot);
@@ -81,7 +74,6 @@ protected:
     void processParticleSystem(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent);
     void processBillboardSet(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent);
     void processPlane(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent);
-    void processPagedGeometry(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent);
 
     void processFog(rapidxml::xml_node<>* XMLNode);
     void processSkyBox(rapidxml::xml_node<>* XMLNode);

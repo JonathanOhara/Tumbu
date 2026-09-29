@@ -46,7 +46,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>include;$(OGRE_HOME)\include;$(OGRE_HOME)\include\OGRE;$(OGRE_HOME)\include\OIS;$(OGRE_HOME)\include\CEGUI;$(OGRE_HOME)\addons\skyx\SkyX\SkyX;$(OGRE_HOME)\boost_1_44;$(OGRE_BULLET_HOME)\Collisions\include\;$(OGRE_BULLET_HOME)\Dynamics\include\;$(BULLET_HOME)\src;$(OGREAL_SDK)\include;$(OPENAL_SDK)\include;$(LIB_OGG_HOME)\include;$(LIB_VORBIS_HOME)\include;$(CEGUI_HOME)\cegui\include;$(PAGED_GEOMETRY_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;$(OGRE_HOME)\include;$(OGRE_HOME)\include\OGRE;$(OGRE_HOME)\include\OIS;$(OGRE_HOME)\include\CEGUI;$(OGRE_HOME)\addons\skyx\SkyX\SkyX;$(OGRE_HOME)\boost_1_44;$(OGRE_BULLET_HOME)\Collisions\include\;$(OGRE_BULLET_HOME)\Dynamics\include\;$(BULLET_HOME)\src;$(OGREAL_SDK)\include;$(OPENAL_SDK)\include;$(LIB_OGG_HOME)\include;$(LIB_VORBIS_HOME)\include;$(CEGUI_HOME)\cegui\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;PRECOMP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -62,12 +62,12 @@
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
-      <AdditionalLibraryDirectories>$(OGRE_HOME)\lib\$(Configuration);$(OGRE_HOME)\boost_1_44\lib;$(BULLET_HOME)\lib\$(ConfigurationName);$(OGRE_BULLET_HOME)\lib\$(ConfigurationName);$(OPENAL_SDK)\libs\Win32;$(OGREAL_SDK)\lib\$(ConfigurationName);$(LIB_OGG_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(LIB_VORBIS_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(CEGUI_HOME)\lib;$(SKYX_HOME)\SkyX\SkyX\bin;$(PAGED_GEOMETRY_HOME)\lib\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OGRE_HOME)\lib\$(Configuration);$(OGRE_HOME)\boost_1_44\lib;$(BULLET_HOME)\lib\$(ConfigurationName);$(OGRE_BULLET_HOME)\lib\$(ConfigurationName);$(OPENAL_SDK)\libs\Win32;$(OGREAL_SDK)\lib\$(ConfigurationName);$(LIB_OGG_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(LIB_VORBIS_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(CEGUI_HOME)\lib;$(SKYX_HOME)\SkyX\SkyX\bin</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)TUMBU.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>OgreMain_d.lib;OIS_d.lib;OgrePaging_d.lib;OgreTerrain_d.lib;CEGUIBase_d.lib;CEGUIOgreRenderer_d.lib;SkyX_d.lib;OgreBulletCollisions_d.lib;OgreBulletDynamics_d.lib;bulletcollision.lib;bulletdynamics.lib;LinearMath.lib;GIMPACTutils.lib;ConvexDecomposition.lib;OpenAL32.lib;OgreAL.lib;PagedGeometry.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OgreMain_d.lib;OIS_d.lib;OgrePaging_d.lib;OgreTerrain_d.lib;CEGUIBase_d.lib;CEGUIOgreRenderer_d.lib;SkyX_d.lib;OgreBulletCollisions_d.lib;OgreBulletDynamics_d.lib;bulletcollision.lib;bulletdynamics.lib;LinearMath.lib;GIMPACTutils.lib;ConvexDecomposition.lib;OpenAL32.lib;OgreAL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/SUBSYSTEM:CONSOLE /ENTRY:WinMainCRTStartup %(AdditionalOptions)</AdditionalOptions>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>WinMainCRTStartup</EntryPointSymbol>
@@ -85,7 +85,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>include;$(OGRE_HOME)\include;$(OGRE_HOME)\include\OGRE;$(OGRE_HOME)\include\OIS;$(OGRE_HOME)\include\CEGUI;$(OGRE_HOME)\addons\skyx\SkyX\SkyX;$(OGRE_HOME)\boost_1_44;$(OGRE_BULLET_HOME)\Collisions\include\;$(OGRE_BULLET_HOME)\Dynamics\include\;$(BULLET_HOME)\src;$(OGREAL_SDK)\include;$(OPENAL_SDK)\include;$(LIB_OGG_HOME)\include;$(LIB_VORBIS_HOME)\include;$(CEGUI_HOME)\cegui\include;$(PAGED_GEOMETRY_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;$(OGRE_HOME)\include;$(OGRE_HOME)\include\OGRE;$(OGRE_HOME)\include\OIS;$(OGRE_HOME)\include\CEGUI;$(OGRE_HOME)\addons\skyx\SkyX\SkyX;$(OGRE_HOME)\boost_1_44;$(OGRE_BULLET_HOME)\Collisions\include\;$(OGRE_BULLET_HOME)\Dynamics\include\;$(BULLET_HOME)\src;$(OGREAL_SDK)\include;$(OPENAL_SDK)\include;$(LIB_OGG_HOME)\include;$(LIB_VORBIS_HOME)\include;$(CEGUI_HOME)\cegui\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;PRECOMP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
@@ -101,9 +101,9 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>OgreMain.lib;OIS.lib;OgrePaging.lib;OgreTerrain.lib;CEGUIBase.lib;CEGUIOgreRenderer.lib;SkyX.lib;OgreBulletCollisions.lib;OgreBulletDynamics.lib;bulletcollision.lib;bulletdynamics.lib;LinearMath.lib;GIMPACTutils.lib;ConvexDecomposition.lib;OpenAL32.lib;OgreAL.lib;PagedGeometry.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OgreMain.lib;OIS.lib;OgrePaging.lib;OgreTerrain.lib;CEGUIBase.lib;CEGUIOgreRenderer.lib;SkyX.lib;OgreBulletCollisions.lib;OgreBulletDynamics.lib;bulletcollision.lib;bulletdynamics.lib;LinearMath.lib;GIMPACTutils.lib;ConvexDecomposition.lib;OpenAL32.lib;OgreAL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
-      <AdditionalLibraryDirectories>$(OGRE_HOME)\lib\$(Configuration);$(OGRE_HOME)\boost_1_44\lib;$(BULLET_HOME)\lib\$(ConfigurationName);$(OGRE_BULLET_HOME)\lib\$(ConfigurationName);$(OPENAL_SDK)\libs\Win32;$(OGREAL_SDK)\lib\$(ConfigurationName);$(LIB_OGG_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(LIB_VORBIS_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(CEGUI_HOME)\lib;$(SKYX_HOME)\SkyX\SkyX\bin;$(PAGED_GEOMETRY_HOME)\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OGRE_HOME)\lib\$(Configuration);$(OGRE_HOME)\boost_1_44\lib;$(BULLET_HOME)\lib\$(ConfigurationName);$(OGRE_BULLET_HOME)\lib\$(ConfigurationName);$(OPENAL_SDK)\libs\Win32;$(OGREAL_SDK)\lib\$(ConfigurationName);$(LIB_OGG_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(LIB_VORBIS_HOME)\win32\VS2010\Win32\$(ConfigurationName);$(CEGUI_HOME)\lib;$(SKYX_HOME)\SkyX\SkyX\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

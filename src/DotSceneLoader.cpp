@@ -3,11 +3,6 @@
 #include <Terrain/OgreTerrainGroup.h>
 #include <Terrain/OgreTerrainMaterialGeneratorA.h>
 
-#include <PagedGeometry.h>
-#include <GrassLoader.h>
-#include <BatchPage.h>
-#include <ImpostorPage.h>
-#include <TreeLoader3D.h>
 
 #include <iostream>
 
@@ -17,7 +12,6 @@
 #pragma warning(disable:4305)
 
 using namespace std;
-using namespace Forests;
 
 #define IMPORT_CAMERA 0
 
@@ -37,25 +31,6 @@ DotSceneLoader::~DotSceneLoader(){
     OGRE_DELETE mTerrainGlobalOptions;
 
 	Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Destructor End");
-}
-
-void ParseStringVector(Ogre::String &str, Ogre::StringVector &list)
-{
-    list.clear();
-    Ogre::StringUtil::trim(str,true,true);
-    if(str == "") 
-        return;
-
-    int pos = str.find(";");
-    while(pos != -1)
-    {
-        list.push_back(str.substr(0,pos));
-        str.erase(0,pos + 1);
-        pos = str.find(";");
-    }
-  
-    if(str != "") 
-        list.push_back(str);
 }
 
 void DotSceneLoader::parseDotScene(const Ogre::String &SceneName, const Ogre::String &groupName, Ogre::SceneManager *yourSceneMgr, Ogre::SceneNode *pAttachNode, const Ogre::String &sPrependNode){
@@ -616,13 +591,7 @@ void DotSceneLoader::processNode(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode 
     if(pElement)
         processUserDataReference(pElement, pNode);
 
-    // Process entity (*)
-    pElement = XMLNode->first_node("pagedgeometry");
-    while(pElement)
-    {
-        processPagedGeometry(pElement, pNode);
-        pElement = pElement->next_sibling("pagedgeometry");
-    }
+    // <pagedgeometry> elements are ignored: PagedGeometry was removed (the arena never used it).
 }
 
 void DotSceneLoader::processLookTarget(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent){
@@ -848,96 +817,6 @@ void DotSceneLoader::processPlane(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode
     ent->setMaterialName(material);
 
     pParent->attachObject(ent);
-}
-
-struct PGInstanceInfo
-{
-    Ogre::Vector3 pos;
-    Ogre::Real    scale;
-    Ogre::Real    yaw;
-};
-
-typedef std::vector<PGInstanceInfo> PGInstanceList;
-
-void DotSceneLoader::processPagedGeometry(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent){
-    Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] Process PagedGeometry" );
-	
-	Ogre::String filename = "../Projects/SampleScene3/" + getAttrib(XMLNode, "fileName");
-    Ogre::String model = getAttrib(XMLNode, "model");
-    Ogre::Real pagesize = getAttribReal(XMLNode, "pageSize");
-    Ogre::Real batchdistance = getAttribReal(XMLNode, "batchDistance");
-    Ogre::Real impostordistance = getAttribReal(XMLNode, "impostorDistance");
-    Ogre::Vector4 bounds = Ogre::StringConverter::parseVector4(getAttrib(XMLNode, "bounds"));
-
-    PagedGeometry *mPGHandle = new PagedGeometry();
-    mPGHandle->setCamera(mSceneMgr->getCameraIterator().begin()->second);
-    mPGHandle->setPageSize(pagesize);
-    mPGHandle->setInfinite();
-
-    mPGHandle->addDetailLevel<BatchPage>(batchdistance,0);
-    mPGHandle->addDetailLevel<ImpostorPage>(impostordistance,0);
-
-    TreeLoader3D *mHandle = new TreeLoader3D(mPGHandle, Forests::TBounds(bounds.x, bounds.y, bounds.z, bounds.w));
-    mPGHandle->setPageLoader(mHandle);
-
-    mPGHandles.push_back(mPGHandle);
-    mTreeHandles.push_back(mHandle);
-
-    std::ifstream stream(filename.c_str());
-
-    if(!stream.is_open())
-        return;
-
-    Ogre::StringVector list;
-
-    char res[128];
-
-    PGInstanceList mInstanceList;
-
-    while(!stream.eof())
-    {
-        stream.getline(res, 128);
-        Ogre::String resStr(res);
-
-        ParseStringVector(resStr, list);
-
-        if(list.size() == 3)
-        {
-            PGInstanceInfo info;
-            
-            info.pos = Ogre::StringConverter::parseVector3(list[0]);
-            info.scale = Ogre::StringConverter::parseReal(list[1]);
-            info.yaw = Ogre::StringConverter::parseReal(list[2]);
-
-            mInstanceList.push_back(info);
-        }
-        else if(list.size() == 4)
-        {
-            PGInstanceInfo info;
-            
-            info.pos = Ogre::StringConverter::parseVector3(list[1]);
-            info.scale = Ogre::StringConverter::parseReal(list[2]);
-            info.yaw = Ogre::StringConverter::parseReal(list[3]);
-
-            mInstanceList.push_back(info);
-        }
-    }
-
-    stream.close();
-
-    if(model != "")
-    {
-        Ogre::Entity *mEntityHandle = mSceneMgr->createEntity(model + ".mesh");
-
-        PGInstanceList::iterator it = mInstanceList.begin();
-
-        while(it != mInstanceList.end())
-        {
-            mHandle->addTree(mEntityHandle, it->pos, Ogre::Degree(it->yaw), it->scale);
-
-            it++;
-        }
-    }
 }
 
 void DotSceneLoader::processFog(rapidxml::xml_node<>* XMLNode)

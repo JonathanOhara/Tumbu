@@ -26,7 +26,7 @@ Phase A runs on the legacy toolchain (`scripts/build.ps1`). Phase B uses the new
 
 - [x] **A1** Frame-rate-independent movement (hero crawls and enemy flies away at high FPS)
 - [x] **A2** Code cleanups that both compilers accept (uninitialised pointers, `delete[]`, header qualification, `hash_map`)
-- [ ] **A3** Remove PagedGeometry
+- [x] **A3** Remove PagedGeometry
 - [ ] **A4** Port `general.cg` to HLSL + GLSL and drop the Cg plugin
 - [ ] **A5** Remove SkyX (the skydome serves both quality levels until Caelum is added)
 - [ ] **B1** CMake + VS2022 x64 + Ogre 14.6 build of the dependencies, and the project skeleton
