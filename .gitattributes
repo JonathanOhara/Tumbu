@@ -1,0 +1,27 @@
+# Normalize text files to LF in the repository; Git converts to the platform's line endings on checkout.
+* text=auto
+
+# Visual Studio files keep CRLF in the working tree on every platform.
+*.sln       text eol=crlf
+*.vcxproj   text eol=crlf
+*.filters   text eol=crlf
+*.vcproj    text eol=crlf
+
+# Binary assets (never touch their bytes).
+*.blend     binary
+*.mesh      binary
+*.skeleton  binary
+*.png       binary
+*.jpg       binary
+*.JPG       binary
+*.tga       binary
+*.dds       binary
+*.ogg       binary
+*.ttf       binary
+*.pcf       binary
+*.zip       binary
+*.ogt       binary
+*.ico       binary
+*.doc       binary
+*.suo       binary
+*.lnk       binary
