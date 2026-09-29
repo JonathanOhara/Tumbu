@@ -26,3 +26,18 @@
 *.exe
 *.out
 *.app
+
+# Build output (runtime DLLs/cfgs are staged here by scripts/run.ps1)
+bin/
+obj/
+
+# Visual Studio caches
+.vs/
+ipch/
+*.VC.db
+*.sdf
+*.opensdf
+
+# Blender backups
+*.blend1
+*.blend2
