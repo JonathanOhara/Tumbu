@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "vs2022",
+      "displayName": "Visual Studio 2022 (x64)",
+      "description": "Generates build/vs2022/TUMBU.sln. Dependencies come from TUMBU_DEPS_DIR (default D:/TumbuDeps/modern, built by scripts/deps.ps1).",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build/vs2022"
+    }
+  ],
+  "buildPresets": [
+    { "name": "release", "displayName": "Release", "configurePreset": "vs2022", "configuration": "Release" },
+    { "name": "relwithdebinfo", "displayName": "RelWithDebInfo (debug info + dev tools)", "configurePreset": "vs2022", "configuration": "RelWithDebInfo" }
+  ]
+}

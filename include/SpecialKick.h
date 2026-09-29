@@ -6,12 +6,12 @@
 
 class SpecialKick: public SpecialInterface{
 public:
-	SpecialKick( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller ,OgreBulletDynamics::DynamicsWorld* _world, int _count, float _damage );
+	SpecialKick( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller ,Physics::DynamicsWorld* _world, int _count, float _damage );
 	virtual ~SpecialKick(void);
 	
 	void update(const Ogre::Real time);
 
-	OgreBulletDynamics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
+	Physics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
 	void collision( CollisionDetectionListener *other );
 
 	void concentrate();

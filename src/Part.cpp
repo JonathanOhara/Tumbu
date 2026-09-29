@@ -112,7 +112,7 @@ void Part::build(){
 		animationArray[i]->setLoop(animationConfig->findChild("loop")->getValueB(0) );
 	}
 
-	animConverter	= new OgreBulletCollisions::AnimatedMeshToShapeConverter( entity );
+	animConverter	= new Physics::AnimatedMeshToShapeConverter( entity );
 	collisionShape	= animConverter->createBox();
 	collisionShape->getBulletShape()->setLocalScaling( btVector3( 0.6f, 0.5f, 0.6f) );
 	delete animConverter;

@@ -2,6 +2,8 @@
 #define _CONFIGSCRIPT_H__
  
 #include <OgreScriptLoader.h>
+#include <iostream>
+#include <sstream>
 #include <OgreStringConverter.h>
 #include <unordered_map>
 #include <vector>

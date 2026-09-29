@@ -2,7 +2,7 @@
 #include "Util.h"
 #include "TUMBU.h"
 //-------------------------------------------------------------------------------------
-Character::Character(OgreBulletDynamics::DynamicsWorld* _physicWorld, Ogre::String _robotName, SoundManager *_soundManager){
+Character::Character(Physics::DynamicsWorld* _physicWorld, Ogre::String _robotName, SoundManager *_soundManager){
 	physicWorld = _physicWorld;
 	robotName = _robotName.append( Ogre::StringConverter::toString( Robot::instances ) );
 	soundManager = _soundManager;
@@ -54,55 +54,55 @@ Character::~Character(void){
 	soundManager->destroySound( soundWalk );
 }
 //-------------------------------------------------------------------------------------
-bool Character::keyPressed( const OIS::KeyEvent& input ) {
+bool Character::keyPressed( const OgreBites::KeyboardEvent &input ) {
 	MoveKey _moveKey = NONE;	
 
 	if( TUMBU::getInstance()->isPlaying() ){
-		switch( input.key ){
-#ifdef _DEBUG
-		case OIS::KC_Y:
+		switch( input.keysym.sym ){
+#ifdef TUMBU_DEBUG
+		case 'y':
 			sofrerDano(999);
-		case OIS::KC_F12:
+		case TumbuInput::KEY_F12:
 			exit(0);
 #endif
 			break;
-		case OIS::KC_W:
+		case 'w':
 			_moveKey = UP;
 			break;
-		case OIS::KC_A:
+		case 'a':
 			_moveKey = LEFT;
 			break;
-		case OIS::KC_S:
+		case 's':
 			_moveKey = DOWN;
 			break;
-		case OIS::KC_D:
+		case 'd':
 			_moveKey = RIGHT;
 			break;
-		case OIS::KC_P:
+		case 'p':
 			_moveKey = GUARD;
 			break;
-		case OIS::KC_LCONTROL:
+		case TumbuInput::KEY_LCTRL:
 			_moveKey = GUARD;
 			break;
-		case OIS::KC_U:
+		case 'u':
 			_moveKey = KICK;
 			break;
-		case OIS::KC_1:
+		case '1':
 			_moveKey = KICK;
 			break;
-		case OIS::KC_O:
+		case 'o':
 			_moveKey = PUNCH;
 			break;
-		case OIS::KC_2:
+		case '2':
 			_moveKey = PUNCH;
 			break;
-		case OIS::KC_I:
+		case 'i':
 			_moveKey = JYN;
 			break;
-		case OIS::KC_3:
+		case '3':
 			_moveKey = JYN;
 			break;
-		case OIS::KC_LSHIFT:
+		case TumbuInput::KEY_LSHIFT:
 			_moveKey = RUNNING;
 			break;
 		}
@@ -241,29 +241,29 @@ void Character::movePressed( MoveKey _moveKey ) {
 	}
 }
 //-------------------------------------------------------------------------------------
-bool Character::keyReleased( const OIS::KeyEvent& input ) {
+bool Character::keyReleased( const OgreBites::KeyboardEvent &input ) {
 	MoveKey _moveKey = NONE;
 
-	switch( input.key ){
-	case OIS::KC_W:
+	switch( input.keysym.sym ){
+	case 'w':
 		_moveKey = UP;
 		break;
-	case OIS::KC_A:
+	case 'a':
 		_moveKey = LEFT;
 		break;
-	case OIS::KC_S:
+	case 's':
 		_moveKey = DOWN;
 		break;
-	case OIS::KC_D:
+	case 'd':
 		_moveKey = RIGHT;
 		break;
-	case OIS::KC_P:
+	case 'p':
 		_moveKey = GUARD;
 		break;
-	case OIS::KC_LCONTROL:
+	case TumbuInput::KEY_LCTRL:
 		_moveKey = GUARD;
 		break;
-	case OIS::KC_LSHIFT:
+	case TumbuInput::KEY_LSHIFT:
 		_moveKey = RUNNING;
 		break;
 	}
@@ -352,180 +352,95 @@ void Character::releaseAllKeys(){
 	mKeyDirection.z = 0;
 }
 //-------------------------------------------------------------------------------------
-bool Character::povMoved( const OIS::JoyStickEvent &e, int pov ) {
-	int direction = e.state.mPOV[pov].direction;
-	MoveKey _moveKey = UNDEFINED;
+bool Character::hatMoved( const OgreBites::HatEvent &e ) {
+	// Plain joysticks (not recognised as game controllers) report the D-pad as a hat: SDL_HAT_* bits.
+	const int UP_BIT = 1, RIGHT_BIT = 2, DOWN_BIT = 4, LEFT_BIT = 8;
 
 	if( TUMBU::getInstance()->isPlaying() ){
-		switch( direction ){
-		//North UP
-		case 1:
-			moveReleased( RIGHT );
-			moveReleased( LEFT );
-			_moveKey = UP;
-			break;
-		//EAST Right
-		case 256:
-			moveReleased( UP );
-			moveReleased( DOWN );
-			_moveKey = RIGHT;
-			break;
-		//SOUTH
-		case 16:
-			moveReleased( RIGHT );
-			moveReleased( LEFT );
-			_moveKey = DOWN;
-			break;
-		//WEST Left
-		case 4096:
-			moveReleased( UP );
-			moveReleased( DOWN );
-			_moveKey = LEFT;
-			break;
-		//NORTHEAST
-		case 257:
-			_moveKey = UP_RIGHT;
-			break;
-		//NORTHWEST
-		case 4097:
-			_moveKey = UP_LEFT;
-			break;
-		//SOUTHEAST
-		case 272:
-			_moveKey = DOWN_RIGHT;
-			break;
-		//SOUTHWEST
-		case 4112:
-			_moveKey = DOWN_LEFT;
-			break;
-		//CENTER
-		case 0:
-			moveReleased( UP );
-			moveReleased( DOWN );
-			moveReleased( RIGHT );
-			moveReleased( LEFT );
-			break;
-		}
+		moveReleased( UP );
+		moveReleased( DOWN );
+		moveReleased( RIGHT );
+		moveReleased( LEFT );
 
-		if( _moveKey != UNDEFINED) {
-			movePressed( _moveKey );
-		}
+		if( e.value & UP_BIT )		movePressed( UP );
+		if( e.value & DOWN_BIT )	movePressed( DOWN );
+		if( e.value & LEFT_BIT )	movePressed( LEFT );
+		if( e.value & RIGHT_BIT )	movePressed( RIGHT );
 	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Character::axisMoved( const OIS::JoyStickEvent &e, int axis ) {
-	int abs = e.state.mAxes[axis].abs;
+bool Character::axisMoved( const OgreBites::AxisEvent &e ) {
+	if( !TUMBU::getInstance()->isPlaying() ){
+		return true;
+	}
 
-	MoveKey _moveKey = UNDEFINED;
-
-	if( TUMBU::getInstance()->isPlaying() ){
-		switch( axis ){
-		case 2:
-			if( abs > 5000 ){
-				_moveKey = DOWN;
-			}else if ( abs < -5000 ){
-				_moveKey = UP;
-			}else if ( abs == 0 ){
-				_moveKey = NONE;
-				
-				moveReleased( UP );
-				moveReleased( DOWN );
-			}
-			break;
-		case 3:
-			if( abs > 5000 ){
-				_moveKey = RIGHT;
-			}else if ( abs < -5000 ){
-				_moveKey = LEFT;
-			}else if ( abs == 0 ){
-				_moveKey = NONE;
-				moveReleased( LEFT );
-				moveReleased( RIGHT );
-			}
-			break;
+	// Left stick moves the robot (like the 2011 pad's axes 2/3).
+	switch( e.axis ){
+	case TumbuInput::AXIS_LEFTY:
+		if( e.value > TumbuInput::AXIS_DEADZONE ){
+			movePressed( DOWN );
+		}else if( e.value < -TumbuInput::AXIS_DEADZONE ){
+			movePressed( UP );
+		}else{
+			moveReleased( UP );
+			moveReleased( DOWN );
 		}
-		if( _moveKey != UNDEFINED) {
-			movePressed( _moveKey );
+		break;
+	case TumbuInput::AXIS_LEFTX:
+		if( e.value > TumbuInput::AXIS_DEADZONE ){
+			movePressed( RIGHT );
+		}else if( e.value < -TumbuInput::AXIS_DEADZONE ){
+			movePressed( LEFT );
+		}else{
+			moveReleased( LEFT );
+			moveReleased( RIGHT );
 		}
-	}	
-
-	return true;
-}
-//-------------------------------------------------------------------------------------
-bool Character::sliderMoved( const OIS::JoyStickEvent &e, int sliderID ) {
-	return true;
-}
-//------------------------------------------------------------------------------------- 
-bool Character::buttonPressed( const OIS::JoyStickEvent &e, int button ) {
-	MoveKey _moveKey = UNDEFINED;
-	if( TUMBU::getInstance()->isPlaying() ){
-		switch( button ){
-		case 0:
-			_moveKey = JYN;
-			break;
-		case 1:
-			_moveKey = PUNCH;
-			break;
-		case 2:
-			_moveKey = KICK;
-			break;
-		case 3:
-			break;
-		case 4:
-			_moveKey = RUNNING;
-			break;
-		case 5:
-			_moveKey = GUARD;
-			break;
-
-		}
-		if( _moveKey != UNDEFINED) {
-			movePressed( _moveKey );
-		}
+		break;
 	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Character::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
-	MoveKey _moveKey = UNDEFINED;
-	if( TUMBU::getInstance()->isPlaying() ){
-		switch( button ){
-		case 0:
-			_moveKey = JYN;
-			break;
-		case 1:
-			_moveKey = PUNCH;
-			break;
-		case 2:
-			_moveKey = KICK;
-			break;
-		case 3:
-			break;
-		case 4:
-			_moveKey = RUNNING;
-			break;
-		case 5:
-			_moveKey = GUARD;
-			break;
-
-		}
-		if( _moveKey != UNDEFINED) {
-			moveReleased( _moveKey );
-		}
+Character::MoveKey Character::padButtonToMove( int button ) {
+	switch( button ){
+	case TumbuInput::PAD_SPECIAL:		return JYN;
+	case TumbuInput::PAD_PUNCH:			return PUNCH;
+	case TumbuInput::PAD_KICK:			return KICK;
+	case TumbuInput::PAD_RUN:			return RUNNING;
+	case TumbuInput::PAD_GUARD:			return GUARD;
+	case TumbuInput::PAD_DPAD_UP:		return UP;
+	case TumbuInput::PAD_DPAD_DOWN:		return DOWN;
+	case TumbuInput::PAD_DPAD_LEFT:		return LEFT;
+	case TumbuInput::PAD_DPAD_RIGHT:	return RIGHT;
+	}
+	return UNDEFINED;
+}
+//-------------------------------------------------------------------------------------
+bool Character::buttonPressed( const OgreBites::ButtonEvent &e ) {
+	MoveKey _moveKey = padButtonToMove( e.button );
+	if( TUMBU::getInstance()->isPlaying() && _moveKey != UNDEFINED ){
+		movePressed( _moveKey );
 	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Character::mouseMoved( const OIS::MouseEvent &arg ){
+bool Character::buttonReleased( const OgreBites::ButtonEvent &e ) {
+	MoveKey _moveKey = padButtonToMove( e.button );
+	if( TUMBU::getInstance()->isPlaying() && _moveKey != UNDEFINED ){
+		moveReleased( _moveKey );
+	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Character::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id ){
+bool Character::mouseMoved( const OgreBites::MouseMotionEvent &arg ){
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Character::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id ){
+bool Character::mousePressed( const OgreBites::MouseButtonEvent &arg ){
+	return true;
+}
+//-------------------------------------------------------------------------------------
+bool Character::mouseReleased( const OgreBites::MouseButtonEvent &arg ){
 	return true;
 }
 //-------------------------------------------------------------------------------------
@@ -555,7 +470,7 @@ void Character::collision( CollisionDetectionListener *other ){
 	//specialManager->collision( rigid, rigid2 );	
 }
 //--------------------------------------------------------------------------
-OgreBulletDynamics::RigidBody* Character::getOgreBulletRigidBody( const std::string& instanceName ){
+Physics::RigidBody* Character::getOgreBulletRigidBody( const std::string& instanceName ){
 	return charRigidBody;
 }
 //-------------------------------------------------------------------------------------
@@ -861,11 +776,11 @@ void Character::buildCharacter(){
 	legsNode->setPosition(		Ogre::Vector3( legs->position ) );
 
 	/** PHYSICS */
-	charRigidBody	= new OgreBulletDynamics::RigidBody( "mainCharRigid", physicWorld );
+	charRigidBody	= new Physics::RigidBody( "mainCharRigid", physicWorld );
 
 	TUMBU::getInstance()->addCollisionDetectionListener( this );
 
-	charShape		= new OgreBulletCollisions::CompoundCollisionShape();
+	charShape		= new Physics::CompoundCollisionShape();
 
 	charShape->addChildShape(head->collisionShape,		Ogre::Vector3( head->position ));
 	charShape->addChildShape(body->collisionShape,		Ogre::Vector3( body->position ));
@@ -890,8 +805,8 @@ void Character::buildCharacter(){
 	}
 
 	btTransform localTrans;
-	localTrans.setOrigin (OgreBulletCollisions::OgreBtConverter::to(robotNode->getPosition()));
-	localTrans.setRotation (OgreBulletCollisions::OgreBtConverter::to(robotNode->getOrientation()));
+	localTrans.setOrigin (Physics::OgreBtConverter::to(robotNode->getPosition()));
+	localTrans.setRotation (Physics::OgreBtConverter::to(robotNode->getOrientation()));
 	charRigidBody->getBulletObject()->setWorldTransform( localTrans );
 
 	charBuilded = true;

@@ -44,11 +44,11 @@ SimpleRigidBody::~SimpleRigidBody(void){
 void SimpleRigidBody::collision( CollisionDetectionListener *other ){
 }
 //-------------------------------------------------------------------------------------
-OgreBulletDynamics::RigidBody* SimpleRigidBody::getOgreBulletRigidBody( const std::string& instanceName ){
+Physics::RigidBody* SimpleRigidBody::getOgreBulletRigidBody( const std::string& instanceName ){
 	return rigidBody;
 }
 //-------------------------------------------------------------------------------------
-void SimpleRigidBody::setOgreBulletRigidBody( OgreBulletDynamics::RigidBody *_rigidBody ){
+void SimpleRigidBody::setOgreBulletRigidBody( Physics::RigidBody *_rigidBody ){
 	rigidBody = _rigidBody;
 	TUMBU::getInstance()->addCollisionDetectionListener( this );
 }

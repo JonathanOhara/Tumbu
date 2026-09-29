@@ -2,7 +2,6 @@
 #define __Sky_h_
 
 #include <Ogre.h>
-#include <OIS.h>
 #include <GUI.h>
 
 #include "Clock.h"

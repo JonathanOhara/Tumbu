@@ -42,8 +42,8 @@ public:
 	void renderOneFrame(void);
 	Ogre::Root* getRoot(void);
 
-	SimpleRigidBody* createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld* physicWorld, const Ogre::String &instanceName, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag);
-	SimpleRigidBody* createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld* physicWorld, Ogre::Entity* entity, Ogre::SceneNode* node, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag);
+	SimpleRigidBody* createSimpleRigidBody(Physics::DynamicsWorld* physicWorld, const Ogre::String &instanceName, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag);
+	SimpleRigidBody* createSimpleRigidBody(Physics::DynamicsWorld* physicWorld, Ogre::Entity* entity, Ogre::SceneNode* node, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag);
 	
 	/*************************************************************/
 	/******************** GETTERS AND SETTERS ********************/
@@ -88,22 +88,13 @@ public:
 	void printSceneHierarchy(void);
 protected:
 	void createScene(void);
+	void destroyScene(void);
 	void createStartMenu(void);
 
     bool frameRenderingQueued( const Ogre::FrameEvent& evt );
 	bool frameStarted( const Ogre::FrameEvent& evt );
 
-	bool keyPressed( const OIS::KeyEvent &arg );
-	bool keyReleased( const OIS::KeyEvent &arg );
-	bool mouseMoved( const OIS::MouseEvent &arg );
-	bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
-	bool mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
-
-    bool povMoved( const OIS::JoyStickEvent &e, int pov );
-    bool axisMoved( const OIS::JoyStickEvent &e, int axis );
-    bool sliderMoved( const OIS::JoyStickEvent &e, int sliderID );
-    bool buttonPressed( const OIS::JoyStickEvent &e, int button );
-    bool buttonReleased( const OIS::JoyStickEvent &e, int button );	
+	bool keyPressed( const OgreBites::KeyboardEvent &arg );
 private:
 	void initializeGUIStuff(void);
 	void initializeUtil(void);
@@ -123,8 +114,8 @@ private:
 		shadowTextureCount,
 		skyQuality;
 
-	OgreBulletCollisions::StaticMeshToShapeConverter		*trimeshConverter;
-	OgreBulletCollisions::AnimatedMeshToShapeConverter		*animConverter;
+	Physics::StaticMeshToShapeConverter		*trimeshConverter;
+	Physics::AnimatedMeshToShapeConverter		*animConverter;
 
 	AIManager				*ai;
 	Sound					*startScreenBackgroundSound;

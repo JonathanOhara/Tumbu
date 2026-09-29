@@ -13,7 +13,7 @@ StartScreen::StartScreen(Ogre::SceneManager* mSceneMgr){
 	// Create background rectangle covering the whole screen
 	rect = new Ogre::Rectangle2D(true);
 	rect->setCorners(-1.0, 1.0, 1.0, -1.0);
-	rect->setMaterial(material->getName());
+	rect->setMaterial(material);
  
 	// Render the background before everything else
 	rect->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);

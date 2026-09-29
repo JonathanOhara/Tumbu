@@ -2,7 +2,6 @@
 #define __CutScene_h_
 
 #include <Ogre.h>
-#include <OIS.h>
 
 #include <iostream>
 

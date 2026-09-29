@@ -41,3 +41,6 @@ ipch/
 # Blender backups
 *.blend1
 *.blend2
+
+# CMake build trees
+build/

@@ -121,12 +121,12 @@ public:
 		*leftArmNode,
 		*legsNode;
 
-	OgreBulletDynamics::RigidBody 
+	Physics::RigidBody 
 		*charRigidBody;
 
 	Ogre::ParticleSystem* particleSystem;
 
-	OgreBulletCollisions::CompoundCollisionShape 
+	Physics::CompoundCollisionShape 
 		*charShape;
 
 	bool 
@@ -161,7 +161,7 @@ public:
 		hpPercent,
 		apPercent;
 protected:
-	OgreBulletDynamics::DynamicsWorld* physicWorld;
+	Physics::DynamicsWorld* physicWorld;
 	SoundManager* soundManager;
 	Sound* soundWalk;
 

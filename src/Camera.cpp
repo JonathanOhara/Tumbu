@@ -1,7 +1,7 @@
 #include "Camera.h"
 #include "TUMBU.h"
 #include "GUI.h"
-#ifdef _DEBUG
+#ifdef TUMBU_DEBUG
 #define MIN_CAMERA_DISTANCE 0
 #define MAX_CAMERA_DISTANCE 100
 #else
@@ -22,7 +22,14 @@ Camera::Camera( Ogre::Camera* camera, Ogre::SceneNode* mChaseNode){
 
 	initiateCameraPosition();
 
-	mCameraNode->attachObject(camera);
+	// The camera hangs from a zoom node under the chase node (Ogre 14 cameras are positioned by their node).
+	if( camera->isAttached() ){
+		camera->detachFromParent();
+	}
+	mZoomNode = mCameraNode->createChildSceneNode( "camera_zoom_node" );
+	// In 2011 the camera kept its own local offset (0, 2, 4) under this node; the zoom range (2..5) is built on it.
+	mZoomNode->setPosition( 0, 2, 4 );
+	mZoomNode->attachObject(camera);
 
 	screenFull			= GUI::getInstance()->getScreenWidth();
 	
@@ -74,31 +81,31 @@ void Camera::initiateCameraPosition(void){
 	mPivotPitch = 0;
 }
 //-------------------------------------------------------------------------------------
-bool Camera::keyPressed( const OIS::KeyEvent& input){
+bool Camera::keyPressed( const OgreBites::KeyboardEvent &input){
 	if( TUMBU::getInstance()->isPlaying() ){
-		switch( input.key ) {
-		case OIS::KC_Q:
+		switch( input.keysym.sym ) {
+		case 'q':
 			animation = ROTATING_RIGHT;
 			rotationFactor = 1.3f;
 			break;
-		case OIS::KC_E:
+		case 'e':
 			animation = ROTATING_LEFT;
 			rotationFactor = 1.3f;
 			break;
-		case OIS::KC_PGUP:
+		case TumbuInput::KEY_PAGEUP:
 			animation = ZOOM_IN;
 			break;
-		case OIS::KC_PGDOWN:
+		case TumbuInput::KEY_PAGEDOWN:
 			animation = ZOOM_OUT;
 			break;
-		case OIS::KC_C:
+		case 'c':
 			initiateCameraPosition();
 			break;                
-	#ifdef _DEBUG
-		case OIS::KC_HOME:
+	#ifdef TUMBU_DEBUG
+		case TumbuInput::KEY_HOME:
 			animation = ROTATING_UP;
 			break;
-		case OIS::KC_END:
+		case TumbuInput::KEY_END:
 			animation = ROTATING_DOWN;
 			break;
 	#endif	
@@ -108,36 +115,36 @@ bool Camera::keyPressed( const OIS::KeyEvent& input){
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Camera::keyReleased( const OIS::KeyEvent& input){
+bool Camera::keyReleased( const OgreBites::KeyboardEvent &input){
 	if( TUMBU::getInstance()->isPlaying() ){
-		switch( input.key ) {
-		case OIS::KC_Q:
+		switch( input.keysym.sym ) {
+		case 'q':
 			if( animation == ROTATING_RIGHT ){
 				animation = NONE;
 			}
 			break;
-		case OIS::KC_E:
+		case 'e':
 			if( animation == ROTATING_LEFT ){
 				animation = NONE;
 			}
 			break;
-		case OIS::KC_PGUP:
+		case TumbuInput::KEY_PAGEUP:
 			if( animation == ZOOM_IN ){
 				animation = NONE;
 			}
 			break;
-		case OIS::KC_PGDOWN:
+		case TumbuInput::KEY_PAGEDOWN:
 			if( animation == ZOOM_OUT ){
 				animation = NONE;
 			}
 			break;
-	#ifdef _DEBUG
-		case OIS::KC_HOME:
+	#ifdef TUMBU_DEBUG
+		case TumbuInput::KEY_HOME:
 			if( animation == ROTATING_UP ){
 				animation = NONE;
 			}
 			break;
-		case OIS::KC_END:
+		case TumbuInput::KEY_END:
 			if( animation == ROTATING_DOWN ){
 				animation = NONE;
 			}
@@ -149,63 +156,62 @@ bool Camera::keyReleased( const OIS::KeyEvent& input){
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Camera::povMoved( const OIS::JoyStickEvent &e, int pov ) { 
+bool Camera::hatMoved( const OgreBites::HatEvent &e ) { 
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Camera::axisMoved( const OIS::JoyStickEvent &e, int axis ) {
-	return true;
-}
-//-------------------------------------------------------------------------------------
-bool Camera::sliderMoved( const OIS::JoyStickEvent &e, int sliderID ) {
-	return true;
-}
-//------------------------------------------------------------------------------------- 
-bool Camera::buttonPressed( const OIS::JoyStickEvent &e, int button ) {
-	switch( button ){
-	case 6:
-		animation = ROTATING_LEFT;
-		break;
-	case 7:
-		animation = ROTATING_RIGHT;
-		break;
+bool Camera::axisMoved( const OgreBites::AxisEvent &e ) {
+	if( !TUMBU::getInstance()->isPlaying() ){
+		return true;
 	}
 
-	return true;
-}
-//-------------------------------------------------------------------------------------
-bool Camera::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
-	if( TUMBU::getInstance()->isPlaying() ){
-		switch( button ){
-		case 6:
-			if( animation == ROTATING_LEFT ){
-				animation = NONE;
-				rotationFactor = 1.5f;
-			}
-			break;
-		case 7:
-			if( animation == ROTATING_RIGHT ){
-				animation = NONE;
-				rotationFactor = 1.5f;
-			}
-			break;
+	// Triggers rotate the camera (the 2011 pad used buttons 6/7), and so does the right stick.
+	switch( e.axis ){
+	case TumbuInput::AXIS_TRIGGERLEFT:
+	case TumbuInput::AXIS_TRIGGERRIGHT:
+	case TumbuInput::AXIS_RIGHTX:{
+		bool left = e.axis == TumbuInput::AXIS_TRIGGERLEFT || ( e.axis == TumbuInput::AXIS_RIGHTX && e.value < 0 );
+		CameraAnimation wanted = left ? ROTATING_LEFT : ROTATING_RIGHT;
+		if( Ogre::Math::Abs( e.value ) > TumbuInput::AXIS_DEADZONE ){
+			animation = wanted;
+			rotationFactor = 1.5f;
+		}else if( animation == ROTATING_LEFT || animation == ROTATING_RIGHT ){
+			animation = NONE;
 		}
+		break;
+	}
 	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Camera::mouseMoved( const OIS::MouseEvent &arg ){
+bool Camera::buttonPressed( const OgreBites::ButtonEvent &e ) {
+	return true;
+}
+//-------------------------------------------------------------------------------------
+bool Camera::buttonReleased( const OgreBites::ButtonEvent &e ) {
+	return true;
+}
+//-------------------------------------------------------------------------------------
+bool Camera::mouseMoved( const OgreBites::MouseMotionEvent &arg ){
 	if( TUMBU::getInstance()->isPlaying() ){
-		updateCameraGoal(-0.05f * arg.state.X.rel, -0.05f * arg.state.Y.rel, -0.0005f * arg.state.Z.rel);
+		updateCameraGoal( -0.05f * arg.xrel, -0.05f * arg.yrel, 0 );
 	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Camera::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id ){
+bool Camera::mouseWheelRolled( const OgreBites::MouseWheelEvent &arg ){
+	if( TUMBU::getInstance()->isPlaying() ){
+		// OIS reported 120 per wheel notch; SDL reports 1.
+		updateCameraGoal( 0, 0, -0.06f * arg.y );
+	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Camera::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id ){
+bool Camera::mousePressed( const OgreBites::MouseButtonEvent &arg ){
+	return true;
+}
+//-------------------------------------------------------------------------------------
+bool Camera::mouseReleased( const OgreBites::MouseButtonEvent &arg ){
 	return true;
 }
 //-------------------------------------------------------------------------------------
@@ -246,16 +252,16 @@ bool Camera::frameRenderingQueued(const Ogre::FrameEvent &evt){
 			mCameraPivot->yaw(Ogre::Radian(evt.timeSinceLastFrame * - rotationFactor));
 			break;
 		case ZOOM_IN:
-			if( mCamera->getPosition().z > MIN_CAMERA_DISTANCE){
-				mCamera->setPosition(mCamera->getPosition() + Ogre::Vector3(0, 0, -10 * evt.timeSinceLastFrame));
+			if( mZoomNode->getPosition().z > MIN_CAMERA_DISTANCE){
+				mZoomNode->setPosition(mZoomNode->getPosition() + Ogre::Vector3(0, 0, -10 * evt.timeSinceLastFrame));
 			}
 			break;
 		case ZOOM_OUT:
-			if( mCamera->getPosition().z < MAX_CAMERA_DISTANCE){
-				mCamera->setPosition(mCamera->getPosition() + Ogre::Vector3(0, 0, 10 * evt.timeSinceLastFrame));
+			if( mZoomNode->getPosition().z < MAX_CAMERA_DISTANCE){
+				mZoomNode->setPosition(mZoomNode->getPosition() + Ogre::Vector3(0, 0, 10 * evt.timeSinceLastFrame));
 			}
 			break;
-	#ifdef _DEBUG
+	#ifdef TUMBU_DEBUG
 		case ROTATING_UP:
 			mCameraPivot->pitch(Ogre::Radian(evt.timeSinceLastFrame * - 2));
 			break;

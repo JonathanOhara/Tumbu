@@ -123,7 +123,7 @@ void Robot::setHorizontalVelocity( const Ogre::Vector3 &direction, Ogre::Real sp
 //-------------------------------------------------------------------
 void Robot::syncBodyRotation(void){
 	btRigidBody* rigid = charRigidBody->getBulletRigidBody();
-	btQuaternion rotation = OgreBulletCollisions::OgreBtConverter::to( robotNode->getOrientation() );
+	btQuaternion rotation = Physics::OgreBtConverter::to( robotNode->getOrientation() );
 
 	// Only the rotation is copied: the physics simulation owns the position.
 	btTransform transform = rigid->getWorldTransform();

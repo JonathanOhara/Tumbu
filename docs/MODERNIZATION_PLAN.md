@@ -29,13 +29,13 @@ Phase A runs on the legacy toolchain (`scripts/build.ps1`). Phase B uses the new
 - [x] **A3** Remove PagedGeometry
 - [x] **A4** Port `general.cg` to HLSL + GLSL and drop the Cg plugin
 - [x] **A5** Remove SkyX (the skydome serves both quality levels until Caelum is added)
-- [ ] **B1** CMake + VS2022 x64 + Ogre 14.6 build of the dependencies, and the project skeleton
-- [ ] **B2** App shell on Ogre 14: Root, window, resources, camera, OgreBites trays, SDL2 input
-- [ ] **B3** Scene loader + terrain on Ogre 14
-- [ ] **B4** Physics on the Ogre Bullet component
-- [ ] **B5** Audio on miniaudio
+- [x] **B1** CMake + VS2022 x64 + Ogre 14.6 build of the dependencies, and the project skeleton
+- [x] **B2** App shell on Ogre 14: Root, window, resources, camera, OgreBites trays, SDL2 input
+- [x] **B3** Scene loader + terrain on Ogre 14
+- [x] **B4** Physics on the Ogre Bullet component
+- [x] **B5** Audio on miniaudio
 - [ ] **B6** GUI on MyGUI (start menu, HUD, dialogs, ESC menu and inventory)
-- [ ] **B7** Mesh upgrade (`OgreMeshTool`) and a modern render system (D3D11/GL3+)
+- [ ] **B7** Mesh upgrade (done: scripts/upgrade-meshes.ps1) and a modern render system (D3D11 is the default; robot shaders still to port)
 - [ ] **C2** Sky on Caelum
 - [ ] **Done** Full game loop plays on Ogre 14.6, with docs for building in Visual Studio
 

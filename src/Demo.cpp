@@ -9,8 +9,7 @@ Demo::Demo(){
 	arenaRigidBody				= NULL;
 	backGroundSound				= NULL;
 	colliseumRigidBody			= NULL;
-#ifdef _DEBUG
-	debugDrawer					= NULL;
+#ifdef TUMBU_DEBUG
 	debugDrawerNode				= NULL;
 #endif
 	enemy						= NULL;
@@ -67,15 +66,10 @@ Demo::~Demo(void){
 		backGroundSound->stop();
 		soundManager->destroySound( backGroundSound );
 	}
-#ifdef _DEBUG
-	if( debugDrawerNode != NULL && debugDrawer != NULL ){
-		debugDrawerNode->removeAndDestroyAllChildren();
+#ifdef TUMBU_DEBUG
+	if( debugDrawerNode != NULL ){
+		getPhysicWorld()->setDebugDrawNode( NULL );
 		mSceneMgr->destroySceneNode( debugDrawerNode );
-		debugDrawer->setDrawWireframe(false);
-		getPhysicWorld()->setShowDebugShapes(false);
-		getPhysicWorld()->setShowDebugContactPoints(false);
-		debugDrawer->clear();
-		delete debugDrawer;
 	}
 #endif
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Arena...");
@@ -128,8 +122,8 @@ bool Demo::frameRenderingQueued(const Ogre::FrameEvent &evt){
 //-------------------------------------------------------------------------------------
 void Demo::collisionDetection(void){
 	btPersistentManifold* contactManifold;
-	btRigidBody *rigid,
-				*rigid2;
+	const btCollisionObject *rigid,
+							*rigid2;
 
 	CollisionDetectionListener *listener1,
 							   *listener2;
@@ -148,8 +142,8 @@ void Demo::collisionDetection(void){
 		try{
 			contactManifold =  getPhysicWorld()->getBulletCollisionWorld()->getDispatcher()->getManifoldByIndexInternal(i);
 	
-			rigid = static_cast<btRigidBody*>(contactManifold->getBody0());
-			rigid2 = static_cast<btRigidBody*>(contactManifold->getBody1());
+			rigid = contactManifold->getBody0();
+			rigid2 = contactManifold->getBody1();
 
 			if( getPhysicWorld()->findObject( rigid ) == NULL || getPhysicWorld()->findObject( rigid2 ) == NULL ){
 				continue;
@@ -178,11 +172,11 @@ void Demo::collisionDetection(void){
 						}
 					}
 	*/
-					listener1->collisionPosition = OgreBulletCollisions::BtOgreConverter::to( contactManifold->getContactPoint(0).getPositionWorldOnA() );
-					listener2->collisionPosition = OgreBulletCollisions::BtOgreConverter::to( contactManifold->getContactPoint(0).getPositionWorldOnB() );
+					listener1->collisionPosition = Physics::BtOgreConverter::to( contactManifold->getContactPoint(0).getPositionWorldOnA() );
+					listener2->collisionPosition = Physics::BtOgreConverter::to( contactManifold->getContactPoint(0).getPositionWorldOnB() );
 
-					listener1->collisionPosition = OgreBulletCollisions::BtOgreConverter::to( collisionPointA );
-					listener2->collisionPosition = OgreBulletCollisions::BtOgreConverter::to( collisionPointB );
+					listener1->collisionPosition = Physics::BtOgreConverter::to( collisionPointA );
+					listener2->collisionPosition = Physics::BtOgreConverter::to( collisionPointB );
 
 					listener2->rigidBodyName = rigid2Name;
 					listener1->collision( listener2 );
@@ -262,7 +256,7 @@ void Demo::initializeDemo(){
 	tumbu->renderOneFrame();
 	setupCamera();
 	
-	backGroundSound = soundManager->createSound( "backgroundSound", "battle_music.ogg", Ogre::Vector3(0,0,0), true, false);
+	backGroundSound = soundManager->createSound( "backgroundSound", "battle_music.ogg", Ogre::Vector3(0,0,0), true, false, false );
 	backGroundSound->play();
 
 	gui->stopLoad();
@@ -310,20 +304,16 @@ void Demo::stopTutorialMode(void){
 }
 //-------------------------------------------------------------------------------------
 void Demo::initializePhysicsStuff(void){
-	physicWorld = new OgreBulletDynamics::DynamicsWorld( mSceneMgr, 
+	physicWorld = new Physics::DynamicsWorld( mSceneMgr, 
 		Ogre::AxisAlignedBox( Ogre::Vector3 (-100, -100, -100), Ogre::Vector3 (100,  100,  100) ), 
-		Ogre::Vector3(0,-9.81f,0), true, true, 32768
+		Ogre::Vector3(0,-9.81f,0)
 	);
 
-	#ifdef _DEBUG
-	if( debugDrawer == NULL ){
-		debugDrawer = new OgreBulletCollisions::DebugDrawer();
-		debugDrawer->setDrawWireframe(true);
-		getPhysicWorld()->setDebugDrawer(debugDrawer);
-		getPhysicWorld()->setShowDebugShapes(true);
-		getPhysicWorld()->setShowDebugContactPoints(true);
+	#ifdef TUMBU_DEBUG
+	if( debugDrawerNode == NULL ){
+		// Collision shapes drawn as lines (RelWithDebInfo builds).
 		debugDrawerNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("debugDrawer", Ogre::Vector3::ZERO);
-		debugDrawerNode->attachObject(static_cast <Ogre::SimpleRenderable *> (debugDrawer));
+		getPhysicWorld()->setDebugDrawNode( debugDrawerNode );
 	}
 	#endif
 }
@@ -344,8 +334,8 @@ void Demo::createArena(void){
 void Demo::createTerrainPhysic(void){
 	Ogre::Terrain* pTerrain;
 	Ogre::SceneNode* pTerrainNode;
-	OgreBulletCollisions::CollisionShape* mTerrainShape;
-	OgreBulletDynamics::RigidBody* defaultTerrainBody;
+	Physics::CollisionShape* mTerrainShape;
+	Physics::RigidBody* defaultTerrainBody;
 
 	pTerrain = mLoader->getTerrainGroup()->getTerrain( 0, 0 );
 
@@ -366,7 +356,7 @@ void Demo::createTerrainPhysic(void){
 	const float      terrainBodyRestitution  = 0.1f;
 	const float      terrainBodyFriction     = 0.8f;
 
-	mTerrainShape = new OgreBulletCollisions:: HeightmapCollisionShape(
+	mTerrainShape = new Physics::HeightmapCollisionShape(
 		pTerrain->getSize(), 
 		pTerrain->getSize(),	
 		localScaling,
@@ -375,7 +365,7 @@ void Demo::createTerrainPhysic(void){
 		pTerrain->getMinHeight(), 
 		true);
 
-	defaultTerrainBody = new OgreBulletDynamics::RigidBody(
+	defaultTerrainBody = new Physics::RigidBody(
 		"Terrain", 
 		getPhysicWorld());
 
@@ -494,27 +484,14 @@ void Demo::startInitialConversation(void){
 }
 //-------------------------------------------------------------------------------------
 void Demo::initialiseGameResources(void){
-	if ( !Ogre::ResourceGroupManager::getSingleton().isResourceGroupInitialised("EditorResources") ){
-		Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("EditorResources");
+	// Ogre 14 initialises every group at startup; this only covers groups that are still pending.
+	Ogre::ResourceGroupManager &rgm = Ogre::ResourceGroupManager::getSingleton();
+	const char* groups[] = { "Plants", "TerrainTextures", "Game" };
+	for( size_t i = 0; i < sizeof(groups) / sizeof(groups[0]); i++ ){
+		if( rgm.resourceGroupExists( groups[i] ) && !rgm.isResourceGroupInitialised( groups[i] ) ){
+			rgm.initialiseResourceGroup( groups[i] );
+		}
 	}
-
-	if ( !Ogre::ResourceGroupManager::getSingleton().isResourceGroupInitialised("Brushes") ){
-		Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Brushes");
-	}
-
-	if ( !Ogre::ResourceGroupManager::getSingleton().isResourceGroupInitialised("Plants") ){
-		Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Plants");
-	}
-
-	if ( !Ogre::ResourceGroupManager::getSingleton().isResourceGroupInitialised("TerrainTextures") ){
-		Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("TerrainTextures");
-	}
-	
-	if ( !Ogre::ResourceGroupManager::getSingleton().isResourceGroupInitialised("Game") ){
-		Ogre::ResourceGroupManager::getSingleton().initialiseResourceGroup("Game");
-	}
-
-
 }
 //-------------------------------------------------------------------------------------
 void Demo::setupCamera(void){
@@ -635,11 +612,11 @@ Camera* Demo::getCamera(){
 	return camera;
 }
 //-------------------------------------------------------------------------------------
-void Demo::setPhysicWorld( OgreBulletDynamics::DynamicsWorld* _physicWorld ){
+void Demo::setPhysicWorld( Physics::DynamicsWorld* _physicWorld ){
 	physicWorld = _physicWorld;
 }
 //-------------------------------------------------------------------------------------
-OgreBulletDynamics::DynamicsWorld* Demo::getPhysicWorld(){
+Physics::DynamicsWorld* Demo::getPhysicWorld(){
 	return physicWorld;
 }
 //-------------------------------------------------------------------------------------

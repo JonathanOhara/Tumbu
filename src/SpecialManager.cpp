@@ -3,7 +3,7 @@
 #include "Robot.h"
 #include "TUMBU.h"
 //-------------------------------------------------------------------------------------
-SpecialManager::SpecialManager( Ogre::SceneManager* _sceneMgr, Robot* _robotSpeller, OgreBulletDynamics::DynamicsWorld* _world ){
+SpecialManager::SpecialManager( Ogre::SceneManager* _sceneMgr, Robot* _robotSpeller, Physics::DynamicsWorld* _world ){
 	sceneMgr = _sceneMgr;
 	world = _world;
 	robotSpeller = _robotSpeller;

@@ -1,0 +1,118 @@
+# Builds the modern (Ogre 14) dependencies of TUMBU with Visual Studio 2022, x64.
+#
+#   .\scripts\deps.ps1                      # everything
+#   .\scripts\deps.ps1 -Only ogre           # one package: ogre | mygui | caelum | miniaudio
+#
+# Everything is built in Release. Ogre builds its own dependencies (SDL2, Bullet, FreeType, pugixml) as
+# static Release libraries, so the game links Release libraries in every configuration (Release and
+# RelWithDebInfo) and all modules share one C runtime.
+#
+# Output: $DepsDir\install (headers, libs, DLLs, CMake configs). The game's CMake finds it through the
+# TUMBU_DEPS_DIR environment variable (default D:\TumbuDeps\modern). Sources and build trees live in
+# $DepsDir\src and $DepsDir\build, so they never touch the repo.
+param(
+    [string]$DepsDir = $(if ($env:TUMBU_DEPS_DIR) { $env:TUMBU_DEPS_DIR } else { 'D:\TumbuDeps\modern' }),
+    [ValidateSet('all', 'ogre', 'mygui', 'caelum', 'miniaudio')] [string]$Only = 'all',
+    [string[]]$Configs = @('Release')
+)
+$ErrorActionPreference = 'Stop'
+
+# Pinned versions.
+$OgreVersion      = '14.6.0'
+$MyGuiVersion     = '3.5.1'
+$CaelumCommit     = 'master'
+$MiniaudioVersion = '0.11.25'
+
+$src     = Join-Path $DepsDir 'src'
+$build   = Join-Path $DepsDir 'build'
+$install = Join-Path $DepsDir 'install'
+# Ogre builds SDL2, Bullet, FreeType and pugixml (static, Release) here; the folder must not exist beforehand.
+$ogreDeps = Join-Path $DepsDir 'ogredeps'
+New-Item -ItemType Directory -Force $src, $build, $install | Out-Null
+
+$vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+$vsPath  = & $vswhere -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+$cmake   = Join-Path $vsPath 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+if (-not (Test-Path $cmake)) { throw "CMake not found in Visual Studio ($vsPath). Install the 'C++ CMake tools for Windows' component." }
+$generator = @('-G', 'Visual Studio 17 2022', '-A', 'x64')
+
+function Invoke-Checked([string]$exe, [string[]]$arguments) {
+    Write-Host ">> $exe $($arguments -join ' ')" -ForegroundColor DarkGray
+    & $exe @arguments
+    if ($LASTEXITCODE -ne 0) { throw "Command failed with exit code $LASTEXITCODE" }
+}
+
+function Get-Source([string]$name, [string]$url, [string]$folder) {
+    $dir = Join-Path $src $folder
+    if (Test-Path $dir) { return $dir }
+    $archive = Join-Path $src "$name.tar.gz"
+    Write-Host "Downloading $name" -ForegroundColor Cyan
+    Invoke-Checked 'curl.exe' @('-sSL', '--fail', '-o', $archive, $url)
+    Invoke-Checked 'tar.exe' @('-xzf', $archive, '-C', $src)
+    return $dir
+}
+
+function Build-CMake([string]$name, [string]$sourceDir, [string[]]$options) {
+    $buildDir = Join-Path $build $name
+    Write-Host "Configuring $name" -ForegroundColor Cyan
+    Invoke-Checked $cmake (@('-S', $sourceDir, '-B', $buildDir) + $generator + @(
+        "-DCMAKE_INSTALL_PREFIX=$install", "-DCMAKE_PREFIX_PATH=$install;$ogreDeps") + $options)
+    foreach ($config in $Configs) {
+        Write-Host "Building $name ($config)" -ForegroundColor Cyan
+        Invoke-Checked $cmake @('--build', $buildDir, '--config', $config, '--parallel')
+        Invoke-Checked $cmake @('--install', $buildDir, '--config', $config)
+    }
+}
+
+if ($Only -in 'all', 'ogre') {
+    $dir = Get-Source "ogre-$OgreVersion" "https://github.com/OGRECave/ogre/archive/refs/tags/v$OgreVersion.tar.gz" "ogre-$OgreVersion"
+    Build-CMake 'ogre' $dir @(
+        # Ogre downloads and builds SDL2, Bullet, FreeType and pugixml into $ogreDeps (only if it doesn't exist).
+        '-DOGRE_BUILD_DEPENDENCIES=ON', "-DOGRE_DEPENDENCIES_DIR=$ogreDeps", '-DCMAKE_BUILD_TYPE=Release',
+        '-DOGRE_BUILD_SAMPLES=OFF', '-DOGRE_BUILD_TESTS=OFF', '-DOGRE_BUILD_TOOLS=ON',
+        '-DOGRE_INSTALL_SAMPLES=OFF', '-DOGRE_INSTALL_DOCS=OFF', '-DOGRE_INSTALL_PDB=ON',
+        '-DOGRE_BUILD_COMPONENT_BITES=ON', '-DOGRE_BUILD_COMPONENT_OVERLAY=ON', '-DOGRE_BUILD_COMPONENT_OVERLAY_IMGUI=ON',
+        '-DOGRE_BUILD_COMPONENT_TERRAIN=ON', '-DOGRE_BUILD_COMPONENT_PAGING=ON', '-DOGRE_BUILD_COMPONENT_RTSHADERSYSTEM=ON',
+        '-DOGRE_BUILD_COMPONENT_BULLET=ON', '-DOGRE_BUILD_COMPONENT_MESHLODGENERATOR=ON',
+        '-DOGRE_BUILD_COMPONENT_VOLUME=OFF', '-DOGRE_BUILD_COMPONENT_PROPERTY=OFF',
+        '-DOGRE_BUILD_COMPONENT_PYTHON=OFF', '-DOGRE_BUILD_COMPONENT_JAVA=OFF', '-DOGRE_BUILD_COMPONENT_CSHARP=OFF',
+        '-DOGRE_BUILD_PLUGIN_ASSIMP=OFF', '-DOGRE_BUILD_PLUGIN_EXRCODEC=OFF', '-DOGRE_BUILD_PLUGIN_FREEIMAGE=OFF',
+        '-DOGRE_BUILD_PLUGIN_GLSLANG=OFF', '-DOGRE_BUILD_PLUGIN_CG=OFF', '-DOGRE_BUILD_PLUGIN_DOT_SCENE=OFF',
+        '-DOGRE_BUILD_PLUGIN_PCZ=OFF', '-DOGRE_BUILD_PLUGIN_BSP=OFF',
+        # Direct3D9 would need the discontinued 2010 DirectX SDK; Direct3D11 and OpenGL cover Windows.
+        '-DOGRE_BUILD_RENDERSYSTEM_D3D9=OFF', '-DOGRE_BUILD_RENDERSYSTEM_D3D11=ON',
+        '-DOGRE_BUILD_RENDERSYSTEM_GL=ON', '-DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON',
+        '-DOGRE_BUILD_RENDERSYSTEM_VULKAN=OFF', '-DOGRE_BUILD_RENDERSYSTEM_GLES2=OFF', '-DOGRE_BUILD_RENDERSYSTEM_TINY=OFF')
+}
+
+if ($Only -in 'all', 'mygui') {
+    $dir = Get-Source "mygui-$MyGuiVersion" "https://github.com/MyGUI/mygui/archive/refs/tags/v$MyGuiVersion.tar.gz" "mygui-$MyGuiVersion"
+    Build-CMake 'mygui' $dir @(
+        '-DMYGUI_RENDERSYSTEM=3',                # 3 = Ogre (1.x)
+        '-DMYGUI_USE_SYSTEM_PUGIXML=ON',         # reuse the pugixml Ogre built (no git clone)
+        "-DOGRE_DIR=$install\CMake",
+        '-DMYGUI_BUILD_DEMOS=OFF', '-DMYGUI_BUILD_TOOLS=OFF', '-DMYGUI_BUILD_DOCS=OFF',
+        '-DMYGUI_BUILD_UNITTESTS=OFF', '-DMYGUI_BUILD_TEST_APP=OFF', '-DMYGUI_BUILD_WRAPPER=OFF',
+        '-DMYGUI_STATIC=OFF')
+    # MyGUI's base media (skins, fonts, pointers) is not installed without the demos; the game ships it.
+    $media = Join-Path $install 'share\MYGUI\Media'
+    New-Item -ItemType Directory -Force $media | Out-Null
+    Copy-Item -Recurse -Force (Join-Path $dir 'Media\MyGUI_Media') $media
+}
+
+if ($Only -in 'all', 'caelum') {
+    $dir = Get-Source "caelum-$CaelumCommit" "https://github.com/OGRECave/ogre-caelum/archive/$CaelumCommit.tar.gz" "ogre-caelum-$CaelumCommit"
+    Build-CMake 'caelum' $dir @("-DOGRE_DIR=$install\CMake")
+}
+
+if ($Only -in 'all', 'miniaudio') {
+    # Single-file library: the game compiles miniaudio.c itself.
+    $dir = Get-Source "miniaudio-$MiniaudioVersion" "https://github.com/mackron/miniaudio/archive/refs/tags/$MiniaudioVersion.tar.gz" "miniaudio-$MiniaudioVersion"
+    $target = Join-Path $install 'include\miniaudio'
+    New-Item -ItemType Directory -Force $target | Out-Null
+    # stb_vorbis (bundled with miniaudio) decodes the game's .ogg files.
+    Copy-Item (Join-Path $dir 'miniaudio.h'), (Join-Path $dir 'miniaudio.c'), (Join-Path $dir 'extras\stb_vorbis.c') $target -Force
+    Write-Host "miniaudio $MiniaudioVersion -> $target" -ForegroundColor Cyan
+}
+
+Write-Host "Dependencies ready in $install" -ForegroundColor Green

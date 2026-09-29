@@ -2,7 +2,6 @@
 #define __EnergyParticle_h_
 
 #include <Ogre.h>
-#include <OIS.h>
 #include "GameObject.h"
 
 class EnergyParticle {

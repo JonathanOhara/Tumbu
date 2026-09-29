@@ -6,11 +6,11 @@ Util::Util(){
 Util::~Util(void){
 }
 //-------------------------------------------------------------------------------------
-OgreBulletDynamics::RigidBody* Util::createBarrel(int barrelIndex, Ogre::SceneManager* mSceneMgr, OgreBulletDynamics::DynamicsWorld* world, Ogre::Camera* mCamera){
+Physics::RigidBody* Util::createBarrel(int barrelIndex, Ogre::SceneManager* mSceneMgr, Physics::DynamicsWorld* world, Ogre::Camera* mCamera){
 //	printf("CreateBarrel()\n");
 	
-	OgreBulletDynamics::RigidBody *defaultBody;
-	OgreBulletCollisions::BoxCollisionShape *sceneBoxShape;
+	Physics::RigidBody *defaultBody;
+	Physics::BoxCollisionShape *sceneBoxShape;
 
 	Ogre::SceneNode* node;
 	Ogre::Entity *entity;
@@ -32,9 +32,9 @@ OgreBulletDynamics::RigidBody* Util::createBarrel(int barrelIndex, Ogre::SceneMa
 	size = entity->getBoundingBox().getSize(); 
 	size /= 1.9f; // diminuindo o tamanho
 		
-	sceneBoxShape = new OgreBulletCollisions::BoxCollisionShape(size);
+	sceneBoxShape = new Physics::BoxCollisionShape(size);
 	
-	defaultBody = new OgreBulletDynamics::RigidBody(
+	defaultBody = new Physics::RigidBody(
 		"defaultBoxRigid" + Ogre::StringConverter::toString(barrelIndex), 
 		world
 	);
@@ -43,7 +43,7 @@ OgreBulletDynamics::RigidBody* Util::createBarrel(int barrelIndex, Ogre::SceneMa
 					   0.1f,         // dynamic body restitution
 					   0.6f,         // dynamic body friction
 					   80,          // dynamic bodymass
-					   Ogre::Vector3(mCamera->getPosition().x, 2, mCamera->getPosition().z),      // starting position of the box
+					   Ogre::Vector3(mCamera->getDerivedPosition().x, 2, mCamera->getDerivedPosition().z),      // starting position of the box
 					   Ogre::Quaternion(0,0,0,1));// orientation of the box     
 
 	defaultBody->setLinearVelocity(mCamera->getDerivedDirection().normalisedCopy() * 7.0f ); // velocidade
@@ -54,11 +54,11 @@ OgreBulletDynamics::RigidBody* Util::createBarrel(int barrelIndex, Ogre::SceneMa
 }
  
 void Util::updateShapeFromEntity ( Robot* charUp, Part* part ){
-	OgreBulletCollisions::AnimatedMeshToShapeConverter* animConverter = new OgreBulletCollisions::AnimatedMeshToShapeConverter(part->entity);
+	Physics::AnimatedMeshToShapeConverter* animConverter = new Physics::AnimatedMeshToShapeConverter(part->entity);
 
-	OgreBulletCollisions::CollisionShape* shape = animConverter->createConvex();
+	Physics::CollisionShape* shape = animConverter->createConvex();
 	
-	charUp->charShape = new OgreBulletCollisions::CompoundCollisionShape();
+	charUp->charShape = new Physics::CompoundCollisionShape();
 
 	switch(part->partType){
 	case HEAD:

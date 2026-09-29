@@ -5,7 +5,7 @@
 
 class CharacterEnemy : public Robot, public CollisionDetectionListener {
 public:
-	CharacterEnemy(OgreBulletDynamics::DynamicsWorld* _physicWorld, Ogre::String _robotName, SoundManager *_soundManager);
+	CharacterEnemy(Physics::DynamicsWorld* _physicWorld, Ogre::String _robotName, SoundManager *_soundManager);
 	virtual ~CharacterEnemy(void);
 
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
@@ -17,7 +17,7 @@ public:
 	void updateDefense(const Ogre::Real time);
 	void updateRegeneration(const Ogre::Real time);
 	
-	OgreBulletDynamics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
+	Physics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
 	void collision( CollisionDetectionListener *other );
 	
 	void unbuildParts();

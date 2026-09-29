@@ -6,12 +6,12 @@
 
 class SpecialPunch: public SpecialInterface{
 public:
-	SpecialPunch( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller ,OgreBulletDynamics::DynamicsWorld* _world, int _count, float _damage );
+	SpecialPunch( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller ,Physics::DynamicsWorld* _world, int _count, float _damage );
 	virtual ~SpecialPunch(void);
 	
 	void update(const Ogre::Real time);
 
-	OgreBulletDynamics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
+	Physics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
 	void collision( CollisionDetectionListener *other );
 
 	void concentrate();

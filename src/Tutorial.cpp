@@ -63,37 +63,37 @@ bool Tutorial::frameRenderingQueued(const Ogre::FrameEvent &evt){
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::keyPressed( const OIS::KeyEvent &arg ){
+bool Tutorial::keyPressed( const OgreBites::KeyboardEvent &arg ){
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
-	switch( arg.key ){
-	case OIS::KC_W:
+bool Tutorial::keyReleased( const OgreBites::KeyboardEvent &arg ){
+	switch( arg.keysym.sym ){
+	case 'w':
 		if( type == WALKING ){
 			delay = 1;
 			correctMove = true;
 		}
 		break;
-	case OIS::KC_A:
+	case 'a':
 		if( type == WALKING ){
 			delay = 1;
 			correctMove = true;
 		}
 		break;
-	case OIS::KC_S:
+	case 's':
 		if( type == WALKING ){
 			delay = 1;
 			correctMove = true;
 		}
 		break;
-	case OIS::KC_D:
+	case 'd':
 		if( type == WALKING ){
 			delay = 1;
 			correctMove = true;
 		}
 		break;
-	case OIS::KC_LSHIFT:
+	case TumbuInput::KEY_LSHIFT:
 		if( type == RUNNING ){
 			if( !hero->mKeyDirection.isZeroLength() ){
 				delay = 1;
@@ -101,20 +101,20 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 			}
 		}
 		break;
-	case OIS::KC_Q:
+	case 'q':
 		if( type == ROTATING_CAMERA ){
 			delay = 1;
 			correctMove = true;
 		}
 		break;
-	case OIS::KC_E:
+	case 'e':
 		if( type == ROTATING_CAMERA ){
 			delay = 1;
 			correctMove = true;
 		}
 		break;
 
-	case OIS::KC_U:
+	case 'u':
 		if( type == KICKING ){
 			if( hero->kick->isAttacking() ){
 				delay = 1;
@@ -122,7 +122,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 			}
 		}
 		break;
-	case OIS::KC_1:
+	case '1':
 		if( type == KICKING ){
 			if( hero->kick->isAttacking() ){
 				delay = 1;
@@ -131,7 +131,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 		}
 		break;
 
-	case OIS::KC_O:
+	case 'o':
 		if( type == PUNCHING ){
 			if( hero->punch->isAttacking() ){
 				delay = 1;
@@ -139,7 +139,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 			}
 		}
 		break;
-	case OIS::KC_2:
+	case '2':
 		if( type == PUNCHING ){
 			if( hero->punch->isAttacking() ){
 				delay = 1;
@@ -148,7 +148,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 		}
 		break;
 
-	case OIS::KC_I:
+	case 'i':
 		if( type == JYN_PREPARE){
 			delay = 0.1f;
 			correctMove = true;
@@ -160,7 +160,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 			correctMove = true;
 		}
 		break;
-	case OIS::KC_3:
+	case '3':
 		if( type == JYN_PREPARE){
 			delay = 0.1f;
 			correctMove = true;
@@ -173,7 +173,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 		}
 		break;
 
-	case OIS::KC_P:
+	case 'p':
 		if( type == DEFENSE ){
 			if( !hero->isAttacking ){
 				delay = 0.5f;
@@ -181,7 +181,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 			}
 		}
 		break;
-	case OIS::KC_LCONTROL:
+	case TumbuInput::KEY_LCTRL:
 		if( type == DEFENSE ){
 			if( !hero->isAttacking ){
 				delay = 0.5f;
@@ -190,7 +190,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 		}
 		break;
 
-	case OIS::KC_ESCAPE:
+	case TumbuInput::KEY_ESCAPE:
 		if( type == MENU ){
 			if( !GUI::getInstance()->isOptionOn() ){
 				delay = 0.5f;
@@ -209,9 +209,7 @@ bool Tutorial::keyReleased( const OIS::KeyEvent &arg ){
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::povMoved( const OIS::JoyStickEvent &e, int pov ) {
-	int direction = e.state.mPOV[pov].direction;
-
+bool Tutorial::hatMoved( const OgreBites::HatEvent &e ) {
 	if( TUMBU::getInstance()->isPlaying() ){
 		if( type == WALKING ){
 			delay = 1;
@@ -221,12 +219,17 @@ bool Tutorial::povMoved( const OIS::JoyStickEvent &e, int pov ) {
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::axisMoved( const OIS::JoyStickEvent &e, int axis ) {
-	int abs = e.state.mAxes[axis].abs;
-
+bool Tutorial::axisMoved( const OgreBites::AxisEvent &e ) {
 	if( TUMBU::getInstance()->isPlaying() ){
-		if( axis == 0 || axis == 1 ){
+		if( ( e.axis == TumbuInput::AXIS_LEFTX || e.axis == TumbuInput::AXIS_LEFTY ) && Ogre::Math::Abs( e.value ) > TumbuInput::AXIS_DEADZONE ){
 			if( type == WALKING ){
+				delay = 1;
+				correctMove = true;
+			}
+		}
+		// Camera rotation is on the triggers and the right stick.
+		if( ( e.axis == TumbuInput::AXIS_TRIGGERLEFT || e.axis == TumbuInput::AXIS_TRIGGERRIGHT || e.axis == TumbuInput::AXIS_RIGHTX ) && Ogre::Math::Abs( e.value ) > TumbuInput::AXIS_DEADZONE ){
+			if( type == ROTATING_CAMERA ){
 				delay = 1;
 				correctMove = true;
 			}
@@ -236,21 +239,17 @@ bool Tutorial::axisMoved( const OIS::JoyStickEvent &e, int axis ) {
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::sliderMoved( const OIS::JoyStickEvent &e, int sliderID ) {
-	return true;
-}
-//------------------------------------------------------------------------------------- 
-bool Tutorial::buttonPressed( const OIS::JoyStickEvent &e, int button ) {
+bool Tutorial::buttonPressed( const OgreBites::ButtonEvent &e ) {
 	if( TUMBU::getInstance()->isPlaying() ){
 
 	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
+bool Tutorial::buttonReleased( const OgreBites::ButtonEvent &e ) {
 	if( TUMBU::getInstance()->isPlaying() ){
-		switch( button ){
-		case 0:
+		switch( e.button ){
+		case TumbuInput::PAD_SPECIAL:
 			if( type == JYN_PREPARE){
 				delay = 0.1f;
 				correctMove = true;
@@ -262,7 +261,7 @@ bool Tutorial::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
 				correctMove = true;
 			}
 			break;
-		case 1:
+		case TumbuInput::PAD_PUNCH:
 			if( type == PUNCHING ){
 				if( hero->punch->isAttacking() ){
 					delay = 1;
@@ -270,7 +269,7 @@ bool Tutorial::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
 				}
 			}
 			break;
-		case 2:
+		case TumbuInput::PAD_KICK:
 			if( type == KICKING ){
 				if( hero->kick->isAttacking() ){
 					delay = 1;
@@ -278,14 +277,14 @@ bool Tutorial::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
 				}
 			}
 			break;
-		case 4:
+		case TumbuInput::PAD_RUN:
 			if( type == RUNNING ){
 				if( !hero->mKeyDirection.isZeroLength() ){
 					delay = 1;
 					correctMove = true;
 				}
 			}
-		case 5:
+		case TumbuInput::PAD_GUARD:
 			if( type == DEFENSE ){
 				if( !hero->isAttacking ){
 					delay = 0.5f;
@@ -293,19 +292,7 @@ bool Tutorial::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
 				}
 			}
 			break;
-		case 6:
-			if( type == ROTATING_CAMERA ){
-				delay = 1;
-				correctMove = true;
-			}
-			break;
-		case 7:
-			if( type == ROTATING_CAMERA ){
-				delay = 1;
-				correctMove = true;
-			}
-			break;
-		case 9:
+		case TumbuInput::PAD_MENU:
 			if( type == MENU ){
 				if( !GUI::getInstance()->isOptionOn() ){
 					delay = 0.5f;
@@ -325,9 +312,9 @@ bool Tutorial::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::mouseMoved( const OIS::MouseEvent &arg ){
+bool Tutorial::mouseMoved( const OgreBites::MouseMotionEvent &arg ){
 	if( type == ROTATING_CAMERA && TUMBU::getInstance()->isPlaying() && !correctMove){
-		if( arg.state.X.rel < 2 || arg.state.X.rel > 2 ) {
+		if( arg.xrel < 2 || arg.xrel > 2 ) {
 			delay = 1.0f;
 			correctMove = true;
 		}
@@ -335,11 +322,11 @@ bool Tutorial::mouseMoved( const OIS::MouseEvent &arg ){
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id ){
+bool Tutorial::mousePressed( const OgreBites::MouseButtonEvent &arg ){
 	return true;
 }
 //-------------------------------------------------------------------------------------
-bool Tutorial::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id ){
+bool Tutorial::mouseReleased( const OgreBites::MouseButtonEvent &arg ){
 	return true;
 }
 //-------------------------------------------------------------------------------------

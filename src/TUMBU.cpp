@@ -1,5 +1,5 @@
 #include "TUMBU.h"
-#ifdef _DEBUG
+#ifdef TUMBU_DEBUG
 #include <vld.h>
 #endif
 TUMBU* TUMBU::instance = NULL;
@@ -35,8 +35,15 @@ TUMBU::TUMBU(void){
 }
 //-------------------------------------------------------------------------------------
 TUMBU::~TUMBU(void){
-	Ogre::LogManager::getSingletonPtr()->logMessage("Finishing Game");
 	instance = NULL;
+}
+//-------------------------------------------------------------------------------------
+void TUMBU::destroyScene(void){
+	// Runs before Ogre shuts down (BaseApplication::go), while the Root and the scene still exist.
+	if( mRoot == NULL || mSceneMgr == NULL ){
+		return;
+	}
+	Ogre::LogManager::getSingletonPtr()->logMessage("Finishing Game");
 
 	removeAllKeyListeners();
 	removeAllMouseListeners();
@@ -110,51 +117,15 @@ bool TUMBU::frameStarted(const Ogre::FrameEvent& evt){
 	return BaseApplication::frameStarted(evt);
 }
 //-------------------------------------------------------------------------------------
-bool TUMBU::keyPressed( const OIS::KeyEvent &arg ){	
+bool TUMBU::keyPressed( const OgreBites::KeyboardEvent &arg ){	
 
-#ifdef _DEBUG
-	if( arg.key == OIS::KC_F12 ){
+#ifdef TUMBU_DEBUG
+	if( arg.keysym.sym == TumbuInput::KEY_F12 ){
 		TUMBU::getInstance()->printSceneHierarchy();
 	}
 #endif
 
 	return BaseApplication::keyPressed(arg);
-}
-//-------------------------------------------------------------------------------------
-bool TUMBU::keyReleased( const OIS::KeyEvent &arg ){
-	return BaseApplication::keyReleased( arg );
-}
-//-------------------------------------------------------------------------------------
-bool TUMBU::mouseMoved( const OIS::MouseEvent &arg ){
-	return BaseApplication::mouseMoved(arg);
-}
-//-------------------------------------------------------------------------------------
-bool TUMBU::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id ){
-	return BaseApplication::mousePressed( arg, id );
-}
-//-------------------------------------------------------------------------------------
-bool TUMBU::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id ){
-	return BaseApplication::mouseReleased( arg, id );
-}
-//-------------------------------------------------------------------------------------
-bool TUMBU::povMoved( const OIS::JoyStickEvent &e, int pov ) { 
-	return BaseApplication::povMoved( e, pov );
-}
-//-------------------------------------------------------------------------------------
-bool TUMBU::axisMoved( const OIS::JoyStickEvent &e, int axis ) {
-	return BaseApplication::axisMoved( e, axis );
-}
-//-------------------------------------------------------------------------------------
-bool TUMBU::sliderMoved( const OIS::JoyStickEvent &e, int sliderID ) {
-	return BaseApplication::sliderMoved( e, sliderID );
-}
-//------------------------------------------------------------------------------------- 
-bool TUMBU::buttonPressed( const OIS::JoyStickEvent &e, int button ) {
-	return BaseApplication::buttonPressed( e, button );
-}
-//-------------------------------------------------------------------------------------
-bool TUMBU::buttonReleased( const OIS::JoyStickEvent &e, int button ) {
-	return BaseApplication::buttonReleased( e, button );
 }
 //-------------------------------------------------------------------------------------
 void TUMBU::initializeGUIStuff(void){
@@ -186,17 +157,17 @@ Ogre::Root* TUMBU::getRoot(void){
 	return mRoot;
 }
 //-------------------------------------------------------------------------------------
-SimpleRigidBody* TUMBU::createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld* physicWorld, const Ogre::String &instanceName, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag){
+SimpleRigidBody* TUMBU::createSimpleRigidBody(Physics::DynamicsWorld* physicWorld, const Ogre::String &instanceName, const Ogre::String &meshName, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag){
 	SimpleRigidBody* simpleRigidBody = new SimpleRigidBody( mSceneMgr, tag );
 
     simpleRigidBody->entity = mSceneMgr->createEntity(instanceName + Ogre::StringConverter::toString(mNumEntitiesInstanced), meshName);
     simpleRigidBody->entity->setCastShadows (shadows);
 
-	trimeshConverter = new OgreBulletCollisions::StaticMeshToShapeConverter( simpleRigidBody->entity );
+	trimeshConverter = new Physics::StaticMeshToShapeConverter( simpleRigidBody->entity );
 	simpleRigidBody->shape = trimeshConverter->createTrimesh();
     delete trimeshConverter;
 
-    OgreBulletDynamics::RigidBody *sceneRigid = new OgreBulletDynamics::RigidBody(
+    Physics::RigidBody *sceneRigid = new Physics::RigidBody(
         instanceName + "Rigid" + Ogre::StringConverter::toString(mNumEntitiesInstanced),
         physicWorld);
 
@@ -211,17 +182,17 @@ SimpleRigidBody* TUMBU::createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld*
     return simpleRigidBody;
 }
 //-------------------------------------------------------------------------------------
-SimpleRigidBody* TUMBU::createSimpleRigidBody(OgreBulletDynamics::DynamicsWorld* physicWorld, Ogre::Entity* entity, Ogre::SceneNode* node, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag){
+SimpleRigidBody* TUMBU::createSimpleRigidBody(Physics::DynamicsWorld* physicWorld, Ogre::Entity* entity, Ogre::SceneNode* node, const Ogre::Vector3 &pos, const Ogre::Quaternion &q, const Ogre::Real bodyRestitution, const Ogre::Real bodyFriction, bool shadows, TumbuEnums::PhysicObjectTag tag){
 	SimpleRigidBody* simpleRigidBody = new SimpleRigidBody( mSceneMgr, tag );
 
     simpleRigidBody->entity = entity;
     simpleRigidBody->entity->setCastShadows( shadows );
 
-	trimeshConverter = new OgreBulletCollisions::StaticMeshToShapeConverter( simpleRigidBody->entity );
+	trimeshConverter = new Physics::StaticMeshToShapeConverter( simpleRigidBody->entity );
 	simpleRigidBody->shape = trimeshConverter->createTrimesh();
     delete trimeshConverter;
 
-    OgreBulletDynamics::RigidBody *sceneRigid = new OgreBulletDynamics::RigidBody(
+    Physics::RigidBody *sceneRigid = new Physics::RigidBody(
 		entity->getName() + "Rigid" + Ogre::StringConverter::toString( mNumEntitiesInstanced ),
         physicWorld );
 
@@ -311,7 +282,7 @@ void TUMBU::createStartMenu(void){
 
 	gameState = TumbuEnums::START_SCREEN;
 
-	startScreenBackgroundSound = soundManager->createSound( "startScreenBackgroundSound", "intro_music.ogg", Ogre::Vector3(0,0,0), true, false);
+	startScreenBackgroundSound = soundManager->createSound( "startScreenBackgroundSound", "intro_music.ogg", Ogre::Vector3(0,0,0), true, false, false );
 	startScreenBackgroundSound->play();
 }
 //-------------------------------------------------------------------------------------

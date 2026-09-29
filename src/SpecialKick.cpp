@@ -1,8 +1,9 @@
 #include "SpecialKick.h"
+#include "TUMBU.h"
 #include "Robot.h"
 #include "GUI.h"
 //-------------------------------------------------------------------------------------
-SpecialKick::SpecialKick( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller, OgreBulletDynamics::DynamicsWorld* _world, int _count, float _damage ){
+SpecialKick::SpecialKick( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller, Physics::DynamicsWorld* _world, int _count, float _damage ){
 	world = _world;
 	sceneMgr = _sceneMgr;
 	particleSystemNode = _particleSystemNode;
@@ -39,7 +40,7 @@ void SpecialKick::update(const Ogre::Real time){
 		timeToResest -= time;
 			
 		if( specialShape != NULL ){
-			particleList[0]->particle->position = specialRigidBodyList.front()->getWorldPosition();
+			particleList[0]->particle->mPosition = specialRigidBodyList.front()->getWorldPosition();
 		}
 
 		if(timeToResest <= 0){
@@ -70,12 +71,12 @@ void SpecialKick::collision( CollisionDetectionListener *other ){
 	}
 }
 //-------------------------------------------------------------------------------------
-OgreBulletDynamics::RigidBody* SpecialKick::getOgreBulletRigidBody( const std::string& instanceName ){
-	OgreBulletDynamics::RigidBody 
+Physics::RigidBody* SpecialKick::getOgreBulletRigidBody( const std::string& instanceName ){
+	Physics::RigidBody 
 		*returnObject = NULL,
 		*specialRigid;
 
-	std::list<OgreBulletDynamics::RigidBody*>::iterator i = specialRigidBodyList.begin();
+	std::list<Physics::RigidBody*>::iterator i = specialRigidBodyList.begin();
 	while ( i != specialRigidBodyList.end() ){
 		specialRigid = (*i);
 		if( specialRigid->getName() == instanceName ){
@@ -98,11 +99,11 @@ void SpecialKick::concentrate(){
 	position += robotSpeller->robotNode->getOrientation() * Ogre::Vector3(0, 0, 0.5f);
 			
 	particula->particle->setDimensions( PARTICLE_WIDTH * 2, PARTICLE_HEIGHT * 2 );
-	particula->particle->timeToLive = PARTICLE_LIVE_TIME;
-	particula->particle->colour = PARTICLE_COLOR;
-	particula->particle->direction = Ogre::Vector3::ZERO;
-	particula->particle->rotationSpeed = 0;
-	particula->particle->position = Ogre::Vector3(position);
+	particula->particle->mTimeToLive = PARTICLE_LIVE_TIME;
+	particula->particle->mColour = (PARTICLE_COLOR).getAsBYTE();
+	particula->particle->mDirection = Ogre::Vector3::ZERO;
+	particula->particle->mRotationSpeed = 0;
+	particula->particle->mPosition = Ogre::Vector3(position);
 
 	particleList.push_back(particula);
 }
@@ -110,7 +111,7 @@ void SpecialKick::concentrate(){
 void SpecialKick::attack(Ogre::Quaternion orientation){
 	setSpecialStatus( SpecialInterface::ATTACKING );
 	
-	OgreBulletDynamics::RigidBody* specialRigidBody;
+	Physics::RigidBody* specialRigidBody;
 	
 	Ogre::Vector3 rigidBodyPosition(robotSpeller->legsNode->_getDerivedPosition() );
 	rigidBodyPosition += robotSpeller->robotNode->getOrientation() * Ogre::Vector3(0, 0, 0.5f);
@@ -120,8 +121,8 @@ void SpecialKick::attack(Ogre::Quaternion orientation){
 
 	specialRigidNode = particleSystemNode->getParentSceneNode()->getParentSceneNode()->createChildSceneNode( nodeName );
 
-	specialShape = new OgreBulletCollisions::BoxCollisionShape( Ogre::Vector3( PARTICLE_WIDTH, PARTICLE_WIDTH, PARTICLE_WIDTH ) );
-	specialRigidBody = new OgreBulletDynamics::RigidBody( rightBodyName, world );
+	specialShape = new Physics::BoxCollisionShape( Ogre::Vector3( PARTICLE_WIDTH, PARTICLE_WIDTH, PARTICLE_WIDTH ) );
+	specialRigidBody = new Physics::RigidBody( rightBodyName, world );
 
 	specialRigidBody->setShape( specialRigidNode, 
 		specialShape,
@@ -166,7 +167,7 @@ void SpecialKick::clear(){
 	particleList.clear();
     particleSystem->clear();
 
-	std::list<OgreBulletDynamics::RigidBody*>::iterator i = specialRigidBodyList.begin();
+	std::list<Physics::RigidBody*>::iterator i = specialRigidBodyList.begin();
 	while ( i != specialRigidBodyList.end() ){
 		TUMBU::getInstance()->removeCollisionDetectionListener( (*i)->getName() );
 		delete *i;

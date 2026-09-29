@@ -252,7 +252,8 @@ void DotSceneLoader::processTerrain(rapidxml::xml_node<>* XMLNode){
     lightdir.normalise();
     Ogre::Light* l = mSceneMgr->createLight("tstLight");
     l->setType(Ogre::Light::LT_DIRECTIONAL);
-    l->setDirection(lightdir);
+    mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(l);
+    l->getParentSceneNode()->setDirection(lightdir, Ogre::Node::TS_WORLD);
     l->setDiffuseColour(Ogre::ColourValue(1.0, 1.0, 1.0));
     l->setSpecularColour(Ogre::ColourValue(0.4, 0.4, 0.4));
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.6, 0.6, 0.6));
@@ -317,8 +318,9 @@ void DotSceneLoader::processLight(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode
 
     // Create the light
     Ogre::Light *pLight = mSceneMgr->createLight(name);
-    if(pParent)
-        pParent->attachObject(pLight);
+    // Ogre 14: lights are placed by a scene node (the node's -Z axis is the light direction).
+    Ogre::SceneNode *pLightNode = (pParent ? pParent : mSceneMgr->getRootSceneNode())->createChildSceneNode();
+    pLightNode->attachObject(pLight);
 
     Ogre::String sValue = getAttrib(XMLNode, "type");
     if(sValue == "point")
@@ -338,17 +340,17 @@ void DotSceneLoader::processLight(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode
     // Process position (?)
     pElement = XMLNode->first_node("position");
     if(pElement)
-        pLight->setPosition(parseVector3(pElement));
+        pLightNode->setPosition(parseVector3(pElement));
 
     // Process normal (?)
     pElement = XMLNode->first_node("normal");
     if(pElement)
-        pLight->setDirection(parseVector3(pElement));
+        pLightNode->setDirection(parseVector3(pElement), Ogre::Node::TS_PARENT);
 
     pElement = XMLNode->first_node("directionVector");
     if(pElement)
     {
-        pLight->setDirection(parseVector3(pElement));
+        pLightNode->setDirection(parseVector3(pElement), Ogre::Node::TS_PARENT);
         mLightDirection = parseVector3(pElement);
     }
 
@@ -391,6 +393,8 @@ void DotSceneLoader::processCamera(rapidxml::xml_node<>* XMLNode, Ogre::SceneNod
 
     // Create the camera
     Ogre::Camera *pCamera = mSceneMgr->createCamera(name);
+    Ogre::SceneNode *pCameraNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    pCameraNode->attachObject(pCamera);
     
     //TODO: make a flag or attribute indicating whether or not the camera should be attached to any parent node.
     //if(pParent)
@@ -425,12 +429,12 @@ void DotSceneLoader::processCamera(rapidxml::xml_node<>* XMLNode, Ogre::SceneNod
     // Process position (?)
     pElement = XMLNode->first_node("position");
     if(pElement)
-        pCamera->setPosition(parseVector3(pElement));
+        pCameraNode->setPosition(parseVector3(pElement));
 
     // Process rotation (?)
     pElement = XMLNode->first_node("rotation");
     if(pElement)
-        pCamera->setOrientation(parseQuaternion(pElement));
+        pCameraNode->setOrientation(parseQuaternion(pElement));
 
     // Process normal (?)
     pElement = XMLNode->first_node("normal");
@@ -703,7 +707,8 @@ void DotSceneLoader::processEntity(rapidxml::xml_node<>* XMLNode, Ogre::SceneNod
     Ogre::Entity *pEntity = 0;
     try
     {
-        Ogre::MeshManager::getSingleton().load(meshFile, m_sGroupName);
+        // Ogre 14 does not search other groups: let it find the mesh wherever it is.
+        Ogre::MeshManager::getSingleton().load(meshFile, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
         pEntity = mSceneMgr->createEntity(name, meshFile);
         pEntity->setCastShadows(castShadows);
         pParent->attachObject(pEntity);
@@ -725,9 +730,9 @@ void DotSceneLoader::processEntity(rapidxml::xml_node<>* XMLNode, Ogre::SceneNod
 			processSubEntity(XMLNode, pEntity);
 		}
     }
-    catch(Ogre::Exception &/*e*/)
+    catch(Ogre::Exception &e)
     {
-        Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Error loading an entity!");
+        Ogre::LogManager::getSingleton().logError("[DotSceneLoader] Error loading entity " + name + ": " + e.getDescription());
     }
 
     // Process userDataReference (?)

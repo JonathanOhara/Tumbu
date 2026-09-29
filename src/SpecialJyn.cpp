@@ -1,9 +1,10 @@
 #include "SpecialJyn.h"
+#include "TUMBU.h"
 #include "Robot.h"
 #include "GUI.h"
 #include "SoundManager.h"
 //-------------------------------------------------------------------------------------
-SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller, OgreBulletDynamics::DynamicsWorld* _world, int _count, float _damage ){
+SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller, Physics::DynamicsWorld* _world, int _count, float _damage ){
 	world = _world;
 	sceneMgr = _sceneMgr;
 	particleSystemNode = _particleSystemNode;
@@ -34,7 +35,9 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	specialLight->setDiffuseColour(PARTICLE_LIGHT_DIFFUSE_COLOR);
 	specialLight->setSpecularColour(PARTICLE_LIGHT_SPECULAR_COLOR);
 	specialLight->setAttenuation(1, 0, 0, 500);
-	specialLight->setPosition(0, 10000, 0);
+	// Ogre 14 lights are positioned by their scene node.
+	sceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject( specialLight );
+	specialLight->getParentSceneNode()->setPosition(0, 10000, 0);
 
 	particleSystem = sceneMgr->createParticleSystem();
 	explosionParticleSystem = sceneMgr->createParticleSystem(particleSystemName, "TumbuSpecialExplosion");
@@ -53,6 +56,7 @@ SpecialJyn::~SpecialJyn(void){
 	clear();
 
 	if( specialLight != NULL ){
+		sceneMgr->destroySceneNode( specialLight->getParentSceneNode() );
 		sceneMgr->destroyLight(specialLight);
 	}
 
@@ -101,7 +105,7 @@ void SpecialJyn::update(const Ogre::Real time){
 		timeToResest -= time;
 			
 		if( specialShape != NULL ){
-			particleList[melhorParticula]->particle->position = specialRigidBodyList.front()->getWorldPosition();
+			particleList[melhorParticula]->particle->mPosition = specialRigidBodyList.front()->getWorldPosition();
 		}
 
 		if(timeToResest <= 0){
@@ -125,10 +129,10 @@ void SpecialJyn::collision( CollisionDetectionListener *other ){
 	if( getSpecialStatus() == SpecialInterface::ATTACKING ){
 		switch( other->objectTag ){
 		case TumbuEnums::TERRAIN:
-			hitScenario( particleList[melhorParticula]->particle->position );
+			hitScenario( particleList[melhorParticula]->particle->mPosition );
 			break;
 		case TumbuEnums::SCENE_OBJECT:
-			hitScenario( particleList[melhorParticula]->particle->position );
+			hitScenario( particleList[melhorParticula]->particle->mPosition );
 			break;
 		case TumbuEnums::ROBOT:
 			Robot *enemy;
@@ -154,12 +158,12 @@ void SpecialJyn::collision( CollisionDetectionListener *other ){
 	}
 }
 //-------------------------------------------------------------------------------------
-OgreBulletDynamics::RigidBody* SpecialJyn::getOgreBulletRigidBody( const std::string& instanceName ){
-	OgreBulletDynamics::RigidBody 
+Physics::RigidBody* SpecialJyn::getOgreBulletRigidBody( const std::string& instanceName ){
+	Physics::RigidBody 
 		*returnObject = NULL,
 		*specialRigid;
 
-	std::list<OgreBulletDynamics::RigidBody*>::iterator i = specialRigidBodyList.begin();
+	std::list<Physics::RigidBody*>::iterator i = specialRigidBodyList.begin();
 	while ( i != specialRigidBodyList.end() ){
 		specialRigid = (*i);
 		if( specialRigid->getName() == instanceName ){
@@ -179,15 +183,15 @@ void SpecialJyn::concentrate(){
 void SpecialJyn::attack(Ogre::Quaternion orientation){
 	setSpecialStatus( SpecialInterface::ATTACKING );
 
-	OgreBulletDynamics::RigidBody* specialRigidBody;
+	Physics::RigidBody* specialRigidBody;
 
 	Ogre::String nodeName = robotSpeller->robotName + "_jyn_node_" + Ogre::StringConverter::toString(count);
 	Ogre::String rightBodyName = robotSpeller->robotName + "_jyn_rigidbody_" + Ogre::StringConverter::toString(count);
 
 	specialRigidNode = particleSystemNode->getParentSceneNode()->getParentSceneNode()->createChildSceneNode( nodeName );
 
-	specialShape = new OgreBulletCollisions::BoxCollisionShape( Ogre::Vector3( tamanhoMaiorParticula / 2, tamanhoMaiorParticula / 2, tamanhoMaiorParticula / 2 ) );
-	specialRigidBody = new OgreBulletDynamics::RigidBody( rightBodyName, world );
+	specialShape = new Physics::BoxCollisionShape( Ogre::Vector3( tamanhoMaiorParticula / 2, tamanhoMaiorParticula / 2, tamanhoMaiorParticula / 2 ) );
+	specialRigidBody = new Physics::RigidBody( rightBodyName, world );
 
 	specialRigidBody->setShape( specialRigidNode, 
 		specialShape,
@@ -213,7 +217,7 @@ void SpecialJyn::attack(Ogre::Quaternion orientation){
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::hitScenario( Ogre::Vector3 position ){
-	std::list<OgreBulletDynamics::RigidBody*>::iterator i = specialRigidBodyList.begin();
+	std::list<Physics::RigidBody*>::iterator i = specialRigidBodyList.begin();
 	while ( i != specialRigidBodyList.end() ){
 		(*i)->getShape()->getBulletShape()->setLocalScaling( btVector3( 7, 7, 7 ) );
 		i++;
@@ -233,7 +237,7 @@ void SpecialJyn::hitScenario( Ogre::Vector3 position ){
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::hit(Ogre::SceneNode* hittedNode){
-	std::list<OgreBulletDynamics::RigidBody*>::iterator i = specialRigidBodyList.begin();
+	std::list<Physics::RigidBody*>::iterator i = specialRigidBodyList.begin();
 	while ( i != specialRigidBodyList.end() ){
 		(*i)->getShape()->getBulletShape()->setLocalScaling( btVector3( 7, 7, 7 ) );
 		i++;
@@ -269,7 +273,7 @@ void SpecialJyn::clear(){
 	particleList.clear();
     particleSystem->clear();
 
-	std::list<OgreBulletDynamics::RigidBody*>::iterator i = specialRigidBodyList.begin();
+	std::list<Physics::RigidBody*>::iterator i = specialRigidBodyList.begin();
 	while ( i != specialRigidBodyList.end() ){
 		TUMBU::getInstance()->removeCollisionDetectionListener( (*i)->getName() );
 		delete *i;
@@ -289,6 +293,7 @@ void SpecialJyn::clear(){
 	}
         
     if( specialLight != NULL){
+		sceneMgr->destroySceneNode( specialLight->getParentSceneNode() );
 		sceneMgr->destroyLight(specialLight);
 		specialLight = NULL;
     }
@@ -331,11 +336,11 @@ void SpecialJyn::createRandomParticles(){
 		fitnessAtual = Ogre::Real(avaliarDesempenho(position));
 
 		particula->particle->setDimensions( PARTICLE_WIDTH, PARTICLE_HEIGHT );
-		particula->particle->timeToLive = PARTICLE_LIVE_TIME;
-		particula->particle->colour = PARTICLE_COLOR;
-		particula->particle->direction = Ogre::Vector3::ZERO;
-		particula->particle->rotationSpeed = 0;
-		particula->particle->position = Ogre::Vector3(position);
+		particula->particle->mTimeToLive = PARTICLE_LIVE_TIME;
+		particula->particle->mColour = (PARTICLE_COLOR).getAsBYTE();
+		particula->particle->mDirection = Ogre::Vector3::ZERO;
+		particula->particle->mRotationSpeed = 0;
+		particula->particle->mPosition = Ogre::Vector3(position);
 		
 		particula->velocity = velocity;
 		particula->fitness = fitnessAtual;
@@ -345,7 +350,7 @@ void SpecialJyn::createRandomParticles(){
 		particleList.push_back(particula);
 	}
 	everBestFitness = particleList[0]->fitness;
-	everBestPosition = particleList[0]->particle->position;
+	everBestPosition = particleList[0]->particle->mPosition;
 	fitnessMedio = 1000;
 }
 //-------------------------------------------------------------------------------------
@@ -360,21 +365,21 @@ void SpecialJyn::executaPSO(Ogre::Real time){
 		//Verifica se a partícula atual está com melhor fitness do que seu histórico local
 		if( particleList[i]->fitness < particleList[i]->bestFitness ){
 			particleList[i]->bestFitness = particleList[i]->fitness;
-			particleList[i]->bestPosition = particleList[i]->particle->position;
+			particleList[i]->bestPosition = particleList[i]->particle->mPosition;
 		}
 
 		//Verifica seus vizinhos para saber qual é o vizinho com melhor fitness
 		for(int j = 0; j < NUMBER_OF_PARTICLES; j++){
 			if( particleList[j]->fitness < particleList[g]->fitness ){
 				g = j;
-				globalBest = particleList[j]->particle->position;
+				globalBest = particleList[j]->particle->mPosition;
 			}
 		}
 
 		//Verifica se o fitness do melhor é o melhor de todos (Parecido com o salvacionismo)
 		if( particleList[g]->fitness < everBestFitness ){
 			everBestFitness = particleList[g]->fitness;
-			everBestPosition = particleList[g]->particle->position;
+			everBestPosition = particleList[g]->particle->mPosition;
 		}
 
 		//Calcula a inercia baseada em quantas iterações faltam
@@ -387,12 +392,12 @@ void SpecialJyn::executaPSO(Ogre::Real time){
 		double randomA = time * Ogre::Math::RangeRandom(0,1),
 		       randomB = time * Ogre::Math::RangeRandom(0,1);
 
-		double	newX = (particleList[i]->velocity.x * inertia) + (randomA * ( particleList[i]->bestPosition.x - particleList[i]->particle->position.x )) + (randomB * ( everBestPosition.x - particleList[i]->particle->position.x)),
-				newY = (particleList[i]->velocity.y * inertia) + (randomA * ( particleList[i]->bestPosition.y - particleList[i]->particle->position.y )) + (randomB * ( everBestPosition.y - particleList[i]->particle->position.y)),
-				newZ = (particleList[i]->velocity.z * inertia) + (randomA * ( particleList[i]->bestPosition.z - particleList[i]->particle->position.z )) + (randomB * ( everBestPosition.z - particleList[i]->particle->position.z));
+		double	newX = (particleList[i]->velocity.x * inertia) + (randomA * ( particleList[i]->bestPosition.x - particleList[i]->particle->mPosition.x )) + (randomB * ( everBestPosition.x - particleList[i]->particle->mPosition.x)),
+				newY = (particleList[i]->velocity.y * inertia) + (randomA * ( particleList[i]->bestPosition.y - particleList[i]->particle->mPosition.y )) + (randomB * ( everBestPosition.y - particleList[i]->particle->mPosition.y)),
+				newZ = (particleList[i]->velocity.z * inertia) + (randomA * ( particleList[i]->bestPosition.z - particleList[i]->particle->mPosition.z )) + (randomB * ( everBestPosition.z - particleList[i]->particle->mPosition.z));
 					
 		/*
-		printf("P x: %.4f y: %.4f z: %.4f -", particleList[i]->particle->position.x, particleList[i]->particle->position.y, particleList[i]->particle->position.z);
+		printf("P x: %.4f y: %.4f z: %.4f -", particleList[i]->particle->mPosition.x, particleList[i]->particle->mPosition.y, particleList[i]->particle->mPosition.z);
 		printf("B x: %.4f y: %.4f z: %.4f -", particleList[i]->bestPosition.x, particleList[i]->bestPosition.y, particleList[i]->bestPosition.z);
 		printf("V x: %.4f y: %.4f z: %.4f -", newX, newY, newZ);
 		printf("inercia %.4f\n",inertia);
@@ -405,12 +410,12 @@ void SpecialJyn::executaPSO(Ogre::Real time){
 
 		/** Calcula a posicao */
 		Ogre::Vector3 newPosition(
-			particleList[i]->particle->position.x + newVelocidade.x,
-			particleList[i]->particle->position.y + newVelocidade.y,
-			particleList[i]->particle->position.z + newVelocidade.z);
+			particleList[i]->particle->mPosition.x + newVelocidade.x,
+			particleList[i]->particle->mPosition.y + newVelocidade.y,
+			particleList[i]->particle->mPosition.z + newVelocidade.z);
 
 		particleList[i]->velocity = newVelocidade;
-		particleList[i]->particle->position = newPosition;
+		particleList[i]->particle->mPosition = newPosition;
 	}
 }
 //-------------------------------------------------------------------------------------
@@ -455,7 +460,7 @@ void SpecialJyn::avaliarDesempenhoTodos(){
 	melhorFitness = 999999;
 
 	for(int i = 0; i < NUMBER_OF_PARTICLES; i++){
-		particleList[i]->fitness = avaliarDesempenho( particleList[i]->particle->position );
+		particleList[i]->fitness = avaliarDesempenho( particleList[i]->particle->mPosition );
 		fitnessMedio += particleList[i]->fitness;
 
 		if( particleList[i]->fitness < melhorFitness ){
@@ -481,15 +486,15 @@ void SpecialJyn::moverTodasParticulas(Ogre::Vector3 moveTarget){
 	if(targetVector.x != moveTarget.x && targetVector.y != moveTarget.y+3 && targetVector.z != moveTarget.z){
 		for(unsigned int i = 0; i < NUMBER_OF_PARTICLES; i++){
 			if(particleList[i]->active){
-				particleList[i]->particle->position.x += moveTarget.x - targetVector.x;
+				particleList[i]->particle->mPosition.x += moveTarget.x - targetVector.x;
 				particleList[i]->bestPosition.x += moveTarget.x - targetVector.x;
 				everBestPosition.x += (moveTarget.x - targetVector.x); 
 
-				particleList[i]->particle->position.y += (moveTarget.y - targetVector.y) + 2.5f;
+				particleList[i]->particle->mPosition.y += (moveTarget.y - targetVector.y) + 2.5f;
 				particleList[i]->bestPosition.y += ( moveTarget.y - targetVector.y) + 2.5f;
 				everBestPosition.y += (moveTarget.y - targetVector.y) + 2.5f; 
 
-				particleList[i]->particle->position.z += moveTarget.z - targetVector.z;
+				particleList[i]->particle->mPosition.z += moveTarget.z - targetVector.z;
 				particleList[i]->bestPosition.z += moveTarget.z - targetVector.z;
 				everBestPosition.z += (moveTarget.z - targetVector.z); 
 			}
@@ -499,7 +504,7 @@ void SpecialJyn::moverTodasParticulas(Ogre::Vector3 moveTarget){
 		targetVector.y = moveTarget.y +2.5f;
 		targetVector.z = moveTarget.z;
 
-		specialLight->setPosition( particleList[melhorParticula]->particle->position );
+		specialLight->getParentSceneNode()->setPosition( particleList[melhorParticula]->particle->mPosition );
 
 	}
 }

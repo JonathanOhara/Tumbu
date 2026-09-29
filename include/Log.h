@@ -2,7 +2,6 @@
 #define __Log_h_
 
 #include <Ogre.h>
-#include <OIS.h>
 #include <math.h>
 
 using namespace std;

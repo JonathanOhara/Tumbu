@@ -2,7 +2,6 @@
 #define __RobotAI_h_
 
 #include <Ogre.h>
-#include <OIS.h>
 #include <math.h>
 
 #include "CharacterEnemy.h"

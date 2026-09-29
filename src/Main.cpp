@@ -30,15 +30,17 @@
 				app->go();
 				delete app;
 			} catch( Ogre::Exception &e ) {
+				if( Ogre::LogManager::getSingletonPtr() ) Ogre::LogManager::getSingletonPtr()->logError( "Fatal: " + e.getFullDescription() );
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-				MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+				if( !DevTest::isEnabled() ) MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
 				std::cerr << "An exception has occured: " <<
 					e.getFullDescription().c_str() << std::endl;
 #endif
 			}catch( std::exception &e ){
+				if( Ogre::LogManager::getSingletonPtr() ) Ogre::LogManager::getSingletonPtr()->logError( Ogre::String( "Fatal: " ) + e.what() );
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-				MessageBox( NULL, e.what(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+				if( !DevTest::isEnabled() ) MessageBox( NULL, e.what(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 #else
 				std::cout<<"!!!!std::exception!!!!"<<e.what()<<std::endl;
 #endif

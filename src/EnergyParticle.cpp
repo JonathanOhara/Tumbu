@@ -5,6 +5,6 @@ EnergyParticle::EnergyParticle( Ogre::Particle* pParticle ){
 }
 //-------------------------------------------------------------------------------------
 EnergyParticle::~EnergyParticle(void){
-	particle->timeToLive = 0;
+	particle->mTimeToLive = 0;
 }
 //-------------------------------------------------------------------------------------

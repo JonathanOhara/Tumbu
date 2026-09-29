@@ -7,7 +7,6 @@
 #include <Terrain/OgreTerrainGroup.h>
 #include <Terrain/OgreTerrainMaterialGeneratorA.h>
 
-#include <OIS.h>
 #include <iostream>
 
 #include "CollisionDetectionListener.h"
@@ -54,8 +53,8 @@ public:
 	void setCamera( Camera* _camera );
 	Camera* getCamera();
 
-	void setPhysicWorld( OgreBulletDynamics::DynamicsWorld* _physicWorld );
-	OgreBulletDynamics::DynamicsWorld* getPhysicWorld();
+	void setPhysicWorld( Physics::DynamicsWorld* _physicWorld );
+	Physics::DynamicsWorld* getPhysicWorld();
 
 	void initialiseGameResources(void);
 
@@ -79,9 +78,9 @@ private:
 	void heroDie(void);
 	void enemyDie(void);
 	
-	OgreBulletCollisions::CollisionShape	*defaultPlaneShape;
+	Physics::CollisionShape	*defaultPlaneShape;
 	
-	OgreBulletDynamics::RigidBody
+	Physics::RigidBody
 		*defaultPlaneBody;
 
 	
@@ -93,9 +92,8 @@ private:
 		*floorRigidBody,
 		*terrainRigidBody;
 
-	OgreBulletDynamics::DynamicsWorld* physicWorld;
-#ifdef _DEBUG
-    OgreBulletCollisions::DebugDrawer* debugDrawer;
+	Physics::DynamicsWorld* physicWorld;
+#ifdef TUMBU_DEBUG
 	Ogre::SceneNode *debugDrawerNode;
 #endif
 

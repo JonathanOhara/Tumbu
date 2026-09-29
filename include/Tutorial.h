@@ -2,7 +2,6 @@
 #define __Tutorial_h_
 
 #include <Ogre.h>
-#include <OIS.h>
 
 #include <iostream>
 
@@ -11,7 +10,7 @@
 
 using namespace std;
 
-class Tutorial: public OIS::MouseListener, public OIS::KeyListener, public OIS::JoyStickListener, public Ogre::FrameListener{
+class Tutorial: public OgreBites::InputListener, public Ogre::FrameListener{
 public:
 	Tutorial(Character *_hero, CharacterEnemy *_enemy);
     virtual ~Tutorial(void);
@@ -30,18 +29,17 @@ public:
 	void finishTutorial();
 
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
-	bool keyPressed( const OIS::KeyEvent &arg );
-	bool keyReleased( const OIS::KeyEvent &arg );
+	bool keyPressed( const OgreBites::KeyboardEvent &arg );
+	bool keyReleased( const OgreBites::KeyboardEvent &arg );
 
-	bool mouseMoved(const OIS::MouseEvent &arg);
-	bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
-	bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+	bool mouseMoved(const OgreBites::MouseMotionEvent &arg);
+	bool mousePressed(const OgreBites::MouseButtonEvent &arg);
+	bool mouseReleased(const OgreBites::MouseButtonEvent &arg);
 
-    bool povMoved( const OIS::JoyStickEvent &e, int pov );
-    bool axisMoved( const OIS::JoyStickEvent &e, int axis );
-    bool sliderMoved( const OIS::JoyStickEvent &e, int sliderID );
-    bool buttonPressed( const OIS::JoyStickEvent &e, int button );
-    bool buttonReleased( const OIS::JoyStickEvent &e, int button );
+    bool hatMoved( const OgreBites::HatEvent &e );
+    bool axisMoved( const OgreBites::AxisEvent &e );
+    bool buttonPressed( const OgreBites::ButtonEvent &e );
+    bool buttonReleased( const OgreBites::ButtonEvent &e );
 
 	enum TutorialType { NONE, WALKING, RUNNING, ROTATING_CAMERA, KICKING, PUNCHING, JYN_PREPARE, JYN_CONCENTRATE, JYN_ATTACK, DEFENSE, MENU, FINISH };
 

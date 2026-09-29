@@ -3,9 +3,9 @@
 
 #include "Robot.h"
 
-class Character: public Robot, public OIS::KeyListener, public OIS::MouseListener, public OIS::JoyStickListener, public CollisionDetectionListener {
+class Character: public Robot, public OgreBites::InputListener, public CollisionDetectionListener {
 public:
-	Character(OgreBulletDynamics::DynamicsWorld* _physicWorld, Ogre::String _robotName, SoundManager *_soundManager);
+	Character(Physics::DynamicsWorld* _physicWorld, Ogre::String _robotName, SoundManager *_soundManager);
 	virtual ~Character(void);
 
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
@@ -13,27 +13,27 @@ public:
 	void movePressed(MoveKey _moveKey);
 	void moveReleased(MoveKey _moveKey);
 
-	bool keyPressed( const OIS::KeyEvent &arg );
-	bool keyReleased( const OIS::KeyEvent &arg );
+	bool keyPressed( const OgreBites::KeyboardEvent &arg );
+	bool keyReleased( const OgreBites::KeyboardEvent &arg );
 
-	bool mouseMoved(const OIS::MouseEvent &arg);
-	bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
-	bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+	bool mouseMoved(const OgreBites::MouseMotionEvent &arg);
+	bool mousePressed(const OgreBites::MouseButtonEvent &arg);
+	bool mouseReleased(const OgreBites::MouseButtonEvent &arg);
 
-    bool povMoved( const OIS::JoyStickEvent &e, int pov );
-    bool axisMoved( const OIS::JoyStickEvent &e, int axis );
-    bool sliderMoved( const OIS::JoyStickEvent &e, int sliderID );
-    bool buttonPressed( const OIS::JoyStickEvent &e, int button );
-    bool buttonReleased( const OIS::JoyStickEvent &e, int button );
+    bool hatMoved( const OgreBites::HatEvent &e );
+    bool axisMoved( const OgreBites::AxisEvent &e );
+    bool buttonPressed( const OgreBites::ButtonEvent &e );
+    bool buttonReleased( const OgreBites::ButtonEvent &e );
 
 	void releaseAllKeys();
+	MoveKey padButtonToMove( int button );
 
 	void updateMovement(const Ogre::Real time);
 	void updateAttack(const Ogre::Real time);
 	void updateDefense(const Ogre::Real time);
 	void updateRegeneration(const Ogre::Real time);
 	
-	OgreBulletDynamics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
+	Physics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
 	void collision( CollisionDetectionListener *other );
 
 	void unbuildParts();

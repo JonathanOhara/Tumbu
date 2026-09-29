@@ -1,57 +1,87 @@
 #include "Sound.h"
 #include "TUMBU.h"
+#include "miniaudio.h"
 //-------------------------------------------------------------------------------------
 unsigned int Sound::instances = 0;
 //-------------------------------------------------------------------------------------
-Sound::Sound(OgreAL::SoundManager *_soundManager, Ogre::SceneManager *_sceneManager, Ogre::SceneNode* father, Ogre::String nodeName, Ogre::String musicName, Ogre::String musicFile, bool _loop, bool stream){
+Sound::Sound( ma_engine *engine, Ogre::SceneManager *_sceneManager, Ogre::SceneNode* father, Ogre::String nodeName,
+		Ogre::String musicName, const Ogre::MemoryDataStreamPtr &_data, bool _loop ){
 	id = Sound::instances++;
-	soundManager = _soundManager;
 	sceneManager = _sceneManager;
+	name = musicName;
 	loop = _loop;
-
-	sound = soundManager->createSound(musicName, musicFile, loop, stream);
-	soundNode = father->createChildSceneNode(nodeName);
-	soundNode->attachObject(sound);
-
-	setSoundStatus( NONE );
+	soundNode = father->createChildSceneNode( nodeName );
+	init( engine, _data, true );
 }
 //-------------------------------------------------------------------------------------
-Sound::Sound(OgreAL::SoundManager *_soundManager, Ogre::SceneManager *_sceneManager, Ogre::Vector3 position, Ogre::String musicName, Ogre::String musicFile, bool _loop, bool stream){
+Sound::Sound( ma_engine *engine, Ogre::SceneManager *_sceneManager, Ogre::Vector3 position, Ogre::String musicName,
+		const Ogre::MemoryDataStreamPtr &_data, bool _loop, bool spatial ){
 	id = Sound::instances++;
-	soundManager = _soundManager;
 	sceneManager = _sceneManager;
+	name = musicName;
 	loop = _loop;
-
-	sound = soundManager->createSound(musicName, musicFile, loop, stream);
-	sound->setPosition( position );
-	_sceneManager->getRootSceneNode()->attachObject(sound);
-
 	soundNode = NULL;
-
+	init( engine, _data, spatial );
+	if( ready ){
+		ma_sound_set_position( sound, position.x, position.y, position.z );
+	}
+}
+//-------------------------------------------------------------------------------------
+void Sound::init( ma_engine *engine, const Ogre::MemoryDataStreamPtr &_data, bool spatial ){
+	data		= _data;
+	decoder		= new ma_decoder;
+	sound		= new ma_sound;
+	ready		= false;
+	delayToPlay	= 0;
 	setSoundStatus( NONE );
+
+	if( !data || engine == NULL ){
+		return;
+	}
+
+	if( ma_decoder_init_memory( data->getPtr(), data->size(), NULL, decoder ) != MA_SUCCESS ){
+		Ogre::LogManager::getSingleton().logError( "Sound: cannot decode " + name );
+		return;
+	}
+	ma_uint32 flags = spatial ? 0 : MA_SOUND_FLAG_NO_SPATIALIZATION;
+	if( ma_sound_init_from_data_source( engine, decoder, flags, NULL, sound ) != MA_SUCCESS ){
+		ma_decoder_uninit( decoder );
+		Ogre::LogManager::getSingleton().logError( "Sound: cannot create " + name );
+		return;
+	}
+	ma_sound_set_looping( sound, loop ? MA_TRUE : MA_FALSE );
+	// Robots are about 2 units tall: full volume within 2 units, then a gentle roll-off.
+	ma_sound_set_min_distance( sound, 2.0f );
+	ma_sound_set_rolloff( sound, 0.5f );
+	ready = true;
+	update();
 }
 //-------------------------------------------------------------------------------------
 Sound::~Sound(void){
-	try{
-		sound->stop();
-		soundManager->destroySound( sound );
+	if( ready ){
+		ma_sound_uninit( sound );
+		ma_decoder_uninit( decoder );
+	}
+	delete sound;
+	delete decoder;
 
-		if( soundNode != NULL && soundNode->getName() != "" ){
-			Ogre::LogManager::getSingletonPtr()->logMessage("Deleting Sound Node " + soundNode->getName() + " MUSIC " + sound->getName());
-			soundNode->removeAndDestroyAllChildren();
-			sceneManager->destroySceneNode( soundNode );
-		}
-	}catch( char * str ) {
-      cout << "Exception raised: " << str << '\n';
-   }
+	if( soundNode != NULL ){
+		soundNode->removeAndDestroyAllChildren();
+		sceneManager->destroySceneNode( soundNode );
+	}
 }
 //-------------------------------------------------------------------------------------
-OgreAL::Sound* Sound::getSound(){
-	return sound;
-}
-//-------------------------------------------------------------------------------------
-void Sound::setSound( OgreAL::Sound* _sound){
-	sound = _sound;
+void Sound::update(void){
+	if( !ready ){
+		return;
+	}
+	if( soundNode != NULL ){
+		Ogre::Vector3 position = soundNode->_getDerivedPosition();
+		ma_sound_set_position( sound, position.x, position.y, position.z );
+	}
+	if( getSoundStatus() == PLAYING && !loop && ma_sound_at_end( sound ) ){
+		setSoundStatus( TO_DELETE );
+	}
 }
 //-------------------------------------------------------------------------------------
 Ogre::SceneNode* Sound::getSoundNode(){
@@ -75,21 +105,10 @@ Ogre::Real Sound::getDelayToPlay(){
 }
 //-------------------------------------------------------------------------------------
 void Sound::setDelayToPlay( Ogre::Real _delayToPlay ){
-	try{
-//		cout << "delay " << id << " name = " << soundNode->getName() << endl;
-
-		if( getSoundStatus() != TO_DELETE ){
-			setSoundStatus( READY_TO_PLAY );
-
-			delayToPlay = _delayToPlay;
-
-			if( !loop && sound != NULL ){
-				sound->addSoundFinishedHandler(this, &Sound::soundFinished);
-			}
-		}
-	}catch( ... ) {
-      cout << "Exception setDelayToPlay: " << endl;
-   }
+	if( getSoundStatus() != TO_DELETE ){
+		setSoundStatus( READY_TO_PLAY );
+		delayToPlay = _delayToPlay;
+	}
 }
 //-------------------------------------------------------------------------------------
 Ogre::Real Sound::removeOfDelayToPlay( Ogre::Real time ){
@@ -100,17 +119,19 @@ Ogre::Real Sound::removeOfDelayToPlay( Ogre::Real time ){
 void Sound::stop(){
 	if( getSoundStatus() == PLAYING ){
 		setSoundStatus( STOPED );
-		sound->stop();
+		if( ready ){
+			ma_sound_stop( sound );
+		}
 	}
 }
 //-------------------------------------------------------------------------------------
 void Sound::play(){
 	setSoundStatus( PLAYING );
-
-	sound->play();
-}
-//-------------------------------------------------------------------------------------
-void Sound::soundFinished(OgreAL::Sound *sound){
-	setSoundStatus( TO_DELETE );
+	if( ready ){
+		ma_sound_seek_to_pcm_frame( sound, 0 );
+		ma_sound_start( sound );
+	}else if( !loop ){
+		setSoundStatus( TO_DELETE );	// could not be loaded: let the manager clean it up
+	}
 }
 //-------------------------------------------------------------------------------------

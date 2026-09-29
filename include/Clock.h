@@ -2,7 +2,6 @@
 #define __Clock_h_
 
 #include <Ogre.h>
-#include <OIS.h>
 #include "GUI.h"
 #include "Enums.h"
 #include "TUMBU.h"

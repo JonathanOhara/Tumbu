@@ -2,7 +2,7 @@
 #include "Util.h"
 #include "TUMBU.h"
 //-------------------------------------------------------------------------------------
-CharacterEnemy::CharacterEnemy(OgreBulletDynamics::DynamicsWorld* _physicWorld, Ogre::String _robotName, SoundManager *_soundManager){
+CharacterEnemy::CharacterEnemy(Physics::DynamicsWorld* _physicWorld, Ogre::String _robotName, SoundManager *_soundManager){
 	physicWorld = _physicWorld;
 	robotName = _robotName.append( Ogre::StringConverter::toString( Robot::instances ) );
 	soundManager = _soundManager;
@@ -196,7 +196,7 @@ void CharacterEnemy::collision( CollisionDetectionListener *other ){
 	//specialManager->collision( rigid, rigid2 );	
 }
 //--------------------------------------------------------------------------
-OgreBulletDynamics::RigidBody* CharacterEnemy::getOgreBulletRigidBody( const std::string& instanceName ){
+Physics::RigidBody* CharacterEnemy::getOgreBulletRigidBody( const std::string& instanceName ){
 	return charRigidBody;
 }
 //-------------------------------------------------------------------------------------
@@ -488,10 +488,10 @@ void CharacterEnemy::buildCharacter(){
 	legsNode->setPosition(		Ogre::Vector3( legs->position ) );
 
 	/** PHYSICS */
-	charRigidBody	= new OgreBulletDynamics::RigidBody( "enemyRigid", physicWorld );
+	charRigidBody	= new Physics::RigidBody( "enemyRigid", physicWorld );
 	TUMBU::getInstance()->addCollisionDetectionListener( this );
 
-	charShape		= new OgreBulletCollisions::CompoundCollisionShape();
+	charShape		= new Physics::CompoundCollisionShape();
 
 	charShape->addChildShape(head->collisionShape,		Ogre::Vector3( head->position ));
 	charShape->addChildShape(body->collisionShape,		Ogre::Vector3( body->position ));
@@ -512,8 +512,8 @@ void CharacterEnemy::buildCharacter(){
 	}
 
 	btTransform localTrans;		
-	localTrans.setOrigin (OgreBulletCollisions::OgreBtConverter::to(robotNode->getPosition()));
-	localTrans.setRotation (OgreBulletCollisions::OgreBtConverter::to(robotNode->getOrientation()));
+	localTrans.setOrigin (Physics::OgreBtConverter::to(robotNode->getPosition()));
+	localTrans.setRotation (Physics::OgreBtConverter::to(robotNode->getOrientation()));
 	charRigidBody->getBulletObject()->setWorldTransform( localTrans );
 	
 	charBuilded = true;

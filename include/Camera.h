@@ -2,14 +2,10 @@
 #define __Camera_h_
 
 #include <Ogre.h>
-#include <OIS.h>
-
-#include <SdkTrays.h>
-#include <SdkCameraMan.h>
 
 #include "GameObject.h"
 
-class Camera: public OIS::KeyListener, public OIS::JoyStickListener, public OIS::MouseListener, public Ogre::FrameListener{
+class Camera: public OgreBites::InputListener, public Ogre::FrameListener{
 public:
 	enum CameraAnimation{ NONE, ROTATING_LEFT, ROTATING_RIGHT, ZOOM_IN, ZOOM_OUT, ROTATING_UP, ROTATING_DOWN };
 
@@ -17,18 +13,18 @@ public:
 	virtual ~Camera(void);
 
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
-	bool keyPressed( const OIS::KeyEvent &arg );
-	bool keyReleased( const OIS::KeyEvent &arg );
+	bool keyPressed( const OgreBites::KeyboardEvent &arg );
+	bool keyReleased( const OgreBites::KeyboardEvent &arg );
 
-	bool mouseMoved(const OIS::MouseEvent &arg);
-	bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
-	bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+	bool mouseMoved(const OgreBites::MouseMotionEvent &arg);
+	bool mouseWheelRolled(const OgreBites::MouseWheelEvent &arg);
+	bool mousePressed(const OgreBites::MouseButtonEvent &arg);
+	bool mouseReleased(const OgreBites::MouseButtonEvent &arg);
 
-    bool povMoved( const OIS::JoyStickEvent &e, int pov );
-    bool axisMoved( const OIS::JoyStickEvent &e, int axis );
-    bool sliderMoved( const OIS::JoyStickEvent &e, int sliderID );
-    bool buttonPressed( const OIS::JoyStickEvent &e, int button );
-    bool buttonReleased( const OIS::JoyStickEvent &e, int button );
+    bool hatMoved( const OgreBites::HatEvent &e );
+    bool axisMoved( const OgreBites::AxisEvent &e );
+    bool buttonPressed( const OgreBites::ButtonEvent &e );
+    bool buttonReleased( const OgreBites::ButtonEvent &e );
 
 	void updateCameraGoal( Ogre::Real deltaYaw, Ogre::Real deltaPitch, Ogre::Real deltaZoom );
 
@@ -44,7 +40,8 @@ public:
 	Ogre::SceneNode 
 		*mCameraNode, 
 		*mCameraPivot,
-		*mCameraGoal;
+		*mCameraGoal,
+		*mZoomNode;
 protected:
 
 private:
