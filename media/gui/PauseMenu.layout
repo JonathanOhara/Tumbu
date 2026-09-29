@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ESC menu (pauses the match): Status, Inventory (part swapping with a 3D preview), Skills, Help, Quit. -->
+<MyGUI type="Layout" version="3.2.0">
+	<Widget type="Window" skin="Window" position_real="0 0 1 1" layer="Overlapped" name="PauseMenu">
+		<Property key="Visible" value="false"/>
+
+		<Widget type="Button" skin="Button" position_real="0.00 0.00 0.2 0.07" name="StatusTab">
+			<Property key="Caption" value="Status"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.20 0.00 0.2 0.07" name="InventoryTab">
+			<Property key="Caption" value="Inventory"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.40 0.00 0.2 0.07" name="SkillsTab">
+			<Property key="Caption" value="Skills"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.60 0.00 0.2 0.07" name="HelpTab">
+			<Property key="Caption" value="Help"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.80 0.00 0.2 0.07" name="QuitTab">
+			<Property key="Caption" value="Quit"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+
+		<!-- Status -->
+		<Widget type="Widget" skin="PanelEmpty" position_real="0 0.1 1 0.85" name="StatusPanel">
+			<Widget type="TextBox" skin="TextBox" position_real="0.30 0.08 0.18 0.06"><Property key="Caption" value="HP"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.52 0.08 0.30 0.06" name="StatusHp"><Property key="FontName" value="Tumbu.Button"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.30 0.16 0.18 0.06"><Property key="Caption" value="AP"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.52 0.16 0.30 0.06" name="StatusAp"><Property key="FontName" value="Tumbu.Button"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.30 0.24 0.18 0.06"><Property key="Caption" value="Attack"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.52 0.24 0.30 0.06" name="StatusAttack"><Property key="FontName" value="Tumbu.Button"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.30 0.32 0.18 0.06"><Property key="Caption" value="Defense"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.52 0.32 0.30 0.06" name="StatusDefense"><Property key="FontName" value="Tumbu.Button"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.30 0.40 0.18 0.06"><Property key="Caption" value="Velocity"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.52 0.40 0.30 0.06" name="StatusVelocity"><Property key="FontName" value="Tumbu.Button"/></Widget>
+		</Widget>
+
+		<!-- Inventory: swap parts, preview on the left -->
+		<Widget type="Widget" skin="PanelEmpty" position_real="0 0.1 1 0.85" name="InventoryPanel">
+			<Widget type="ImageBox" skin="ImageBox" position_real="0.05 0.02 0.45 0.94" name="InventoryPreview"/>
+			<Widget type="TextBox" skin="TextBox" position_real="0.56 0.06 0.14 0.06"><Property key="Caption" value="Head"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="ComboBox" skin="ComboBox" position_real="0.72 0.06 0.25 0.06" name="HeadCombo"><Property key="ModeDrop" value="true"/><Property key="FontName" value="Tumbu.Text"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.56 0.14 0.14 0.06"><Property key="Caption" value="Body"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="ComboBox" skin="ComboBox" position_real="0.72 0.14 0.25 0.06" name="BodyCombo"><Property key="ModeDrop" value="true"/><Property key="FontName" value="Tumbu.Text"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.56 0.22 0.14 0.06"><Property key="Caption" value="Right Arm"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="ComboBox" skin="ComboBox" position_real="0.72 0.22 0.25 0.06" name="RightArmCombo"><Property key="ModeDrop" value="true"/><Property key="FontName" value="Tumbu.Text"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.56 0.30 0.14 0.06"><Property key="Caption" value="Left Arm"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="ComboBox" skin="ComboBox" position_real="0.72 0.30 0.25 0.06" name="LeftArmCombo"><Property key="ModeDrop" value="true"/><Property key="FontName" value="Tumbu.Text"/></Widget>
+			<Widget type="TextBox" skin="TextBox" position_real="0.56 0.38 0.14 0.06"><Property key="Caption" value="Legs"/><Property key="FontName" value="Tumbu.Button"/><Property key="TextAlign" value="Right VCenter"/></Widget>
+			<Widget type="ComboBox" skin="ComboBox" position_real="0.72 0.38 0.25 0.06" name="LegsCombo"><Property key="ModeDrop" value="true"/><Property key="FontName" value="Tumbu.Text"/></Widget>
+		</Widget>
+
+		<!-- Skills: one button per skill, details on the right -->
+		<Widget type="Widget" skin="PanelEmpty" position_real="0 0.1 1 0.85" name="SkillsPanel">
+			<Widget type="Widget" skin="PanelEmpty" position_real="0.10 0.08 0.30 0.60" name="SkillsList"/>
+			<Widget type="Window" skin="WindowC" position_real="0.50 0.08 0.40 0.45" name="SkillDetails">
+				<Property key="Caption" value="Skill"/>
+				<Property key="FontName" value="Tumbu.Button"/>
+				<Widget type="EditBox" skin="WordWrapEmpty" position_real="0.02 0.04 0.50 0.92" name="SkillStatsLabels">
+					<Property key="FontName" value="Tumbu.Text"/>
+					<Property key="Static" value="true"/>
+					<Property key="ReadOnly" value="true"/>
+					<Property key="MultiLine" value="true"/>
+					<Property key="TextAlign" value="Right Top"/>
+					<Property key="NeedMouse" value="false"/>
+				</Widget>
+				<Widget type="EditBox" skin="WordWrapEmpty" position_real="0.56 0.04 0.42 0.92" name="SkillStatsValues">
+					<Property key="FontName" value="Tumbu.Text"/>
+					<Property key="Static" value="true"/>
+					<Property key="ReadOnly" value="true"/>
+					<Property key="MultiLine" value="true"/>
+					<Property key="NeedMouse" value="false"/>
+				</Widget>
+			</Widget>
+		</Widget>
+
+		<!-- Help -->
+		<Widget type="Widget" skin="PanelEmpty" position_real="0 0.1 1 0.85" name="HelpPanel">
+			<Widget type="Window" skin="WindowC" position_real="0.15 0.04 0.70 0.90" name="HelpWindow">
+				<Property key="Caption" value="Controls"/>
+				<Property key="FontName" value="Tumbu.Button"/>
+				<Widget type="EditBox" skin="WordWrapEmpty" position_real="0.04 0.03 0.92 0.94" name="HelpText">
+					<Property key="FontName" value="Tumbu.Text"/>
+					<Property key="Static" value="true"/>
+					<Property key="ReadOnly" value="true"/>
+					<Property key="MultiLine" value="true"/>
+					<Property key="WordWrap" value="true"/>
+					<Property key="NeedMouse" value="false"/>
+				</Widget>
+			</Widget>
+		</Widget>
+
+		<Widget type="TextBox" skin="TextBox" position_real="0.80 0.95 0.19 0.04" name="Clock">
+			<Property key="FontName" value="Tumbu.Button"/>
+			<Property key="TextAlign" value="Right VCenter"/>
+		</Widget>
+	</Widget>
+</MyGUI>

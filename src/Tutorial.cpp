@@ -341,7 +341,7 @@ void Tutorial::walkingTutorial(){
 	type = WALKING;
 	correctMove = false;
 
-	GUI::getInstance()->addAlert("Walk Tutorial", "Learning to walk\n \nPress <W> or <JoyStick Axis Up> to forward\nPress <A> or <JoyStick Axis Left> to left\nPress <S> or <JoyStick Axis Down> to down\nPress <D> or <JoyStick Axis Right> to right" );
+	GUI::getInstance()->addAlert("Walk Tutorial", "Learning to walk\n \nPress <W> or <Left stick Up> to forward\nPress <A> or <Left stick Left> to left\nPress <S> or <Left stick Down> to down\nPress <D> or <Left stick Right> to right" );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -350,7 +350,7 @@ void Tutorial::runningTutorial(){
 	type = RUNNING;
 	correctMove = false;
 
-	GUI::getInstance()->addAlert("Running Tutorial", "Learning to run\n \nHold <Left Shift> or <JoyStick button 4>\nAnd walk." );
+	GUI::getInstance()->addAlert("Running Tutorial", "Learning to run\n \nHold <Left Shift> or <LB>\nAnd walk." );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -360,7 +360,7 @@ void Tutorial::rotateCameraTutorial(){
 	correctMove = false;
 
 	GUI::getInstance()->addAlert("Walk Tutorial", "Congratulations You did it!" );
-	GUI::getInstance()->addAlert("Camera Tutorial", "Learning to Manage the camera (view)\n \nTo rotate the camera press: \n<Q> or <E> \n<JoyStick button 6> or <JoyStick button 7> \n<Move Mouse Left> or <Move Mouse Right>" );
+	GUI::getInstance()->addAlert("Camera Tutorial", "Learning to Manage the camera (view)\n \nTo rotate the camera press: \n<Q> or <E> \n<LT> or <RT> or <Right stick> \n<Move Mouse Left> or <Move Mouse Right>" );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -370,7 +370,7 @@ void Tutorial::kickTutorial(){
 	correctMove = false;
 
 	GUI::getInstance()->addAlert("Camera Tutorial", "Congratulations You did it!" );
-	GUI::getInstance()->addAlert("Kick Tutorial", "Learning to use the Kick Skill\n \nPress <U> or <1> or <JoyStick button 2>" );
+	GUI::getInstance()->addAlert("Kick Tutorial", "Learning to use the Kick Skill\n \nPress <U> or <1> or <A>" );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -380,7 +380,7 @@ void Tutorial::punchTutorial(){
 	correctMove = false;
 
 	GUI::getInstance()->addAlert("Kick Tutorial", "Congratulations You did it!" );
-	GUI::getInstance()->addAlert("Punch Tutorial", "Learning to use the Punch Skill\n \nPress <O> or <2> or <JoyStick button 1>" );
+	GUI::getInstance()->addAlert("Punch Tutorial", "Learning to use the Punch Skill\n \nPress <O> or <2> or <X>" );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -390,7 +390,7 @@ void Tutorial::prepareJynTutorial(){
 	correctMove = false;
 
 	GUI::getInstance()->addAlert("Punch Tutorial", "Congratulations You did it!" );
-	GUI::getInstance()->addAlert("Jyn Tutorial", "Learning to use the Jyn Skill\n \nPress <I> or <3> or <JoyStick button 0> to call \nenergy balls" );
+	GUI::getInstance()->addAlert("Jyn Tutorial", "Learning to use the Jyn Skill\n \nPress <I> or <3> or <Y> to call \nenergy balls" );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -400,7 +400,7 @@ void Tutorial::concentrateJynTutorial(){
 	correctMove = false;
 
 	GUI::getInstance()->addAlert("Jyn Tutorial", "Congratulations You did it!" );
-	GUI::getInstance()->addAlert("Jyn Tutorial", "Learning to use the Jyn Skill\n \nPress <I> or <3> or <JoyStick button 0> to \nconcentrate the energy balls" );
+	GUI::getInstance()->addAlert("Jyn Tutorial", "Learning to use the Jyn Skill\n \nPress <I> or <3> or <Y> to \nconcentrate the energy balls" );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -410,7 +410,7 @@ void Tutorial::attackJynTutorial(){
 	correctMove = false;
 
 	GUI::getInstance()->addAlert("Jyn Tutorial", "Congratulations You did it!" );
-	GUI::getInstance()->addAlert("Jyn Tutorial", "Learning to use the Jyn Skill\n \nPress <I> or <3> or <JoyStick button 0> to attack" );
+	GUI::getInstance()->addAlert("Jyn Tutorial", "Learning to use the Jyn Skill\n \nPress <I> or <3> or <Y> to attack" );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -420,7 +420,7 @@ void Tutorial::defenseTutorial(){
 	correctMove = false;
 
 	GUI::getInstance()->addAlert("Jyn Tutorial", "Congratulations You did it!" );
-	GUI::getInstance()->addAlert("Defense Tutorial", "Learning to use defense\n \nHold <P> or <Left Control> or <JoyStick button 5>\n \nNote: In defend mode your AP (breath points) \nrecovers more fast" );
+	GUI::getInstance()->addAlert("Defense Tutorial", "Learning to use defense\n \nHold <P> or <Left Control> or <RB>\n \nNote: In defend mode your AP (breath points) \nrecovers more fast" );
 
 	GUI::getInstance()->showNextDialog(true);
 }
@@ -430,7 +430,7 @@ void Tutorial::menuTutorial(){
 	correctMove = false;
 
 	GUI::getInstance()->addAlert("Defense Tutorial", "Congratulations You did it!" );
-	GUI::getInstance()->addAlert("MENU Tutorial", "Learning to use the Menu\n \nPress <ESC> or <JoyStick button 9>" );
+	GUI::getInstance()->addAlert("MENU Tutorial", "Learning to use the Menu\n \nPress <ESC> or <Start>" );
 
 	GUI::getInstance()->showNextDialog(true);
 }

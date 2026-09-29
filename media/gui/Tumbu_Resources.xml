@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TUMBU GUI resources for MyGUI: fonts and the robot portraits used in conversations. -->
+<MyGUI type="Resource" version="1.1">
+
+	<!-- Body text (dialogs, conversations, menus). DejaVuSans.ttf ships with MyGUI_Media. -->
+	<Resource type="ResourceTrueTypeFont" name="Tumbu.Text">
+		<Property key="Source" value="DejaVuSans.ttf"/>
+		<Property key="Size" value="12"/>
+		<Codes>
+			<Code range="32 126"/>
+			<Code range="160 255"/>
+		</Codes>
+	</Resource>
+
+	<!-- Titles, buttons and HUD: "Blue Highway" from the original 2011 media (media/fonts/bluehigh.ttf). -->
+	<Resource type="ResourceTrueTypeFont" name="Tumbu.Button">
+		<Property key="Source" value="bluehigh.ttf"/>
+		<Property key="Size" value="16"/>
+		<Codes>
+			<Code range="32 126"/>
+			<Code range="160 255"/>
+		</Codes>
+	</Resource>
+
+	<Resource type="ResourceTrueTypeFont" name="Tumbu.Title">
+		<Property key="Source" value="bluehigh.ttf"/>
+		<Property key="Size" value="22"/>
+		<Codes>
+			<Code range="32 126"/>
+			<Code range="160 255"/>
+		</Codes>
+	</Resource>
+
+	<!-- Floating damage numbers. -->
+	<Resource type="ResourceTrueTypeFont" name="Tumbu.Hit">
+		<Property key="Source" value="bluehigh.ttf"/>
+		<Property key="Size" value="28"/>
+		<Codes>
+			<Code range="32 126"/>
+		</Codes>
+	</Resource>
+
+	<!-- Robot portraits: one 200x175 image per robot set, named like the set (robot001..robot005). -->
+	<Resource type="ResourceImageSet" name="RobotFaces">
+		<Group name="Faces" texture="RobotFaces.png" size="200 175">
+			<Index name="robot001"><Frame point="0 0"/></Index>
+			<Index name="robot002"><Frame point="200 0"/></Index>
+			<Index name="robot003"><Frame point="400 0"/></Index>
+			<Index name="robot004"><Frame point="600 0"/></Index>
+			<Index name="robot005"><Frame point="800 0"/></Index>
+		</Group>
+	</Resource>
+
+</MyGUI>

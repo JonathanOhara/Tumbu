@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Dialogs (alert, confirm, part preview) and the two conversation panels (top and bottom). -->
+<MyGUI type="Layout" version="3.2.0">
+	<Widget type="Window" skin="WindowC" position_real="0.25 0.30 0.50 0.40" layer="Modal" name="AlertWindow">
+		<Property key="Visible" value="false"/>
+		<Property key="FontName" value="Tumbu.Button"/>
+		<Widget type="EditBox" skin="WordWrapEmpty" position_real="0.03 0.03 0.94 0.72" name="AlertText">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="Static" value="true"/>
+			<Property key="ReadOnly" value="true"/>
+			<Property key="MultiLine" value="true"/>
+			<Property key="WordWrap" value="true"/>
+			<Property key="NeedMouse" value="false"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.35 0.80 0.30 0.16" name="AlertOkButton">
+			<Property key="Caption" value="OK (Space)"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+	</Widget>
+
+	<Widget type="Window" skin="WindowC" position_real="0.25 0.30 0.50 0.40" layer="Modal" name="ConfirmWindow">
+		<Property key="Visible" value="false"/>
+		<Property key="FontName" value="Tumbu.Button"/>
+		<Widget type="EditBox" skin="WordWrapEmpty" position_real="0.03 0.03 0.94 0.72" name="ConfirmText">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="Static" value="true"/>
+			<Property key="ReadOnly" value="true"/>
+			<Property key="MultiLine" value="true"/>
+			<Property key="WordWrap" value="true"/>
+			<Property key="NeedMouse" value="false"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.08 0.80 0.36 0.16" name="ConfirmOkButton">
+			<Property key="Caption" value="OK (Space)"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.56 0.80 0.36 0.16" name="ConfirmCancelButton">
+			<Property key="Caption" value="Cancel (Esc)"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+	</Widget>
+
+	<Widget type="Window" skin="WindowC" position_real="0.15 0.22 0.70 0.56" layer="Modal" name="ShowPartWindow">
+		<Property key="Visible" value="false"/>
+		<Property key="FontName" value="Tumbu.Button"/>
+		<Widget type="ImageBox" skin="ImageBox" position_real="0.03 0.03 0.45 0.78" name="ShowPartImage"/>
+		<Widget type="EditBox" skin="WordWrapEmpty" position_real="0.52 0.03 0.45 0.78" name="ShowPartText">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="Static" value="true"/>
+			<Property key="ReadOnly" value="true"/>
+			<Property key="MultiLine" value="true"/>
+			<Property key="WordWrap" value="true"/>
+			<Property key="NeedMouse" value="false"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.35 0.85 0.30 0.12" name="ShowPartOkButton">
+			<Property key="Caption" value="OK (Space)"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+	</Widget>
+
+	<Widget type="Window" skin="WindowC" position_real="0.01 0.01 0.98 0.21" layer="Middle" name="ConversationTop">
+		<Property key="Visible" value="false"/>
+		<Property key="FontName" value="Tumbu.Button"/>
+		<Widget type="ImageBox" skin="ImageBox" position_real="0.01 0.04 0.12 0.92" name="ConversationTopFace">
+			<Property key="ImageResource" value="RobotFaces"/>
+			<Property key="ImageGroup" value="Faces"/>
+		</Widget>
+		<Widget type="EditBox" skin="WordWrapEmpty" position_real="0.15 0.06 0.83 0.60" name="ConversationTopText">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="Static" value="true"/>
+			<Property key="ReadOnly" value="true"/>
+			<Property key="MultiLine" value="true"/>
+			<Property key="WordWrap" value="true"/>
+			<Property key="NeedMouse" value="false"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.80 0.70 0.19 0.26" name="ConversationTopContinue">
+			<Property key="Caption" value="Press Space..."/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+	</Widget>
+
+	<Widget type="Window" skin="WindowC" position_real="0.01 0.78 0.98 0.21" layer="Middle" name="ConversationBottom">
+		<Property key="Visible" value="false"/>
+		<Property key="FontName" value="Tumbu.Button"/>
+		<Widget type="ImageBox" skin="ImageBox" position_real="0.01 0.04 0.12 0.92" name="ConversationBottomFace">
+			<Property key="ImageResource" value="RobotFaces"/>
+			<Property key="ImageGroup" value="Faces"/>
+		</Widget>
+		<Widget type="EditBox" skin="WordWrapEmpty" position_real="0.15 0.06 0.83 0.60" name="ConversationBottomText">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="Static" value="true"/>
+			<Property key="ReadOnly" value="true"/>
+			<Property key="MultiLine" value="true"/>
+			<Property key="WordWrap" value="true"/>
+			<Property key="NeedMouse" value="false"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.80 0.70 0.19 0.26" name="ConversationBottomContinue">
+			<Property key="Caption" value="Press Space..."/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+	</Widget>
+</MyGUI>

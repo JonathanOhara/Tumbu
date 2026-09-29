@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Start screen menu and its options window. Positions are relative to the screen (left top width height). -->
+<MyGUI type="Layout" version="3.2.0">
+	<Widget type="Widget" skin="PanelEmpty" position_real="0 0 1 1" layer="Back" name="StartMenu">
+		<Property key="NeedMouse" value="false"/>
+		<Widget type="Button" skin="Button" position_real="0.35 0.80 0.30 0.05" name="PlayButton">
+			<Property key="Caption" value="Play Demo"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.375 0.86 0.25 0.05" name="OptionsButton">
+			<Property key="Caption" value="Options"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.40 0.92 0.20 0.05" name="ExitButton">
+			<Property key="Caption" value="Exit"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+	</Widget>
+
+	<Widget type="Window" skin="WindowC" position_real="0.30 0.28 0.40 0.36" layer="Overlapped" name="OptionsWindow">
+		<Property key="Caption" value="Options"/>
+		<Property key="Visible" value="false"/>
+		<Property key="FontName" value="Tumbu.Button"/>
+		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.08 0.35 0.14" name="SkyLabel">
+			<Property key="Caption" value="Sky"/>
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="TextAlign" value="Right VCenter"/>
+		</Widget>
+		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.08 0.48 0.14" name="SkyCombo">
+			<Property key="ModeDrop" value="true"/>
+			<Property key="FontName" value="Tumbu.Text"/>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.28 0.35 0.14" name="ShadowsLabel">
+			<Property key="Caption" value="Shadows"/>
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="TextAlign" value="Right VCenter"/>
+		</Widget>
+		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.28 0.48 0.14" name="ShadowsCombo">
+			<Property key="ModeDrop" value="true"/>
+			<Property key="FontName" value="Tumbu.Text"/>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.48 0.35 0.14" name="FrameLimitLabel">
+			<Property key="Caption" value="Frame limit"/>
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="TextAlign" value="Right VCenter"/>
+		</Widget>
+		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.48 0.48 0.14" name="FrameLimitCombo">
+			<Property key="ModeDrop" value="true"/>
+			<Property key="FontName" value="Tumbu.Text"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.04 0.76 0.29 0.18" name="OptionsOkButton">
+			<Property key="Caption" value="Ok"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.355 0.76 0.29 0.18" name="OptionsDefaultButton">
+			<Property key="Caption" value="Default"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.67 0.76 0.29 0.18" name="OptionsCancelButton">
+			<Property key="Caption" value="Cancel"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+		</Widget>
+	</Widget>
+</MyGUI>

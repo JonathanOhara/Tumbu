@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TUMBU's MyGUI setup: MyGUI's core resources with the BlackBlue theme, plus the game's fonts and images. -->
+<MyGUI type="List">
+	<List file="MyGUI_GeneratedFonts.xml"/>
+	<List file="MyGUI_Fonts.xml"/>
+	<List file="MyGUI_CommonSkins.xml"/>
+	<List file="MyGUI_BlackBlueTheme.xml"/>
+	<List file="MyGUI_PointerImages.xml"/>
+	<List file="MyGUI_Pointers.xml"/>
+	<List file="MyGUI_Layers.xml"/>
+	<List file="MyGUI_Settings.xml"/>
+	<List file="Tumbu_Resources.xml"/>
+</MyGUI>

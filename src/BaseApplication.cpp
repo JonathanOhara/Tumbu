@@ -1,5 +1,6 @@
 #include "BaseApplication.h"
 #include "GUI.h"
+#include "DevTest.h"
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -145,6 +146,10 @@ void BaseApplication::destroyScene(void){
 }
 //-------------------------------------------------------------------------------------
 void BaseApplication::setMouseCaptured( bool captured ){
+	// Automated runs (DevTest) must never grab the mouse of whoever is using the computer.
+	if( DevTest::isEnabled() ){
+		return;
+	}
 	if( !mWindows.empty() ){
 		setWindowGrab( mWindows[0].native, captured );
 	}

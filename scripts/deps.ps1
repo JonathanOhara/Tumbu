@@ -98,6 +98,8 @@ if ($Only -in 'all', 'mygui') {
     $media = Join-Path $install 'share\MYGUI\Media'
     New-Item -ItemType Directory -Force $media | Out-Null
     Copy-Item -Recurse -Force (Join-Path $dir 'Media\MyGUI_Media') $media
+    # The game uses the BlackBlue theme (Media\Common\Themes); ship it inside MyGUI_Media.
+    Copy-Item -Force (Join-Path $dir 'Media\Common\Themes\MyGUI_BlackBlue*') (Join-Path $media 'MyGUI_Media')
 }
 
 if ($Only -in 'all', 'caelum') {

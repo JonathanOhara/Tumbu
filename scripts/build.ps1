@@ -19,8 +19,10 @@ try {
         & $cmake --preset vs2022
         if ($LASTEXITCODE -ne 0) { throw 'CMake configure failed (are the dependencies built? run .\scripts\deps.ps1).' }
     }
-    $target = if ($Clean) { @('--clean-first') } else { @() }
-    & $cmake --build build/vs2022 --config $Configuration @target -- /m /v:minimal
+    $buildArgs = @('--build', 'build/vs2022', '--config', $Configuration)
+    if ($Clean) { $buildArgs += '--clean-first' }
+    $buildArgs += @('--', '/m', '/v:minimal')
+    & $cmake @buildArgs
     if ($LASTEXITCODE -ne 0) { throw "Build failed (exit $LASTEXITCODE)." }
     Write-Host "Built: $root\bin\$Configuration\TUMBU.exe" -ForegroundColor Green
 } finally {

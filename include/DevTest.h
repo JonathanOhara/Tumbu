@@ -10,6 +10,7 @@
  *   -walktest        once playing: idle 1s, hold "forward" for 3s, release; log hero/enemy positions
  *   -fpscap=N        limit the frame rate to N (to compare movement at different FPS)
  *   -quitafter=S     after S seconds of play, save a screenshot to <workPath>/devtest.png and quit
+ *   -guitour         screenshot every GUI screen (start menu, dialogs, HUD, pause menu tabs) and quit
  *
  * Every measurement is written to ogre.log with the prefix [DEVTEST].
  */
@@ -29,6 +30,14 @@ private:
 	void log( const Ogre::String &message );
 	void logPositions(void);
 	void limitFrameRate(void);
+	void runGuiTour( const Ogre::FrameEvent &evt );
+	void screenshot( const Ogre::String &name );
+	void pressKey( int key );
+	void click( const Ogre::String &buttonName );
+	bool isVisible( const Ogre::String &widgetName );
+
+	int tourStep;
+	Ogre::Real tourTimer;
 
 	Stage stage;
 	unsigned long frames;
@@ -40,6 +49,7 @@ private:
 
 	static bool autoplay;
 	static bool walkTest;
+	static bool guiTour;
 	static int fpsCap;
 	static Ogre::Real quitAfter;
 };

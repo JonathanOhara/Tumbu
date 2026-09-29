@@ -71,6 +71,18 @@ public:
 	void setSkyQuality( int _skyQuality );
 	int getSkyQuality(void);
 
+	/** Shadow presets offered in the options menu: 0 none, 1 modulative, 2 additive. */
+	void setShadowPreset( int preset );
+	int getShadowPreset(void);
+
+	/** Frame rate limit: -1 = monitor refresh (VSync, default), 0 = unlimited, N = at most N frames per second. */
+	void setFrameLimit( int fps );
+	int getFrameLimit(void);
+
+	/** Options are kept in <workPath>/options.cfg. */
+	void saveOptions(void);
+	void loadOptions(void);
+
 	void setShadowTechnique( Ogre::ShadowTechnique _shadowTechnique );
 	Ogre::ShadowTechnique getShadowTechnique();
 	
@@ -105,6 +117,9 @@ private:
 	Ogre::Real timeMultiplier;
 
 	bool castShadows;
+
+	int frameLimit;
+	Ogre::Timer frameLimitTimer;
 
 	int barrelIndex, 
 		mNumEntitiesInstanced,

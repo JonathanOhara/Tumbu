@@ -1,4 +1,6 @@
 #include "TUMBU.h"
+#include <chrono>
+#include <thread>
 #ifdef TUMBU_DEBUG
 #include <vld.h>
 #endif
@@ -19,6 +21,7 @@ TUMBU::TUMBU(void){
 	shadowTextureCount = 1;
 	
 	skyQuality = 0;
+	frameLimit = -1;	// monitor refresh (VSync)
 	timeMultiplier = 0.1f;
 
 	gameState = TumbuEnums::NONE;
@@ -113,7 +116,20 @@ bool TUMBU::frameRenderingQueued(const Ogre::FrameEvent& evt){
     return BaseApplication::frameRenderingQueued(evt);
 }
 //-------------------------------------------------------------------------------------
-bool TUMBU::frameStarted(const Ogre::FrameEvent& evt){	
+bool TUMBU::frameStarted(const Ogre::FrameEvent& evt){
+	// Frame rate limit (options menu). VSync is handled by the window; the dev-test FPS cap takes precedence.
+	if( frameLimit > 0 && !DevTest::isEnabled() ){
+		const unsigned long frameMicros = 1000000UL / frameLimit;
+		unsigned long elapsed = frameLimitTimer.getMicroseconds();
+		while( elapsed < frameMicros ){
+			unsigned long remainingMillis = ( frameMicros - elapsed ) / 1000;
+			if( remainingMillis > 1 ){
+				std::this_thread::sleep_for( std::chrono::milliseconds( remainingMillis - 1 ) );
+			}
+			elapsed = frameLimitTimer.getMicroseconds();
+		}
+		frameLimitTimer.reset();
+	}
 	return BaseApplication::frameStarted(evt);
 }
 //-------------------------------------------------------------------------------------
@@ -245,6 +261,8 @@ void TUMBU::finishDemo(void){
 }
 //------------------------------------------------------------------------------------
 void TUMBU::createScene(void){
+	loadOptions();
+
 	cutScene = new StartScreen(mSceneMgr);
 	mRoot->addFrameListener( cutScene );
 	renderOneFrame();
@@ -414,4 +432,73 @@ void TUMBU::printSceneChildren( Ogre::SceneNode* node, int level ){
 	}
 }
 //-------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
+void TUMBU::setShadowPreset( int preset ){
+	// Same presets as the 2011 options menu.
+	switch( preset ){
+	case 1:
+		setCastShadows( true );
+		setShadowTechnique( Ogre::SHADOWTYPE_TEXTURE_MODULATIVE );
+		setShadowFarDistance( 1000 );
+		setShadowTextureSize( 1024 );
+		break;
+	case 2:
+		setCastShadows( true );
+		setShadowTechnique( Ogre::SHADOWTYPE_TEXTURE_ADDITIVE );
+		setShadowFarDistance( 500 );
+		setShadowTextureSize( 512 );
+		break;
+	default:
+		setCastShadows( false );
+		setShadowTechnique( Ogre::SHADOWTYPE_NONE );
+		setShadowFarDistance( 100 );
+		setShadowTextureSize( 256 );
+		break;
+	}
+	setShadowColor( Ogre::ColourValue( 0.4f, 0.4f, 0.4f ) );
+	setShadowTextureCount( 1 );
+}
+//-------------------------------------------------------------------------------------
+int TUMBU::getShadowPreset(void){
+	switch( shadowTechnique ){
+	case Ogre::SHADOWTYPE_TEXTURE_MODULATIVE:	return 1;
+	case Ogre::SHADOWTYPE_TEXTURE_ADDITIVE:		return 2;
+	default:									return 0;
+	}
+}
+//-------------------------------------------------------------------------------------
+void TUMBU::setFrameLimit( int fps ){
+	frameLimit = fps;
+	if( mWindow != NULL ){
+		mWindow->setVSyncEnabled( frameLimit == -1 );
+	}
+	frameLimitTimer.reset();
+}
+//-------------------------------------------------------------------------------------
+int TUMBU::getFrameLimit(void){
+	return frameLimit;
+}
+//-------------------------------------------------------------------------------------
+void TUMBU::saveOptions(void){
+	std::ofstream file( ( workPath + "options.cfg" ).c_str() );
+	if( file ){
+		file << "# TUMBU options (written by the options menu)\n";
+		file << "SkyQuality=" << skyQuality << "\n";
+		file << "Shadows=" << getShadowPreset() << "\n";
+		file << "FrameLimit=" << frameLimit << "\n";
+	}
+}
+//-------------------------------------------------------------------------------------
+void TUMBU::loadOptions(void){
+	Ogre::String path = workPath + "options.cfg";
+	if( Ogre::FileSystemLayer::fileExists( path ) ){
+		Ogre::ConfigFile cfg;
+		cfg.load( path );
+		setSkyQuality( Ogre::StringConverter::parseInt( cfg.getSetting( "SkyQuality", Ogre::BLANKSTRING, "0" ) ) );
+		setShadowPreset( Ogre::StringConverter::parseInt( cfg.getSetting( "Shadows", Ogre::BLANKSTRING, "0" ) ) );
+		setFrameLimit( Ogre::StringConverter::parseInt( cfg.getSetting( "FrameLimit", Ogre::BLANKSTRING, "-1" ) ) );
+	}else{
+		setFrameLimit( frameLimit );
+	}
+}
 //-------------------------------------------------------------------------------------

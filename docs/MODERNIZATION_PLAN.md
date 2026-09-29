@@ -34,7 +34,7 @@ Phase A runs on the legacy toolchain (`scripts/build.ps1`). Phase B uses the new
 - [x] **B3** Scene loader + terrain on Ogre 14
 - [x] **B4** Physics on the Ogre Bullet component
 - [x] **B5** Audio on miniaudio
-- [ ] **B6** GUI on MyGUI (start menu, HUD, dialogs, ESC menu and inventory)
+- [x] **B6** GUI on MyGUI (start menu, HUD, dialogs, ESC menu and inventory)
 - [ ] **B7** Mesh upgrade (done: scripts/upgrade-meshes.ps1) and a modern render system (D3D11 is the default; robot shaders still to port)
 - [ ] **C2** Sky on Caelum
 - [ ] **Done** Full game loop plays on Ogre 14.6, with docs for building in Visual Studio

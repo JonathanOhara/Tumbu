@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Battle HUD: hero bars (top left), enemy bars (bottom right), message log (bottom centre), loading text. -->
+<MyGUI type="Layout" version="3.2.0">
+	<Widget type="Widget" skin="PanelEmpty" position_real="0 0 1 1" layer="Back" name="BattleHud">
+		<Property key="NeedMouse" value="false"/>
+		<Property key="Visible" value="false"/>
+
+		<!-- Dark backing panels keep the text readable over the bright arena floor -->
+		<Widget type="ImageBox" skin="ImageBox" position_real="0 0 0.31 0.145" name="HeroBack">
+			<Property key="ImageTexture" value="HudBack.png"/>
+			<Property key="NeedMouse" value="false"/>
+		</Widget>
+		<Widget type="ImageBox" skin="ImageBox" position_real="0.69 0.855 0.31 0.145" name="EnemyBack">
+			<Property key="ImageTexture" value="HudBack.png"/>
+			<Property key="NeedMouse" value="false"/>
+		</Widget>
+
+		<!-- Hero -->
+		<Widget type="TextBox" skin="TextBox" position_real="0.005 0.005 0.29 0.04" name="HeroName">
+			<Property key="Caption" value="Your Robot"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.005 0.05 0.045 0.04" name="HeroHpLabel">
+			<Property key="Caption" value="HP"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="ProgressBar" skin="ProgressBar" position_real="0.05 0.05 0.25 0.04" name="HeroHpBar">
+			<Property key="Range" value="1000"/>
+			<Property key="RangePosition" value="1000"/>
+			<Widget type="TextBox" skin="TextBox" position_real="0 0 1 1" name="HeroHpValue">
+				<Property key="FontName" value="Tumbu.Text"/>
+				<Property key="TextAlign" value="Center"/>
+				<Property key="TextShadow" value="true"/>
+				<Property key="NeedMouse" value="false"/>
+			</Widget>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.005 0.095 0.045 0.04" name="HeroApLabel">
+			<Property key="Caption" value="AP"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="ProgressBar" skin="ProgressBar" position_real="0.05 0.095 0.25 0.04" name="HeroApBar">
+			<Property key="Range" value="1000"/>
+			<Property key="RangePosition" value="1000"/>
+			<Widget type="TextBox" skin="TextBox" position_real="0 0 1 1" name="HeroApValue">
+				<Property key="FontName" value="Tumbu.Text"/>
+				<Property key="TextAlign" value="Center"/>
+				<Property key="TextShadow" value="true"/>
+				<Property key="NeedMouse" value="false"/>
+			</Widget>
+		</Widget>
+
+		<!-- Enemy -->
+		<Widget type="TextBox" skin="TextBox" position_real="0.70 0.865 0.29 0.04" name="EnemyName">
+			<Property key="Caption" value="Enemy Robot"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.70 0.91 0.045 0.04" name="EnemyHpLabel">
+			<Property key="Caption" value="HP"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="ProgressBar" skin="ProgressBar" position_real="0.745 0.91 0.245 0.04" name="EnemyHpBar">
+			<Property key="Range" value="1000"/>
+			<Property key="RangePosition" value="1000"/>
+			<Widget type="TextBox" skin="TextBox" position_real="0 0 1 1" name="EnemyHpValue">
+				<Property key="Caption" value="???"/>
+				<Property key="FontName" value="Tumbu.Text"/>
+				<Property key="TextAlign" value="Center"/>
+				<Property key="TextShadow" value="true"/>
+				<Property key="NeedMouse" value="false"/>
+			</Widget>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.70 0.955 0.045 0.04" name="EnemyApLabel">
+			<Property key="Caption" value="AP"/>
+			<Property key="FontName" value="Tumbu.Button"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="ProgressBar" skin="ProgressBar" position_real="0.745 0.955 0.245 0.04" name="EnemyApBar">
+			<Property key="Range" value="1000"/>
+			<Property key="RangePosition" value="1000"/>
+			<Widget type="TextBox" skin="TextBox" position_real="0 0 1 1" name="EnemyApValue">
+				<Property key="Caption" value="???"/>
+				<Property key="FontName" value="Tumbu.Text"/>
+				<Property key="TextAlign" value="Center"/>
+				<Property key="TextShadow" value="true"/>
+				<Property key="NeedMouse" value="false"/>
+			</Widget>
+		</Widget>
+
+		<!-- Message log: newest message at the bottom -->
+		<Widget type="TextBox" skin="TextBox" position_real="0.31 0.85 0.38 0.035" name="Log1">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="TextAlign" value="Center"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.31 0.885 0.38 0.035" name="Log2">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="TextAlign" value="Center"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.31 0.92 0.38 0.035" name="Log3">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="TextAlign" value="Center"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+		<Widget type="TextBox" skin="TextBox" position_real="0.31 0.955 0.38 0.035" name="Log4">
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="TextAlign" value="Center"/>
+			<Property key="TextShadow" value="true"/>
+		</Widget>
+	</Widget>
+
+	<Widget type="TextBox" skin="TextBox" position_real="0.60 0.93 0.39 0.06" layer="Info" name="LoadingText">
+		<Property key="Caption" value="Loading..."/>
+		<Property key="FontName" value="Tumbu.Title"/>
+		<Property key="TextAlign" value="Right VCenter"/>
+		<Property key="TextShadow" value="true"/>
+		<Property key="Visible" value="false"/>
+		<Property key="NeedMouse" value="false"/>
+	</Widget>
+</MyGUI>

@@ -16,7 +16,7 @@ StartScreen::StartScreen(Ogre::SceneManager* mSceneMgr){
 	rect->setMaterial(material);
  
 	// Render the background before everything else
-	rect->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);
+	rect->setRenderQueueGroup(Ogre::RENDER_QUEUE_BACKGROUND);
  
 	// Hacky, but we need to set the bounding box to something big
 	// NOTE: If you are using Eihort (v1.4), please see the note below on setting the bounding box
@@ -40,6 +40,11 @@ bool StartScreen::frameRenderingQueued(const Ogre::FrameEvent &evt){
 }
 //-------------------------------------------------------------------------------------
 void StartScreen::showStartScreenImage(){
-	rect->getMaterial()->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureName("startScreen_04.jpg");
+	// Ogre 14: the shader generator (RTSS) adds its own technique, so update the texture in every technique.
+	for( Ogre::Technique *technique : rect->getMaterial()->getTechniques() ){
+		if( technique->getNumPasses() > 0 && technique->getPass(0)->getNumTextureUnitStates() > 0 ){
+			technique->getPass(0)->getTextureUnitState(0)->setTextureName("startScreen_04.jpg");
+		}
+	}
 }
 //-------------------------------------------------------------------------------------

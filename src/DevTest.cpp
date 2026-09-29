@@ -1,6 +1,8 @@
 #include "DevTest.h"
 #include "TUMBU.h"
 
+#include <MyGUI.h>
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -10,6 +12,7 @@
 
 bool DevTest::autoplay = false;
 bool DevTest::walkTest = false;
+bool DevTest::guiTour = false;
 int DevTest::fpsCap = 0;
 Ogre::Real DevTest::quitAfter = 0;
 //-------------------------------------------------------------------------------------
@@ -23,6 +26,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			autoplay = true;
 		}else if( arg == "-walktest" ){
 			walkTest = true;
+		}else if( arg == "-guitour" ){
+			guiTour = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-fpscap=" ) ){
 			fpsCap = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-quitafter=" ) ){
@@ -36,7 +41,7 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 }
 //-------------------------------------------------------------------------------------
 bool DevTest::isEnabled(void){
-	return autoplay || fpsCap > 0;
+	return autoplay || guiTour || fpsCap > 0;
 }
 //-------------------------------------------------------------------------------------
 DevTest::DevTest(void){
@@ -46,6 +51,8 @@ DevTest::DevTest(void){
 	nextLogTime	= 0;
 	walking		= false;
 	walkDone	= false;
+	tourStep	= 0;
+	tourTimer	= 0;
 	frameTimer.reset();
 
 	log( "enabled: autoplay=" + Ogre::StringConverter::toString( autoplay ) +
@@ -60,6 +67,11 @@ DevTest::~DevTest(void){
 bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 	limitFrameRate();
 	frames++;
+
+	if( guiTour ){
+		runGuiTour( evt );
+		return true;
+	}
 
 	if( !autoplay ){
 		return true;
@@ -164,5 +176,127 @@ void DevTest::limitFrameRate(void){
 //-------------------------------------------------------------------------------------
 void DevTest::log( const Ogre::String &message ){
 	Ogre::LogManager::getSingletonPtr()->logMessage( "[DEVTEST] " + message );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::runGuiTour( const Ogre::FrameEvent &evt ){
+	TUMBU* tumbu = TUMBU::getInstance();
+	TumbuEnums::GameState state = tumbu->getGameState();
+	tourTimer += evt.timeSinceLastFrame;
+
+	switch( tourStep ){
+	case 0: // start screen
+		if( state == TumbuEnums::START_SCREEN && frames > 30 && tourTimer > 1.0f ){
+			tourStep++; tourTimer = 0;	// advance first: actions may render frames (re-entering here)
+			screenshot( "start" );
+			click( "OptionsButton" );
+		}
+		break;
+	case 1: // options window
+		if( tourTimer > 0.5f ){
+			tourStep++; tourTimer = 0;
+			screenshot( "options" );
+			click( "OptionsCancelButton" );
+			click( "PlayButton" );
+		}
+		break;
+	case 2: // first conversation (the wait starts when the dialog is really on screen)
+		if( state != TumbuEnums::IN_DIALOG ){
+			tourTimer = 0;
+		}else if( tourTimer > 0.5f ){
+			screenshot( "conversation" );
+			tourStep++; tourTimer = 0;
+		}
+		break;
+	case 3: // walk through the intro dialogs, photographing the part reward and the tutorial question
+		if( state == TumbuEnums::IN_DIALOG ){
+			if( tourTimer > 0.6f ){
+				if( isVisible( "ShowPartWindow" ) ){
+					screenshot( "showpart" );
+				}
+				if( isVisible( "ConfirmWindow" ) ){
+					screenshot( "confirm" );
+					pressKey( TumbuInput::KEY_ESCAPE );	// no tutorial
+				}else{
+					pressKey( TumbuInput::KEY_SPACE );
+				}
+				tourTimer = 0;
+			}
+		}else if( state == TumbuEnums::PLAYING ){
+			tourStep++; tourTimer = 0;
+		}
+		break;
+	case 4: // battle HUD
+		if( tourTimer > 2.0f ){
+			GUI::getInstance()->addLog( Log::LEVEL_UP, "GUI tour: log message", 5 );
+			tourStep++; tourTimer = 0;
+			screenshot( "hud" );
+			pressKey( TumbuInput::KEY_ESCAPE );
+		}
+		break;
+	case 5: // pause menu: status
+		if( tourTimer > 0.5f ){
+			screenshot( "pause-status" );
+			click( "InventoryTab" );
+			tourStep++; tourTimer = 0;
+		}
+		break;
+	case 6:
+		if( tourTimer > 1.0f ){
+			screenshot( "pause-inventory" );
+			click( "SkillsTab" );
+			tourStep++; tourTimer = 0;
+		}
+		break;
+	case 7:
+		if( tourTimer > 0.5f ){
+			screenshot( "pause-skills" );
+			click( "HelpTab" );
+			tourStep++; tourTimer = 0;
+		}
+		break;
+	case 8:
+		if( tourTimer > 0.5f ){
+			screenshot( "pause-help" );
+			pressKey( TumbuInput::KEY_ESCAPE );
+			tourStep++; tourTimer = 0;
+		}
+		break;
+	case 9:
+		if( tourTimer > 0.5f ){
+			log( "GUI tour finished" );
+			tourStep++;
+			tumbu->shutdown();
+		}
+		break;
+	}
+}
+//-------------------------------------------------------------------------------------
+void DevTest::screenshot( const Ogre::String &name ){
+	Ogre::String file = TUMBU::getInstance()->workPath + "devtest-gui-" + name + ".png";
+	TUMBU::getInstance()->mWindow->writeContentsToFile( file );
+	log( "screenshot " + file );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::pressKey( int key ){
+	OgreBites::KeyboardEvent evt;
+	evt.type = OgreBites::KEYDOWN;
+	evt.keysym.sym = key;
+	evt.keysym.mod = 0;
+	evt.repeat = 0;
+	GUI::getInstance()->keyPressed( evt );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::click( const Ogre::String &buttonName ){
+	MyGUI::Button *button = MyGUI::Gui::getInstance().findWidget<MyGUI::Button>( buttonName, false );
+	if( button != NULL ){
+		button->eventMouseButtonClick( button );
+	}else{
+		log( "click: no button " + buttonName );
+	}
+}
+//-------------------------------------------------------------------------------------
+bool DevTest::isVisible( const Ogre::String &widgetName ){
+	MyGUI::Widget *widget = MyGUI::Gui::getInstance().findWidget<MyGUI::Widget>( widgetName, false );
+	return widget != NULL && widget->getVisible();
 }
 //-------------------------------------------------------------------------------------

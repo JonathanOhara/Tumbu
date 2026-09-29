@@ -30,6 +30,7 @@ list(APPEND CMAKE_PREFIX_PATH "${TUMBU_DEPS_INSTALL}" "${TUMBU_DEPS_DIR}/ogredep
 find_package(OGRE 14.6 REQUIRED COMPONENTS Bites Overlay Terrain Paging RTShaderSystem Bullet CONFIG
 	PATHS "${TUMBU_DEPS_INSTALL}/CMake" NO_DEFAULT_PATH)
 find_package(Bullet REQUIRED CONFIG PATHS "${TUMBU_DEPS_DIR}/ogredeps/lib/cmake/bullet" NO_DEFAULT_PATH)
+find_package(MyGUI REQUIRED CONFIG PATHS "${TUMBU_DEPS_INSTALL}/lib/cmake/MyGUI" NO_DEFAULT_PATH)
 
 # Imported Ogre targets only have a Release configuration; use it for RelWithDebInfo too.
 set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "Release")
@@ -48,7 +49,8 @@ target_include_directories(TUMBU PRIVATE
 target_link_directories(TUMBU PRIVATE "${TUMBU_DEPS_DIR}/ogredeps/lib")
 target_link_libraries(TUMBU PRIVATE
 	OgreMain OgreBites OgreOverlay OgreTerrain OgrePaging OgreRTShaderSystem OgreBullet
-	BulletDynamics BulletCollision LinearMath)
+	BulletDynamics BulletCollision LinearMath
+	MyGUI::OgrePlatform MyGUI::MyGUI)
 
 target_compile_definitions(TUMBU PRIVATE
 	$<$<CONFIG:RelWithDebInfo>:TUMBU_DEBUG>
