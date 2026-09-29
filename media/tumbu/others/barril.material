@@ -1,12 +1,14 @@
 material from-nxogre.org{
+  set $ambient_tex "barril.png"
   technique  {
     pass    {      
       texture_unit ambient_tex{
+        texture $ambient_tex
       }
     }
   }
 }
 
 material barrel-from-nxogre.org : from-nxogre.org{
-    set_texture_alias ambient_tex barril.png
+    set $ambient_tex "barril.png"
 }
