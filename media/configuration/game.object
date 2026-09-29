@@ -1,5 +1,7 @@
 game robot{
-	runSpeed 51
+	// Units per second (a robot is about 2 units tall). Movement is frame-rate independent.
+	walkSpeed 1.2
+	runSpeed 2.5
 	turnSpeed 500.0
 	
 	restitution 0.1

@@ -28,6 +28,7 @@ TUMBU::TUMBU(void){
 	clock				= NULL;
 	cutScene			= NULL;
 	demo				= NULL;
+	devTest				= NULL;
 	gui					= NULL;
 	soundManager		= NULL;
 	startScreenBackgroundSound = NULL;
@@ -39,6 +40,11 @@ TUMBU::~TUMBU(void){
 
 	removeAllKeyListeners();
 	removeAllMouseListeners();
+
+	if( devTest != NULL ){
+		mRoot->removeFrameListener( devTest );
+		delete devTest;
+	}
 
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting CutScene...");
 	if( cutScene != NULL ){
@@ -288,6 +294,11 @@ void TUMBU::createScene(void){
 	renderOneFrame();
 
 	createStartMenu();
+
+	if( DevTest::isEnabled() ){
+		devTest = new DevTest();
+		mRoot->addFrameListener( devTest );
+	}
 }
 //-------------------------------------------------------------------------------------
 void TUMBU::createStartMenu(void){

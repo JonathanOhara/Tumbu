@@ -541,17 +541,8 @@ bool Character::frameRenderingQueued( const Ogre::FrameEvent &evt ){
 			updateAttack(time);
 		}
 
-		Ogre::Real direction = RUN_SPEED * time;
-
-		Ogre::Vector3 playerPos = robotNode->getPosition();
-
-		btVector3 pos = OgreBulletCollisions::OgreBtConverter::to( robotPhysicsNode->getPosition() );
-
-		Ogre::Vector3 position(pos.x(), pos.y(), pos.z());
-
-		if (position != playerPos)	{
-			robotNode->translate((position - playerPos) * direction);
-		}
+		// The visual node follows the simulated body exactly (the old catch-up factor depended on frame time).
+		robotNode->setPosition( robotPhysicsNode->getPosition() );
 
 		updateRegeneration(time);
 	}
@@ -569,100 +560,42 @@ OgreBulletDynamics::RigidBody* Character::getOgreBulletRigidBody( const std::str
 }
 //-------------------------------------------------------------------------------------
 void Character::updateMovement( const Ogre::Real time ) {
-	Ogre::Real direction = RUN_SPEED * time;
-
 	if (!mKeyDirection.isZeroLength()){
-		/*
-		cout << "Roboot Node " << endl;
-		cout << "x " << robotNode->getPosition().x << endl;
-		cout << "y " << robotNode->getPosition().y << endl;
-		cout << "z " << robotNode->getPosition().z << endl;
-		*/
-
+		// Movement direction is relative to the camera
 		mGoalDirection = Ogre::Vector3::ZERO;
+		mGoalDirection += mKeyDirection.z * activeCameraNode->getOrientation().zAxis();
+		mGoalDirection += mKeyDirection.x * activeCameraNode->getOrientation().xAxis();
+		mGoalDirection.y = 0;
+		mGoalDirection.normalise();
+
+		toGoal = robotNode->getOrientation().zAxis().getRotationTo(mGoalDirection);
+
+		// How far the robot is from facing the goal direction
+		yawToGoal = toGoal.getYaw().valueDegrees();
+
+		// How much it may turn this frame
+		yawAtSpeed = yawToGoal / Ogre::Math::Abs(yawToGoal) * time * TURN_SPEED;
+
+		if (yawToGoal < 0){
+			yawToGoal = std::min<Ogre::Real>(0, std::max<Ogre::Real>(yawToGoal, yawAtSpeed));
+		}else if (yawToGoal > 0){
+			yawToGoal = std::max<Ogre::Real>(0, std::min<Ogre::Real>(yawToGoal, yawAtSpeed));
+		}
+
+		robotNode->yaw(Ogre::Degree(yawToGoal));
+
+		// Speeds are in units per second (game.object), so movement no longer depends on the frame rate.
+		setHorizontalVelocity( mGoalDirection, isRunning ? RUN_SPEED : WALK_SPEED );
 
 		if( isRunning ){
-			// Calcula a direção do movemento a paritr da camera
-			mGoalDirection += mKeyDirection.z * activeCameraNode->getOrientation().zAxis();
-			mGoalDirection += mKeyDirection.x * activeCameraNode->getOrientation().xAxis();
-			mGoalDirection.y = 0;
-			mGoalDirection.normalise();
-	
-			toGoal = robotNode->getOrientation().zAxis().getRotationTo(mGoalDirection);
-
-			// Calcula quanto o char esta virado para direção de destino
-			yawToGoal = toGoal.getYaw().valueDegrees();
-		
-			// Quanto pode virar nesse frame
-			yawAtSpeed = yawToGoal / Ogre::Math::Abs(yawToGoal) * time * TURN_SPEED;
-
-			// Virando o node
-			if (yawToGoal < 0){
-				yawToGoal = std::min<Ogre::Real>(0, std::max<Ogre::Real>(yawToGoal, yawAtSpeed));
-			}else if (yawToGoal > 0){
-				yawToGoal = std::max<Ogre::Real>(0, std::min<Ogre::Real>(yawToGoal, yawAtSpeed));
-			}
-
-			robotNode->yaw(Ogre::Degree(yawToGoal));
-
-			localTrans.setOrigin (OgreBulletCollisions::OgreBtConverter::to(robotNode->getPosition()));
-			localTrans.setRotation (OgreBulletCollisions::OgreBtConverter::to(robotNode->getOrientation()));
-
-			charRigidBody->getBulletObject()->setWorldTransform(localTrans);
-
-			/*
-			translation = OgreBulletCollisions::OgreBtConverter::to( robotNode->_getDerivedOrientation() * Ogre::Vector3(0, 0, RUN_SPEED * 1.75f ) );
-			translation.setY(0);
-			charRigidBody->getBulletRigidBody()->setLinearVelocity( translation );
-			*/
-
-			charRigidBody->getBulletRigidBody()->setLinearVelocity( btVector3( mGoalDirection.x * direction, mGoalDirection.y * direction, mGoalDirection.z * direction ));	
-
 			legs->animationArray[ANIM_RUN]->addTime( time );
 			leftArm->animationArray[ANIM_RUN]->addTime( time );
 			rightArm->animationArray[ANIM_RUN]->addTime( time );
 		} else {
-			// Calcula a direção do movemento a paritr da camera
-
-			mGoalDirection += mKeyDirection.z * activeCameraNode->getOrientation().zAxis();
-			mGoalDirection += mKeyDirection.x * activeCameraNode->getOrientation().xAxis();
-			mGoalDirection.y = 0;
-			mGoalDirection.normalise();
-	
-			toGoal = robotNode->getOrientation().zAxis().getRotationTo(mGoalDirection);
-
-			// Calcula quanto o char esta virado para direção de destino
-			yawToGoal = toGoal.getYaw().valueDegrees();
-		
-			// Quanto pode virar nesse frame
-			yawAtSpeed = yawToGoal / Ogre::Math::Abs(yawToGoal) * time * TURN_SPEED;
-
-			// Virando o node
-			if (yawToGoal < 0){
-				yawToGoal = std::min<Ogre::Real>(0, std::max<Ogre::Real>(yawToGoal, yawAtSpeed));
-			}else if (yawToGoal > 0){
-				yawToGoal = std::max<Ogre::Real>(0, std::min<Ogre::Real>(yawToGoal, yawAtSpeed));
-			}
-
-			robotNode->yaw(Ogre::Degree(yawToGoal));
-			
-			localTrans.setOrigin (OgreBulletCollisions::OgreBtConverter::to(robotNode->getPosition()));
-			localTrans.setRotation (OgreBulletCollisions::OgreBtConverter::to(robotNode->getOrientation()));
-
-			charRigidBody->getBulletObject()->setWorldTransform(localTrans);
-
-			/*
-			translation = OgreBulletCollisions::OgreBtConverter::to( robotNode->_getDerivedOrientation() * Ogre::Vector3(0, 0, RUN_SPEED ) );
-			translation.setY(0);
-			charRigidBody->getBulletRigidBody()->setLinearVelocity( translation );
-			*/
-
-			charRigidBody->getBulletRigidBody()->setLinearVelocity( btVector3( mGoalDirection.x * direction, mGoalDirection.y * direction, mGoalDirection.z * direction ));	
-
 			legs->animationArray[ANIM_WALK]->addTime( time / 1.15f );
 		}
 	}else{
-		charRigidBody->getBulletRigidBody()->setLinearVelocity( btVector3(0,0,0) );
+		setHorizontalVelocity( Ogre::Vector3::ZERO, 0 );
 	}
 }
 //-------------------------------------------------------------------------------------

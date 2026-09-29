@@ -18,7 +18,8 @@
 #include "Sound.h"
 #include "Tutorial.h"
 #include "SimpleRigidBody.h"
-	
+#include "DevTest.h"
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #include "../res/resource.h"
 #endif
@@ -133,6 +134,7 @@ private:
 	GUI						*gui;
 	SoundManager			*soundManager;
 	StartScreen				*cutScene;
+	DevTest					*devTest;
 
 	Ogre::SceneNode
 		*activeScene;

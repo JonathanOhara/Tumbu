@@ -46,10 +46,22 @@ from each one you defeat.
   VC++ 2010 on 2011-07-24. The Ogre SDK in that backup is 1.8.1 and unused; the game uses Ogre 1.7.3.
 - Blender 5.2 is installed. `media/tumbu/arena/coliseum.blend` was re-saved by **Blender 4.0.1** (Jul 2024)
   and is uncommitted; its file header reads `BLENDER-v401`. Every other `.blend` is still Blender **2.49**.
-- **Known gameplay bug: movement depends on frame rate.** `Character::updateMovement` sets the velocity to
-  `RUN_SPEED * frameTime`, so the hero crawls at high FPS. `CharacterEnemy::updateMovement` uses the full
-  `RUN_SPEED` and teleports its rigid body to the node every frame, so the enemy can fly out of the arena.
-  Both were tuned for about 60 FPS in 2011. Both are visible on the current PC (RTX 3070).
+- Movement is frame-rate independent (fixed in A1). `walkSpeed` and `runSpeed` in `game.object` are in
+  units per second, set through `Robot::setHorizontalVelocity`. Physics steps at a fixed 120 Hz
+  (`Demo::frameRenderingQueued`).
+- Modernization progress and decisions: **[docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md)**.
+
+## Automated checks (use after every change)
+
+```powershell
+.\scripts\devtest.ps1 -QuitAfter 7 -Name check      # auto-starts a match, walks the hero, screenshots, quits
+.\scripts\devtest.ps1 -FpsCap 30 -Name fps30        # same, frame rate capped (compare movement across FPS)
+```
+
+`DevTest` (`src/DevTest.cpp`) handles these game switches: `-autoplay`, `-walktest`, `-fpscap=N` and
+`-quitafter=S`. It logs `[DEVTEST] t=… fps=… hero=x y z enemy=x y z` every 0.5 s to `ogre.log`. The script
+copies the log and screenshot to `%USERPROFILE%\Tumbu\devtest-<Name>.log/.png`. **Read the screenshot**
+to confirm what rendered. The arena is about ±9 units, so any robot position outside that range is a bug.
 - The game design used Portuguese. Some identifiers are Portuguese (`sofrerDano` = take damage,
   `criarDano` = deal damage), and so are many comments and `printf`s.
 

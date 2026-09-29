@@ -10,6 +10,7 @@ Robot::Robot(void){
 	ConfigNode* cfg;
 	cfg = ConfigScriptLoader::getSingleton().getConfigScript( "game", "robot" );
 
+	WALK_SPEED = cfg->findChild("walkSpeed")->getValueF(0);
 	RUN_SPEED = cfg->findChild("runSpeed")->getValueF(0);
 	TURN_SPEED = cfg->findChild("turnSpeed")->getValueF(0);
 
@@ -110,5 +111,27 @@ Robot::~Robot(void){
 	cout << "FIM Classe pai" << endl;
 	SoundManager::getInstance()->printAllSounds();
 	*/
+}
+//-------------------------------------------------------------------
+void Robot::setHorizontalVelocity( const Ogre::Vector3 &direction, Ogre::Real speed ){
+	btRigidBody* rigid = charRigidBody->getBulletRigidBody();
+	syncBodyRotation();
+	rigid->activate( true );
+	btVector3 velocity = rigid->getLinearVelocity();
+	rigid->setLinearVelocity( btVector3( direction.x * speed, velocity.y(), direction.z * speed ) );
+}
+//-------------------------------------------------------------------
+void Robot::syncBodyRotation(void){
+	btRigidBody* rigid = charRigidBody->getBulletRigidBody();
+	btQuaternion rotation = OgreBulletCollisions::OgreBtConverter::to( robotNode->getOrientation() );
+
+	// Only the rotation is copied: the physics simulation owns the position.
+	btTransform transform = rigid->getWorldTransform();
+	transform.setRotation( rotation );
+	rigid->setWorldTransform( transform );
+
+	transform = rigid->getInterpolationWorldTransform();
+	transform.setRotation( rotation );
+	rigid->setInterpolationWorldTransform( transform );
 }
 //-------------------------------------------------------------------

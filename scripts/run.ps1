@@ -2,7 +2,8 @@
 # Usage: .\scripts\run.ps1 [-Configuration Release|Debug] [-Wait]
 param(
     [ValidateSet('Release', 'Debug')] [string]$Configuration = 'Release',
-    [switch]$Wait
+    [switch]$Wait,
+    [switch]$NoLaunch
 )
 $ErrorActionPreference = 'Stop'
 $root   = Split-Path $PSScriptRoot -Parent
@@ -24,6 +25,7 @@ Copy-Item "$root\tumbu.cfg" "$binDir\tumbu$suffix.cfg" -Force
 
 # Per-user folder for ogre.cfg / ogre.log / cegui.log (the game throws without it).
 New-Item -ItemType Directory -Force "$env:USERPROFILE\Tumbu" | Out-Null
+if ($NoLaunch) { return }
 
 $proc = Start-Process $exe -WorkingDirectory $binDir -PassThru
 Write-Host "Started TUMBU ($Configuration), PID $($proc.Id). Logs: $env:USERPROFILE\Tumbu\ogre.log"

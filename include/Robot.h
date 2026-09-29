@@ -83,7 +83,8 @@ public:
 	Ogre::String robotName;
 
 	float 
-		RUN_SPEED,
+		WALK_SPEED,		// units per second
+		RUN_SPEED,		// units per second
 		TURN_SPEED,
 		CHAR_RESTITUTION,
 		CHAR_FRICTION,
@@ -137,7 +138,7 @@ public:
 	Skill *jyn;
 	list<Skill*> skillList;
 
-	/** Atributos para animação*/	
+	/** Atributos para animaï¿½ï¿½o*/	
 	bool 
 		isAttacking,
 		isGuard,
@@ -166,6 +167,11 @@ protected:
 
 	Ogre::Real statsRegenartionCount;
 
+	/** Frame-rate independent movement: aligns the rigid body with robotNode's facing and sets its horizontal
+	 *  velocity to direction * speed (units/second), keeping the vertical velocity so gravity still applies. */
+	void setHorizontalVelocity( const Ogre::Vector3 &direction, Ogre::Real speed );
+	void syncBodyRotation(void);
+
 	Ogre::Vector3 mGoalDirection;
 
 	/** MOVEMENT */
@@ -178,7 +184,7 @@ protected:
 	btTransform localTrans;
 	btVector3 translation;
 
-	/** Atributos estáticos do jogador */
+	/** Atributos estï¿½ticos do jogador */
 	float 
 		maxHp,
 		maxAp,

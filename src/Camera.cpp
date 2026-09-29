@@ -226,7 +226,8 @@ bool Camera::frameRenderingQueued(const Ogre::FrameEvent &evt){
 		mCameraPivot->setPosition(chasePosition + Ogre::Vector3::UNIT_Y * cameraHeight);
 		// move the camera smoothly to the goal
 		Ogre::Vector3 goalOffset = mCameraGoal->_getDerivedPosition() - mCameraNode->getPosition();
-		mCameraNode->translate(goalOffset * evt.timeSinceLastFrame * cameraTranslate);
+		// Clamp the catch-up factor so a long frame cannot overshoot the goal.
+		mCameraNode->translate(goalOffset * std::min<Ogre::Real>(1.0f, evt.timeSinceLastFrame * cameraTranslate));
 
 		// always look at the pivot		
 		

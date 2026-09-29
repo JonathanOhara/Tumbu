@@ -17,6 +17,15 @@
 #endif
 		{
 			try {
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+				DevTest::parseCommandLine( strCmdLine );
+#else
+				Ogre::String commandLine;
+				for( int i = 1; i < argc; i++ ){
+					commandLine += Ogre::String( argv[i] ) + " ";
+				}
+				DevTest::parseCommandLine( commandLine );
+#endif
 				TUMBU* app = TUMBU::getInstance();
 				app->go();
 				delete app;

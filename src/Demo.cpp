@@ -106,7 +106,8 @@ bool Demo::frameRenderingQueued(const Ogre::FrameEvent &evt){
 
 	switch( tumbu->getGameState() ){
 	case TumbuEnums::PLAYING:
-		getPhysicWorld()->stepSimulation(timeSinceLastFrame);
+		// Fixed 120 Hz physics with up to 8 sub-steps per frame, so the simulation runs at the same speed at any frame rate.
+		getPhysicWorld()->stepSimulation(timeSinceLastFrame, 8, 1.0f / 120.0f);
 		collisionDetection();
 
 		verifyDeaths();

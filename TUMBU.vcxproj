@@ -137,6 +137,7 @@
     <ClInclude Include="include\Conversation.h" />
     <ClInclude Include="include\CutScene.h" />
     <ClInclude Include="include\Demo.h" />
+    <ClInclude Include="include\DevTest.h" />
     <ClInclude Include="include\Dialog.h" />
     <ClInclude Include="include\DotSceneLoader.h" />
     <ClInclude Include="include\EnergyParticle.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="src\Conversation.cpp" />
     <ClCompile Include="src\CutScene.cpp" />
     <ClCompile Include="src\Demo.cpp" />
+    <ClCompile Include="src\DevTest.cpp" />
     <ClCompile Include="src\Dialog.cpp" />
     <ClCompile Include="src\DotSceneLoader.cpp" />
     <ClCompile Include="src\EnergyParticle.cpp" />

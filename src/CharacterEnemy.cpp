@@ -224,14 +224,9 @@ void CharacterEnemy::updateMovement( const Ogre::Real time ) {
 
 		robotNode->yaw(Ogre::Degree(yawToGoal));
 		
-		localTrans.setOrigin (OgreBulletCollisions::OgreBtConverter::to(robotNode->getPosition()));
-		localTrans.setRotation (OgreBulletCollisions::OgreBtConverter::to(robotNode->getOrientation()));
-
-		charRigidBody->getBulletObject()->setWorldTransform(localTrans);
-
-		translation = OgreBulletCollisions::OgreBtConverter::to(robotNode->_getDerivedOrientation() * Ogre::Vector3(0, 0, RUN_SPEED));
-		translation.setY(0);
-		charRigidBody->getBulletRigidBody()->setLinearVelocity( translation );
+		// Walks along its facing at WALK_SPEED units/second (was a fixed 51 plus a per-frame teleport, which
+		// made it tunnel through the arena walls).
+		setHorizontalVelocity( robotNode->_getDerivedOrientation() * Ogre::Vector3::UNIT_Z, WALK_SPEED );
 
 		legs->animationArray[ANIM_WALK]->addTime( time / 1.15f );
 	}
