@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "DotSceneLoader.h"
+#include "Lighting.h"
 
 #pragma warning(disable:4390)
 #pragma warning(disable:4305)
@@ -247,21 +248,15 @@ void DotSceneLoader::processTerrain(rapidxml::xml_node<>* XMLNode){
     int compositeMapDistance = Ogre::StringConverter::parseInt(XMLNode->first_attribute("tuningCompositeMapDistance")->value());
     int maxPixelError = Ogre::StringConverter::parseInt(XMLNode->first_attribute("tuningMaxPixelError")->value());
     
-    Ogre::Vector3 lightdir(0, -0.3, 0.75);
-    lightdir.normalise();
-    Ogre::Light* l = mSceneMgr->createLight("tstLight");
-    l->setType(Ogre::Light::LT_DIRECTIONAL);
-    mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(l);
-    l->getParentSceneNode()->setDirection(lightdir, Ogre::Node::TS_WORLD);
-    l->setDiffuseColour(Ogre::ColourValue(1.0, 1.0, 1.0));
-    l->setSpecularColour(Ogre::ColourValue(0.4, 0.4, 0.4));
-    mSceneMgr->setAmbientLight(Ogre::ColourValue(0.6, 0.6, 0.6));
+    // The terrain's baked light map follows the sun of the lighting rig at load time (the scene's light is the
+    // sun; the 2011 loader added a second directional light here).
+    Lighting* lighting = Lighting::getInstance();
 
     mTerrainGlobalOptions->setMaxPixelError((Ogre::Real)maxPixelError);
     mTerrainGlobalOptions->setCompositeMapDistance((Ogre::Real)compositeMapDistance);
-    mTerrainGlobalOptions->setLightMapDirection(lightdir);
-    mTerrainGlobalOptions->setCompositeMapAmbient(mSceneMgr->getAmbientLight());
-    mTerrainGlobalOptions->setCompositeMapDiffuse(l->getDiffuseColour());
+    mTerrainGlobalOptions->setLightMapDirection(lighting->getLightDirection());
+    mTerrainGlobalOptions->setCompositeMapAmbient(lighting->getAmbientColour());
+    mTerrainGlobalOptions->setCompositeMapDiffuse(lighting->getSunColour());
 
     mTerrainGroup = OGRE_NEW Ogre::TerrainGroup(mSceneMgr, Ogre::Terrain::ALIGN_X_Z, mapSize, worldSize);
     mTerrainGroup->setOrigin(Ogre::Vector3::ZERO);

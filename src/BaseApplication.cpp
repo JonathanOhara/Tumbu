@@ -1,6 +1,7 @@
 #include "BaseApplication.h"
 #include "GUI.h"
 #include "DevTest.h"
+#include "Lighting.h"
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -118,6 +119,8 @@ void BaseApplication::locateResources(void){
 	// The robot shaders (Game) #include OgreUnifiedShader.h from OgreInternal. Only groups in the global pool
 	// look for resources in other groups, so Game is created as one before resources.cfg fills it.
 	Ogre::ResourceGroupManager::getSingleton().createResourceGroup( "Game", true );
+	// The robot and arena shader scripts reference these shared parameters.
+	Lighting::declareSharedParameters();
 
 	// resources.cfg (next to the executable) lists the game's resource groups and Ogre's own media.
 	OgreBites::ApplicationContext::locateResources();

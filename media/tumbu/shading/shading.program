@@ -1,0 +1,59 @@
+// Arena toon shading and post-processing programs (see robots.program for the robot ones). The shared
+// parameters "TumbuLighting" are declared and filled by Lighting.cpp.
+
+vertex_program env_toon_vs glsl glsles hlsl
+{
+    source env_toon.vert
+    target vs_4_0
+    default_params
+    {
+        param_named_auto wMat world_matrix
+        param_named_auto wvpMat worldviewproj_matrix
+        param_named_auto texViewProj texture_viewproj_matrix 0
+    }
+}
+
+fragment_program env_toon_ps glsl glsles hlsl
+{
+    source env_toon.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto matDif surface_diffuse_colour
+        param_named_auto matSpec surface_specular_colour
+        param_named_auto matShininess surface_shininess
+        param_named_auto camPos camera_position
+    }
+}
+
+vertex_program postprocess_vs glsl glsles hlsl
+{
+    source postprocess.vert
+    target vs_4_0
+    default_params
+    {
+        param_named_auto wvpMat worldviewproj_matrix
+    }
+}
+
+fragment_program postprocess_final_ps glsl glsles hlsl
+{
+    source postprocess_final.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+    }
+}
+
+// Depth-comparison sampler of the sun's shadow map (TumbuToon.h: tumbuShadow). Defined here because program
+// scripts are parsed before the materials that use it. Outside the map (border) counts as lit.
+sampler Tumbu/ShadowSampler
+{
+    filtering linear linear none
+    tex_address_mode border
+    tex_border_colour 1 1 1 1
+    compare_test on
+    comp_func less_equal
+}

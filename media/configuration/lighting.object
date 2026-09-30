@@ -1,0 +1,113 @@
+// Lighting rig of the arena (Lighting.cpp). The look is a soft anime style: the sun goes through a toon ramp,
+// the side away from the sun takes the shadow colour instead of going grey or black, the ambient light blends
+// from a ground colour (below) to a sky colour (above), and a rim light outlines the robots against the sky.
+//
+// Colours are in display (gamma) space. The scene is rendered in HDR and the final pass compresses values
+// above 1 (see exposure), so a lit surface may add up to a bit more than 1.
+//
+// "lighting configuration" holds the values that do not change with the time of day. The keyframes list the
+// "lighting <name>" blocks in time order; the game clock blends the two keyframes around the current hour
+// (and wraps from the last one back to the first).
+
+lighting configuration{
+	keyframes night dawn morning afternoon sunset dusk
+
+	// Toon ramp, applied to N.L remapped to 0..1: where the lit side starts, and how soft the edge is.
+	rampThreshold 0.5
+	rampSoftness 0.06
+	// Rim light width (higher = thinner) and the soft edge of the stylised specular highlight.
+	rimPower 3.5
+	specularSoftness 0.05
+
+	// Shadow map: depth bias (raise it if surfaces shadow themselves in stripes, lower it if shadows float away
+	// from their object) and the width of the soft edge in shadow-map texels.
+	shadowBias 0.0008
+	shadowSoftness 1.5
+
+	// Final image: saturation and contrast (1 = unchanged), and how much the corners darken.
+	saturation 1.1
+	contrast 1.05
+	vignette 0.3
+}
+
+// Each keyframe: the hour it applies to; sun elevation and azimuth in degrees (azimuth 0 = +Z, 90 = +X); the
+// sun (or moon) colour; sky and ground ambient; the shadow colour (multiplies the sun on the side away from
+// it); rim colour and strength; exposure of the final image.
+
+lighting night{
+	hour 1
+	sunElevation 50
+	sunAzimuth 250
+	sunColour 0.30 0.38 0.62
+	skyColour 0.16 0.20 0.36
+	groundColour 0.08 0.08 0.13
+	shadowColour 0.30 0.34 0.60
+	rimColour 0.45 0.55 1.00
+	rimStrength 0.45
+	exposure 1.35
+}
+
+lighting dawn{
+	hour 6
+	sunElevation 10
+	sunAzimuth 60
+	sunColour 1.00 0.68 0.48
+	skyColour 0.36 0.38 0.54
+	groundColour 0.22 0.17 0.16
+	shadowColour 0.38 0.36 0.62
+	rimColour 1.00 0.75 0.60
+	rimStrength 0.45
+	exposure 1.05
+}
+
+lighting morning{
+	hour 9
+	sunElevation 38
+	sunAzimuth 75
+	sunColour 1.00 0.95 0.86
+	skyColour 0.40 0.47 0.60
+	groundColour 0.26 0.23 0.20
+	shadowColour 0.42 0.45 0.68
+	rimColour 0.80 0.90 1.00
+	rimStrength 0.35
+	exposure 1.0
+}
+
+lighting afternoon{
+	hour 15
+	sunElevation 42
+	sunAzimuth 120
+	sunColour 1.00 0.93 0.80
+	skyColour 0.40 0.46 0.60
+	groundColour 0.27 0.23 0.19
+	shadowColour 0.42 0.44 0.68
+	rimColour 0.85 0.90 1.00
+	rimStrength 0.35
+	exposure 1.0
+}
+
+lighting sunset{
+	hour 18.5
+	sunElevation 9
+	sunAzimuth 140
+	sunColour 1.00 0.58 0.34
+	skyColour 0.38 0.34 0.50
+	groundColour 0.22 0.15 0.14
+	shadowColour 0.40 0.32 0.60
+	rimColour 1.00 0.60 0.40
+	rimStrength 0.5
+	exposure 1.05
+}
+
+lighting dusk{
+	hour 20
+	sunElevation 30
+	sunAzimuth 200
+	sunColour 0.40 0.40 0.62
+	skyColour 0.22 0.22 0.40
+	groundColour 0.11 0.10 0.15
+	shadowColour 0.32 0.32 0.60
+	rimColour 0.60 0.55 1.00
+	rimStrength 0.45
+	exposure 1.25
+}

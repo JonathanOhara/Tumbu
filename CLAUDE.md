@@ -79,7 +79,8 @@ bin\Release\TUMBU.exe -cycles=12                    # leak check: 12 matches (3 
 | GUI | **MyGUI 3.5.1** (Ogre platform, BlackBlue theme). Layouts are in `media/gui/*.layout` | `GUI.cpp/.h` |
 | Audio | **miniaudio 0.11.25** + stb_vorbis. Files are loaded through Ogre resources; 3D sounds follow scene nodes | `Sound`, `SoundManager` |
 | Sky | Low: skydome material. High: **Caelum** day/night, **Direct3D 11 only** (Caelum ships only cg/hlsl shaders), driven by `Clock` | `Sky` |
-| Shaders | Robot shaders in unified GLSL/HLSL (`OgreUnifiedShader.h`); materials set textures through `set $var` | `media/tumbu/robots/` |
+| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, integrated depth shadow map, HDR compositor with tone mapping | `Lighting`, `media/tumbu/shading/` |
+| Shaders | Robot and arena shaders in unified GLSL/HLSL (`OgreUnifiedShader.h`), sharing `TumbuToon.h`; materials set textures through `set $var` | `media/tumbu/robots/`, `media/tumbu/shading/` |
 | Scene format | `.scene` from Ogitor 0.4.4 + terrain page `.ogt`, parsed by our `DotSceneLoader` (rapidxml) | `media/scenes/arena` |
 | Installer | NSIS `Tumbu.nsi` (still the 2011 x86 layout; needs updating) | root |
 
@@ -110,6 +111,19 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
 - **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
   `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
   particles render white.
+- **Lighting values reach the shaders as shared parameters.** `Lighting::declareSharedParameters` creates
+  `TumbuLighting` in `BaseApplication::locateResources`, before any script is parsed; programs reference it
+  with `shared_params_ref TumbuLighting`. Every value is a `float4` (the types must match exactly).
+- **Shadows are integrated.** The shadow technique is `SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED` with a
+  depth (`PF_DEPTH16`) map: Ogre only renders the map, and the robot and arena shaders sample it
+  (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). The old modulative/additive receiver
+  passes did not work with our shaders. `shadowParams.x` tells the shaders whether a map is bound.
+  RTSS-lit objects (terrain, particles) do not receive shadows.
+- **Samplers must be defined before use.** `Tumbu/ShadowSampler` lives in `shading.program`, because all
+  `*.program` scripts are parsed before any `*.material`.
+- **Post-processing:** `Lighting` adds the `Tumbu/PostProcess` compositor (HDR scene, then tone mapping,
+  grading and vignette) to the window viewport for a match and removes it afterwards. MyGUI and the
+  trays draw after it and are not affected.
 
 ### Object lifetime rules (each one was a real leak or crash)
 
@@ -140,8 +154,8 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   - `Game`, `Plants`, `TerrainTextures`, `Caelum`, `MyGUI`
 - **Per-user folder `%USERPROFILE%\Tumbu\`** holds:
   - `ogre.cfg`: render system
-  - `options.cfg`: `SkyQuality`, `Shadows`, `FrameLimit`. `-1` means VSync, the default; the other values
-    are 144/72/60/0 = unlimited.
+  - `options.cfg`: `SkyQuality`, `Shadows` (0 off, 1 normal = default, 2 high), `FrameLimit`. For
+    `FrameLimit`, `-1` means VSync, the default; the other values are 144/72/60/0 = unlimited.
   - `ogre.log` and `MyGUI.log`
 - **Controls:**
   - WASD to move, Left Shift to run.
@@ -197,6 +211,8 @@ through a listener registry in `BaseApplication`.
   `Tutorial` is a guided tutorial state machine.
 - `SoundManager` / `Sound` use miniaudio. `Sky` uses the skydome or Caelum. `Clock` keeps the in-game time
   (`getHours()` drives Caelum).
+- `Lighting` (owned by `Demo`) sets the sun, ambient light and the `TumbuLighting` shader values from
+  `lighting.object`, blending its keyframes by the clock every frame, and owns the post-processing compositor.
 - `ConfigScriptLoader` (`ConfigScript.*`) is an Ogre `ScriptLoader` for `*.object` files:
   `ConfigScriptLoader::getSingleton().getConfigScript("<type>", "<name>")->findChild("key")->getValueI()`.
 - `DotSceneLoader` is the Ogitor dotScene loader. Lights and camera are placed by their nodes, and meshes are
@@ -214,13 +230,19 @@ through a listener registry in `BaseApplication`.
     rate at walk/run speed, scaled by the real ground speed). The 2011 walk/run cycles are mirror-symmetric
     pendulums, so the feet slide at any rate; `TUMBU.exe -measureanims` checks new exports for that.
   - `skills.object`, `camera.object`, `animation.object`
+  - `lighting.object`: the lighting rig. Keyframes by hour (sun elevation/azimuth and colour, sky/ground
+    ambient, shadow tint, rim light, exposure) plus fixed values (toon ramp, shadow bias/softness, grading).
+    Read at match start, so a restart is enough to see a change.
 - `media/tumbu/robot00{1..5}/` holds one robot "set" each:
   - parts: `head/body/leftArm/rightArm/legs_00N.mesh` + `.skeleton` (upgraded to the Ogre 14 format)
   - textures in TGA
   - `robot00N.material`, `robot00N.object` (stats and attach points) and the source `robot00N.blend`
     (Blender 2.49)
-- `media/tumbu/robots/` holds the shared robot shaders (`robot_*.vert/.frag`, `robots.program`) and the base
-  `robots.material`.
+- `media/tumbu/robots/` holds the robot shaders (`robot_toon.*`, `robot_outline.*`, `robots.program`) and the
+  base `robots.material`: `$outlineWidth`/`$outlineColour` per robot.
+- `media/tumbu/shading/` holds the shared toon lighting (`TumbuToon.h`), the arena shaders and base
+  material (`Tumbu/EnvironmentToon`, used by `arena.material` and `coliseum.material`), and the
+  post-processing compositor, material and shaders.
 - `media/gui/` holds the MyGUI layouts (`StartScreen`, `Battle`, `Dialogs`, `PauseMenu`), resources
   (`Tumbu_Core.xml`, `Tumbu_Resources.xml`) and images (`RobotFaces.png`, `HudBack.png`).
 - `media/musics/*.ogg` and `media/sounds/*.ogg` hold the audio.

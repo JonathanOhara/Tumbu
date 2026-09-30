@@ -153,9 +153,9 @@ void GUI::loadLayouts(void){
 
 	skyCombo->addItem( "Low (sky dome)" );
 	skyCombo->addItem( "High (day/night sky)" );
-	shadowsCombo->addItem( "None" );
-	shadowsCombo->addItem( "Modulative" );
-	shadowsCombo->addItem( "Additive" );
+	shadowsCombo->addItem( "Off" );
+	shadowsCombo->addItem( "Normal" );
+	shadowsCombo->addItem( "High" );
 	frameLimitCombo->addItem( "VSync (monitor)", -1 );
 	frameLimitCombo->addItem( "144 FPS", 144 );
 	frameLimitCombo->addItem( "72 FPS", 72 );
@@ -524,11 +524,7 @@ void GUI::loadOptionsIntoWidgets(void){
 	TUMBU *tumbu = TUMBU::getInstance();
 	skyCombo->setIndexSelected( tumbu->getSkyQuality() == 1 ? 1 : 0 );
 
-	switch( tumbu->getShadowTechnique() ){
-	case Ogre::SHADOWTYPE_TEXTURE_MODULATIVE:	shadowsCombo->setIndexSelected( 1 ); break;
-	case Ogre::SHADOWTYPE_TEXTURE_ADDITIVE:		shadowsCombo->setIndexSelected( 2 ); break;
-	default:									shadowsCombo->setIndexSelected( 0 ); break;
-	}
+	shadowsCombo->setIndexSelected( tumbu->getShadowPreset() );
 
 	frameLimitCombo->setIndexSelected( 0 );
 	for( size_t i = 0; i < frameLimitCombo->getItemCount(); i++ ){
@@ -802,7 +798,7 @@ void GUI::onOptionsOk( MyGUI::Widget *sender ){
 }
 void GUI::onOptionsDefault( MyGUI::Widget *sender ){
 	skyCombo->setIndexSelected( 0 );
-	shadowsCombo->setIndexSelected( 0 );
+	shadowsCombo->setIndexSelected( 1 );
 	frameLimitCombo->setIndexSelected( 0 );
 }
 void GUI::onOptionsCancel( MyGUI::Widget *sender ){

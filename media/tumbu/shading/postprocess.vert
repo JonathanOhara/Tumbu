@@ -1,5 +1,4 @@
-// Robot lighting, ambient pass. One source for Direct3D 11 (HLSL) and OpenGL (GLSL) via OgreUnifiedShader.h.
-// Ported from the original 2011 Cg shader (general.cg).
+// Full-screen quad of the compositor passes.
 #include <OgreUnifiedShader.h>
 
 OGRE_UNIFORMS(

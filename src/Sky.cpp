@@ -13,12 +13,8 @@ Sky::Sky(Ogre::SceneManager* sceneMgr){
 
 	timeMultiplier = TUMBU::getInstance()->getTimeMultiplier();
 
+	// The scene's light is the sun; Lighting sets its direction and colour.
 	light = mSceneMgr->getLight("skyXSpotLight");
-	light->setType(Ogre::Light::LT_POINT);
-	light->setDiffuseColour(Ogre::ColourValue::White);
-	light->setSpecularColour(Ogre::ColourValue::White);
-//	light->setPosition( 10, 20, 0 );
-	light->setCastShadows( TUMBU::getInstance()->isCastShadows() );
 }
 //-------------------------------------------------------------------------------------
 Sky::~Sky(void){

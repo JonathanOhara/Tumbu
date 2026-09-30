@@ -22,6 +22,7 @@ Demo::Demo(){
 	pDataConvert				= NULL;
 	physicWorld					= NULL;
 	sky							= NULL;
+	lighting					= NULL;
 }
 //-------------------------------------------------------------------------------------
 Demo::~Demo(void){
@@ -47,6 +48,11 @@ Demo::~Demo(void){
 	if( enemy != NULL ){
 		tumbu->getRoot()->removeFrameListener( enemy );
 		delete enemy;
+	}
+	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Lighting...");
+	if( lighting != NULL ){
+		tumbu->getRoot()->removeFrameListener( lighting );
+		delete lighting;
 	}
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Sky...");
 	if( sky != NULL ){
@@ -183,6 +189,9 @@ void Demo::initializeDemo(){
 	tumbu->renderOneFrame();
 	mLoader = new DotSceneLoader();
 	tumbu->renderOneFrame();
+	// Before the scene: the terrain bakes its light map from the sun direction.
+	lighting = Lighting::getInstance();
+	lighting->setClock( tumbu->getClock() );
 	mLoader->parseDotScene("Arena.scene", "General", mSceneMgr);
 
 	gui->startLoad("Loading Scene...");
@@ -476,14 +485,21 @@ void Demo::setupCamera(void){
 }
 //-------------------------------------------------------------------------------------
 void Demo::createLightEffects(void){
-	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.4f, 0.4f, 0.4f));
-	
-	// Set Shadow Properties
-	mSceneMgr->setShadowTechnique(tumbu->getShadowTechnique());
-	mSceneMgr->setShadowColour(tumbu->getShadowColor());
+	// Tone mapping and grading of the final image; the lighting follows the clock (lighting.object).
+	lighting->enablePostProcessing( tumbu->mWindow->getViewport( 0 ) );
+	tumbu->getRoot()->addFrameListener( lighting );
+
+	// A depth shadow map that the robot and arena shaders sample themselves (TumbuToon.h). Every object
+	// also shadows itself (a robot's arm on its body, the coliseum walls on the floor).
+	mSceneMgr->setShadowTextureSettings( tumbu->getShadowTextureSize(), tumbu->getShadowTextureCount(), Ogre::PF_DEPTH16 );
+	mSceneMgr->setShadowTextureSelfShadow( true );
+	mSceneMgr->setShadowDirectionalLightExtrusionDistance( 100 );
 	mSceneMgr->setShadowFarDistance(tumbu->getShadowFarDistance());
-	mSceneMgr->setShadowTextureSize(tumbu->getShadowTextureSize());
-	mSceneMgr->setShadowTextureCount(tumbu->getShadowTextureCount());
+	mSceneMgr->setShadowTechnique(tumbu->getShadowTechnique());
+	// Fit the shadow map to what the camera sees instead of a fixed box around the light.
+	mSceneMgr->setShadowCameraSetup( Ogre::FocusedShadowCameraSetup::create() );
+	// The sun, ambient light and toon shading values; after the shadow settings, which it passes to the shaders.
+	lighting->setSun( mSceneMgr->getLight("skyXSpotLight") );
 }
 //-------------------------------------------------------------------------------------
 void Demo::createSky(){

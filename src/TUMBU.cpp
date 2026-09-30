@@ -437,19 +437,21 @@ void TUMBU::printSceneChildren( Ogre::SceneNode* node, int level, Ogre::String &
 //-------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------
 void TUMBU::setShadowPreset( int preset ){
-	// Same presets as the 2011 options menu.
+	// 0 = off, 1 = normal, 2 = high. The robot and arena shaders sample the depth shadow map themselves
+	// (integrated texture shadows, see TumbuToon.h), so a shadow takes the same toon colour as the unlit side.
 	switch( preset ){
 	case 1:
 		setCastShadows( true );
-		setShadowTechnique( Ogre::SHADOWTYPE_TEXTURE_MODULATIVE );
-		setShadowFarDistance( 1000 );
-		setShadowTextureSize( 1024 );
+		setShadowTechnique( Ogre::SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED );
+		// The arena is about 20 units across: a short shadow distance keeps the shadow map sharp.
+		setShadowFarDistance( 40 );
+		setShadowTextureSize( 2048 );
 		break;
 	case 2:
 		setCastShadows( true );
-		setShadowTechnique( Ogre::SHADOWTYPE_TEXTURE_ADDITIVE );
-		setShadowFarDistance( 500 );
-		setShadowTextureSize( 512 );
+		setShadowTechnique( Ogre::SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED );
+		setShadowFarDistance( 40 );
+		setShadowTextureSize( 4096 );
 		break;
 	default:
 		setCastShadows( false );
@@ -463,11 +465,10 @@ void TUMBU::setShadowPreset( int preset ){
 }
 //-------------------------------------------------------------------------------------
 int TUMBU::getShadowPreset(void){
-	switch( shadowTechnique ){
-	case Ogre::SHADOWTYPE_TEXTURE_MODULATIVE:	return 1;
-	case Ogre::SHADOWTYPE_TEXTURE_ADDITIVE:		return 2;
-	default:									return 0;
+	if( shadowTechnique == Ogre::SHADOWTYPE_NONE ){
+		return 0;
 	}
+	return shadowTextureSize >= 4096 ? 2 : 1;
 }
 //-------------------------------------------------------------------------------------
 void TUMBU::setFrameLimit( int fps ){
@@ -501,6 +502,7 @@ void TUMBU::loadOptions(void){
 		setShadowPreset( Ogre::StringConverter::parseInt( cfg.getSetting( "Shadows", Ogre::BLANKSTRING, "0" ) ) );
 		setFrameLimit( Ogre::StringConverter::parseInt( cfg.getSetting( "FrameLimit", Ogre::BLANKSTRING, "-1" ) ) );
 	}else{
+		setShadowPreset( 1 );	// no options saved yet: shadows on
 		setFrameLimit( frameLimit );
 	}
 }

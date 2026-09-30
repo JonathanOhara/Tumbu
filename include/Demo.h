@@ -17,6 +17,7 @@
 #include "TUMBU.h"
 #include "Tutorial.h"
 #include "Sky.h"
+#include "Lighting.h"
 #include "SimpleRigidBody.h"
 
 #include "DotSceneLoader.h"
@@ -102,6 +103,7 @@ private:
 	Sound			*backGroundSound;
 	SoundManager	*soundManager;
 	Sky				*sky;
+	Lighting		*lighting;
 	TUMBU			*tumbu;
 	Tutorial		*tutorial;
 

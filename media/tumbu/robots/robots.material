@@ -1,65 +1,67 @@
 // Base material of every robot part. Each robot00N.material inherits it and sets the texture variables
-// ($diffuseMap, $specMap, $normalMap, optionally $aoMap) plus colours.
+// ($diffuseMap, $specMap, $normalMap, optionally $aoMap) plus colours and the outline.
 material base_material{
     set $diffuseCol "1 1 1 1"
     set $specularCol "1 1 1"
     set $shininess "32"
     set $diffuseMap "white.png"
     set $specMap "white.png"
-    set $normalMap "white.png"
+    set $normalMap "flat_normal.png"
     set $aoMap "white.png"
+    // Outline width in pixels, and the colour it multiplies the part's texture by.
+    set $outlineWidth "1.5"
+    set $outlineColour "0.3 0.25 0.35 1"
 
-    // Ambient pass + one additive pass per light, with normal and specular maps (robots.program).
-    technique fullShader{
+    // Toon shading in one pass (the sun and ambient come from the shared lighting, Lighting.cpp), then the
+    // outline.
+    technique toon{
         pass{
-            illumination_stage ambient
-
-            ambient 1 1 1 1
-            diffuse $diffuseCol
-            specular 0 0 0 0
-            emissive 0 0 0 0
-
-            vertex_program_ref ambient_vs{
-            }
-
-            fragment_program_ref ambient_ps{
-            }
-
-            texture_unit diffuseMap{
-                texture $diffuseMap
-            }
-
-            texture_unit aoMap{
-                texture $aoMap
-            }
-        }
-
-        pass{
-            illumination_stage per_light
-
-            scene_blend add
-            iteration once_per_light
-
-            vertex_program_ref diffuse_vs{
-            }
-
-            fragment_program_ref diffuse_ps{
-            }
-
             diffuse $diffuseCol
             specular $specularCol $shininess
-            ambient 0 0 0 0
+
+            vertex_program_ref robot_toon_vs{
+            }
+
+            fragment_program_ref robot_toon_ps{
+            }
 
             texture_unit diffuseMap{
                 texture $diffuseMap
+            }
+
+            texture_unit normalMap{
+                texture $normalMap
             }
 
             texture_unit specMap{
                 texture $specMap
             }
 
-            texture_unit normalMap{
-                texture $normalMap
+            texture_unit aoMap{
+                texture $aoMap
+            }
+
+            // Depth shadow map of the sun (integrated texture shadows, Demo::createLightEffects).
+            texture_unit shadowMap{
+                content_type shadow
+                sampler_ref Tumbu/ShadowSampler
+            }
+        }
+
+        pass outline{
+            diffuse $diffuseCol
+            cull_hardware anticlockwise
+
+            vertex_program_ref robot_outline_vs{
+                param_named outlineWidth float $outlineWidth
+            }
+
+            fragment_program_ref robot_outline_ps{
+                param_named outlineColour float4 $outlineColour
+            }
+
+            texture_unit diffuseMap{
+                texture $diffuseMap
             }
         }
     }

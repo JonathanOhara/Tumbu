@@ -1,125 +1,52 @@
-material rightArmUV_005/TEXFACE/rightArmUV_005.tga
-{
-	receive_shadows on
-	technique
-	{
-		pass
-		{
-			ambient 0.500000 0.500000 0.500000 1.000000
-			diffuse 0.800000 0.800000 0.800000 1.000000
-			emissive 0.000000 0.000000 0.000000 1.000000
-			texture_unit
-			{
-				texture rightArmUV_005.tga
-				colour_op modulate
-			}
-		}
-		pass
-		{
-			ambient 0.0 0.0 0.0
-			diffuse 0.0 0.0 0.0
-			specular 0.000000 0.000000 0.000000 1.000000 12.500000
-			scene_blend add
-		}
-	}
+import * from "robots.material"
+
+material headUV_005/TEXFACE/headUV_005.tga : base_material{
+    set $diffuseMap "headUV_005.tga"
+    set $specMap "SMheadUV_005.tga"
+    set $normalMap "NMheadUV_005.tga"
+
+    set $diffuseCol "1 1 1 1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
 }
-material bodyUV_005/TEXFACE/bodyUV_005.tga
-{
-	receive_shadows on
-	technique
-	{
-		pass
-		{
-			ambient 0.500000 0.500000 0.500000 1.000000
-			diffuse 0.800000 0.800000 0.800000 1.000000
-			emissive 0.000000 0.000000 0.000000 1.000000
-			texture_unit
-			{
-				texture bodyUV_005.tga
-				colour_op modulate
-			}
-		}
-		pass
-		{
-			ambient 0.0 0.0 0.0
-			diffuse 0.0 0.0 0.0
-			specular 0.000000 0.000000 0.000000 1.000000 12.500000
-			scene_blend add
-		}
-	}
+
+material bodyUV_005/TEXFACE/bodyUV_005.tga : base_material{
+    set $diffuseMap "bodyUV_005.tga"
+    set $specMap "SMbodyUV_005.tga"
+    set $normalMap "NMbodyUV_005.tga"
+
+    set $diffuseCol "1 1 1 1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
 }
-material legsUV_005/TEXFACE/legsUV_005.tga
-{
-	receive_shadows on
-	technique
-	{
-		pass
-		{
-			ambient 0.500000 0.500000 0.500000 1.000000
-			diffuse 0.800000 0.800000 0.800000 1.000000
-			emissive 0.000000 0.000000 0.000000 1.000000
-			texture_unit
-			{
-				texture legsUV_005.tga
-				colour_op modulate
-			}
-		}
-		pass
-		{
-			ambient 0.0 0.0 0.0
-			diffuse 0.0 0.0 0.0
-			specular 0.000000 0.000000 0.000000 1.000000 12.500000
-			scene_blend add
-		}
-	}
+
+material leftArmUV_005/TEXFACE/leftArmUV_005.tga : base_material{
+    set $diffuseMap "leftArmUV_005.tga"
+    set $specMap "SMleftArmUV_005.tga"
+    set $normalMap "NMleftArmUV_005.tga"
+
+    set $diffuseCol "1 1 1 1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
 }
-material leftArmUV_005/TEXFACE/leftArmUV_005.tga
-{
-	receive_shadows on
-	technique
-	{
-		pass
-		{
-			ambient 0.500000 0.500000 0.500000 1.000000
-			diffuse 0.800000 0.800000 0.800000 1.000000
-			emissive 0.000000 0.000000 0.000000 1.000000
-			texture_unit
-			{
-				texture leftArmUV_005.tga
-				colour_op modulate
-			}
-		}
-		pass
-		{
-			ambient 0.0 0.0 0.0
-			diffuse 0.0 0.0 0.0
-			specular 0.000000 0.000000 0.000000 1.000000 12.500000
-			scene_blend add
-		}
-	}
+
+material rightArmUV_005/TEXFACE/rightArmUV_005.tga : base_material{
+    set $diffuseMap "rightArmUV_005.tga"
+    set $specMap "SMrightArmUV_005.tga"
+    set $normalMap "NMrightArmUV_005.tga"
+
+    set $diffuseCol "1 1 1 1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
 }
-material headUV_005/TEXFACE/headUV_005.tga
-{
-	receive_shadows on
-	technique
-	{
-		pass
-		{
-			ambient 0.500000 0.500000 0.500000 1.000000
-			diffuse 0.800000 0.800000 0.800000 1.000000
-			emissive 0.000000 0.000000 0.000000 1.000000
-			texture_unit
-			{
-				texture headUV_005.tga
-				colour_op modulate
-			}
-		}
-		pass
-		{
-			ambient 0.0 0.0 0.0
-			diffuse 0.0 0.0 0.0
-			specular 0.000000 0.000000 0.000000 1.000000 12.500000
-			scene_blend add
-		}
-	}
+
+material legsUV_005/TEXFACE/legsUV_005.tga : base_material{
+    set $diffuseMap "legsUV_005.tga"
+    set $specMap "SMlegsUV_005.tga"
+    set $normalMap "NMlegsUV_005.tga"
+
+    set $diffuseCol "1 1 1 1"
+    set $specularCol "0 0 0 1"
+    set $shininess "64"
 }
+

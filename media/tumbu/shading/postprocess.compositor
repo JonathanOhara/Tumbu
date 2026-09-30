@@ -1,0 +1,26 @@
+// Post-processing of a match (Lighting.cpp adds it to the viewport): the scene is rendered into a
+// half-float (HDR) texture, then the final pass tone maps and grades it onto the screen. The GUI is drawn
+// after the compositor, so it is not affected.
+compositor Tumbu/PostProcess
+{
+    technique
+    {
+        texture scene target_width target_height PF_FLOAT16_RGBA
+
+        target scene
+        {
+            input previous
+        }
+
+        target_output
+        {
+            input none
+
+            pass render_quad
+            {
+                material Tumbu/PostProcess/Final
+                input 0 scene
+            }
+        }
+    }
+}
