@@ -1,3 +1,4 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Robot outline ("inverted hull"): the back faces pushed out along the normal by a fixed width in pixels.
 #include <OgreUnifiedShader.h>
 

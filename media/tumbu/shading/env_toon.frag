@@ -1,3 +1,4 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Arena and coliseum toon shading, fragment stage: same lighting as the robots (TumbuToon.h), no normal map.
 #include <OgreUnifiedShader.h>
 #include "TumbuToon.h"

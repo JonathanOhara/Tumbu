@@ -24,6 +24,13 @@ lighting configuration{
 	shadowBias 0.0012
 	shadowSoftness 1.5
 
+	// Bloom: glow around what is brighter than the threshold in the HDR image (eyes, energy balls, hot
+	// highlights). A lit wall reaches about 1.1, so keep the threshold above that. Soft knee = how gradually the
+	// glow fades in; strength = how much of it is added.
+	bloomThreshold 1.3
+	bloomSoftKnee 0.4
+	bloomStrength 0.8
+
 	// Final image: saturation and contrast (1 = unchanged), and how much the corners darken.
 	saturation 1.1
 	contrast 1.05

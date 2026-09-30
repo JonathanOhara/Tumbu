@@ -6,6 +6,7 @@ unsigned int Robot::instances = 0;
 //-------------------------------------------------------------------
 Robot::Robot(void){
 	Robot::instances++;
+	eyeGlowBoost = 0;
 
 	ConfigNode* cfg;
 	cfg = ConfigScriptLoader::getSingleton().getConfigScript( "game", "robot" );
@@ -120,6 +121,24 @@ Robot::~Robot(void){
 	if( robotPhysicsNode != NULL ){
 		robotPhysicsNode->removeAndDestroyAllChildren();
 		sceneMgr->destroySceneNode( robotPhysicsNode );
+	}
+}
+//-------------------------------------------------------------------------------------
+void Robot::updateEyeGlow( const Ogre::Real time ){
+	bool charging = jyn != NULL && jyn->isAttacking() && jyn->special != NULL
+		&& ( jyn->special->getSpecialStatus() == SpecialInterface::NONE			// cast: energy gathering
+			|| jyn->special->getSpecialStatus() == SpecialInterface::CONCENTRATING
+			|| jyn->special->getSpecialStatus() == SpecialInterface::CONCENTRATED );
+	// Jyn takes three presses: cast (NONE), concentrate, attack. The eyes flare from the cast until the attack.
+	// About a quarter of a second to flare up, half a second to calm down.
+	Ogre::Real target = charging ? 1.0f : 0.0f;
+	Ogre::Real rate = charging ? 4.0f : 2.0f;
+	eyeGlowBoost += ( target - eyeGlowBoost ) * std::min( 1.0f, rate * time );
+
+	if( head != NULL && head->entity != NULL ){
+		for( unsigned int i = 0; i < head->entity->getNumSubEntities(); i++ ){
+			head->entity->getSubEntity( i )->setCustomParameter( 0, Ogre::Vector4( eyeGlowBoost, 0, 0, 0 ) );
+		}
 	}
 }
 //-------------------------------------------------------------------

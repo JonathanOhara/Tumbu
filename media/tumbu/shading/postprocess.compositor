@@ -1,15 +1,65 @@
 // Post-processing of a match (Lighting.cpp adds it to the viewport): the scene is rendered into a
-// half-float (HDR) texture, then the final pass tone maps and grades it onto the screen. The GUI is drawn
-// after the compositor, so it is not affected.
+// half-float (HDR) texture; the bright parts are extracted at quarter size and blurred twice (bloom); the
+// final pass adds the bloom, then tone maps and grades the image onto the screen. The GUI is drawn after the
+// compositor, so it is not affected.
 compositor Tumbu/PostProcess
 {
     technique
     {
         texture scene target_width target_height PF_FLOAT16_RGBA
+        texture bloomA target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
+        texture bloomB target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
 
         target scene
         {
             input previous
+        }
+
+        // Bloom: bright pass, then horizontal + vertical blur, twice (a wide, soft glow).
+        target bloomA
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BrightPass
+                input 0 scene
+            }
+        }
+        target bloomB
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BlurH
+                input 0 bloomA
+            }
+        }
+        target bloomA
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BlurV
+                input 0 bloomB
+            }
+        }
+        target bloomB
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BlurH
+                input 0 bloomA
+            }
+        }
+        target bloomA
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BlurV
+                input 0 bloomB
+            }
         }
 
         target_output
@@ -20,6 +70,7 @@ compositor Tumbu/PostProcess
             {
                 material Tumbu/PostProcess/Final
                 input 0 scene
+                input 1 bloomA
             }
         }
     }

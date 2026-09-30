@@ -1,5 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Robot toon shading, fragment stage: diffuse, normal, specular and ambient-occlusion maps lit by the shared
-// toon lighting (TumbuToon.h) in a single pass.
+// toon lighting (TumbuToon.h) in a single pass, plus the emissive glow map.
 #include <OgreUnifiedShader.h>
 #include "TumbuToon.h"
 
@@ -8,6 +9,7 @@ SAMPLER2D(normalMap, 1);
 SAMPLER2D(specMap, 2);
 SAMPLER2D(aoMap, 3);
 SAMPLER2DSHADOW(shadowMap, 4);
+SAMPLER2D(glowMap, 5);
 
 OGRE_UNIFORMS(
     TUMBU_LIGHTING_UNIFORMS
@@ -15,6 +17,12 @@ OGRE_UNIFORMS(
     uniform vec4 matSpec;
     uniform float matShininess;
     uniform vec3 camPos;
+    // rgb: tint of the glow (multiplies the texture colour), w: strength (0 = no glow)
+    uniform vec4 glowColour;
+    // x: flare while a special attack charges (0..1, set per robot by Robot::updateEyeGlow)
+    uniform vec4 glowBoost;
+    // time wrapped to 0..2pi (slow pulse)
+    uniform float glowTime;
 )
 
 MAIN_PARAMETERS
@@ -38,6 +46,12 @@ MAIN_DECLARATION
 
     vec3 colour = tumbuToon(albedo, n, v, ao, specMask, matShininess, shadow,
         sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams);
+
+    // Emissive glow (eyes, lights): the texture colour where the glow map is white. Not lit or shadowed,
+    // and above 1 in the HDR buffer, so the bloom picks it up.
+    float pulse = 0.85 + 0.15 * sin(glowTime);
+    float glow = texture2D(glowMap, oUv).r * glowColour.w * (pulse + 2.0 * glowBoost.x);
+    colour += diffuseTex.rgb * glowColour.rgb * glow;
 
     gl_FragColor = vec4(colour, diffuseTex.a);
 }

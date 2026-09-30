@@ -1,3 +1,4 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Arena and coliseum toon shading, vertex stage.
 #include <OgreUnifiedShader.h>
 

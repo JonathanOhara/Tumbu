@@ -48,6 +48,9 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	vignette			= requireChild( cfg, name, "vignette" )->getValueF();
 	shadowBias			= requireChild( cfg, name, "shadowBias" )->getValueF();
 	shadowSoftness		= requireChild( cfg, name, "shadowSoftness" )->getValueF();
+	bloomThreshold		= requireChild( cfg, name, "bloomThreshold" )->getValueF();
+	bloomSoftKnee		= requireChild( cfg, name, "bloomSoftKnee" )->getValueF();
+	bloomStrength		= requireChild( cfg, name, "bloomStrength" )->getValueF();
 
 	std::vector<Ogre::String> &names = requireChild( cfg, name, "keyframes" )->getValues();
 	for( size_t i = 0; i < names.size(); i++ ){
@@ -79,7 +82,7 @@ Lighting* Lighting::getInstance(){
 //-------------------------------------------------------------------------------------
 void Lighting::declareSharedParameters(void){
 	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().createSharedParameters( SHARED_PARAMS );
-	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams" };
+	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -93,6 +96,7 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "toonParams", Ogre::Vector4( 0.5f, 0.06f, 3.5f, 0.05f ) );
 	params->setNamedConstant( "shadowParams", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "postParams", Ogre::Vector4( 1, 1, 1, 0 ) );
+	params->setNamedConstant( "bloomParams", Ogre::Vector4( 1.5f, 0.5f, 0, 0 ) );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
@@ -193,6 +197,7 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "rimColour", toVector4( k.rimColour, k.rimStrength ) );
 	params->setNamedConstant( "toonParams", Ogre::Vector4( rampThreshold, rampSoftness, rimPower, specularSoftness ) );
 	params->setNamedConstant( "postParams", Ogre::Vector4( k.exposure, saturation, contrast, vignette ) );
+	params->setNamedConstant( "bloomParams", Ogre::Vector4( bloomThreshold, bloomSoftKnee, bloomStrength, 0 ) );
 
 	// The shaders sample the shadow map only when the scene renders one (Options: shadows).
 	bool shadows = sun != NULL && sun->getCastShadows() && mSceneMgr->isShadowTechniqueTextureBased();

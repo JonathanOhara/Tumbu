@@ -55,7 +55,9 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 ```
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
-  `-fpscap=N`, `-quitafter=S`, `-hour=H` and `-mute` (all sounds at volume 0; also works for a normal game).
+  `-fpscap=N`, `-quitafter=S`, `-hour=H`, `-mute` (all sounds at volume 0; also works for a normal game) and
+  `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
+  `devtest.ps1 -FaceShot [-Jyn]`).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`
@@ -123,14 +125,18 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). The old modulative/additive receiver
   passes did not work with our shaders. `shadowParams.x` tells the shaders whether a map is bound.
   RTSS-lit objects (terrain, particles) do not receive shadows.
-  OpenGL stores render textures upside down, so `tumbuShadow` flips V there. **Known OpenGL issue:** the
-  coliseum does not cast into the shadow map (robots do); D3D11 is fine. Light-space coordinates match
-  between the renderers, and back/front-face casting and depth format made no difference.
+- **Every shader source starts with `OGRE_NATIVE_GLSL_VERSION_DIRECTIVE`.** Without it OpenGL compiles the
+  file as old GLSL: `SAMPLER2D(name, n)` then has no binding, so every sampler reads texture unit 0 (this
+  broke shadows and bloom on OpenGL), and `shadow2D` returns a vec4. For HLSL the token is empty.
 - **Samplers must be defined before use.** `Tumbu/ShadowSampler` lives in `shading.program`, because all
   `*.program` scripts are parsed before any `*.material`.
 - **Post-processing:** `Lighting` adds the `Tumbu/PostProcess` compositor (HDR scene, then tone mapping,
   grading and vignette) to the window viewport for a match and removes it afterwards. MyGUI and the
-  trays draw after it and are not affected.
+  trays draw after it and are not affected. Bloom: a bright pass to quarter size, two H+V blurs, added
+  before tone mapping (`bloomThreshold` / `bloomSoftKnee` / `bloomStrength` in `lighting.object`).
+- **Emissive glow:** robot materials set `$glowMap` (the `GMheadUV_00N.tga` masks) and `$glowColour`
+  (tint, strength). The glow is the part's own texture colour where the mask is white, so each robot glows in
+  its eye colour. `Robot::updateEyeGlow` passes a 0..1 flare (custom parameter 0) while Jyn builds up.
 
 ### Object lifetime rules (each one was a real leak or crash)
 

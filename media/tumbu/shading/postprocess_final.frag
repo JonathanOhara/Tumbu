@@ -1,11 +1,15 @@
-// Final image: exposure, tone mapping (HDR scene -> screen), saturation, contrast and vignette.
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+// Final image: bloom, exposure, tone mapping (HDR scene -> screen), saturation, contrast and vignette.
 #include <OgreUnifiedShader.h>
 
 SAMPLER2D(scene, 0);
+SAMPLER2D(bloom, 1);
 
 OGRE_UNIFORMS(
     // x = exposure, y = saturation, z = contrast, w = vignette
     uniform vec4 postParams;
+    // z = bloom strength (x, y: threshold and knee, used by the bright pass)
+    uniform vec4 bloomParams;
 )
 
 // Leaves values below the knee untouched (the art keeps its colours) and rolls everything above it smoothly
@@ -22,7 +26,7 @@ MAIN_PARAMETERS
 IN(vec2 oUv, TEXCOORD0)
 MAIN_DECLARATION
 {
-    vec3 colour = texture2D(scene, oUv).rgb * postParams.x;
+    vec3 colour = (texture2D(scene, oUv).rgb + texture2D(bloom, oUv).rgb * bloomParams.z) * postParams.x;
     colour = softShoulder(colour);
 
     float luma = dot(colour, vec3(0.2126, 0.7152, 0.0722));

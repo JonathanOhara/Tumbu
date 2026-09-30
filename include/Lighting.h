@@ -63,7 +63,10 @@ private:
 		contrast,
 		vignette,
 		shadowBias,
-		shadowSoftness;
+		shadowSoftness,
+		bloomThreshold,
+		bloomSoftKnee,
+		bloomStrength;
 
 	static Lighting* instance;
 };

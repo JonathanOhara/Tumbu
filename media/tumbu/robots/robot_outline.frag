@@ -1,3 +1,4 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Robot outline colour: the part's own texture, darkened and tinted (coloured lines instead of black ones).
 #include <OgreUnifiedShader.h>
 

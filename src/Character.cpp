@@ -516,6 +516,8 @@ void Character::updateMovement( const Ogre::Real time ) {
 }
 //-------------------------------------------------------------------------------------
 void Character::updateAttack( const Ogre::Real time ) {
+	updateEyeGlow( time );
+
 	if( isAttacking ){
 
 		if( jyn->isAttacking() ){

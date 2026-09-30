@@ -20,6 +20,7 @@ int DevTest::startHour = -1;
 int DevTest::cycles = 0;
 bool DevTest::measureAnims = false;
 bool DevTest::mute = false;
+int DevTest::faceShot = 0;
 //-------------------------------------------------------------------------------------
 void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	Ogre::StringVector args = Ogre::StringUtil::split( commandLine, " \t" );
@@ -39,6 +40,10 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			measureAnims = true;
 		}else if( arg == "-mute" ){
 			mute = true;
+		}else if( arg == "-faceshot" ){
+			faceShot = 1;
+		}else if( arg == "-faceshot=jyn" ){
+			faceShot = 2;
 		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
 			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
@@ -64,6 +69,7 @@ DevTest::DevTest(void){
 	nextLogTime	= 0;
 	walking		= false;
 	walkDone	= false;
+	faceJynPresses = 0;
 	tourStep	= 0;
 	tourTimer	= 0;
 	cycle		= 0;
@@ -150,10 +156,17 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 			nextLogTime += 0.5f;
 		}
 
+		if( faceShot > 0 && quitAfter > 0 ){
+			faceCamera( evt );
+		}
+
 		if( quitAfter > 0 && playTime >= quitAfter ){
 			Ogre::String shot = tumbu->workPath + "devtest.png";
 			tumbu->mWindow->writeContentsToFile( shot );
 			log( "screenshot saved to " + shot );
+			if( faceShot > 0 && tumbu->getDemo() != NULL ){
+				log( "faceshot: hero eye flare " + Ogre::StringConverter::toString( tumbu->getDemo()->mainChar->getEyeGlowBoost() ) );
+			}
 			log( "quitting after " + Ogre::StringConverter::toString( playTime ) + "s" );
 			stage = FINISHED;
 			tumbu->shutdown();
@@ -165,6 +178,33 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 	}
 
 	return true;
+}
+//-------------------------------------------------------------------------------------
+void DevTest::faceCamera( const Ogre::FrameEvent &evt ){
+	// -faceshot=jyn: cast Jyn 1.5 s before the shot and concentrate it 1 s before (eye flare, energy balls).
+	if( faceShot == 2 && faceJynPresses < 2 && playTime >= quitAfter - 1.5f + faceJynPresses * 0.5f ){
+		log( faceJynPresses == 0 ? "faceshot: Jyn cast" : "faceshot: Jyn concentrate" );
+		pressKey( 'i' );
+		faceJynPresses++;
+	}
+	// The last half second: the camera looks at the hero's face (the chase camera moves it back after each
+	// frame is queued, so this is set again before every frame).
+	Demo* demo = TUMBU::getInstance()->getDemo();
+	if( playTime < quitAfter - 0.5f || demo == NULL || demo->mainChar == NULL ){
+		return;
+	}
+	Ogre::Camera* camera = TUMBU::getInstance()->mCamera;
+	Ogre::SceneNode* head = demo->mainChar->headNode;
+	Ogre::Vector3 face = head->_getDerivedPosition() + Ogre::Vector3( 0, 0.15f, 0 );
+	Ogre::Vector3 forward = demo->mainChar->robotNode->_getDerivedOrientation() * Ogre::Vector3::UNIT_Z;
+	forward.y = 0;
+	forward.normalise();
+	Ogre::Vector3 eye = face + forward * 1.1f + Ogre::Vector3( 0.25f, 0.1f, 0 );
+	camera->getParentSceneNode()->_setDerivedPosition( eye );
+	// Level orientation looking at the face (Ogre cameras look down their -Z axis).
+	Ogre::Vector3 back = ( eye - face ).normalisedCopy();
+	Ogre::Vector3 right = Ogre::Vector3::UNIT_Y.crossProduct( back ).normalisedCopy();
+	camera->getParentSceneNode()->_setDerivedOrientation( Ogre::Quaternion( right, back.crossProduct( right ), back ) );
 }
 //-------------------------------------------------------------------------------------
 void DevTest::logPositions(void){

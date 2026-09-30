@@ -25,6 +25,9 @@ fragment_program robot_toon_ps glsl glsles hlsl
         param_named_auto matSpec surface_specular_colour
         param_named_auto matShininess surface_shininess
         param_named_auto camPos camera_position
+        param_named_auto glowBoost custom 0
+        param_named_auto glowTime time_0_2pi 2
+        param_named glowColour float4 1 1 1 0
     }
 }
 

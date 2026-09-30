@@ -1,3 +1,4 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Robot toon shading, vertex stage: world-space position and tangent frame for the normal map.
 #include <OgreUnifiedShader.h>
 

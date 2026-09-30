@@ -63,6 +63,65 @@ material Tumbu/PostProcess/Final{
                 tex_address_mode clamp
                 filtering none
             }
+
+            texture_unit bloom{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+// Bloom steps (postprocess.compositor): full-screen passes on the quarter-size bloom textures.
+material Tumbu/PostProcess/BrightPass{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_bright_ps{
+            }
+
+            texture_unit scene{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+material Tumbu/PostProcess/BlurH{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_blur_ps{
+                param_named blurDirection float4 1 0 0 0
+            }
+
+            texture_unit source{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+material Tumbu/PostProcess/BlurV : Tumbu/PostProcess/BlurH{
+    technique{
+        pass{
+            fragment_program_ref postprocess_blur_ps{
+                param_named blurDirection float4 0 1 0 0
+            }
         }
     }
 }

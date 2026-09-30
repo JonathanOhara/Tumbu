@@ -8,6 +8,9 @@ material base_material{
     set $specMap "white.png"
     set $normalMap "flat_normal.png"
     set $aoMap "white.png"
+    // Emissive glow (eyes): the part texture shines where the glow map is white. $glowColour = tint + strength.
+    set $glowMap "black.png"
+    set $glowColour "1 1 1 0"
     // Outline width in pixels, and the colour it multiplies the part's texture by.
     set $outlineWidth "1.5"
     set $outlineColour "0.3 0.25 0.35 1"
@@ -23,6 +26,7 @@ material base_material{
             }
 
             fragment_program_ref robot_toon_ps{
+                param_named glowColour float4 $glowColour
             }
 
             texture_unit diffuseMap{
@@ -45,6 +49,10 @@ material base_material{
             texture_unit shadowMap{
                 content_type shadow
                 sampler_ref Tumbu/ShadowSampler
+            }
+
+            texture_unit glowMap{
+                texture $glowMap
             }
         }
 

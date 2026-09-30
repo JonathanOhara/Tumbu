@@ -30,6 +30,8 @@ public:
 	virtual ~Robot(void);
 
 	virtual bool frameRenderingQueued(const Ogre::FrameEvent &evt) = 0;
+	/// Eye flare, 0..1 (see updateEyeGlow).
+	Ogre::Real getEyeGlowBoost(void) const { return eyeGlowBoost; }
 
 	enum MoveKey{ UNDEFINED, NONE, RUNNING, UP, LEFT, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, RIGHT, GUARD, KICK, PUNCH, JYN };
 
@@ -178,6 +180,10 @@ protected:
 	/// real ground speed so the legs slow down when the robot is blocked.
 	Ogre::Real getLegsAnimationRate( bool running ) const;
 	void syncBodyRotation(void);
+	/** Eye glow: eases eyeGlowBoost towards 1 while the Jyn special charges and passes it to the head shader
+	 *  (custom parameter 0, robot_toon.frag glowBoost), so the eyes flare. Call once per frame. */
+	void updateEyeGlow( const Ogre::Real time );
+	Ogre::Real eyeGlowBoost;
 
 	Ogre::Vector3 mGoalDirection;
 

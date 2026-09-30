@@ -1,3 +1,4 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Full-screen quad of the compositor passes.
 #include <OgreUnifiedShader.h>
 

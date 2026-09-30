@@ -4,6 +4,8 @@ material headUV_004/TEXFACE/headUV_004.tga : base_material{
     set $diffuseMap "headUV_004.tga"
     set $specMap "SMheadUV_004.tga"
     set $normalMap "NMheadUV_004.tga"
+    set $glowMap "GMheadUV_004.tga"
+    set $glowColour "1 1 1 3"
     // set $aoMap "AOheadUV_004.tga"
 
     set $diffuseCol "1 1 1 1"

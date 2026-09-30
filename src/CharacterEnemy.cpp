@@ -232,6 +232,8 @@ void CharacterEnemy::updateMovement( const Ogre::Real time ) {
 }
 //-------------------------------------------------------------------------------------
 void CharacterEnemy::updateAttack( const Ogre::Real time ) {
+	updateEyeGlow( time );
+
 	if( isAttacking ){
 		if( jyn->isAttacking() ){
 			if( jyn->special->getSpecialStatus() == SpecialInterface::CONCENTRATING ){

@@ -35,9 +35,6 @@ float tumbuShadow(sampler2DShadow shadowMap, vec4 lightSpacePos, float ndl, vec4
 #if !defined(OGRE_REVERSED_Z) && !defined(OGRE_HLSL)
     pos.z = pos.z * 0.5 + 0.5;    // OpenGL clip depth -1..1 -> 0..1
 #endif
-#if defined(OGRE_GLSL)
-    pos.y = 1.0 - pos.y;    // OpenGL render textures are stored upside down
-#endif
     // Outside the shadow map: lit.
     if (pos.x < 0.0 || pos.x > 1.0 || pos.y < 0.0 || pos.y > 1.0 || pos.z > 1.0)
         return 1.0;
