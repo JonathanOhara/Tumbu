@@ -119,10 +119,13 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   `TumbuLighting` in `BaseApplication::locateResources`, before any script is parsed; programs reference it
   with `shared_params_ref TumbuLighting`. Every value is a `float4` (the types must match exactly).
 - **Shadows are integrated.** The shadow technique is `SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED` with a
-  depth (`PF_DEPTH16`) map: Ogre only renders the map, and the robot and arena shaders sample it
+  depth (`PF_DEPTH32F`) map: Ogre only renders the map, and the robot and arena shaders sample it
   (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). The old modulative/additive receiver
   passes did not work with our shaders. `shadowParams.x` tells the shaders whether a map is bound.
   RTSS-lit objects (terrain, particles) do not receive shadows.
+  OpenGL stores render textures upside down, so `tumbuShadow` flips V there. **Known OpenGL issue:** the
+  coliseum does not cast into the shadow map (robots do); D3D11 is fine. Light-space coordinates match
+  between the renderers, and back/front-face casting and depth format made no difference.
 - **Samplers must be defined before use.** `Tumbu/ShadowSampler` lives in `shading.program`, because all
   `*.program` scripts are parsed before any `*.material`.
 - **Post-processing:** `Lighting` adds the `Tumbu/PostProcess` compositor (HDR scene, then tone mapping,

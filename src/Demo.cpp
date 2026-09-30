@@ -491,7 +491,7 @@ void Demo::createLightEffects(void){
 
 	// A depth shadow map that the robot and arena shaders sample themselves (TumbuToon.h). Every object
 	// also shadows itself (a robot's arm on its body, the coliseum walls on the floor).
-	mSceneMgr->setShadowTextureSettings( tumbu->getShadowTextureSize(), tumbu->getShadowTextureCount(), Ogre::PF_DEPTH16 );
+	mSceneMgr->setShadowTextureSettings( tumbu->getShadowTextureSize(), tumbu->getShadowTextureCount(), Ogre::PF_DEPTH32F );
 	mSceneMgr->setShadowTextureSelfShadow( true );
 	mSceneMgr->setShadowDirectionalLightExtrusionDistance( 100 );
 	mSceneMgr->setShadowFarDistance(tumbu->getShadowFarDistance());
