@@ -88,9 +88,12 @@ void Sky::updateCaelumTime(void){
 	}
 	float hours = clock->getHours();
 	int h = (int) hours;
-	int m = (int) ( ( hours - h ) * 60 );
-	// 7 August 2011: the last update of the original game.
-	caelum->getUniversalClock()->setGregorianDateTime( 2011, 8, 7, h, m, 0 );
+	float minutes = ( hours - h ) * 60;
+	int m = (int) minutes;
+	// 7 August 2011: the last update of the original game. The seconds keep the sky moving every frame:
+	// whole minutes held its shader constants still for about a hundred frames at a time, and the NVIDIA
+	// driver compiled (and kept) a specialised shader for each held value, about 1.5 MB per match.
+	caelum->getUniversalClock()->setGregorianDateTime( 2011, 8, 7, h, m, ( minutes - m ) * 60 );
 }
 //-------------------------------------------------------------------------------------
 bool Sky::frameRenderingQueued(const Ogre::FrameEvent &evt){
