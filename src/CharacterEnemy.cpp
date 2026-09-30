@@ -227,7 +227,7 @@ void CharacterEnemy::updateMovement( const Ogre::Real time ) {
 		// made it tunnel through the arena walls).
 		setHorizontalVelocity( robotNode->_getDerivedOrientation() * Ogre::Vector3::UNIT_Z, WALK_SPEED );
 
-		legs->animationArray[ANIM_WALK]->addTime( time / 1.15f );
+		legs->animationArray[ANIM_WALK]->addTime( time * getLegsAnimationRate( false ) );
 	}
 }
 //-------------------------------------------------------------------------------------

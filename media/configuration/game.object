@@ -2,6 +2,11 @@ game robot{
 	// Units per second (a robot is about 2 units tall). Movement is frame-rate independent.
 	walkSpeed 1.2
 	runSpeed 2.5
+	// Walk/run animation playback rate at walkSpeed/runSpeed (1 = the animation's own speed). The legs scale
+	// with the real ground speed (slower when blocked). The 2011 walk/run cycles swing each leg like a
+	// pendulum, so no rate matches the ground exactly: 1.5 matches the pushing half of the walk at 1.2 u/s.
+	walkAnimationRate 1.5
+	runAnimationRate 1.8
 	turnSpeed 500.0
 	
 	restitution 0.1

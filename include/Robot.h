@@ -85,6 +85,8 @@ public:
 	float 
 		WALK_SPEED,		// units per second
 		RUN_SPEED,		// units per second
+		WALK_ANIMATION_RATE,	// walk/run animation playback rate at WALK_SPEED/RUN_SPEED (game.object)
+		RUN_ANIMATION_RATE,
 		TURN_SPEED,
 		CHAR_RESTITUTION,
 		CHAR_FRICTION,
@@ -170,6 +172,11 @@ protected:
 	/** Frame-rate independent movement: aligns the rigid body with robotNode's facing and sets its horizontal
 	 *  velocity to direction * speed (units/second), keeping the vertical velocity so gravity still applies. */
 	void setHorizontalVelocity( const Ogre::Vector3 &direction, Ogre::Real speed );
+	/// Actual ground speed of the physics body (lower than requested when blocked), units per second.
+	Ogre::Real getHorizontalSpeed(void) const;
+	/// Playback rate for the walk (or run) animation: walk/runAnimationRate from game.object, scaled by the
+	/// real ground speed so the legs slow down when the robot is blocked.
+	Ogre::Real getLegsAnimationRate( bool running ) const;
 	void syncBodyRotation(void);
 
 	Ogre::Vector3 mGoalDirection;

@@ -50,7 +50,7 @@ bin\Release\TUMBU.exe -guitour                      # every GUI screen, Quit to 
 bin\Release\TUMBU.exe -cycles=12                    # leak check: 12 matches (3 kills each) via the real UI
 ```
 
-- `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`,
+- `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
   `-fpscap=N`, `-quitafter=S` and `-hour=H`.
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
@@ -210,7 +210,9 @@ through a listener registry in `BaseApplication`.
 
 - `media/configuration/*.object` holds the **data-driven game tuning**:
   - `demo.object`: enemy count, hero and `enemyN` loadouts
-  - `game.object`: speed, mass, regen
+  - `game.object`: speed, mass, regen, and `walkAnimationRate`/`runAnimationRate` (leg animation playback
+    rate at walk/run speed, scaled by the real ground speed). The 2011 walk/run cycles are mirror-symmetric
+    pendulums, so the feet slide at any rate; `TUMBU.exe -measureanims` checks new exports for that.
   - `skills.object`, `camera.object`, `animation.object`
 - `media/tumbu/robot00{1..5}/` holds one robot "set" each:
   - parts: `head/body/leftArm/rightArm/legs_00N.mesh` + `.skeleton` (upgraded to the Ogre 14 format)

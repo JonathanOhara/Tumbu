@@ -12,6 +12,8 @@ Robot::Robot(void){
 
 	WALK_SPEED = cfg->findChild("walkSpeed")->getValueF(0);
 	RUN_SPEED = cfg->findChild("runSpeed")->getValueF(0);
+	WALK_ANIMATION_RATE = cfg->findChild("walkAnimationRate")->getValueF(0);
+	RUN_ANIMATION_RATE = cfg->findChild("runAnimationRate")->getValueF(0);
 	TURN_SPEED = cfg->findChild("turnSpeed")->getValueF(0);
 
 	CHAR_RESTITUTION = cfg->findChild("restitution")->getValueF(0);
@@ -127,6 +129,24 @@ void Robot::setHorizontalVelocity( const Ogre::Vector3 &direction, Ogre::Real sp
 	rigid->activate( true );
 	btVector3 velocity = rigid->getLinearVelocity();
 	rigid->setLinearVelocity( btVector3( direction.x * speed, velocity.y(), direction.z * speed ) );
+}
+//-------------------------------------------------------------------
+Ogre::Real Robot::getHorizontalSpeed(void) const{
+	if( charRigidBody == NULL || charRigidBody->getBulletRigidBody() == NULL ){
+		return 0;
+	}
+	btVector3 velocity = charRigidBody->getBulletRigidBody()->getLinearVelocity();
+	return Ogre::Math::Sqrt( velocity.x() * velocity.x() + velocity.z() * velocity.z() );
+}
+//-------------------------------------------------------------------
+Ogre::Real Robot::getLegsAnimationRate( bool running ) const{
+	// The configured rate at the configured speed, scaled by the real ground speed (0 when stuck).
+	Ogre::Real speed = running ? RUN_SPEED : WALK_SPEED;
+	Ogre::Real rate = running ? RUN_ANIMATION_RATE : WALK_ANIMATION_RATE;
+	if( speed <= 0 ){
+		return rate;
+	}
+	return rate * std::min<Ogre::Real>( getHorizontalSpeed() / speed, 1.5f );
 }
 //-------------------------------------------------------------------
 void Robot::syncBodyRotation(void){

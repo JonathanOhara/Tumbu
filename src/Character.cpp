@@ -501,12 +501,14 @@ void Character::updateMovement( const Ogre::Real time ) {
 		// Speeds are in units per second (game.object), so movement no longer depends on the frame rate.
 		setHorizontalVelocity( mGoalDirection, isRunning ? RUN_SPEED : WALK_SPEED );
 
+		// The steps follow the real ground speed (arms keep time with the legs).
 		if( isRunning ){
-			legs->animationArray[ANIM_RUN]->addTime( time );
-			leftArm->animationArray[ANIM_RUN]->addTime( time );
-			rightArm->animationArray[ANIM_RUN]->addTime( time );
+			Ogre::Real rate = getLegsAnimationRate( true );
+			legs->animationArray[ANIM_RUN]->addTime( time * rate );
+			leftArm->animationArray[ANIM_RUN]->addTime( time * rate );
+			rightArm->animationArray[ANIM_RUN]->addTime( time * rate );
 		} else {
-			legs->animationArray[ANIM_WALK]->addTime( time / 1.15f );
+			legs->animationArray[ANIM_WALK]->addTime( time * getLegsAnimationRate( false ) );
 		}
 	}else{
 		setHorizontalVelocity( Ogre::Vector3::ZERO, 0 );

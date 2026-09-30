@@ -12,6 +12,7 @@
  *   -quitafter=S     after S seconds of play, save a screenshot to <workPath>/devtest.png and quit
  *   -guitour         screenshot every GUI screen (start menu, dialogs, HUD, pause menu tabs) and quit
  *   -hour=H          start the in-game clock at hour H (0-23) instead of 13:00, e.g. to check the night sky
+ *   -measureanims    log how far the feet travel in the walk/run animations of every legs set, then quit
  *   -cycles=N        memory check: play N matches (3 enemy kills each, then Quit to the menu) through the
  *                    real UI, logging memory and Ogre object counts after each one, then Exit
  *
@@ -38,6 +39,7 @@ private:
 	void runGuiTour( const Ogre::FrameEvent &evt );
 	void runCycles( const Ogre::FrameEvent &evt );
 	void logMemory( const Ogre::String &label );
+	void measureWalkCycles(void);
 	void screenshot( const Ogre::String &name );
 	void pressKey( int key );
 	void click( const Ogre::String &buttonName );
@@ -64,6 +66,7 @@ private:
 	static Ogre::Real quitAfter;
 	static int startHour;
 	static int cycles;
+	static bool measureAnims;
 };
 
 #endif // #ifndef __DevTest_h_

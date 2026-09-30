@@ -18,6 +18,7 @@ int DevTest::fpsCap = 0;
 Ogre::Real DevTest::quitAfter = 0;
 int DevTest::startHour = -1;
 int DevTest::cycles = 0;
+bool DevTest::measureAnims = false;
 //-------------------------------------------------------------------------------------
 void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	Ogre::StringVector args = Ogre::StringUtil::split( commandLine, " \t" );
@@ -33,6 +34,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			guiTour = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-fpscap=" ) ){
 			fpsCap = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
+		}else if( arg == "-measureanims" ){
+			measureAnims = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
 			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
@@ -48,7 +51,7 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 }
 //-------------------------------------------------------------------------------------
 bool DevTest::isEnabled(void){
-	return autoplay || guiTour || cycles > 0 || fpsCap > 0;
+	return autoplay || guiTour || cycles > 0 || measureAnims || fpsCap > 0;
 }
 //-------------------------------------------------------------------------------------
 DevTest::DevTest(void){
@@ -78,6 +81,14 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 	limitFrameRate();
 	frames++;
 
+	if( measureAnims ){
+		if( TUMBU::getInstance()->getGameState() == TumbuEnums::START_SCREEN && frames > 5 && frames < 1000000 ){
+			frames = 1000000;
+			measureWalkCycles();
+			TUMBU::getInstance()->shutdown();
+		}
+		return true;
+	}
 	if( cycles > 0 ){
 		runCycles( evt );
 		return true;
@@ -515,4 +526,72 @@ void DevTest::runCycles( const Ogre::FrameEvent &evt ){
 		}
 		break;
 	}
+}
+//-------------------------------------------------------------------------------------
+void DevTest::measureWalkCycles(void){
+	// Samples the walk and run animations of every legs set in their own model space. A foot on the ground
+	// slides backward relative to the body; the body must advance by that much for the foot not to skate.
+	Ogre::SceneManager *sm = Ogre::Root::getSingleton().createSceneManager( Ogre::SMT_DEFAULT, "AnimMeasure" );
+	const char *anims[] = { "walk", "run" };
+	for( int set = 1; set <= 5; set++ ){
+		Ogre::String mesh = "legs_00" + Ogre::StringConverter::toString( set ) + ".mesh";
+		Ogre::Entity *entity = sm->createEntity( mesh );
+		sm->getRootSceneNode()->createChildSceneNode()->attachObject( entity );
+		for( const char *anim : anims ){
+			Ogre::AnimationState *state = entity->getAnimationState( anim );
+			Ogre::AnimationStateSet *all = entity->getAllAnimationStates();
+			for( auto &s : all->getAnimationStates() ) s.second->setEnabled( false );
+			state->setEnabled( true );
+			state->setWeight( 1 );
+			const int samples = 400;
+			std::vector<Ogre::Vector3> left, right;
+			for( int i = 0; i <= samples; i++ ){
+				state->setTimePosition( state->getLength() * i / samples );
+				// Apply the pose now (the entity itself re-evaluates animation only once per rendered frame).
+				entity->getSkeleton()->setAnimationState( *entity->getAllAnimationStates() );
+				left.push_back( entity->getSkeleton()->getBone( "ankle_L" )->_getDerivedPosition() );
+				right.push_back( entity->getSkeleton()->getBone( "ankle_R" )->_getDerivedPosition() );
+			}
+			{	// A cycle whose poses mirror in time (t and 1-t alike) swings each leg like a pendulum: the low foot
+				// slides back and then forward along the same arc, so no playback rate can match the ground. A
+				// real walk cycle plants and pushes back, then lifts and swings forward (asymmetric).
+				Ogre::Real mirrorError = 0, lo = left[0].z, hi = left[0].z;
+				for( int i = 0; i <= samples; i++ ){
+					mirrorError = std::max( mirrorError, left[i].distance( left[samples - i] ) );
+					lo = std::min( lo, left[i].z );
+					hi = std::max( hi, left[i].z );
+				}
+				ConfigNode *cfg = ConfigScriptLoader::getSingleton().getConfigScript( "game", "robot" );
+				Ogre::Real speed = cfg->findChild( strcmp( anim, "run" ) == 0 ? "runSpeed" : "walkSpeed" )->getValueF( 0 );
+				char line[260];
+				snprintf( line, sizeof( line ), "cycle %s %s: foot sweep %.3f, %s; matching the pushing half at %.2f u/s needs rate %.2f",
+					mesh.c_str(), anim, hi - lo, mirrorError < 0.01f ? "mirror-symmetric pendulum (feet will slide)" : "asymmetric walk cycle",
+					speed, speed * state->getLength() / ( 2 * ( hi - lo ) ) );
+				log( line );
+			}
+			for( int side = 0; side < 2; side++ ){
+				std::vector<Ogre::Vector3> &p = side == 0 ? left : right;
+				Ogre::Vector3 lo = p[0], hi = p[0];
+				for( auto &v : p ){ lo.makeFloor( v ); hi.makeCeil( v ); }
+				// Ground contact: the lowest 20% of the foot's height range. Sum the backward (-Z) motion there.
+				Ogre::Real contactY = lo.y + ( hi.y - lo.y ) * 0.2f;
+				Ogre::Real slideZ = 0, slideX = 0;
+				int contactSamples = 0;
+				for( int i = 1; i <= samples; i++ ){
+					if( p[i].y <= contactY && p[i - 1].y <= contactY ){
+						slideZ += p[i].z - p[i - 1].z;
+						slideX += p[i].x - p[i - 1].x;
+						contactSamples++;
+					}
+				}
+				char line[300];
+				snprintf( line, sizeof( line ), "anim %s %s ankle_%c: length=%.2fs range x[%.3f %.3f] y[%.3f %.3f] z[%.3f %.3f] ground=%.0f%% slideZ=%.3f slideX=%.3f",
+					mesh.c_str(), anim, side == 0 ? 'L' : 'R', state->getLength(), lo.x, hi.x, lo.y, hi.y, lo.z, hi.z,
+					100.0f * contactSamples / samples, slideZ, slideX );
+				log( line );
+			}
+		}
+		sm->destroyEntity( entity );
+	}
+	Ogre::Root::getSingleton().destroySceneManager( sm );
 }
