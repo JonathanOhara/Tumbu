@@ -3,5 +3,5 @@ import * from "shading.material"
 // Arena floor (toon shading, shading.material).
 material arenaMaterial/TEXFACE/gym_arena.png : Tumbu/EnvironmentToon{
 	set $diffuseMap "gym_arena.png"
-	set $diffuseCol "0.68 0.68 0.7 1"
+	set $diffuseCol "0.6 0.62 0.66 1"
 }

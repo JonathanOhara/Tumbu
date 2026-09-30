@@ -21,7 +21,7 @@ lighting configuration{
 
 	// Shadow map: depth bias (raise it if surfaces shadow themselves in stripes, lower it if shadows float away
 	// from their object) and the width of the soft edge in shadow-map texels.
-	shadowBias 0.0008
+	shadowBias 0.0012
 	shadowSoftness 1.5
 
 	// Final image: saturation and contrast (1 = unchanged), and how much the corners darken.
@@ -65,9 +65,9 @@ lighting morning{
 	sunElevation 38
 	sunAzimuth 75
 	sunColour 1.00 0.95 0.86
-	skyColour 0.40 0.47 0.60
-	groundColour 0.26 0.23 0.20
-	shadowColour 0.42 0.45 0.68
+	skyColour 0.36 0.44 0.60
+	groundColour 0.24 0.23 0.22
+	shadowColour 0.46 0.52 0.74
 	rimColour 0.80 0.90 1.00
 	rimStrength 0.35
 	exposure 1.0
@@ -78,9 +78,9 @@ lighting afternoon{
 	sunElevation 42
 	sunAzimuth 120
 	sunColour 1.00 0.93 0.80
-	skyColour 0.40 0.46 0.60
-	groundColour 0.27 0.23 0.19
-	shadowColour 0.42 0.44 0.68
+	skyColour 0.36 0.44 0.60
+	groundColour 0.25 0.23 0.21
+	shadowColour 0.46 0.51 0.74
 	rimColour 0.85 0.90 1.00
 	rimStrength 0.35
 	exposure 1.0
@@ -90,10 +90,10 @@ lighting sunset{
 	hour 18.5
 	sunElevation 9
 	sunAzimuth 140
-	sunColour 1.00 0.58 0.34
-	skyColour 0.38 0.34 0.50
-	groundColour 0.22 0.15 0.14
-	shadowColour 0.40 0.32 0.60
+	sunColour 1.00 0.64 0.40
+	skyColour 0.34 0.36 0.52
+	groundColour 0.21 0.17 0.16
+	shadowColour 0.40 0.40 0.66
 	rimColour 1.00 0.60 0.40
 	rimStrength 0.5
 	exposure 1.05
