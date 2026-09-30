@@ -42,16 +42,20 @@ from each one you defeat.
 
 ## Automated checks (use after every change)
 
+**Always run the game muted.** The user works on other things while tests run and the game sound bothers
+them. `devtest.ps1` passes `-mute` by default; add `-mute` to every direct `TUMBU.exe` command and use
+`run.ps1 -Mute`. Only drop it (`devtest.ps1 -Sound`) when the user asks to hear something.
+
 ```powershell
 .\scripts\devtest.ps1 -QuitAfter 7 -Name check      # auto-starts a match, walks the hero, screenshots, quits
 .\scripts\devtest.ps1 -FpsCap 30 -Name fps30        # same, frame rate capped (compare movement across FPS)
 .\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High)
-bin\Release\TUMBU.exe -guitour                      # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
-bin\Release\TUMBU.exe -cycles=12                    # leak check: 12 matches (3 kills each) via the real UI
+bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
+bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 kills each) via the real UI
 ```
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
-  `-fpscap=N`, `-quitafter=S` and `-hour=H`.
+  `-fpscap=N`, `-quitafter=S`, `-hour=H` and `-mute` (all sounds at volume 0; also works for a normal game).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`

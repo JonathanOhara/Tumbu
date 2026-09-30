@@ -1,4 +1,5 @@
 #include "SoundManager.h"
+#include "DevTest.h"
 #include "TUMBU.h"
 #include "miniaudio.h"
 //-------------------------------------------------------------------------------------
@@ -15,6 +16,11 @@ SoundManager::SoundManager( Ogre::SceneManager* sceneManager ){
 		ma_device *device = ma_engine_get_device( engine );
 		Ogre::LogManager::getSingleton().logMessage( Ogre::String( "Sound: miniaudio " MA_VERSION_STRING " on '" ) +
 			device->playback.name + "', " + Ogre::StringConverter::toString( ma_engine_get_sample_rate( engine ) ) + " Hz" );
+		if( DevTest::isMuted() ){
+			// -mute: sounds still load and play, at volume 0.
+			ma_engine_set_volume( engine, 0 );
+			Ogre::LogManager::getSingleton().logMessage( "Sound: muted (-mute)" );
+		}
 	}else{
 		Ogre::LogManager::getSingleton().logError( "Sound: no audio device, the game runs silent" );
 	}

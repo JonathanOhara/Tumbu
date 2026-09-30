@@ -19,6 +19,7 @@ Ogre::Real DevTest::quitAfter = 0;
 int DevTest::startHour = -1;
 int DevTest::cycles = 0;
 bool DevTest::measureAnims = false;
+bool DevTest::mute = false;
 //-------------------------------------------------------------------------------------
 void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	Ogre::StringVector args = Ogre::StringUtil::split( commandLine, " \t" );
@@ -36,6 +37,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			fpsCap = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( arg == "-measureanims" ){
 			measureAnims = true;
+		}else if( arg == "-mute" ){
+			mute = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
 			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
