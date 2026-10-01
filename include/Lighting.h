@@ -40,6 +40,11 @@ public:
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
 	/// Before the god-ray pass: camera and shadow-map matrices, and the shadow map itself.
 	void notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &material );
+	/// Sun position for the lens flare in the final pass.
+	void setLensFlare( Ogre::MaterialPtr &material );
+	/// How much of the sun disc the camera sees (physics rays), eased over time.
+	void updateSunVisibility( Ogre::Real time );
+	Ogre::Real sunVisibility;
 
 private:
 	struct Keyframe{
@@ -83,7 +88,8 @@ private:
 		shaftStrength,
 		shaftDistance,
 		shaftAnisotropy,
-		shaftSteps;
+		shaftSteps,
+		lensFlare;
 
 	static Lighting* instance;
 };

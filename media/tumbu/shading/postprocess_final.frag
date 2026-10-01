@@ -1,5 +1,6 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
-// Final image: bloom, exposure, tone mapping (HDR scene -> screen), saturation, contrast and vignette.
+// Final image: god rays, bloom, lens flare, exposure, tone mapping (HDR scene -> screen), saturation, contrast
+// and vignette.
 #include <OgreUnifiedShader.h>
 
 SAMPLER2D(scene, 0);
@@ -11,6 +12,11 @@ OGRE_UNIFORMS(
     uniform vec4 postParams;
     // z = bloom strength (x, y: threshold and knee, used by the bright pass)
     uniform vec4 bloomParams;
+    // Lens flare (Lighting::notifyMaterialRender): xy = sun position in texture coordinates, z = strength
+    // times how much of the sun is visible (0 = hidden by a wall, behind the camera, moon, or flare off)
+    uniform vec4 flareSun;
+    uniform vec4 sunColour;
+    uniform vec4 viewportSize;
 )
 
 // Leaves values below the knee untouched (the art keeps its colours) and rolls everything above it smoothly
@@ -23,12 +29,48 @@ vec3 softShoulder(vec3 x)
     return mix(x, rolled, step(vec3_splat(knee), x));
 }
 
+// One soft ghost disc with a brighter rim.
+float ghost(vec2 p, vec2 centre, float radius)
+{
+    float d = length(p - centre) / radius;
+    return smoothstep(1.0, 0.75, d) * (0.4 + 0.6 * smoothstep(0.4, 0.95, d));
+}
+
+vec3 lensFlare(vec2 uv)
+{
+    vec2 sun = flareSun.xy;
+    // flareSun.z already holds how much of the sun is visible (Lighting::setLensFlare). Fade out at the screen edge.
+    vec2 edge = min(sun, vec2_splat(1.0) - sun);
+    float visibility = smoothstep(-0.05, 0.1, min(edge.x, edge.y));
+    float strength = flareSun.z * visibility;
+    if (strength <= 0.0)
+        return vec3_splat(0.0);
+
+    float aspect = viewportSize.x / viewportSize.y;
+    vec2 p = vec2(uv.x * aspect, uv.y);
+    vec2 s = vec2(sun.x * aspect, sun.y);
+    vec2 c = vec2(0.5 * aspect, 0.5);
+    vec2 axis = c - s;    // the ghosts line up through the screen centre
+
+    // Glow and a horizontal anamorphic streak around the sun.
+    float dist = length(p - s);
+    vec3 flare = sunColour.rgb * (exp(-dist * 9.0) * 0.6 + exp(-abs(p.y - s.y) * 160.0) * exp(-abs(p.x - s.x) * 2.5) * 0.35);
+
+    // Ghosts: small tinted discs along the axis, on both sides of the centre.
+    flare += vec3(1.0, 0.75, 0.45) * ghost(p, s + axis * 0.45, 0.035) * 0.25;
+    flare += vec3(0.55, 0.85, 1.00) * ghost(p, s + axis * 0.80, 0.060) * 0.18;
+    flare += vec3(0.80, 1.00, 0.70) * ghost(p, s + axis * 1.25, 0.025) * 0.30;
+    flare += vec3(1.00, 0.60, 0.80) * ghost(p, s + axis * 1.60, 0.090) * 0.12;
+    flare += vec3(0.60, 0.70, 1.00) * ghost(p, s + axis * 2.05, 0.045) * 0.20;
+    return flare * strength;
+}
+
 MAIN_PARAMETERS
 IN(vec2 oUv, TEXCOORD0)
 MAIN_DECLARATION
 {
-    vec3 colour = (texture2D(scene, oUv).rgb + texture2D(bloom, oUv).rgb * bloomParams.z + texture2D(shafts, oUv).rgb)
-        * postParams.x;
+    vec3 colour = (texture2D(scene, oUv).rgb + texture2D(bloom, oUv).rgb * bloomParams.z + texture2D(shafts, oUv).rgb
+        + lensFlare(oUv)) * postParams.x;
     colour = softShoulder(colour);
 
     float luma = dot(colour, vec3(0.2126, 0.7152, 0.0722));

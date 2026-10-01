@@ -103,6 +103,8 @@ compositor Tumbu/PostProcess
 
             pass render_quad
             {
+                // Lighting::notifyMaterialRender sets the lens flare (sun position) for this pass.
+                identifier 20
                 material Tumbu/PostProcess/Final
                 input 0 scene
                 input 1 bloomA

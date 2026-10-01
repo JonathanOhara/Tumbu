@@ -75,11 +75,11 @@ MAIN_DECLARATION
     float cosTheta = dot(dir, sunDirection.xyz);
     float phase = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * cosTheta, 1.5);
     phase /= (1.0 - g * g) / pow(1.0 + g * g, 1.5);
-    phase = min(phase, 10.0);    // looking straight into the sun: at most 10x the sideways glow
+    phase = min(phase, 7.0);    // looking straight into the sun: at most 7x the sideways glow
 
     // Soft saturation: linear for thin haze, never more than maxAmount of the sunlight (looking straight into a
     // low sun would otherwise white out the screen).
-    const float maxAmount = 2.5;
+    const float maxAmount = 2.0;
     float amount = maxAmount * (1.0 - exp(-litLength * phase * shaftParams.x / maxAmount));
     vec3 scattered = sunColour.rgb * amount;
     gl_FragColor = vec4(scattered, 1.0);

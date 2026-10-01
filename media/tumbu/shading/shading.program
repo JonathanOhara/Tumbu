@@ -45,6 +45,8 @@ fragment_program postprocess_final_ps glsl glsles hlsl
     default_params
     {
         shared_params_ref TumbuLighting
+        param_named_auto viewportSize viewport_size
+        param_named flareSun float4 0 0 0 0
     }
 }
 

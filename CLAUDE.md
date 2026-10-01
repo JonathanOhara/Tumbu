@@ -152,6 +152,11 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   frame of lag. No shadows → no god rays. OpenGL stores the depth texture upside down (`camPos.w`).
   Tuning: `shaftStrength` / `shaftDistance` / `shaftAnisotropy` / `shaftSteps`, plus an optional per-keyframe
   `shaftStrength` multiplier (strong at dawn and sunset, weak at night).
+- **Lens flare** (final pass, `identifier 20`): glow, horizontal streak and ghosts through the screen centre.
+  `Lighting::setLensFlare` projects the sun to the screen; whether it is hidden is decided on the CPU with
+  five Bullet rays from the camera towards the sun (`updateSunVisibility`, eased over time), because the
+  final pass could not read the scene depth (it sampled zeros on Direct3D 11). `lensFlare` in
+  `lighting.object` (0 = off); never for the moon.
 - **Visible sun = lighting sun.** `Sky` is a `RenderTargetListener` added after Caelum: in
   `preRenderTargetUpdate` (after Caelum's frame update, before it places the sky) it sets Caelum's sun, sky
   dome and clouds to `Lighting`'s direction, or its moon between `moonFrom` and `moonUntil`. The `twilight`

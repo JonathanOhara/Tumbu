@@ -3,6 +3,8 @@
 #include "Sky.h"
 #include "ConfigScript.h"
 #include "TUMBU.h"
+#include "Demo.h"
+#include "Physics.h"
 Lighting* Lighting::instance = NULL;
 static const char* SHARED_PARAMS = "TumbuLighting";
 static const char* POST_PROCESS = "Tumbu/PostProcess";
@@ -39,6 +41,7 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	clock = NULL;
 	postProcessViewport = NULL;
 	postProcess = NULL;
+	sunVisibility = 0;
 
 	const Ogre::String name = "configuration";
 	ConfigNode* cfg = requireScript( name );
@@ -64,6 +67,7 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	shaftDistance		= requireChild( cfg, name, "shaftDistance" )->getValueF();
 	shaftAnisotropy		= requireChild( cfg, name, "shaftAnisotropy" )->getValueF();
 	shaftSteps			= std::min( 32.0f, std::max( 4.0f, requireChild( cfg, name, "shaftSteps" )->getValueF() ) );
+	lensFlare			= requireChild( cfg, name, "lensFlare" )->getValueF();
 
 	std::vector<Ogre::String> &names = requireChild( cfg, name, "keyframes" )->getValues();
 	for( size_t i = 0; i < names.size(); i++ ){
@@ -264,11 +268,19 @@ bool Lighting::frameRenderingQueued( const Ogre::FrameEvent &evt ){
 	if( clock != NULL && TUMBU::getInstance()->isPlaying() ){
 		update( clock->getHours() );
 	}
+	updateSunVisibility( evt.timeSinceLastFrame );
 	return true;
 }
 //-------------------------------------------------------------------------------------
 void Lighting::notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &material ){
-	if( passId != 10 || postProcessViewport == NULL ){
+	if( postProcessViewport == NULL ){
+		return;
+	}
+	if( passId == 20 ){
+		setLensFlare( material );
+		return;
+	}
+	if( passId != 10 ){
 		return;
 	}
 	// God-ray pass (postprocess.compositor, identifier 10): set here, right before it renders, so the camera and
@@ -291,4 +303,51 @@ void Lighting::notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &mat
 		params->setNamedConstant( "shadowViewProj", shadowViewProj );
 		pass->getTextureUnitState( 1 )->_setTexturePtr( shadowTexture );
 	}
+}
+//-------------------------------------------------------------------------------------
+void Lighting::setLensFlare( Ogre::MaterialPtr &material ){
+	// Final pass (identifier 20): where the sun is on screen, times how much of it is visible (sunVisibility). No
+	// flare for the moon, or when the sun is behind the camera.
+	Ogre::GpuProgramParametersSharedPtr params = material->getBestTechnique()->getPass( 0 )->getFragmentProgramParameters();
+	Ogre::Camera* camera = postProcessViewport->getCamera();
+	bool moon = current.hour >= moonFrom || current.hour < moonUntil;
+	Ogre::Vector3 sunPoint = camera->getDerivedPosition() - getLightDirection() * 1000.0f;
+	Ogre::Vector4 clip = camera->getProjectionMatrix() * ( camera->getViewMatrix() * Ogre::Vector4( sunPoint.x, sunPoint.y, sunPoint.z, 1.0f ) );
+	Ogre::Vector4 flare( 0, 0, 0, 0 );
+	if( !moon && lensFlare > 0 && clip.w > 0 ){
+		flare.x = ( clip.x / clip.w ) * 0.5f + 0.5f;
+		flare.y = 0.5f - ( clip.y / clip.w ) * 0.5f;
+		flare.z = lensFlare * sunVisibility;
+		flare.w = Ogre::Root::getSingleton().getRenderSystem()->getName().find( "OpenGL" ) != Ogre::String::npos ? 1.0f : 0.0f;
+	}
+	params->setNamedConstant( "flareSun", flare );
+}
+//-------------------------------------------------------------------------------------
+void Lighting::updateSunVisibility( Ogre::Real time ){
+	// Rays from the camera towards the sun (centre and four points on the disc) against the physics world: the
+	// coliseum, the floor and the robots hide the sun. Eased over time, so the flare fades in and out.
+	Demo* demo = TUMBU::getInstance()->getDemo();
+	if( postProcessViewport == NULL || demo == NULL || demo->getPhysicWorld() == NULL ){
+		return;
+	}
+	btCollisionWorld* world = demo->getPhysicWorld()->getBulletCollisionWorld();
+	Ogre::Camera* camera = postProcessViewport->getCamera();
+	Ogre::Vector3 eye = camera->getDerivedPosition();
+	Ogre::Vector3 towardsSun = -getLightDirection();
+	Ogre::Vector3 side = towardsSun.perpendicular();
+	Ogre::Vector3 up = towardsSun.crossProduct( side );
+	const Ogre::Real reach = 200.0f, spread = 2.0f;	// spread: about half a degree at 200 units
+	const Ogre::Vector3 offsets[] = { Ogre::Vector3::ZERO, side * spread, -side * spread, up * spread, -up * spread };
+	int clear = 0;
+	for( int i = 0; i < 5; i++ ){
+		btVector3 from = Physics::OgreBtConverter::to( eye );
+		btVector3 to = Physics::OgreBtConverter::to( eye + towardsSun * reach + offsets[i] );
+		btCollisionWorld::ClosestRayResultCallback hit( from, to );
+		world->rayTest( from, to, hit );
+		if( !hit.hasHit() ){
+			clear++;
+		}
+	}
+	Ogre::Real target = clear / 5.0f;
+	sunVisibility += ( target - sunVisibility ) * std::min( 1.0f, time * 8.0f );
 }

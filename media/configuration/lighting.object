@@ -52,10 +52,13 @@ lighting configuration{
 	// God rays (volumetric sunlight through the shadow map): strength per unit of lit air, longest march in units,
 	// forward scattering (0 = same from every angle, 0.9 = only looking at the sun) and samples per pixel (4..32).
 	// A keyframe can scale the strength with its own shaftStrength (1 when missing).
-	shaftStrength 0.008
-	shaftDistance 40
+	shaftStrength 0.0065
+	shaftDistance 30
 	shaftAnisotropy 0.5
 	shaftSteps 32
+
+	// Lens flare when looking towards the sun (glow, horizontal streak and ghosts; hidden by walls). 0 = off.
+	lensFlare 0.7
 }
 
 // Each keyframe: the hour it applies to; sun elevation and azimuth in degrees (azimuth 0 = +Z, 90 = +X); the
@@ -92,7 +95,7 @@ lighting dawn{
 
 lighting morning{
 	hour 9
-	sunElevation 38
+	sunElevation 28
 	sunAzimuth 75
 	sunColour 1.00 0.88 0.70
 	skyColour 0.32 0.42 0.62
@@ -105,7 +108,7 @@ lighting morning{
 
 lighting afternoon{
 	hour 15
-	sunElevation 42
+	sunElevation 30
 	sunAzimuth 120
 	sunColour 1.00 0.88 0.70
 	skyColour 0.32 0.42 0.62
