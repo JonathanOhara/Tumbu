@@ -45,6 +45,14 @@ bool Effect::update( Ogre::Real time ){
 	return running || held;
 }
 //-------------------------------------------------------------------------------------
+void Effect::stopLayers(void){
+	for( size_t i = 0; i < layers.size(); i++ ){
+		if( layers[i] != NULL ){
+			layers[i]->stop();
+		}
+	}
+}
+//-------------------------------------------------------------------------------------
 void Effect::release(void){
 	held = false;
 	for( size_t i = 0; i < layers.size(); i++ ){

@@ -51,6 +51,9 @@ public:
 	/// The owner of a held effect lets it go: looping layers stop, and the effect is deleted once they finish.
 	void release(void);
 	bool isReleased(void) const{ return !held; }
+	/// Looping layers wind down (motes finish their trip, lightning stops) but the owner keeps the effect and can still
+	/// move it; release() later.
+	void stopLayers(void);
 
 	/// "colour ki" / "colour ki 2" (the ki colour, times a factor) or "colour r g b"; white when missing.
 	Ogre::ColourValue readColour( ConfigNode* node, const Ogre::String &key );

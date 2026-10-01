@@ -21,7 +21,7 @@ Anime ki attacks (Dragon Ball Z, Naruto, Saint Seiya), drawn in the same toon st
 | Phase | Punch (ki blast) | Kick (crescent wave) | Jyn (Genki Dama) |
 |---|---|---|---|
 | Build-up | — | — | `jyn_charge`: first press (cast): the swarm balls appear around the robot and the eyes flare, nothing else; second press: the swarm balls fly in one after another and the ball, above the raised hand (its lower edge 0.25 above the knuckles), grows from nothing a step with each arrival (ready to throw once full); energy streaks from the air, motes rising from the floor, dust dragged to the feet, lightning over the ball (only once the ball has started to form); the swarm streams in (`jyn_mote` trails); `jyn_ball` light grows with the ball; eyes flare |
-| Release | `punch_muzzle`: star flash at the fist | `kick_muzzle`: flash and sparks at the foot | `jyn_throw`: thick wake and big sparks |
+| Release | `punch_muzzle`: star flash at the fist | `kick_muzzle`: flash and sparks at the foot | `jyn_throw`: thick wake and big sparks; the gathering winds down around the thrown ball (motes on their way chase it) |
 | Flight | orb + `punch_ball` (light, trail, sparks) | crescent (`Tumbu/EnergyCrescent`) + `kick_ball` | big orb + wake + light |
 | Impact | `blast_hit` on a robot (star flash, shockwave ring, sparks, light, small shake); `blast_wall` on the arena | same | `jyn_impact`: white frame, 70 ms hit-stop, toon explosion ball, ground shockwave, sparks, debris, smoke, light, shake |
 

@@ -172,7 +172,7 @@ void SpecialJyn::update(const Ogre::Real time){
 			ballEffect->setScale( ballRadius );
 		}
 		if( chargeEffect != NULL ){
-			chargeEffect->setPosition( targetVector );
+			chargeEffect->setPosition( charging ? targetVector : particleList[melhorParticula]->particle->mPosition );
 			chargeEffect->setIntensity( grown );
 			chargeEffect->setScale( ballRadius );
 		}
@@ -267,7 +267,10 @@ void SpecialJyn::concentrate(){
 void SpecialJyn::attack(Ogre::Quaternion orientation){
 	setSpecialStatus( SpecialInterface::ATTACKING );
 
-	releaseChargeEffect();
+	// The gathering winds down around the thrown ball: the motes still on their way chase it (update moves the effect).
+	if( chargeEffect != NULL ){
+		chargeEffect->stopLayers();
+	}
 	releaseStreams();
 	if( EffectsManager::getInstance() != NULL && !particleList.empty() ){
 		throwEffect = EffectsManager::getInstance()->spawn( "jyn_throw", particleList[melhorParticula]->particle->mPosition, getKiColour( "jyn" ), true );
