@@ -25,6 +25,7 @@ bool DevTest::measureAnims = false;
 bool DevTest::mute = false;
 int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
+bool DevTest::noFx = false;
 Ogre::String DevTest::fxTest = "";
 Ogre::Real DevTest::fxTime = 0.3f;
 Ogre::Real DevTest::fxDistance = 4.0f;
@@ -51,6 +52,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			measureAnims = true;
 		}else if( arg == "-mute" ){
 			mute = true;
+		}else if( arg == "-nofx" ){
+			noFx = true;
 		}else if( arg == "-flytest" ){
 			flyTest = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-fxtest=" ) ){

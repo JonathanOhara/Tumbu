@@ -3,6 +3,7 @@
 #include "ConfigScript.h"
 #include "TUMBU.h"
 #include "Demo.h"
+#include "DevTest.h"
 #include <algorithm>
 
 EffectsManager* EffectsManager::instance = NULL;
@@ -51,6 +52,9 @@ Ogre::Vector3 EffectsManager::getShakeOffset(void){
 }
 //-------------------------------------------------------------------------------------
 Effect* EffectsManager::spawn( const Ogre::String &name, const Ogre::Vector3 &position, const Ogre::ColourValue &kiColour, bool held ){
+	if( DevTest::isFxDisabled() ){
+		return NULL;
+	}
 	ConfigNode* definition = ConfigScriptLoader::getSingleton().getConfigScript( "effect", name );
 	if( definition == NULL ){
 		Ogre::LogManager::getSingleton().logError( "EffectsManager: effect '" + name + "' is not defined in effects.object" );

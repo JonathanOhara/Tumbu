@@ -48,6 +48,7 @@ public:
 private:
 	Ogre::RibbonTrail* trail;
 	Ogre::SceneNode* node;
+	Ogre::SceneNode* holder;	// the ribbon's own node, at the origin
 	Ogre::Real fadeTime;
 	Ogre::Real stoppedFor;
 	bool stopped;
@@ -121,6 +122,7 @@ private:
 	void rebuild(void);
 
 	Ogre::BillboardChain* chain;
+	Ogre::SceneNode* holder;	// the chain's own node, at the origin
 	Ogre::ColourValue colour;
 	Ogre::Real radius, width, interval, chance, leap, timer;
 	int arcs, segments;

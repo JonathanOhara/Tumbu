@@ -7,6 +7,7 @@ started. The special-attack visuals (DBZ/Naruto/Saint Seiya energy balls) are ha
 ## Ideas, in order of impact
 
 1. **Special attacks light the scene** *(Genshin, Astral Chain)*
+   - **Done (2026-10) in the special-attack rework** (docs/SPECIAL_EFFECTS.md): four energy lights in the toon shaders.
    - Energy balls (Jyn, punch, kick) cast coloured light on the floor, walls and robots, and hits flash.
    - Today the toon shaders (`TumbuToon.h`) only use the sun, so the Jyn point light lights nothing.
    - A few point lights passed to the shaders as shared parameters (like `contactShadowA/B`) would do it.
@@ -36,7 +37,8 @@ started. The special-attack visuals (DBZ/Naruto/Saint Seiya energy balls) are ha
 
 7. **Smaller extras**
    - A subtle floor reflection: planar or screen-space, Astral Chain style.
-   - Hit effects: a short screen flash, chromatic aberration and a small screen shake.
+   - Hit effects: a short screen flash, chromatic aberration and a small screen shake. *(Flash and shake done in the
+     special-attack rework; chromatic aberration not.)*
    - Grass and foliage sway in the wind (BotW).
    - Per-robot light direction and crisper two-tone shading options (Granblue Fantasy Versus).
    - Dust spawned only in sunlit air, so the beams carry more of it.

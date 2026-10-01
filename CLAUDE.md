@@ -9,6 +9,8 @@ Jonathan made all code, models, textures, music and UI. In Sep 2026 it was reviv
   **[docs/DEV_SETUP.md](docs/DEV_SETUP.md)**.
 - Port history and decisions: **[docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md)**.
 - Backlog of lighting, shadow and environment ideas: **[docs/IMPROVEMENT_IDEAS.md](docs/IMPROVEMENT_IDEAS.md)**.
+- Special-attack effects (Genki Dama Jyn, ki blasts, impacts; the effect system and its tests):
+  **[docs/SPECIAL_EFFECTS.md](docs/SPECIAL_EFFECTS.md)**.
 - **Before any work on robots, models, parts, animations, specials or the game's look and feel, read
   [docs/ART_AND_DESIGN.md](docs/ART_AND_DESIGN.md).** It covers:
   - the vision: robot customization is the core, with energy/ki combat
@@ -56,7 +58,8 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 ```
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
-  `-fpscap=N`, `-quitafter=S`, `-hour=H`, `-mute` (all sounds at volume 0; also works for a normal game) and
+  `-fpscap=N`, `-quitafter=S`, `-hour=H`, `-mute` (all sounds at volume 0; also works for a normal game), `-nofx` (no
+  special-attack effects, to compare frame rate or memory) and
   `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
   `devtest.ps1 -FaceShot [-Jyn]`), `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point:
   `devtest.ps1 -Camera "…"`, handy for close-ups of the arena) and `-flytest` (fly camera: F, fly, Esc
@@ -71,7 +74,9 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`
   after each match. `heap` is the bytes really in use; it must stay flat from cycle 2 on (about 21 MB,
-  +25 KB per match). Every object count must return to the same value each cycle.
+  +25 KB per match). Every object count must return to the same value each cycle. Exception: on Direct3D 11 it grows about
+  1 MB per match with the special-attack effects (0.3–0.7 MB with `-nofx`); OpenGL stays flat, and the object counts
+  are flat on both (docs/SPECIAL_EFFECTS.md, "Known issue").
 - **Crash report:** any crash (access violation, uncaught exception, `abort`) writes the call stack to
   `ogre.log` and `%USERPROFILE%\Tumbu\crash.log` (`Main.cpp`). RelWithDebInfo has file:line for game code.
   Ogre frames only show exported names, because the deps are built without PDBs.

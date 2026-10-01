@@ -129,7 +129,8 @@ EffectTrailLayer::EffectTrailLayer( Effect* _effect, ConfigNode* node ): EffectL
 	trail->setInitialWidth( 0, width );
 	trail->setWidthChange( 0, width / fadeTime );
 	trail->setCastShadows( false );
-	sceneMgr->getRootSceneNode()->attachObject( trail );
+	holder = sceneMgr->getRootSceneNode()->createChildSceneNode();
+	holder->attachObject( trail );
 	trail->addNode( this->node );
 
 	stopped = false;
@@ -141,6 +142,7 @@ EffectTrailLayer::~EffectTrailLayer(void){
 	Ogre::SceneManager* sceneMgr = effect->getManager()->getSceneManager();
 	sceneMgr->destroyRibbonTrail( trail );
 	sceneMgr->destroySceneNode( node );
+	sceneMgr->destroySceneNode( holder );
 }
 //-------------------------------------------------------------------------------------
 bool EffectTrailLayer::update( Ogre::Real age, Ogre::Real time ){
@@ -403,11 +405,14 @@ EffectLightningLayer::EffectLightningLayer( Effect* _effect, ConfigNode* node ):
 	chain->setTextureCoordDirection( Ogre::BillboardChain::TCD_V );
 	chain->setMaterialName( material != NULL ? material->getValue() : "Tumbu/EnergyTrail/Lightning" );
 	chain->setCastShadows( false );
-	sceneMgr->getRootSceneNode()->attachObject( chain );
+	holder = sceneMgr->getRootSceneNode()->createChildSceneNode();
+	holder->attachObject( chain );
 }
 //-------------------------------------------------------------------------------------
 EffectLightningLayer::~EffectLightningLayer(void){
-	effect->getManager()->getSceneManager()->destroyBillboardChain( chain );
+	Ogre::SceneManager* sceneMgr = effect->getManager()->getSceneManager();
+	sceneMgr->destroyBillboardChain( chain );
+	sceneMgr->destroySceneNode( holder );
 }
 //-------------------------------------------------------------------------------------
 bool EffectLightningLayer::update( Ogre::Real age, Ogre::Real time ){

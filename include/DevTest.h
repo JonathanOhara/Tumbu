@@ -14,6 +14,7 @@
  *   -hour=H          start the in-game clock at hour H (0-23) instead of 13:00, e.g. to check the night sky
  *   -measureanims    log how far the feet travel in the walk/run animations of every legs set, then quit
  *   -mute            silence all sounds (the game and every other switch work as usual)
+ *   -nofx            no special-attack effects (EffectsManager::spawn does nothing)
  *   -faceshot        with -quitafter: the screenshot looks at the hero's face (eyes, glow, rim light);
  *                    -faceshot=jyn also charges the Jyn special just before it (eye flare)
  *   -jynwalk         -walktest that also casts and concentrates Jyn while walking; logs the ball's offset
@@ -41,6 +42,8 @@ public:
 	static int getStartHour(void){ return startHour; }
 	/// -mute: every sound plays at volume 0 (for runs started by tools or while working on something else).
 	static bool isMuted(void){ return mute; }
+	/// -nofx: special-attack effects are not started (to compare performance or memory with and without them).
+	static bool isFxDisabled(void){ return noFx; }
 
 	DevTest(void);
 	virtual ~DevTest(void);
@@ -98,6 +101,7 @@ private:
 	static bool mute;
 	static int faceShot;
 	static bool jynWalk;
+	static bool noFx;
 	static Ogre::String fxTest;
 	static Ogre::Real fxTime;
 	static Ogre::Real fxDistance;
