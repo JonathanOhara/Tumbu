@@ -355,7 +355,9 @@ void DevTest::logPositions(void){
 	SpecialJyn* jyn = demo->mainChar->jyn != NULL ? dynamic_cast<SpecialJyn*>( demo->mainChar->jyn->special ) : NULL;
 	if( jyn != NULL && !jyn->particleList.empty() && jyn->getSpecialStatus() <= SpecialInterface::CONCENTRATED ){
 		log( "jyn: status=" + Ogre::StringConverter::toString( (int)jyn->getSpecialStatus() ) +
-			" ball-anchor=" + Ogre::StringConverter::toString( jyn->particleList[jyn->melhorParticula]->particle->mPosition - ( demo->mainChar->robotNode->_getDerivedPosition() + Ogre::Vector3( 0, 2.5f, 0 ) ) ) );
+			" size=" + Ogre::StringConverter::toString( jyn->tamanhoVisivel, 3 ) + "/" + Ogre::StringConverter::toString( jyn->tamanhoMaiorParticula, 3 ) +
+			" hand-robot=" + Ogre::StringConverter::toString( jyn->getChargeAnchor() - demo->mainChar->robotNode->_getDerivedPosition() ) +
+			" ball-anchor=" + Ogre::StringConverter::toString( jyn->particleList[jyn->melhorParticula]->particle->mPosition - jyn->getChargeAnchor() ) );
 	}
 }
 //-------------------------------------------------------------------------------------

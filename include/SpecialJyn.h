@@ -6,6 +6,7 @@
 #include "SpecialInterface.h"
 
 class Robot;
+class Part;
 
 class SpecialJyn: public SpecialInterface{
 public:
@@ -32,6 +33,8 @@ public:
 	void moverTodasParticulas(Ogre::Vector3 moveTarget);
 	/// Where the ball gathers: above the speller, followed from the cast until the attack.
 	Ogre::Vector3 getChargeAnchor(void);
+	/// World position of a bone of a part's entity; false when the part or bone is missing.
+	bool getBonePosition( Part* part, const char* boneName, Ogre::Vector3 &position );
 	void startAttack(Ogre::Quaternion orientation);
 	
 	void clearParticleSystem();
@@ -45,6 +48,10 @@ public:
 		melhorParticula;
 
 	float tamanhoMaiorParticula;
+	/// Size the ball shows: it grows towards tamanhoMaiorParticula a little at a time as the swarm balls arrive.
+	float tamanhoVisivel;
+	/// The PSO has converged; the special becomes CONCENTRATED once the ball has finished growing.
+	bool convergiu;
 	double fitnessMedio;
 protected:
 

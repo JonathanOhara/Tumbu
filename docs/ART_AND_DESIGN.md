@@ -79,7 +79,8 @@ points compatible across sets.
   and the random factors `AC1`/`AC2`. This organic "swarming ki" motion is intentional. Keep it for
   multi-ball specials.
 - Energy look (being reworked in 2026 towards anime ki attacks: DBZ, Naruto, Saint Seiya). **Jyn is Dragon Ball Z's
-  Genki Dama (Spirit Bomb)**: energy gathered from all around (the PSO swarm) into a ball above the raised hand,
+  Genki Dama (Spirit Bomb)**: energy gathered from all around (the PSO swarm) into a ball above the raised hand (`SpecialJyn::getChargeAnchor`:
+  the higher of the two hands' `finger_3_1` bones), growing a little with every swarm ball that arrives,
   blue-white (`kiColour` of `skill jyn` in `skills.object`). While it gathers, energy streaks in from the air and rises from
   the ground, faint dust is dragged over the floor and lightning crackles over the growing ball. Punch and kick are ki blasts in the robot's own colour:
   `kiColour` of its head's set (`robotNNN.object`), matching its eyes. Every ball is a procedural toon orb

@@ -1,6 +1,7 @@
 #include "SpecialJyn.h"
 #include "TUMBU.h"
 #include "Robot.h"
+#include "Part.h"
 #include "GUI.h"
 #include "SoundManager.h"
 #include "EffectsManager.h"
@@ -23,6 +24,8 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	particulaMaiorFitness = 0;
 	melhorParticula = 0;
 	tamanhoMaiorParticula = 0;
+	tamanhoVisivel = 0;
+	convergiu = false;
 
 	explosionParticleSystem = NULL;	
 	specialShape = NULL;
@@ -96,11 +99,15 @@ void SpecialJyn::update(const Ogre::Real time){
 				//Se fitness Medio das particulas chego a 0.001 parar de fazer
 				if(fitnessMedio < 0.2f){
 					times = MAX_ITERATIONS;
-					setSpecialStatus( SpecialInterface::CONCENTRATED );
+					convergiu = true;
 				}
 			}else{
-				setSpecialStatus( SpecialInterface::CONCENTRATED );
+				convergiu = true;
 			}
+		}
+		// Ready to throw once the swarm has converged and the ball has finished growing.
+		if( convergiu && tamanhoVisivel >= tamanhoMaiorParticula - 0.001f ){
+			setSpecialStatus( SpecialInterface::CONCENTRATED );
 		}
 	}else if( getSpecialStatus() == SpecialInterface::ATTACKING ){
 		timeToResest -= time;
@@ -124,18 +131,31 @@ void SpecialJyn::update(const Ogre::Real time){
 	}
 
 	if( !particleList.empty() ){
-		// Charging: the light grows with the ball (each merged swarm ball adds to it); thrown: full strength.
-		Ogre::Real grown = Ogre::Math::saturate( tamanhoMaiorParticula / ( ( NUMBER_OF_PARTICLES - 1 ) * ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20 ) );
-		Ogre::Real intensity = getSpecialStatus() == SpecialInterface::ATTACKING ? 1.0f : 0.3f + 0.7f * grown;
-		updateBallEffect( particleList[melhorParticula]->particle->mPosition, intensity );
+		bool charging = getSpecialStatus() <= SpecialInterface::CONCENTRATED;
+		if( charging ){
+			// Each swarm ball that arrives makes the ball grow a little: the shown size eases towards the merged size
+			// (about a second to catch up), instead of jumping.
+			Ogre::Real missing = tamanhoMaiorParticula - tamanhoVisivel;
+			if( missing > 0 ){
+				tamanhoVisivel += std::min( missing, std::max( missing * 4.0f, 0.06f ) * time );
+			}
+			setOrbSize( particleList[melhorParticula]->particle, PARTICLE_WIDTH + tamanhoVisivel );
+		}
+		// Charging: the light and the lightning grow with the ball (0 until the first swarm ball arrives); thrown: full.
+		Ogre::Real grown = Ogre::Math::saturate( tamanhoVisivel / ( ( NUMBER_OF_PARTICLES - 1 ) * ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20 ) );
+		Ogre::Real intensity = charging ? 0.3f + 0.7f * grown : 1.0f;
+		// While charging, the light and the gathering stay at the raised hand, where the ball forms: the swarm ball
+		// that leads the PSO can still be far away at first.
+		Ogre::Vector3 ballPosition = charging ? targetVector : particleList[melhorParticula]->particle->mPosition;
+		updateBallEffect( ballPosition, intensity );
 		// The layers that wrap the ball (lightning, where the motes arrive) measure in its radius.
-		Ogre::Real ballRadius = ( PARTICLE_WIDTH + tamanhoMaiorParticula ) * 0.5f;
+		Ogre::Real ballRadius = ( PARTICLE_WIDTH + tamanhoVisivel ) * 0.5f;
 		if( ballEffect != NULL ){
 			ballEffect->setScale( ballRadius );
 		}
 		if( chargeEffect != NULL ){
-			chargeEffect->setPosition( particleList[melhorParticula]->particle->mPosition );
-			chargeEffect->setIntensity( intensity );
+			chargeEffect->setPosition( targetVector );
+			chargeEffect->setIntensity( grown );
 			chargeEffect->setScale( ballRadius );
 		}
 		updateStreams();
@@ -224,7 +244,7 @@ void SpecialJyn::attack(Ogre::Quaternion orientation){
 		0.1f,         // dynamic body restitution
 		1.0f,         // dynamic body friction
 		30,          // dynamic bodymass
-		Ogre::Vector3( particleSystemNode->getParentSceneNode()->getPosition().x, particleSystemNode->getParentSceneNode()->getPosition().y + 2.5f, particleSystemNode->getParentSceneNode()->getPosition().z ), // starting position of the box
+		particleList.empty() ? targetVector : particleList[melhorParticula]->particle->mPosition, // starting position: the ball, above the raised hand
 		orientation
 	);// orientation of the box
 
@@ -296,6 +316,8 @@ void SpecialJyn::clear(){
     particulaMaiorFitness = 0;
     melhorParticula = 0;
     tamanhoMaiorParticula = 0;
+    tamanhoVisivel = 0;
+    convergiu = false;
 
 	for(unsigned int i = 0; i < particleList.size(); i++){
 		delete particleList[i];
@@ -339,6 +361,8 @@ void SpecialJyn::createRandomParticles(){
 	timePSO = 0;
 
 	tamanhoMaiorParticula = 0;
+	tamanhoVisivel = 0;
+	convergiu = false;
 	targetVector = getChargeAnchor();
 
 	particleSystem->_update(1);
@@ -475,8 +499,8 @@ void SpecialJyn::executaComplementoPSO(){
 	}
 
 
-	//Altera Cor e Tamanho da melhor Particula
-	setOrbSize( particleList[g]->particle, PARTICLE_WIDTH + tamanhoMaiorParticula );
+	//Altera Cor e Tamanho da melhor Particula (o tamanho cresce aos poucos em update: tamanhoVisivel)
+	setOrbSize( particleList[g]->particle, PARTICLE_WIDTH + tamanhoVisivel );
 	particleList[g]->active = true;
 
 	melhorParticula = g;
@@ -529,8 +553,32 @@ void SpecialJyn::moverTodasParticulas(Ogre::Vector3 moveTarget){
 }
 //-------------------------------------------------------------------------------------
 Ogre::Vector3 SpecialJyn::getChargeAnchor(void){
-	// The ball gathers above the speller's head (its raised hand in pre_special_jyn).
-	return robotSpeller->robotNode->_getDerivedPosition() + Ogre::Vector3( 0, 2.5f, 0 );
+	// The ball gathers above the speller's raised hand (pre_special_jyn raises it): the higher of the two hands, a
+	// little above the middle finger. Above the head when the hands cannot be found.
+	Ogre::Vector3 best = robotSpeller->robotNode->_getDerivedPosition() + Ogre::Vector3( 0, 2.5f, 0 );
+	Ogre::Vector3 hand;
+	bool found = false;
+	if( getBonePosition( robotSpeller->rightArm, "finger_3_1_R", hand ) ){
+		best = hand;
+		found = true;
+	}
+	if( getBonePosition( robotSpeller->leftArm, "finger_3_1_L", hand ) && ( !found || hand.y > best.y ) ){
+		best = hand;
+		found = true;
+	}
+	return found ? best + Ogre::Vector3( 0, 0.35f, 0 ) : best;
+}
+//-------------------------------------------------------------------------------------
+bool SpecialJyn::getBonePosition( Part* part, const char* boneName, Ogre::Vector3 &position ){
+	if( part == NULL || part->entity == NULL || !part->entity->hasSkeleton() || part->entity->getParentSceneNode() == NULL ){
+		return false;
+	}
+	Ogre::SkeletonInstance* skeleton = part->entity->getSkeleton();
+	if( !skeleton->hasBone( boneName ) ){
+		return false;
+	}
+	position = part->entity->getParentSceneNode()->_getFullTransform() * skeleton->getBone( boneName )->_getDerivedPosition();
+	return true;
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::updateStreams(void){
