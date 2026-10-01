@@ -198,6 +198,27 @@ project.
   variables (`set $diffuseMap …`). The shaders are HLSL + GLSL (`robot_*.vert/.frag`, unified through
   `OgreUnifiedShader.h`).
 
+### Arena ambient occlusion (`art/arena/Arena.blend`)
+
+- `.\scripts\bake-arena-ao.ps1` runs `scripts/blender/arena_ao.py` in headless Blender 5.2:
+  1. first run or `-Rebuild`: creates `art/arena/Arena.blend` from `coliseum.blend` and `gym.blend`, adds a
+     second UV map `AO` (Smart UV Project) to each mesh, and names the materials as the game does;
+  2. every run: bakes Cycles AO through the `AO` UV map into `media/tumbu/arena/<mesh>_ao.png` (every
+     object in the scene occludes) and exports `<mesh>.mesh` with blender2ogre (two UV sets).
+- Collections: **Export** (baked and exported) and **Occluders** (geometry that only casts AO, such as a
+  terrain proxy). Settings are custom properties, so they can be changed in Blender: scene
+  `tumbu_ao_distance` (3 units) and `tumbu_ao_samples` (1024), object `tumbu_ao_size` (texture pixels).
+- In the game, `Tumbu/EnvironmentToon` reads `$aoMap` with `tex_coord_set 1`. How strongly AO darkens the
+  ambient light and the sun, and its tint towards the shadow colour, are `aoAmbient` / `aoDirect` /
+  `aoTint` in `lighting.object`.
+- **Up axis:** the 2011 files disagree. `coliseum.blend` and the robot files are **Y-up** (Ogre's
+  convention, exported without axis conversion); `gym.blend` is Z-up. blender2ogre converts Blender Z-up to
+  Ogre Y-up, so Y-up sources must be turned upright (+90 degrees around X) first, or they export lying on
+  their side. `arena_ao.py` does this for the coliseum. Check the bounding box of every new export against
+  the old mesh.
+- blender2ogre exports only **selected** objects (its `SELECTED_ONLY` setting) and silently skips the
+  others: select the object before calling `api.dot_mesh`.
+
 ### Other tools (backed up in `D:\Backup\OgreSDK\OGRE_tools`)
 
 - **Ogitor 0.4.4** was the scene editor that produced `media/scenes/arena/Arena.scene` and the terrain

@@ -1,8 +1,10 @@
 // Toon-shaded arena materials (same lighting as the robots) and the post-processing materials.
 
-// Base of the arena and coliseum materials: set $diffuseMap and $diffuseCol.
+// Base of the arena and coliseum materials: set $diffuseMap and $diffuseCol, and $aoMap (baked by
+// scripts/bake-arena-ao.ps1, read through the mesh's second UV set).
 material Tumbu/EnvironmentToon{
     set $diffuseMap "white.png"
+    set $aoMap "white.png"
     set $diffuseCol "1 1 1 1"
     set $specularCol "0 0 0"
     set $shininess "16"
@@ -28,6 +30,11 @@ material Tumbu/EnvironmentToon{
             texture_unit shadowMap{
                 content_type shadow
                 sampler_ref Tumbu/ShadowSampler
+            }
+
+            texture_unit aoMap{
+                texture $aoMap
+                tex_coord_set 1
             }
         }
     }

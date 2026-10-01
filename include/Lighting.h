@@ -66,7 +66,10 @@ private:
 		shadowSoftness,
 		bloomThreshold,
 		bloomSoftKnee,
-		bloomStrength;
+		bloomStrength,
+		aoAmbient,
+		aoDirect,
+		aoTint;
 
 	static Lighting* instance;
 };

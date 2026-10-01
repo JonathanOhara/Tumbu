@@ -31,6 +31,12 @@ lighting configuration{
 	bloomSoftKnee 0.4
 	bloomStrength 0.8
 
+	// Baked ambient occlusion (scripts/bake-arena-ao.ps1, robot AO maps): how much it darkens the ambient light and
+	// the sun (0..1), and how much occluded areas lean towards the shadow colour instead of grey.
+	aoAmbient 1.0
+	aoDirect 0.5
+	aoTint 0.5
+
 	// Final image: saturation and contrast (1 = unchanged), and how much the corners darken.
 	saturation 1.1
 	contrast 1.05

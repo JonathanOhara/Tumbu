@@ -261,6 +261,10 @@ through a listener registry in `BaseApplication`.
 - `media/musics/*.ogg` and `media/sounds/*.ogg` hold the audio.
 - New exports: use blender2ogre, keep the 14 animation names, and upgrade with `scripts/upgrade-meshes.ps1`
   if needed. Details are in DEV_SETUP Part B.
+- **`art/`** holds the modern Blender working files (the 2011 `.blend` files in `media/` stay untouched).
+  `art/arena/Arena.blend` (coliseum + arena floor) is the source of `coliseum.mesh`, `arena.mesh` and their
+  baked AO maps (`*_ao.png`, second UV set): edit it, then run `.\scripts\bake-arena-ao.ps1` (headless Blender
+  5.2 + blender2ogre; `-Rebuild` recreates it from the 2011 files). Details in DEV_SETUP Part B.
 
 ## Conventions when editing
 

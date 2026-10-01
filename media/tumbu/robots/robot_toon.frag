@@ -45,7 +45,7 @@ MAIN_DECLARATION
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(normalize(oNormal), sunDirection.xyz), shadowParams);
 
     vec3 colour = tumbuToon(albedo, n, v, ao, specMask, matShininess, shadow,
-        sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams);
+        sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams, aoParams);
 
     // Emissive glow (eyes, lights): the texture colour where the glow map is white. Not lit or shadowed,
     // and above 1 in the HDR buffer, so the bloom picks it up.

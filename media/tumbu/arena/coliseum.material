@@ -1,6 +1,7 @@
 import * from "shading.material"
 
-// Coliseum walls (toon shading, shading.material). No texture yet: a flat colour.
+// Coliseum walls (toon shading, shading.material). No texture yet: a flat colour. AO baked by scripts/bake-arena-ao.ps1.
 material coliseumMaterial : Tumbu/EnvironmentToon{
 	set $diffuseCol "0.74 0.6 0.44 1"
+	set $aoMap "coliseum_ao.png"
 }

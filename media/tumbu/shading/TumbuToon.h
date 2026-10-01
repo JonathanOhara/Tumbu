@@ -12,11 +12,14 @@
     uniform vec4 shadowColour; \
     uniform vec4 rimColour; \
     uniform vec4 toonParams; \
-    uniform vec4 shadowParams;
+    uniform vec4 shadowParams; \
+    uniform vec4 aoParams;
 
 // sunDirection.xyz: unit vector towards the sun (world space)
 // rimColour.w: rim strength
 // toonParams: x = ramp threshold, y = ramp softness, z = rim power, w = specular softness
+// aoParams: x = AO strength on the ambient light, y = on the sun, z = tint of occluded areas towards the shadow
+//           colour (all 0..1)
 // shadowParams: x = 1 when the shadow map is in use, y = depth bias, z = 1 / shadow map size, w = filter radius
 //               in texels
 
@@ -55,7 +58,7 @@ float tumbuShadow(sampler2DShadow shadowMap, vec4 lightSpacePos, float ndl, vec4
 // (1 = open); specMask: specular colour (0 = matte); shadow: 1 = lit, 0 = in a cast shadow.
 vec3 tumbuToon(vec3 albedo, vec3 n, vec3 v, float ao, vec3 specMask, float shininess, float shadow,
                vec4 sunDirection, vec4 sunColour, vec4 skyColour, vec4 groundColour, vec4 shadowColour,
-               vec4 rimColour, vec4 toonParams)
+               vec4 rimColour, vec4 toonParams, vec4 aoParams)
 {
     // Toon ramp on the half-Lambert term: a soft band instead of a gradient that fades to black.
     float halfLambert = dot(n, sunDirection.xyz) * 0.5 + 0.5;
@@ -65,7 +68,12 @@ vec3 tumbuToon(vec3 albedo, vec3 n, vec3 v, float ao, vec3 specMask, float shini
     vec3 direct = sunColour.rgb * mix(shadowColour.rgb, vec3_splat(1.0), lit);
     // Hemispheric ambient: ground colour below, sky colour above.
     vec3 hemi = mix(groundColour.rgb, skyColour.rgb, n.y * 0.5 + 0.5);
-    vec3 colour = albedo * (direct + hemi) * ao;
+    // Ambient occlusion: full on the ambient light, partial on the sun, and occluded areas lean towards the
+    // shadow colour (coloured, never grey).
+    float aoAmbient = mix(1.0, ao, aoParams.x);
+    float aoDirect = mix(1.0, ao, aoParams.y);
+    vec3 aoTint = mix(vec3_splat(1.0), mix(shadowColour.rgb, vec3_splat(1.0), ao), aoParams.z);
+    vec3 colour = albedo * (direct * aoDirect + hemi * aoAmbient) * aoTint;
 
     // Stylised specular: a highlight shape with a soft edge, only on the lit side.
     vec3 h = normalize(sunDirection.xyz + v);
@@ -75,7 +83,7 @@ vec3 tumbuToon(vec3 albedo, vec3 n, vec3 v, float ao, vec3 specMask, float shini
 
     // Rim light: brighter on the sun side, tinted by the surface so it does not look like a white halo.
     float rim = pow(1.0 - saturate(dot(n, v)), toonParams.z) * rimColour.w * (0.35 + 0.65 * lit);
-    colour += rim * rimColour.rgb * (albedo * 0.5 + 0.5) * ao;
+    colour += rim * rimColour.rgb * (albedo * 0.5 + 0.5) * aoAmbient;
 
     return colour;
 }
