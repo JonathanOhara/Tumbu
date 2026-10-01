@@ -264,10 +264,19 @@ through a listener registry in `BaseApplication`.
 - **`art/`** holds the modern Blender working files (the 2011 `.blend` files in `media/` stay untouched).
   `art/arena/Arena.blend` (coliseum + arena floor) is the source of `coliseum.mesh`, `arena.mesh` and their
   baked AO maps (`*_ao.png`, second UV set): edit it, then run `.\scripts\bake-arena-ao.ps1` (headless Blender
-  5.2 + blender2ogre; `-Rebuild` recreates it from the 2011 files). Details in DEV_SETUP Part B.
+  5.2 + blender2ogre; `-Rebuild` recreates it from the 2011 files and **discards manual edits**, so never use
+  it once `Arena.blend` has been edited by hand). Details in DEV_SETUP Part B.
+- The `.mesh` files in `media/` are **generated** from Blender: see "Geometry" under Conventions.
 
 ## Conventions when editing
 
+- **Geometry: Blender is the source of truth.** Never edit a `.mesh` (or `.skeleton`) file directly, by hand,
+  through XML, or with a script that patches vertices. Every geometry change (shape, normals, UVs,
+  clean-up, materials assigned to faces) is made in the Blender file, then the `.mesh` is generated again
+  with the blender2ogre exporter (for the arena: `.\scripts\bake-arena-ao.ps1`). Scripted fixes belong in
+  the Blender build scripts (for example `clean_mesh` in `scripts/blender/arena_ao.py`), so a rebuild
+  reproduces them. The working `.blend` files live in `art/`; a model that has none yet gets one there
+  first (from its 2011 `.blend`, never by overwriting it). Details in DEV_SETUP Part B.
 - Style: tabs, braces on the same line, `//----...` separators between methods, `getInstance()` singletons,
   raw `new`/`delete`, and `NULL`. Match it.
 - **Encoding and line endings:** `.gitattributes` normalizes line endings to LF in the repo. Some sources and

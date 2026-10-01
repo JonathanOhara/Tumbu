@@ -159,6 +159,13 @@ project.
 
 ### Blender models
 
+- **Rule: Blender is the source of truth for geometry.** Never edit a `.mesh`/`.skeleton` directly (by hand,
+  through its XML, or by a script that patches it). Make every change in the `.blend` file, then export
+  again with blender2ogre. Put scripted fixes in the Blender build scripts so they are reproducible.
+  Working files live in `art/` (`art/arena/Arena.blend` for the arena). A model without one gets one there
+  first, made from its 2011 `.blend`; the original is never overwritten. Once a working file has been edited
+  by hand, it is the only source: `bake-arena-ao.ps1 -Rebuild` would replace it, so do not use `-Rebuild`
+  after manual edits.
 - All robots, the arena, the gym, the house, the trees and the splash screen are **Blender 2.49** files
   (Blender 5.2 also reports `media/tumbu/arena/coliseum.blend` as 2.49).
 - **The `.blend` files match the game's `.mesh` files** (checked Sep 2026: identical triangle counts and
