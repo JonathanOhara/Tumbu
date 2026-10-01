@@ -77,7 +77,7 @@ def build():
         log("imported %s from %s (%d vertices)" % (name, source, len(ob.data.vertices)))
 
     scene = bpy.context.scene
-    scene["tumbu_ao_distance"] = 3.0
+    scene["tumbu_ao_distance"] = 1.0
     scene["tumbu_ao_samples"] = 1024
     os.makedirs(ART, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=BLEND)
@@ -233,7 +233,7 @@ def main():
     scene.cycles.samples = int(scene.get("tumbu_ao_samples", 1024))
     if scene.world is None:
         scene.world = bpy.data.worlds.new("World")
-    scene.world.light_settings.distance = float(scene.get("tumbu_ao_distance", 3.0))
+    scene.world.light_settings.distance = float(scene.get("tumbu_ao_distance", 1.0))
     log("AO distance %.2f, %d samples" % (scene.world.light_settings.distance, scene.cycles.samples))
 
     export_col = bpy.data.collections.get("Export")
