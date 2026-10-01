@@ -11,6 +11,8 @@ compositor Tumbu/PostProcess
         texture scene target_width target_height PF_FLOAT16_RGBA PF_DEPTH32F
         texture shaftsA target_width_scaled 0.5 target_height_scaled 0.5 PF_FLOAT16_RGBA
         texture shaftsB target_width_scaled 0.5 target_height_scaled 0.5 PF_FLOAT16_RGBA
+        texture ssaoA target_width_scaled 0.5 target_height_scaled 0.5 PF_BYTE_RGBA
+        texture ssaoB target_width_scaled 0.5 target_height_scaled 0.5 PF_BYTE_RGBA
         texture bloomA target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
         texture bloomB target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
 
@@ -47,6 +49,37 @@ compositor Tumbu/PostProcess
             {
                 material Tumbu/PostProcess/BlurV
                 input 0 shaftsB
+            }
+        }
+
+        // Screen-space AO: depth-based occlusion, then one horizontal + vertical blur.
+        target ssaoA
+        {
+            input none
+            pass render_quad
+            {
+                // Lighting::notifyMaterialRender sets the matrices for this pass.
+                identifier 30
+                material Tumbu/PostProcess/SSAO
+                input 0 scene 1
+            }
+        }
+        target ssaoB
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BlurH
+                input 0 ssaoA
+            }
+        }
+        target ssaoA
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BlurV
+                input 0 ssaoB
             }
         }
 
@@ -109,6 +142,7 @@ compositor Tumbu/PostProcess
                 input 0 scene
                 input 1 bloomA
                 input 2 shaftsA
+                input 3 ssaoA
             }
         }
     }

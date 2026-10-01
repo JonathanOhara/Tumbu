@@ -1,0 +1,46 @@
+// Dust floating in the arena air: tiny motes that drift slowly and only shine in sunlight (Tumbu/Dust), so
+// they sparkle inside the god rays. Created by Demo::createDust over the arena centre.
+particle_system Tumbu/ArenaDust
+{
+    material Tumbu/Dust
+    particle_width 0.06
+    particle_height 0.06
+    quota 1000
+    billboard_type point
+    cull_each false
+
+    emitter Box
+    {
+        width 44
+        height 9
+        depth 44
+        emission_rate 100
+        time_to_live_min 8
+        time_to_live_max 12
+        direction 0 1 0
+        angle 180
+        velocity_min 0.02
+        velocity_max 0.1
+        colour 1 1 1 1
+    }
+
+    // Fade in and out, so motes never pop.
+    affector ColourInterpolator
+    {
+        colour0 1 1 1 0
+        time0 0
+        colour1 1 1 1 1
+        time1 0.2
+        colour2 1 1 1 1
+        time2 0.8
+        colour3 1 1 1 0
+        time3 1
+    }
+
+    affector DirectionRandomiser
+    {
+        randomness 0.08
+        scope 1
+        keep_velocity true
+    }
+}

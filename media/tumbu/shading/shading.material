@@ -103,6 +103,11 @@ material Tumbu/PostProcess/Final{
                 tex_address_mode clamp
                 filtering linear linear none
             }
+
+            texture_unit ssao{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
         }
     }
 }
@@ -182,6 +187,50 @@ material Tumbu/PostProcess/LightShafts{
 
             texture_unit shadowMap{
                 sampler_ref Tumbu/ShadowSampler
+            }
+        }
+    }
+}
+
+// Dust motes (dust.particle): additive, lit only where the sun's shadow map says they are in sunlight.
+material Tumbu/Dust{
+    technique{
+        pass{
+            scene_blend add
+            depth_write off
+            lighting off
+
+            vertex_program_ref dust_vs{
+            }
+
+            fragment_program_ref dust_ps{
+            }
+
+            texture_unit shadowMap{
+                content_type shadow
+                sampler_ref Tumbu/ShadowSampler
+            }
+        }
+    }
+}
+
+// Screen-space AO (postprocess.compositor): reads the scene depth.
+material Tumbu/PostProcess/SSAO{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_ssao_ps{
+            }
+
+            texture_unit depth{
+                tex_address_mode clamp
+                filtering none
             }
         }
     }

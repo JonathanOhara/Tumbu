@@ -85,6 +85,18 @@ fragment_program postprocess_shafts_ps glsl glsles hlsl
     }
 }
 
+// Screen-space AO (Lighting.cpp sets invViewProj, camPos and ssaoParams before the pass renders).
+fragment_program postprocess_ssao_ps glsl glsles hlsl
+{
+    source postprocess_ssao.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto viewportSize viewport_size
+    }
+}
+
 // Shadow caster for the arena (Tumbu/EnvironmentToon): depth only.
 vertex_program shadow_caster_vs glsl glsles hlsl
 {
@@ -111,4 +123,28 @@ sampler Tumbu/ShadowSampler
     tex_border_colour 1 1 1 1
     compare_test on
     comp_func less_equal
+}
+
+// Dust motes in the sunlight (Tumbu/Dust, dust.particle).
+vertex_program dust_vs glsl glsles hlsl
+{
+    source dust.vert
+    target vs_4_0
+    default_params
+    {
+        param_named_auto camPos camera_position
+        param_named_auto wMat world_matrix
+        param_named_auto vpMat viewproj_matrix
+        param_named_auto texViewProj texture_viewproj_matrix 0
+    }
+}
+
+fragment_program dust_ps glsl glsles hlsl
+{
+    source dust.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+    }
 }

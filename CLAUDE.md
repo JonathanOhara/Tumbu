@@ -157,6 +157,20 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   five Bullet rays from the camera towards the sun (`updateSunVisibility`, eased over time), because the
   final pass could not read the scene depth (it sampled zeros on Direct3D 11). `lensFlare` in
   `lighting.object` (0 = off); never for the moon.
+- **Contact shadows** (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
+  each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by
+  `Lighting::updateContactShadows`; strength in `aoParams.w`). No extra geometry. `contactShadow`,
+  `contactShadowRadius`.
+- **Distance fog**: computed in the god-ray pass (it has the depth) and stored in that texture's **alpha**;
+  the blur keeps alpha and the final pass mixes towards `skyColour x fogBrightness`. Sky pixels (beyond 600
+  units) get none. `fogStart` / `fogDensity` / `fogMax` / `fogBrightness`. Works with shadows off too.
+- **Dust** (`dust.particle`, `Tumbu/Dust`, `Demo::createDust`): motes below the wall tops, additive, lit only
+  where the shadow map says sunlight reaches them, visible 3–10 units from the camera (closer ones would be
+  blobs, farther ones look like stars). `dustSunlight` (x the keyframe `shaftStrength`), `dustShadow`.
+- **Screen-space AO** (`postprocess_ssao.frag`, `identifier 30`, half size + blur): world position and normal
+  from depth, 12 spiral samples; the final pass multiplies the scene by it. `ssaoRadius`, `ssaoStrength`
+  (0 = off). Note: the final pass cannot sample the depth texture (it reads zeros on Direct3D 11), so every
+  depth-based effect is computed in an earlier pass.
 - **Visible sun = lighting sun.** `Sky` is a `RenderTargetListener` added after Caelum: in
   `preRenderTargetUpdate` (after Caelum's frame update, before it places the sky) it sets Caelum's sun, sky
   dome and clouds to `Lighting`'s direction, or its moon between `moonFrom` and `moonUntil`. The `twilight`

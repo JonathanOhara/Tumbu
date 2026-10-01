@@ -59,6 +59,27 @@ lighting configuration{
 
 	// Lens flare when looking towards the sun (glow, horizontal streak and ghosts; hidden by walls). 0 = off.
 	lensFlare 0.7
+
+	// Contact shadows: soft dark disc on the floor under each robot (fades when it jumps). Strength 0..1, radius.
+	contactShadow 0.6
+	contactShadowRadius 0.55
+
+	// Distance fog: far geometry (mountains, terrain) fades into the sky colour. Start distance, density per unit,
+	// maximum amount (0 = no fog), and the brightness of the fog colour (sky ambient colour x this).
+	fogStart 35
+	fogDensity 0.012
+	fogMax 0.65
+	fogBrightness 2.2
+
+	// Dust motes (dust.particle): brightness in sunlight (scaled by the keyframe shaftStrength) and in shadow.
+	// dustSunlight 0 hides them.
+	dustSunlight 0.6
+	dustShadow 0.02
+
+	// Screen-space AO: contact darkening between moving things (robots and floor, robots and walls). Radius in
+	// world units and strength (0 = off).
+	ssaoRadius 0.6
+	ssaoStrength 1.2
 }
 
 // Each keyframe: the hour it applies to; sun elevation and azimuth in degrees (azimuth 0 = +Z, 90 = +X); the

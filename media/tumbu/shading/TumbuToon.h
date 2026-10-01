@@ -13,13 +13,19 @@
     uniform vec4 rimColour; \
     uniform vec4 toonParams; \
     uniform vec4 shadowParams; \
-    uniform vec4 aoParams;
+    uniform vec4 aoParams; \
+    uniform vec4 contactShadowA; \
+    uniform vec4 contactShadowB; \
+    uniform vec4 fogParams;
 
 // sunDirection.xyz: unit vector towards the sun (world space)
 // rimColour.w: rim strength
 // toonParams: x = ramp threshold, y = ramp softness, z = rim power, w = specular softness
 // aoParams: x = AO strength on the ambient light, y = on the sun, z = tint of occluded areas towards the shadow
-//           colour (all 0..1)
+//           colour (all 0..1), w = contact shadow strength
+// contactShadowA/B: a robot's feet position (xyz) and its contact shadow radius (w, 0 = none)
+// fogParams: x = fog start distance, y = density, z = maximum amount, w = brightness of the fog colour
+//            (fog colour = sky ambient colour x w)
 // shadowParams: x = 1 when the shadow map is in use, y = depth bias, z = 1 / shadow map size, w = filter radius
 //               in texels
 
@@ -52,6 +58,20 @@ float tumbuShadow(sampler2DShadow shadowMap, vec4 lightSpacePos, float ndl, vec4
             visible += TUMBU_SHADOW_CMP(shadowMap, vec3(pos.xy + vec2(float(x), float(y)) * texelStep, depth));
     }
     return visible / 9.0;
+}
+
+// Soft dark disc under a robot (contact shadow): on upward-facing surfaces below its feet, fading with the
+// distance from its centre and with the height of a jump. 0 = none, 1 = full.
+float tumbuContact(vec3 p, vec3 n, vec4 robot)
+{
+    if (robot.w <= 0.0)
+        return 0.0;
+    float height = robot.y - p.y;
+    float r = length(p.xz - robot.xz) / robot.w;
+    float facingUp = smoothstep(0.5, 0.9, n.y);
+    float below = smoothstep(-0.25, -0.05, height);
+    float fade = 1.0 - saturate(height / 1.5);
+    return facingUp * below * fade * (1.0 - smoothstep(0.2, 1.0, r));
 }
 
 // albedo: surface colour; n: unit world normal; v: unit vector towards the camera; ao: ambient occlusion

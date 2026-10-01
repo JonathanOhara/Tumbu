@@ -68,6 +68,16 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	shaftAnisotropy		= requireChild( cfg, name, "shaftAnisotropy" )->getValueF();
 	shaftSteps			= std::min( 32.0f, std::max( 4.0f, requireChild( cfg, name, "shaftSteps" )->getValueF() ) );
 	lensFlare			= requireChild( cfg, name, "lensFlare" )->getValueF();
+	contactShadow		= requireChild( cfg, name, "contactShadow" )->getValueF();
+	contactShadowRadius	= requireChild( cfg, name, "contactShadowRadius" )->getValueF();
+	fogStart			= requireChild( cfg, name, "fogStart" )->getValueF();
+	fogDensity			= requireChild( cfg, name, "fogDensity" )->getValueF();
+	fogMax				= requireChild( cfg, name, "fogMax" )->getValueF();
+	fogBrightness		= requireChild( cfg, name, "fogBrightness" )->getValueF();
+	dustSunlight		= requireChild( cfg, name, "dustSunlight" )->getValueF();
+	dustShadow			= requireChild( cfg, name, "dustShadow" )->getValueF();
+	ssaoRadius			= requireChild( cfg, name, "ssaoRadius" )->getValueF();
+	ssaoStrength		= requireChild( cfg, name, "ssaoStrength" )->getValueF();
 
 	std::vector<Ogre::String> &names = requireChild( cfg, name, "keyframes" )->getValues();
 	for( size_t i = 0; i < names.size(); i++ ){
@@ -100,7 +110,7 @@ Lighting* Lighting::getInstance(){
 //-------------------------------------------------------------------------------------
 void Lighting::declareSharedParameters(void){
 	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().createSharedParameters( SHARED_PARAMS );
-	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams" };
+	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams", "contactShadowA", "contactShadowB", "fogParams", "dustParams" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -118,6 +128,10 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "aoParams", Ogre::Vector4( 1, 0.5f, 0.5f, 0 ) );
 	params->setNamedConstant( "shadowOffset", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "shaftParams", Ogre::Vector4( 0, 40, 0.5f, 16 ) );
+	params->setNamedConstant( "contactShadowA", Ogre::Vector4( 0, 0, 0, 0 ) );
+	params->setNamedConstant( "contactShadowB", Ogre::Vector4( 0, 0, 0, 0 ) );
+	params->setNamedConstant( "fogParams", Ogre::Vector4( 1000, 0, 0, 1 ) );
+	params->setNamedConstant( "dustParams", Ogre::Vector4( 0, 0, 0, 0 ) );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
@@ -227,7 +241,10 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "toonParams", Ogre::Vector4( rampThreshold, rampSoftness, rimPower, specularSoftness ) );
 	params->setNamedConstant( "postParams", Ogre::Vector4( k.exposure, saturation, contrast, vignette ) );
 	params->setNamedConstant( "bloomParams", Ogre::Vector4( bloomThreshold, bloomSoftKnee, bloomStrength, 0 ) );
-	params->setNamedConstant( "aoParams", Ogre::Vector4( aoAmbient, aoDirect, aoTint, 0 ) );
+	params->setNamedConstant( "aoParams", Ogre::Vector4( aoAmbient, aoDirect, aoTint, contactShadow ) );
+	params->setNamedConstant( "fogParams", Ogre::Vector4( fogStart, fogDensity, fogMax, fogBrightness ) );
+	// The dust follows the god rays' strength through the day (stronger at dawn and sunset, faint at night).
+	params->setNamedConstant( "dustParams", Ogre::Vector4( dustSunlight * k.shaftStrength, dustShadow, 0, 0 ) );
 
 	// The shaders sample the shadow map only when the scene renders one (Options: shadows).
 	bool shadows = sun != NULL && sun->getCastShadows() && mSceneMgr->isShadowTechniqueTextureBased();
@@ -269,6 +286,7 @@ bool Lighting::frameRenderingQueued( const Ogre::FrameEvent &evt ){
 		update( clock->getHours() );
 	}
 	updateSunVisibility( evt.timeSinceLastFrame );
+	updateContactShadows();
 	return true;
 }
 //-------------------------------------------------------------------------------------
@@ -278,6 +296,10 @@ void Lighting::notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &mat
 	}
 	if( passId == 20 ){
 		setLensFlare( material );
+		return;
+	}
+	if( passId == 30 ){
+		setAmbientOcclusion( material );
 		return;
 	}
 	if( passId != 10 ){
@@ -350,4 +372,34 @@ void Lighting::updateSunVisibility( Ogre::Real time ){
 	}
 	Ogre::Real target = clear / 5.0f;
 	sunVisibility += ( target - sunVisibility ) * std::min( 1.0f, time * 8.0f );
+}
+//-------------------------------------------------------------------------------------
+void Lighting::updateContactShadows(void){
+	// The robots' feet positions for the soft contact shadows of the arena shader (TumbuToon.h tumbuContact).
+	Demo* demo = TUMBU::getInstance()->getDemo();
+	Robot* robots[2] = { demo != NULL ? demo->mainChar : NULL, demo != NULL ? demo->enemy : NULL };
+	const char* names[2] = { "contactShadowA", "contactShadowB" };
+	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( SHARED_PARAMS );
+	for( int i = 0; i < 2; i++ ){
+		Ogre::Vector4 value( 0, 0, 0, 0 );
+		if( robots[i] != NULL && robots[i]->robotNode != NULL ){
+			Ogre::Vector3 feet = robots[i]->robotNode->_getDerivedPosition();
+			value = Ogre::Vector4( feet.x, feet.y, feet.z, contactShadowRadius );
+		}
+		params->setNamedConstant( names[i], value );
+	}
+}
+//-------------------------------------------------------------------------------------
+void Lighting::setAmbientOcclusion( Ogre::MaterialPtr &material ){
+	// Screen-space AO pass (identifier 30): camera matrices of this frame, radius and strength.
+	Ogre::GpuProgramParametersSharedPtr params = material->getBestTechnique()->getPass( 0 )->getFragmentProgramParameters();
+	Ogre::Camera* camera = postProcessViewport->getCamera();
+	Ogre::Matrix4 projection = camera->getProjectionMatrixWithRSDepth();
+	params->setNamedConstant( "invViewProj", ( projection * camera->getViewMatrix() ).inverse() );
+	Ogre::Vector3 eye = camera->getDerivedPosition();
+	params->setNamedConstant( "camPos", Ogre::Vector4( eye.x, eye.y, eye.z, 1 ) );
+	bool flipped = Ogre::Root::getSingleton().getRenderSystem()->getName().find( "OpenGL" ) != Ogre::String::npos;
+	// projection[1][1] = 1 / tan(fov / 2): a world size at distance 1 covers that much of the screen height
+	// (x 0.5 in texture coordinates).
+	params->setNamedConstant( "ssaoParams", Ogre::Vector4( ssaoRadius, ssaoStrength, projection[1][1] * 0.5f, flipped ? 1.0f : 0.0f ) );
 }

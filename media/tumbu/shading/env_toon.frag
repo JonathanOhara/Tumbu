@@ -28,6 +28,10 @@ MAIN_DECLARATION
     vec3 albedo = texture2D(diffuseMap, oUv).rgb * matDif.rgb;
     float ao = texture2D(aoMap, oAoUv).r;
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(n, sunDirection.xyz), shadowParams);
+    // Contact shadows under the robots (Lighting::updateContactShadows).
+    float contact = max(tumbuContact(oWorldPos, n, contactShadowA), tumbuContact(oWorldPos, n, contactShadowB)) * aoParams.w;
+    ao *= 1.0 - contact;
+    shadow *= 1.0 - contact * 0.6;
 
     vec3 colour = tumbuToon(albedo, n, v, ao, matSpec.rgb, matShininess, shadow,
         sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams, aoParams);

@@ -73,6 +73,7 @@ private:
 	void createSimpleTerrain(void);
 	void createTerrainPhysic(void);
 	void createArena(void);
+	void createDust(void);
 	void createMainCharacter(void);
 	void createEnemyCharacter(void);
 	void setupCamera(void);
@@ -108,6 +109,8 @@ private:
 	Sky				*sky;
 	Lighting		*lighting;
 	FlyCamera		*flyCamera;
+	Ogre::ParticleSystem	*dust;
+	Ogre::SceneNode		*dustNode;
 	TUMBU			*tumbu;
 	Tutorial		*tutorial;
 

@@ -42,8 +42,12 @@ public:
 	void notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &material );
 	/// Sun position for the lens flare in the final pass.
 	void setLensFlare( Ogre::MaterialPtr &material );
+	/// Matrices, radius and strength for the screen-space AO pass.
+	void setAmbientOcclusion( Ogre::MaterialPtr &material );
 	/// How much of the sun disc the camera sees (physics rays), eased over time.
 	void updateSunVisibility( Ogre::Real time );
+	/// Robots' feet positions for the contact shadows (shared parameters contactShadowA/B).
+	void updateContactShadows(void);
 	Ogre::Real sunVisibility;
 
 private:
@@ -89,7 +93,17 @@ private:
 		shaftDistance,
 		shaftAnisotropy,
 		shaftSteps,
-		lensFlare;
+		lensFlare,
+		contactShadow,
+		contactShadowRadius,
+		fogStart,
+		fogDensity,
+		fogMax,
+		fogBrightness,
+		dustSunlight,
+		dustShadow,
+		ssaoRadius,
+		ssaoStrength;
 
 	static Lighting* instance;
 };

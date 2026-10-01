@@ -24,6 +24,8 @@ Demo::Demo(){
 	sky							= NULL;
 	lighting					= NULL;
 	flyCamera					= NULL;
+	dust						= NULL;
+	dustNode					= NULL;
 }
 //-------------------------------------------------------------------------------------
 Demo::~Demo(void){
@@ -49,6 +51,10 @@ Demo::~Demo(void){
 	if( enemy != NULL ){
 		tumbu->getRoot()->removeFrameListener( enemy );
 		delete enemy;
+	}
+	if( dust != NULL ){
+		mSceneMgr->destroyParticleSystem( dust );
+		mSceneMgr->destroySceneNode( dustNode );
 	}
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Lighting...");
 	if( lighting != NULL ){
@@ -234,6 +240,7 @@ void Demo::initializeDemo(){
 	gui->startLoad("Loading Terrain...");
 	tumbu->renderOneFrame();
 	createArena();
+	createDust();
 
 	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating hero" );
 	gui->startLoad("Loading Character...");
@@ -310,6 +317,16 @@ void Demo::initializePhysicsStuff(void){
 		getPhysicWorld()->setDebugDrawNode( debugDrawerNode );
 	}
 	#endif
+}
+//-------------------------------------------------------------------------------------
+void Demo::createDust(void){
+	// Dust motes floating over the arena; they shine only in sunlight, so they sparkle in the god rays. Below the
+	// wall tops: above them all the air is sunlit and the motes would look like stars in the sky.
+	dust = mSceneMgr->createParticleSystem( "ArenaDust", "Tumbu/ArenaDust" );
+	dust->setCastShadows( false );
+	dustNode = mSceneMgr->getRootSceneNode()->createChildSceneNode( "ArenaDustNode", Ogre::Vector3( 0, 5, 0 ) );
+	dustNode->attachObject( dust );
+	dust->fastForward( 12 );	// already floating when the match starts
 }
 //-------------------------------------------------------------------------------------
 void Demo::createArena(void){

@@ -1,7 +1,8 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // God rays (volumetric sunlight), at half resolution: march from the camera to the visible surface and add the
 // sunlight scattered by the air at every step that the sun's shadow map says is lit. Light coming through the
-// coliseum's windows and gaps becomes visible shafts. Lighting.cpp sets the matrices before the pass renders.
+// coliseum's windows and gaps becomes visible shafts. The alpha channel carries the distance fog.
+// Lighting.cpp sets the matrices before the pass renders.
 #include <OgreUnifiedShader.h>
 #include "TumbuToon.h"
 
@@ -22,12 +23,6 @@ MAIN_PARAMETERS
 IN(vec2 oUv, TEXCOORD0)
 MAIN_DECLARATION
 {
-    if (shaftParams.x <= 0.0 || shadowParams.x < 0.5)
-    {
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-        return;
-    }
-
     // World position of the visible surface.
     float depth = texture2D(depthMap, oUv).r;
     vec2 ndcXY = vec2(oUv.x * 2.0 - 1.0, 1.0 - oUv.y * 2.0);
@@ -40,6 +35,18 @@ MAIN_DECLARATION
     world.xyz /= world.w;
 
     vec3 ray = world.xyz - camPos.xyz;
+
+    // Distance fog (alpha, blended in the final pass): far geometry such as the mountains fades into the sky colour.
+    // The sky itself (beyond 600 units) gets none.
+    float distance = length(ray);
+    float fog = distance < 600.0 ? fogParams.z * (1.0 - exp(-max(distance - fogParams.x, 0.0) * fogParams.y)) : 0.0;
+
+    if (shaftParams.x <= 0.0 || shadowParams.x < 0.5)
+    {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, fog);
+        return;
+    }
+
     float rayLength = min(length(ray), shaftParams.y);
     // Sky (nothing behind it): a shorter march, so the open sky does not turn milky.
     if (length(ray) > shaftParams.y * 4.0)
@@ -82,5 +89,5 @@ MAIN_DECLARATION
     const float maxAmount = 2.0;
     float amount = maxAmount * (1.0 - exp(-litLength * phase * shaftParams.x / maxAmount));
     vec3 scattered = sunColour.rgb * amount;
-    gl_FragColor = vec4(scattered, 1.0);
+    gl_FragColor = vec4(scattered, fog);
 }

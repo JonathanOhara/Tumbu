@@ -1,11 +1,13 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
-// Final image: god rays, bloom, lens flare, exposure, tone mapping (HDR scene -> screen), saturation, contrast
+// Final image: distance fog, god rays, bloom, lens flare, exposure, tone mapping (HDR scene -> screen),
+// saturation, contrast
 // and vignette.
 #include <OgreUnifiedShader.h>
 
 SAMPLER2D(scene, 0);
 SAMPLER2D(bloom, 1);
 SAMPLER2D(shafts, 2);
+SAMPLER2D(ssao, 3);
 
 OGRE_UNIFORMS(
     // x = exposure, y = saturation, z = contrast, w = vignette
@@ -16,6 +18,9 @@ OGRE_UNIFORMS(
     // times how much of the sun is visible (0 = hidden by a wall, behind the camera, moon, or flare off)
     uniform vec4 flareSun;
     uniform vec4 sunColour;
+    uniform vec4 skyColour;
+    // x = start, y = density, z = maximum, w = brightness of the fog colour (sky ambient x w)
+    uniform vec4 fogParams;
     uniform vec4 viewportSize;
 )
 
@@ -69,8 +74,9 @@ MAIN_PARAMETERS
 IN(vec2 oUv, TEXCOORD0)
 MAIN_DECLARATION
 {
-    vec3 colour = (texture2D(scene, oUv).rgb + texture2D(bloom, oUv).rgb * bloomParams.z + texture2D(shafts, oUv).rgb
-        + lensFlare(oUv)) * postParams.x;
+    vec4 shaftsAndFog = texture2D(shafts, oUv);    // rgb = god rays, a = distance fog
+    vec3 colour = mix(texture2D(scene, oUv).rgb * texture2D(ssao, oUv).r, skyColour.rgb * fogParams.w, shaftsAndFog.a);
+    colour = (colour + texture2D(bloom, oUv).rgb * bloomParams.z + shaftsAndFog.rgb + lensFlare(oUv)) * postParams.x;
     colour = softShoulder(colour);
 
     float luma = dot(colour, vec3(0.2126, 0.7152, 0.0722));
