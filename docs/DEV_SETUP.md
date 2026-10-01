@@ -208,8 +208,11 @@ project.
 - The build also cleans the 2011 meshes (`clean_mesh`): it stitches T-junctions (the coliseum had two,
   hairline cracks on the upper ring), removes loose edges, and marks edges sharper than 30 degrees as hard.
   Every face used to be smooth-shaded, so the window jambs and flat walls showed diagonal gradients.
-  The thin dark vertical line on the upper ring, seen from the arena centre, is not an error: it is the side
-  face where the top wall ends, seen edge-on (it is radial) and darkened by AO.
+- **AO textures use clamp addressing** (`tex_address_mode clamp` in `Tumbu/EnvironmentToon`). Smart UV
+  Project can place an island against the texture border; with the default wrap, bilinear filtering blended
+  texels from the opposite border into it, which drew a thin dark vertical line on the upper ring along a
+  seam lying on the border. The bake also starts from a white image, so filtering near UV islands drifts
+  towards "unoccluded" rather than black.
 - Collections: **Export** (baked and exported) and **Occluders** (geometry that only casts AO, such as a
   terrain proxy). Settings are custom properties, so they can be changed in Blender: scene
   `tumbu_ao_distance` (1 unit) and `tumbu_ao_samples` (1024), object `tumbu_ao_size` (texture pixels).

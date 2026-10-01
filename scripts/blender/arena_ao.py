@@ -184,11 +184,13 @@ def clean_ao(image, passes=2):
 def bake(ob, scene):
     size = int(ob.get("tumbu_ao_size", 1024))
     name = ob.name + "_ao"
-    image = bpy.data.images.get(name)
-    if image is None or tuple(image.size) != (size, size):
-        if image is not None:
-            bpy.data.images.remove(image)
-        image = bpy.data.images.new(name, size, size, alpha=False)
+    old = bpy.data.images.get(name)
+    if old is not None:
+        bpy.data.images.remove(old)
+    image = bpy.data.images.new(name, size, size, alpha=False)
+    # White background: texture filtering at a distance (smaller mip levels) mixes the space around small UV
+    # islands into them; black there turned thin faces seen edge-on into dark lines.
+    image.generated_color = (1.0, 1.0, 1.0, 1.0)
     image.colorspace_settings.name = "Non-Color"
     bake_target(ob, image)
 

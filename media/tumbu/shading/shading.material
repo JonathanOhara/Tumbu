@@ -35,6 +35,9 @@ material Tumbu/EnvironmentToon{
             texture_unit aoMap{
                 texture $aoMap
                 tex_coord_set 1
+                // Clamp, not wrap: UV islands may touch the texture border, and wrapping blended texels from the
+                // opposite border into them (a dark line along a seam on the upper ring).
+                tex_address_mode clamp
             }
         }
     }
