@@ -15,6 +15,16 @@
 //     flicker     0..1, uneven crackle of the strength
 //     offset      x y z from the effect position
 //
+// trail: a ribbon left behind as the effect moves (held effects that follow a ball)
+//     colour      ribbon colour; width: world units at the ball; length: world units of ribbon kept
+//     fadeTime    seconds each point takes to fade and narrow to nothing; segments: points kept (20)
+//     material    Tumbu/EnergyTrail (default), Tumbu/EnergyTrail/Mote, Tumbu/EnergyTrail/Jyn (effects.material)
+//
+// particles: an Ogre particle system from a template (media/tumbu/effects/effects.particle)
+//     template    the particle_system name; colour: replaces the emitters' colour
+//     time        seconds of emission (a burst); 0 = until the effect is let go
+//     follow      1 (default) = follows the effect; 0 = stays where it started
+//
 // screen: when the effect starts (once)
 //     flash       0..1, how far the whole frame turns to flashColour; flashTime: seconds to fade
 //     shake       camera shake amplitude in world units; shakeTime: seconds; shakeRange: full shake within this
@@ -60,6 +70,18 @@ effect punch_ball
 		fade 0.15
 		flicker 0.12
 	}
+	trail
+	{
+		colour ki
+		width 0.4
+		length 1.8
+		fadeTime 0.25
+	}
+	particles
+	{
+		template Tumbu/Fx/Sparks
+		colour ki
+	}
 }
 
 // Kick ki blast.
@@ -74,6 +96,18 @@ effect kick_ball
 		time 0
 		fade 0.15
 		flicker 0.12
+	}
+	trail
+	{
+		colour ki
+		width 0.4
+		length 1.8
+		fadeTime 0.25
+	}
+	particles
+	{
+		template Tumbu/Fx/Sparks
+		colour ki
 	}
 }
 
@@ -90,5 +124,54 @@ effect jyn_ball
 		time 0
 		fade 0.3
 		flicker 0.08
+	}
+}
+
+// One stream of the swarm flying into the Genki Dama (one per swarm ball, let go when the ball merges).
+effect jyn_mote
+{
+	trail
+	{
+		colour ki
+		width 0.16
+		length 1.6
+		fadeTime 0.35
+		material Tumbu/EnergyTrail/Mote
+	}
+}
+
+// The thrown Genki Dama: a thick wake and big sparks (its light is jyn_ball's).
+effect jyn_throw
+{
+	trail
+	{
+		colour ki
+		width 0.55
+		length 3.5
+		fadeTime 0.4
+		segments 30
+		material Tumbu/EnergyTrail/Jyn
+	}
+	particles
+	{
+		template Tumbu/Fx/SparksBig
+		colour ki
+	}
+}
+
+// Calibration for DevTest -fxtest=trailtest: a punch-like trail and sparks (DevTest moves it in a circle).
+effect trailtest
+{
+	trail
+	{
+		colour ki
+		width 0.4
+		length 1.8
+		fadeTime 0.25
+	}
+	particles
+	{
+		template Tumbu/Fx/Sparks
+		colour ki
 	}
 }

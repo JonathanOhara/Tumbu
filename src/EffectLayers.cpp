@@ -8,6 +8,10 @@ EffectLayer* createEffectLayer( Effect* effect, ConfigNode* node ){
 		return new EffectLightLayer( effect, node );
 	}else if( type == "screen" ){
 		return new EffectScreenLayer( effect, node );
+	}else if( type == "trail" ){
+		return new EffectTrailLayer( effect, node );
+	}else if( type == "particles" ){
+		return new EffectParticlesLayer( effect, node );
 	}
 	Ogre::LogManager::getSingleton().logWarning( "Effect: unknown layer '" + type + "' ignored" );
 	return NULL;
@@ -93,5 +97,111 @@ bool EffectScreenLayer::update( Ogre::Real age, Ogre::Real time ){
 		manager->hitStop( hitStop );
 	}
 	return false;	// one-shot
+}
+//-------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
+//------------------------------------- TRAIL -----------------------------------------
+//-------------------------------------------------------------------------------------
+EffectTrailLayer::EffectTrailLayer( Effect* _effect, ConfigNode* node ): EffectLayer( _effect ){
+	Ogre::SceneManager* sceneMgr = effect->getManager()->getSceneManager();
+	Ogre::ColourValue colour = effect->readColour( node, "colour" );
+	Ogre::Real width = Effect::readReal( node, "width", 0.3f );
+	Ogre::Real length = Effect::readReal( node, "length", 2 );
+	fadeTime = std::max<Ogre::Real>( Effect::readReal( node, "fadeTime", 0.3f ), 0.01f );
+	int segments = (int)Effect::readReal( node, "segments", 20 );
+	ConfigNode* material = node->findChild( "material" );
+
+	// The tracked node starts where the effect is, so the ribbon does not stretch from the origin.
+	this->node = sceneMgr->getRootSceneNode()->createChildSceneNode( effect->getPosition() );
+	trail = sceneMgr->createRibbonTrail();
+	trail->setMaterialName( material != NULL ? material->getValue() : "Tumbu/EnergyTrail" );
+	trail->setTrailLength( length );
+	trail->setMaxChainElements( segments );
+	trail->setNumberOfChains( 1 );
+	trail->setInitialColour( 0, colour );
+	// Alpha (the shader's fade) and width go to zero over fadeTime; the colour itself stays.
+	trail->setColourChange( 0, 0, 0, 0, 1.0f / fadeTime );
+	trail->setInitialWidth( 0, width );
+	trail->setWidthChange( 0, width / fadeTime );
+	trail->setCastShadows( false );
+	sceneMgr->getRootSceneNode()->attachObject( trail );
+	trail->addNode( this->node );
+
+	stopped = false;
+	stoppedFor = 0;
+}
+//-------------------------------------------------------------------------------------
+EffectTrailLayer::~EffectTrailLayer(void){
+	// The trail first: it listens to the node.
+	Ogre::SceneManager* sceneMgr = effect->getManager()->getSceneManager();
+	sceneMgr->destroyRibbonTrail( trail );
+	sceneMgr->destroySceneNode( node );
+}
+//-------------------------------------------------------------------------------------
+bool EffectTrailLayer::update( Ogre::Real age, Ogre::Real time ){
+	if( !stopped ){
+		node->setPosition( effect->getPosition() );
+		return true;
+	}
+	// Released: the node stays put and the ribbon fades out behind it.
+	stoppedFor += time;
+	return stoppedFor < fadeTime;
+}
+//-------------------------------------------------------------------------------------
+void EffectTrailLayer::stop(void){
+	stopped = true;
+}
+//-------------------------------------------------------------------------------------
+//------------------------------------ PARTICLES --------------------------------------
+//-------------------------------------------------------------------------------------
+EffectParticlesLayer::EffectParticlesLayer( Effect* _effect, ConfigNode* node ): EffectLayer( _effect ){
+	static unsigned int counter = 0;
+	Ogre::SceneManager* sceneMgr = effect->getManager()->getSceneManager();
+	ConfigNode* templateNode = node->findChild( "template" );
+	Ogre::String templateName = templateNode != NULL ? templateNode->getValue() : "Tumbu/Fx/Sparks";
+	duration = Effect::readReal( node, "time", 0 );
+	// "follow 0": the system stays where the effect started (an explosion); otherwise it follows the effect.
+	follow = Effect::readReal( node, "follow", 1 ) != 0;
+
+	this->node = sceneMgr->getRootSceneNode()->createChildSceneNode( effect->getPosition() );
+	system = sceneMgr->createParticleSystem( "TumbuFx" + Ogre::StringConverter::toString( counter++ ), templateName );
+	system->setCastShadows( false );
+	// The emitters take the effect's colour (the shader brightens it; particle colours stop at 1).
+	if( node->findChild( "colour" ) != NULL ){
+		Ogre::ColourValue colour = effect->readColour( node, "colour" );
+		colour.r = std::min<Ogre::Real>( colour.r, 1 );
+		colour.g = std::min<Ogre::Real>( colour.g, 1 );
+		colour.b = std::min<Ogre::Real>( colour.b, 1 );
+		for( unsigned short i = 0; i < system->getNumEmitters(); i++ ){
+			system->getEmitter( i )->setColour( colour );
+		}
+	}
+	this->node->attachObject( system );
+	emitting = true;
+}
+//-------------------------------------------------------------------------------------
+EffectParticlesLayer::~EffectParticlesLayer(void){
+	Ogre::SceneManager* sceneMgr = effect->getManager()->getSceneManager();
+	node->detachObject( system );
+	sceneMgr->destroyParticleSystem( system );
+	sceneMgr->destroySceneNode( node );
+}
+//-------------------------------------------------------------------------------------
+bool EffectParticlesLayer::update( Ogre::Real age, Ogre::Real time ){
+	if( follow ){
+		node->setPosition( effect->getPosition() );
+	}
+	if( emitting && duration > 0 && age >= duration ){
+		stop();
+	}
+	// Done once it stopped emitting and the last particle is gone.
+	return emitting || system->getNumParticles() > 0;
+}
+//-------------------------------------------------------------------------------------
+void EffectParticlesLayer::stop(void){
+	if( emitting ){
+		system->setEmitting( false );
+		emitting = false;
+	}
 }
 //-------------------------------------------------------------------------------------

@@ -36,6 +36,10 @@ public:
 	
 	void clearParticleSystem();
 
+	/// Streams of the swarm balls: follow them, and are let go when a ball merges into the Genki Dama.
+	void updateStreams(void);
+	void releaseStreams(void);
+
 	int times,
 		particulaMaiorFitness,
 		melhorParticula;
@@ -53,6 +57,9 @@ private:
 		timeToResest,
 		melhorFitness,
 		everBestFitness;
+
+	/// The thrown ball's wake and sparks (held), or NULL.
+	Effect* throwEffect;
 
 	Ogre::Vector3 
 		everBestPosition,

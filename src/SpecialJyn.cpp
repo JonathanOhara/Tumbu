@@ -3,6 +3,8 @@
 #include "Robot.h"
 #include "GUI.h"
 #include "SoundManager.h"
+#include "EffectsManager.h"
+#include "Effect.h"
 //-------------------------------------------------------------------------------------
 SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller, Physics::DynamicsWorld* _world, int _count, float _damage ){
 	world = _world;
@@ -25,6 +27,7 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	explosionParticleSystem = NULL;	
 	specialShape = NULL;
 	specialRigidNode = NULL;
+	throwEffect = NULL;
 	specialLight = NULL;
 
 	Ogre::String lightName = robotSpeller->robotName +  "_jyn_light_ " + Ogre::StringConverter::toString(count);
@@ -132,6 +135,10 @@ void SpecialJyn::update(const Ogre::Real time){
 		Ogre::Real grown = Ogre::Math::saturate( tamanhoMaiorParticula / ( ( NUMBER_OF_PARTICLES - 1 ) * ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20 ) );
 		Ogre::Real intensity = getSpecialStatus() == SpecialInterface::ATTACKING ? 1.0f : 0.3f + 0.7f * grown;
 		updateBallEffect( particleList[melhorParticula]->particle->mPosition, intensity );
+		updateStreams();
+		if( throwEffect != NULL ){
+			throwEffect->setPosition( particleList[melhorParticula]->particle->mPosition );
+		}
 	}
 }
 //-------------------------------------------------------------------------------------
@@ -192,6 +199,11 @@ void SpecialJyn::concentrate(){
 //-------------------------------------------------------------------------------------
 void SpecialJyn::attack(Ogre::Quaternion orientation){
 	setSpecialStatus( SpecialInterface::ATTACKING );
+
+	releaseStreams();
+	if( EffectsManager::getInstance() != NULL && !particleList.empty() ){
+		throwEffect = EffectsManager::getInstance()->spawn( "jyn_throw", particleList[melhorParticula]->particle->mPosition, getKiColour( "jyn" ), true );
+	}
 
 	Physics::RigidBody* specialRigidBody;
 
@@ -267,6 +279,11 @@ void SpecialJyn::toDelete(){
 //-------------------------------------------------------------------------------------
 void SpecialJyn::clear(){
 	releaseBallEffect();
+	releaseStreams();
+	if( throwEffect != NULL ){
+		throwEffect->release();
+		throwEffect = NULL;
+	}
 	times = 0;
     timePSO = 0;
     melhorFitness = 9999;
@@ -356,6 +373,10 @@ void SpecialJyn::createRandomParticles(){
 		particula->fitness = fitnessAtual;
 		particula->bestFitness = fitnessAtual;
 		particula->bestPosition = position;
+
+		if( EffectsManager::getInstance() != NULL ){
+			particula->stream = EffectsManager::getInstance()->spawn( "jyn_mote", position, kiColour, true );
+		}
 
 		particleList.push_back(particula);
 	}
@@ -507,5 +528,30 @@ void SpecialJyn::moverTodasParticulas(Ogre::Vector3 moveTarget){
 Ogre::Vector3 SpecialJyn::getChargeAnchor(void){
 	// The ball gathers above the speller's head (its raised hand in pre_special_jyn).
 	return robotSpeller->robotNode->_getDerivedPosition() + Ogre::Vector3( 0, 2.5f, 0 );
+}
+//-------------------------------------------------------------------------------------
+void SpecialJyn::updateStreams(void){
+	for( unsigned int i = 0; i < particleList.size(); i++ ){
+		EnergyParticle* ball = particleList[i];
+		if( ball->stream == NULL ){
+			continue;
+		}
+		if( ball->active ){
+			ball->stream->setPosition( ball->particle->mPosition );
+		}else{
+			// Merged into the Genki Dama: its stream fades out where it ended.
+			ball->stream->release();
+			ball->stream = NULL;
+		}
+	}
+}
+//-------------------------------------------------------------------------------------
+void SpecialJyn::releaseStreams(void){
+	for( unsigned int i = 0; i < particleList.size(); i++ ){
+		if( particleList[i]->stream != NULL ){
+			particleList[i]->stream->release();
+			particleList[i]->stream = NULL;
+		}
+	}
 }
 //-------------------------------------------------------------------------------------

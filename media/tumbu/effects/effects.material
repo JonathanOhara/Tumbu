@@ -55,3 +55,85 @@ material Tumbu/EnergyOrb/Jyn : Tumbu/EnergyOrbBase
     set $orbShape "0.17 0.45 1.0 0.85"
     set $orbMotion "0.7 1.3 0.03 0.85"
 }
+
+// Ribbon trail behind a ki ball ("trail" layer of effects.object). $trailParams: band brightness, centre line
+// brightness, glow, band width (see energy_trail.frag). $trailUnderlay: darkness of the band under it.
+abstract material Tumbu/EnergyTrailBase
+{
+    technique
+    {
+        pass underlay
+        {
+            scene_blend alpha_blend
+            depth_write off
+            lighting off
+            cull_hardware none
+
+            vertex_program_ref energy_vs
+            {
+            }
+            fragment_program_ref energy_trail_underlay_ps
+            {
+                param_named trailParams float4 $trailParams
+                param_named trailUnderlay float4 $trailUnderlay
+            }
+        }
+        pass glow
+        {
+            scene_blend add
+            depth_write off
+            lighting off
+            cull_hardware none
+
+            vertex_program_ref energy_vs
+            {
+            }
+            fragment_program_ref energy_trail_ps
+            {
+                param_named trailParams float4 $trailParams
+            }
+        }
+    }
+}
+
+material Tumbu/EnergyTrail : Tumbu/EnergyTrailBase
+{
+    set $trailParams "0.9 0.8 0.3 0.65"
+    set $trailUnderlay "0.55 0 0 0"
+}
+
+// The swarm streaming into the Genki Dama: thin, faint streams.
+material Tumbu/EnergyTrail/Mote : Tumbu/EnergyTrailBase
+{
+    set $trailParams "0.8 0.9 0.3 0.6"
+    set $trailUnderlay "0.45 0 0 0"
+}
+
+// The thrown Genki Dama: a thick, bright wake.
+material Tumbu/EnergyTrail/Jyn : Tumbu/EnergyTrailBase
+{
+    set $trailParams "0.75 0.7 0.35 0.7"
+    set $trailUnderlay "0.6 0 0 0"
+}
+
+// Sparks shed by the balls and thrown by impacts (effects.particle).
+material Tumbu/EnergySpark
+{
+    technique
+    {
+        pass
+        {
+            scene_blend add
+            depth_write off
+            lighting off
+            cull_hardware none
+
+            vertex_program_ref energy_vs
+            {
+            }
+            fragment_program_ref energy_spark_ps
+            {
+            }
+        }
+    }
+}

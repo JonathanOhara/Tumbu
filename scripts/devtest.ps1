@@ -14,6 +14,7 @@ param(
     [switch]$JynWalk,
     [string]$FxTest = "",
     [double]$FxTime = 0.3,
+    [double]$FxDistance = 0,
     [string]$Camera = '',
     [string]$Name = 'run',
     [int]$TimeoutSeconds = 180

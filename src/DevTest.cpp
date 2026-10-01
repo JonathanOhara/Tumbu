@@ -105,6 +105,7 @@ DevTest::DevTest(void){
 	faceJynPresses = 0;
 	fxSpawned = false;
 	fxPresses = 0;
+	fxEffect = NULL;
 	fxSpot = Ogre::Vector3::ZERO;
 	flyStep = 0;
 	tourStep	= 0;
@@ -117,7 +118,8 @@ DevTest::DevTest(void){
 	log( "enabled: autoplay=" + Ogre::StringConverter::toString( autoplay ) +
 		" walktest=" + Ogre::StringConverter::toString( walkTest ) +
 		" fpscap=" + Ogre::StringConverter::toString( fpsCap ) +
-		" quitafter=" + Ogre::StringConverter::toString( quitAfter ) );
+		" quitafter=" + Ogre::StringConverter::toString( quitAfter ) +
+		( fxTest.empty() ? "" : " fxtest=" + fxTest + " fxtime=" + Ogre::StringConverter::toString( fxTime ) + " fxdistance=" + Ogre::StringConverter::toString( fxDistance ) ) );
 }
 //-------------------------------------------------------------------------------------
 DevTest::~DevTest(void){
@@ -271,9 +273,20 @@ void DevTest::runFxTest(void){
 	bool special = Ogre::StringUtil::startsWith( fxTest, "special:", false );
 	if( special ){
 		Ogre::String attack = fxTest.substr( 8 );
-		bool jyn = attack == "jyn";
+		bool throwJyn = attack == "jynthrow";
+		bool jyn = attack == "jyn" || throwJyn;
+		SpecialJyn* charging = jyn && demo->mainChar->jyn != NULL ? dynamic_cast<SpecialJyn*>( demo->mainChar->jyn->special ) : NULL;
+		// jynthrow: cast and concentrate at 1 s, throw as soon as the ball is ready; the shot is fxTime after the throw.
+		if( throwJyn && fxPresses == 2 && charging != NULL && charging->getSpecialStatus() == SpecialInterface::CONCENTRATED ){
+			log( "fxtest: hero jyn (throw)" );
+			pressKey( 'i' );
+			releaseKey( 'i' );
+			fxPresses++;
+			quitAfter = playTime + fxTime;
+		}
 		int presses = jyn ? 2 : 1;
-		if( fxPresses < presses && playTime >= quitAfter - fxTime + fxPresses * 0.3f ){
+		Ogre::Real start = throwJyn ? 1.0f : quitAfter - fxTime;
+		if( fxPresses < presses && playTime >= start + fxPresses * 0.3f ){
 			char key = jyn ? 'i' : ( attack == "kick" ? 'u' : 'o' );
 			log( "fxtest: hero " + attack + ( fxPresses == 0 ? "" : " (concentrate)" ) );
 			pressKey( key );
@@ -282,16 +295,20 @@ void DevTest::runFxTest(void){
 		}
 		// Jyn gathers above the head; punch and kick fly forward.
 		fxSpot = jyn ? hero->_getDerivedPosition() + Ogre::Vector3( 0, 2.0f, 0 ) + forward * 0.6f : front;
-		SpecialJyn* charging = jyn && demo->mainChar->jyn != NULL ? dynamic_cast<SpecialJyn*>( demo->mainChar->jyn->special ) : NULL;
-		if( charging != NULL && !charging->particleList.empty() && charging->getSpecialStatus() <= SpecialInterface::CONCENTRATED ){
+		if( charging != NULL && !charging->particleList.empty() && charging->getSpecialStatus() <= SpecialInterface::ATTACKING ){
 			fxSpot = charging->particleList[charging->melhorParticula]->particle->mPosition;	// the ball itself
 		}
 		fxSpawned = true;
 	}else if( !fxSpawned && playTime >= quitAfter - fxTime ){
 		fxSpot = front;
-		Effect* effect = EffectsManager::getInstance()->spawn( fxTest, fxSpot, Ogre::ColourValue( 0.6f, 0.85f, 1.0f ) );
-		log( "fxtest: " + fxTest + ( effect != NULL ? " started at " + Ogre::StringConverter::toString( fxSpot ) : " is not defined" ) );
+		// Held, so it can be moved: it circles the spot (trails and sparks need motion).
+		fxEffect = EffectsManager::getInstance()->spawn( fxTest, fxSpot, Ogre::ColourValue( 1.0f, 0.3f, 0.15f ), true );
+		log( "fxtest: " + fxTest + ( fxEffect != NULL ? " started at " + Ogre::StringConverter::toString( fxSpot ) : " is not defined" ) );
 		fxSpawned = true;
+	}
+	if( fxEffect != NULL ){
+		Ogre::Real angle = ( playTime - ( quitAfter - fxTime ) ) * 5.0f;
+		fxEffect->setPosition( fxSpot + Ogre::Vector3( Ogre::Math::Cos( angle ), 0, Ogre::Math::Sin( angle ) ) * 0.8f );
 	}
 	if( !fixedCamera && faceShot == 0 && playTime >= quitAfter - 0.5f ){
 		Ogre::Vector3 centre = fxSpawned ? fxSpot : front;

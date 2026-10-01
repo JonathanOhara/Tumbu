@@ -21,6 +21,7 @@
  *   -fxtest=NAME     with -quitafter: start the effect "effect NAME" (effects.object) in front of the hero and
  *                    screenshot it from the side; -fxtime=S: seconds between the start and the screenshot (0.3)
  *                    -fxtest=special:jyn|punch|kick: the hero uses that attack instead (fxtime before the shot)
+ *                    -fxtest=special:jynthrow: charge Jyn from 1 s, throw it when ready, shot fxtime after the throw
  *                    -fxdistance=D: camera distance (4; under 3 the shot frames only the effect)
  *   -camera=x,y,z,tx,ty,tz  with -quitafter: the screenshot looks from (x,y,z) at (tx,ty,tz)
  *   -flytest         fly camera check: F, fly, Esc (no pause menu), F again; screenshot while flying
@@ -29,6 +30,8 @@
  *
  * Every measurement is written to ogre.log with the prefix [DEVTEST].
  */
+class Effect;
+
 class DevTest: public Ogre::FrameListener{
 public:
 	static void parseCommandLine( const Ogre::String &commandLine );
@@ -53,6 +56,7 @@ private:
 	void runFxTest(void);
 	bool fxSpawned;
 	int fxPresses;
+	Effect* fxEffect;	// the -fxtest effect (held; the match deletes it)
 	Ogre::Vector3 fxSpot;
 	int faceJynPresses;
 	void limitFrameRate(void);

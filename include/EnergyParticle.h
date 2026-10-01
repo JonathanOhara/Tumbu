@@ -4,6 +4,8 @@
 #include <Ogre.h>
 #include "GameObject.h"
 
+class Effect;
+
 class EnergyParticle {
 public:
 	EnergyParticle( Ogre::Particle* pParticle );
@@ -17,6 +19,8 @@ public:
 	Ogre::Particle* particle;
 	Ogre::Vector3 bestPosition;
 	Ogre::Vector3 velocity;
+	/// Its stream (trail) while it flies into the Genki Dama (EffectsManager, held), or NULL.
+	Effect* stream;
 protected:
 private:
 };

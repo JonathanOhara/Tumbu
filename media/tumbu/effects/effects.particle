@@ -1,0 +1,66 @@
+// Particle templates of the special-attack effects ("particles" layers of effects.object). The emitter colour is
+// replaced by the effect's colour at run time; the materials brighten it (HDR) and use alpha to fade.
+
+// Sparks shed by a flying ki ball: short streaks flung out in every direction, falling a little.
+particle_system Tumbu/Fx/Sparks
+{
+    material Tumbu/EnergySpark
+    particle_width 0.035
+    particle_height 0.22
+    quota 60
+    billboard_type oriented_self
+    cull_each false
+
+    emitter Point
+    {
+        angle 180
+        emission_rate 45
+        velocity_min 1.2
+        velocity_max 3
+        time_to_live_min 0.15
+        time_to_live_max 0.35
+        colour 1 1 1 1
+    }
+
+    affector ColourFader
+    {
+        alpha -3
+    }
+
+    affector LinearForce
+    {
+        force_vector 0 -4 0
+    }
+}
+
+// The thrown Genki Dama sheds more, longer sparks.
+particle_system Tumbu/Fx/SparksBig
+{
+    material Tumbu/EnergySpark
+    particle_width 0.05
+    particle_height 0.35
+    quota 120
+    billboard_type oriented_self
+    cull_each false
+
+    emitter Point
+    {
+        angle 180
+        emission_rate 80
+        velocity_min 1.5
+        velocity_max 4
+        time_to_live_min 0.2
+        time_to_live_max 0.45
+        colour 1 1 1 1
+    }
+
+    affector ColourFader
+    {
+        alpha -2.4
+    }
+
+    affector LinearForce
+    {
+        force_vector 0 -3 0
+    }
+}

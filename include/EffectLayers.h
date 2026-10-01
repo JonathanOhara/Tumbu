@@ -35,4 +35,41 @@ private:
 	Ogre::Real flashAmount, flashTime, shakeAmplitude, shakeTime, shakeRange, hitStop;
 };
 
+/**
+ * "trail": a ribbon left behind by the moving effect (Ogre RibbonTrail), in the effect's colour. Each point fades
+ * out and narrows over "fadeTime" seconds; once the effect is released the ribbon dies out and the layer ends.
+ */
+class EffectTrailLayer: public EffectLayer{
+public:
+	EffectTrailLayer( Effect* _effect, ConfigNode* node );
+	virtual ~EffectTrailLayer(void);
+	bool update( Ogre::Real age, Ogre::Real time );
+	void stop(void);
+private:
+	Ogre::RibbonTrail* trail;
+	Ogre::SceneNode* node;
+	Ogre::Real fadeTime;
+	Ogre::Real stoppedFor;
+	bool stopped;
+};
+
+/**
+ * "sparks" (or any particle template): an Ogre particle system following the effect; its emitters take the
+ * effect's colour. With "time" > 0 it emits for that long (a burst); otherwise until the effect is released. The
+ * layer ends when no particle is left.
+ */
+class EffectParticlesLayer: public EffectLayer{
+public:
+	EffectParticlesLayer( Effect* _effect, ConfigNode* node );
+	virtual ~EffectParticlesLayer(void);
+	bool update( Ogre::Real age, Ogre::Real time );
+	void stop(void);
+private:
+	Ogre::ParticleSystem* system;
+	Ogre::SceneNode* node;
+	Ogre::Real duration;
+	bool follow;
+	bool emitting;
+};
+
 #endif // #ifndef __EffectLayers_h_
