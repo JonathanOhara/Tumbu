@@ -21,6 +21,9 @@ int DevTest::cycles = 0;
 bool DevTest::measureAnims = false;
 bool DevTest::mute = false;
 int DevTest::faceShot = 0;
+bool DevTest::fixedCamera = false;
+Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
+Ogre::Vector3 DevTest::cameraTarget = Ogre::Vector3::ZERO;
 //-------------------------------------------------------------------------------------
 void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	Ogre::StringVector args = Ogre::StringUtil::split( commandLine, " \t" );
@@ -44,6 +47,14 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			faceShot = 1;
 		}else if( arg == "-faceshot=jyn" ){
 			faceShot = 2;
+		}else if( Ogre::StringUtil::startsWith( arg, "-camera=" ) ){
+			// -camera=x,y,z,tx,ty,tz: the final screenshot looks from (x,y,z) at (tx,ty,tz), world units
+			Ogre::StringVector v = Ogre::StringUtil::split( arg.substr( 8 ), "," );
+			if( v.size() == 6 ){
+				fixedCamera = true;
+				cameraEye = Ogre::Vector3( Ogre::StringConverter::parseReal( v[0] ), Ogre::StringConverter::parseReal( v[1] ), Ogre::StringConverter::parseReal( v[2] ) );
+				cameraTarget = Ogre::Vector3( Ogre::StringConverter::parseReal( v[3] ), Ogre::StringConverter::parseReal( v[4] ), Ogre::StringConverter::parseReal( v[5] ) );
+			}
 		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
 			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
@@ -159,6 +170,9 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 		if( faceShot > 0 && quitAfter > 0 ){
 			faceCamera( evt );
 		}
+		if( fixedCamera && quitAfter > 0 && playTime >= quitAfter - 0.5f ){
+			placeCamera( cameraEye, cameraTarget );
+		}
 
 		if( quitAfter > 0 && playTime >= quitAfter ){
 			Ogre::String shot = tumbu->workPath + "devtest.png";
@@ -193,18 +207,22 @@ void DevTest::faceCamera( const Ogre::FrameEvent &evt ){
 	if( playTime < quitAfter - 0.5f || demo == NULL || demo->mainChar == NULL ){
 		return;
 	}
-	Ogre::Camera* camera = TUMBU::getInstance()->mCamera;
 	Ogre::SceneNode* head = demo->mainChar->headNode;
 	Ogre::Vector3 face = head->_getDerivedPosition() + Ogre::Vector3( 0, 0.15f, 0 );
 	Ogre::Vector3 forward = demo->mainChar->robotNode->_getDerivedOrientation() * Ogre::Vector3::UNIT_Z;
 	forward.y = 0;
 	forward.normalise();
-	Ogre::Vector3 eye = face + forward * 1.1f + Ogre::Vector3( 0.25f, 0.1f, 0 );
-	camera->getParentSceneNode()->_setDerivedPosition( eye );
-	// Level orientation looking at the face (Ogre cameras look down their -Z axis).
-	Ogre::Vector3 back = ( eye - face ).normalisedCopy();
+	placeCamera( face + forward * 1.1f + Ogre::Vector3( 0.25f, 0.1f, 0 ), face );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::placeCamera( const Ogre::Vector3 &eye, const Ogre::Vector3 &target ){
+	// Set before every frame: the chase camera moves the camera back after each frame is queued.
+	Ogre::SceneNode* node = TUMBU::getInstance()->mCamera->getParentSceneNode();
+	node->_setDerivedPosition( eye );
+	// Level orientation looking at the target (Ogre cameras look down their -Z axis).
+	Ogre::Vector3 back = ( eye - target ).normalisedCopy();
 	Ogre::Vector3 right = Ogre::Vector3::UNIT_Y.crossProduct( back ).normalisedCopy();
-	camera->getParentSceneNode()->_setDerivedOrientation( Ogre::Quaternion( right, back.crossProduct( right ), back ) );
+	node->_setDerivedOrientation( Ogre::Quaternion( right, back.crossProduct( right ), back ) );
 }
 //-------------------------------------------------------------------------------------
 void DevTest::logPositions(void){

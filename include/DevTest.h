@@ -16,6 +16,7 @@
  *   -mute            silence all sounds (the game and every other switch work as usual)
  *   -faceshot        with -quitafter: the screenshot looks at the hero's face (eyes, glow, rim light);
  *                    -faceshot=jyn also charges the Jyn special just before it (eye flare)
+ *   -camera=x,y,z,tx,ty,tz  with -quitafter: the screenshot looks from (x,y,z) at (tx,ty,tz)
  *   -cycles=N        memory check: play N matches (3 enemy kills each, then Quit to the menu) through the
  *                    real UI, logging memory and Ogre object counts after each one, then Exit
  *
@@ -41,6 +42,7 @@ private:
 	void log( const Ogre::String &message );
 	void logPositions(void);
 	void faceCamera( const Ogre::FrameEvent &evt );
+	void placeCamera( const Ogre::Vector3 &eye, const Ogre::Vector3 &target );
 	int faceJynPresses;
 	void limitFrameRate(void);
 	void runGuiTour( const Ogre::FrameEvent &evt );
@@ -76,6 +78,8 @@ private:
 	static bool measureAnims;
 	static bool mute;
 	static int faceShot;
+	static bool fixedCamera;
+	static Ogre::Vector3 cameraEye, cameraTarget;
 };
 
 #endif // #ifndef __DevTest_h_

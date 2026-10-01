@@ -40,7 +40,7 @@ AO_UV = "AO"
 # exported without axis conversion; gym.blend is Z-up. blender2ogre converts Blender Z-up to Ogre Y-up, so Y-up
 # sources are turned upright (+90 degrees around X) when Arena.blend is built.
 SOURCES = [
-    ("coliseum.blend", "coliseum", "coliseumMaterial", 2048, True),
+    ("coliseum.blend", "coliseum", "coliseumMaterial", 4096, True),
     ("gym.blend", "arena", "arenaMaterial/TEXFACE/gym_arena.png", 1024, False),
 ]
 
@@ -133,18 +133,42 @@ def clean_mesh(ob):
 
 
 def add_ao_uv(ob):
-    """Second UV map without overlaps (texture UVs stay first: Ogre texture coordinate 0)."""
+    """Second UV map for the AO bake, laid out like a lightmap (texture UVs stay first: Ogre texture coordinate 0).
+
+    Seams go only on hard edges (where the lighting changes anyway) and, so that closed rings can be flattened,
+    where a smooth surface crosses 45/135/225/315 degrees around the arena. Every smooth region is then one
+    continuous island, so its AO has no seams in the middle of a wall. (Smart UV Project cut walls into
+    separate islands; each was baked on its own, which left visible steps such as beside the windows.)
+    """
     mesh = ob.data
     if AO_UV not in mesh.uv_layers:
         mesh.uv_layers.new(name=AO_UV)
     mesh.uv_layers.active = mesh.uv_layers[AO_UV]
+
+    polygons = mesh.polygons
+    edge_faces = {}
+    for p in polygons:
+        for key in p.edge_keys:
+            edge_faces.setdefault(key, []).append(p.index)
+    for e in mesh.edges:
+        faces = edge_faces.get(e.key, [])
+        seam = e.use_edge_sharp or len(faces) != 2
+        if not seam:
+            a, b = (polygons[i].center for i in faces)
+            # cuts at 45/135/225/315 degrees: the start camera looks along 90 degrees, so no cut faces it
+            qa = int(math.floor((math.degrees(math.atan2(a.y, a.x)) + 45.0) / 90.0))
+            qb = int(math.floor((math.degrees(math.atan2(b.y, b.x)) + 45.0) / 90.0))
+            seam = qa != qb
+        e.use_seam = seam
 
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.objects.active = ob
     ob.select_set(True)
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.uv.smart_project(angle_limit=1.15, island_margin=0.004, area_weight=0.0, scale_to_bounds=True)
+    bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.002)
+    bpy.ops.uv.average_islands_scale()
+    bpy.ops.uv.pack_islands(rotate=True, margin=0.004)
     bpy.ops.object.mode_set(mode='OBJECT')
     mesh.uv_layers.active = mesh.uv_layers[0]
 

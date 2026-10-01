@@ -209,20 +209,22 @@ project.
 
 - `.\scripts\bake-arena-ao.ps1` runs `scripts/blender/arena_ao.py` in headless Blender 5.2:
   1. first run or `-Rebuild`: creates `art/arena/Arena.blend` from `coliseum.blend` and `gym.blend`, adds a
-     second UV map `AO` (Smart UV Project) to each mesh, and names the materials as the game does;
+     second UV map `AO` to each mesh (lightmap layout: seams only on hard edges and at 45/135/225/315
+     degrees around the arena, so each smooth wall is one continuous island and its AO has no steps), and
+     names the materials as the game does;
   2. every run: bakes Cycles AO through the `AO` UV map into `media/tumbu/arena/<mesh>_ao.png` (every
      object in the scene occludes) and exports `<mesh>.mesh` with blender2ogre (two UV sets).
 - The build also cleans the 2011 meshes (`clean_mesh`): it stitches T-junctions (the coliseum had two,
   hairline cracks on the upper ring), removes loose edges, and marks edges sharper than 30 degrees as hard.
   Every face used to be smooth-shaded, so the window jambs and flat walls showed diagonal gradients.
-- **AO textures use clamp addressing** (`tex_address_mode clamp` in `Tumbu/EnvironmentToon`). Smart UV
-  Project can place an island against the texture border; with the default wrap, bilinear filtering blended
+- **AO textures use clamp addressing** (`tex_address_mode clamp` in `Tumbu/EnvironmentToon`).
+  The UV packing can place an island against the texture border; with the default wrap, bilinear filtering blended
   texels from the opposite border into it, which drew a thin dark vertical line on the upper ring along a
   seam lying on the border. The bake also starts from a white image, so filtering near UV islands drifts
   towards "unoccluded" rather than black.
 - Collections: **Export** (baked and exported) and **Occluders** (geometry that only casts AO, such as a
   terrain proxy). Settings are custom properties, so they can be changed in Blender: scene
-  `tumbu_ao_distance` (1 unit) and `tumbu_ao_samples` (1024), object `tumbu_ao_size` (texture pixels).
+  `tumbu_ao_distance` (1 unit) and `tumbu_ao_samples` (1024), object `tumbu_ao_size` (texture pixels: 4096 for the coliseum, 1024 for the floor).
 - In the game, `Tumbu/EnvironmentToon` reads `$aoMap` with `tex_coord_set 1`. How strongly AO darkens the
   ambient light and the sun, and its tint towards the shadow colour, are `aoAmbient` / `aoDirect` /
   `aoTint` in `lighting.object`.
