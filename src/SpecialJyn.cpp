@@ -661,8 +661,9 @@ void SpecialJyn::releaseStreams(void){
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::releaseChargeEffect(void){
+	// Gone at once: after the impact (or a timeout) no mote may still be flying to where the ball was.
 	if( chargeEffect != NULL ){
-		chargeEffect->release();
+		chargeEffect->kill();
 		chargeEffect = NULL;
 	}
 }

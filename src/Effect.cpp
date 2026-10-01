@@ -10,6 +10,7 @@ Effect::Effect( EffectsManager* _manager, ConfigNode* definition, const Ogre::Ve
 	age = 0;
 	intensity = 1;
 	scale = 1;
+	killed = false;
 
 	std::vector<ConfigNode*> &children = definition->getChildren();
 	for( size_t i = 0; i < children.size(); i++ ){
@@ -28,6 +29,9 @@ Effect::~Effect(void){
 }
 //-------------------------------------------------------------------------------------
 bool Effect::update( Ogre::Real time ){
+	if( killed ){
+		return false;
+	}
 	age += time;
 	bool running = false;
 	for( size_t i = 0; i < layers.size(); i++ ){

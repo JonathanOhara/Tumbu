@@ -54,6 +54,8 @@ public:
 	/// Looping layers wind down (motes finish their trip, lightning stops) but the owner keeps the effect and can still
 	/// move it; release() later.
 	void stopLayers(void);
+	/// Ends the effect at once (it disappears on the next frame, nothing fades out); the owner must forget it.
+	void kill(void){ held = false; killed = true; }
 
 	/// "colour ki" / "colour ki 2" (the ki colour, times a factor) or "colour r g b"; white when missing.
 	Ogre::ColourValue readColour( ConfigNode* node, const Ogre::String &key );
@@ -70,6 +72,7 @@ private:
 	Ogre::Real intensity;
 	Ogre::Real scale;
 	bool held;
+	bool killed;
 };
 
 #endif // #ifndef __Effect_h_
