@@ -212,7 +212,7 @@ project.
   face where the top wall ends, seen edge-on (it is radial) and darkened by AO.
 - Collections: **Export** (baked and exported) and **Occluders** (geometry that only casts AO, such as a
   terrain proxy). Settings are custom properties, so they can be changed in Blender: scene
-  `tumbu_ao_distance` (3 units) and `tumbu_ao_samples` (1024), object `tumbu_ao_size` (texture pixels).
+  `tumbu_ao_distance` (1 unit) and `tumbu_ao_samples` (1024), object `tumbu_ao_size` (texture pixels).
 - In the game, `Tumbu/EnvironmentToon` reads `$aoMap` with `tex_coord_set 1`. How strongly AO darkens the
   ambient light and the sun, and its tint towards the shadow colour, are `aoAmbient` / `aoDirect` /
   `aoTint` in `lighting.object`.
