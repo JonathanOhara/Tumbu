@@ -2,7 +2,7 @@
 #define __Enums_h_
 
 namespace TumbuEnums{
-	enum GameState{ NONE, START_SCREEN, IN_DIALOG, PAUSED, LOADING, PLAYING  };
+	enum GameState{ NONE, START_SCREEN, IN_DIALOG, PAUSED, LOADING, PLAYING, FLYING /* fly camera (FlyCamera), match frozen */ };
 	enum DayType { MORNING, NIGHT };
 	enum PhysicObjectTag { ANY, ROBOT, TERRAIN, SCENE_OBJECT };
 }

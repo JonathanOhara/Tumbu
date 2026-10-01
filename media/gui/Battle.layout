@@ -114,6 +114,12 @@
 		</Widget>
 	</Widget>
 
+	<!-- Full-screen cover while a match loads (GUI::startLoad / stopLoad), so the scene is never seen half built. -->
+	<Widget type="ImageBox" skin="ImageBox" position_real="0 0 1 1" layer="FadeMiddle" name="LoadingScreen">
+		<Property key="ImageTexture" value="LoadingScreen.jpg"/>
+		<Property key="Visible" value="false"/>
+	</Widget>
+
 	<Widget type="TextBox" skin="TextBox" position_real="0.60 0.93 0.39 0.06" layer="Info" name="LoadingText">
 		<Property key="Caption" value="Loading..."/>
 		<Property key="FontName" value="Tumbu.Title"/>

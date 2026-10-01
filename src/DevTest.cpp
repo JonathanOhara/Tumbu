@@ -22,6 +22,7 @@ bool DevTest::measureAnims = false;
 bool DevTest::mute = false;
 int DevTest::faceShot = 0;
 bool DevTest::fixedCamera = false;
+bool DevTest::flyTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
 Ogre::Vector3 DevTest::cameraTarget = Ogre::Vector3::ZERO;
 //-------------------------------------------------------------------------------------
@@ -43,6 +44,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			measureAnims = true;
 		}else if( arg == "-mute" ){
 			mute = true;
+		}else if( arg == "-flytest" ){
+			flyTest = true;
 		}else if( arg == "-faceshot" ){
 			faceShot = 1;
 		}else if( arg == "-faceshot=jyn" ){
@@ -63,6 +66,9 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			quitAfter = Ogre::StringConverter::parseReal( arg.substr( 11 ) );
 		}
 	}
+	if( flyTest && quitAfter <= 0 ){
+		quitAfter = 5;
+	}
 	// A walk test or timed quit only makes sense inside a match.
 	if( walkTest || quitAfter > 0 ){
 		autoplay = true;
@@ -81,6 +87,7 @@ DevTest::DevTest(void){
 	walking		= false;
 	walkDone	= false;
 	faceJynPresses = 0;
+	flyStep = 0;
 	tourStep	= 0;
 	tourTimer	= 0;
 	cycle		= 0;
@@ -169,6 +176,9 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 
 		if( faceShot > 0 && quitAfter > 0 ){
 			faceCamera( evt );
+		}
+		if( flyTest ){
+			runFlyTest();
 		}
 		if( fixedCamera && quitAfter > 0 && playTime >= quitAfter - 0.5f ){
 			placeCamera( cameraEye, cameraTarget );
@@ -409,6 +419,42 @@ void DevTest::pressKey( int key ){
 	evt.keysym.mod = 0;
 	evt.repeat = 0;
 	input()->keyPressed( evt );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::releaseKey( int key ){
+	OgreBites::KeyboardEvent evt;
+	evt.type = OgreBites::KEYUP;
+	evt.keysym.sym = key;
+	evt.keysym.mod = 0;
+	evt.repeat = 0;
+	input()->keyReleased( evt );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::runFlyTest(void){
+	// -flytest: F, fly forward and up, Esc (back to the match, no pause menu), F again; the screenshot is taken
+	// while flying. Steps are spread over the last seconds before -quitafter.
+	TUMBU* tumbu = TUMBU::getInstance();
+	const Ogre::Real start = quitAfter - 3.5f;
+	const char* stepNames[] = { "F", "fly forward and up", "stop moving", "Esc", "F again" };
+	const Ogre::Real stepTimes[] = { 0.0f, 0.2f, 1.7f, 2.2f, 2.8f };
+	while( flyStep < 5 && playTime >= start + stepTimes[flyStep] ){
+		switch( flyStep ){
+		case 0: pressKey( 'f' ); break;
+		case 1: pressKey( 'w' ); pressKey( TumbuInput::KEY_SPACE ); break;
+		case 2: releaseKey( 'w' ); releaseKey( TumbuInput::KEY_SPACE ); break;
+		case 3: pressKey( TumbuInput::KEY_ESCAPE ); break;
+		case 4: pressKey( 'f' ); break;
+		}
+		log( Ogre::String( "flytest: " ) + stepNames[flyStep] );
+		flyStep++;
+	}
+	// Report the state a few frames after each step.
+	static int lastLogged = -1;
+	if( flyStep > 0 && lastLogged != flyStep && playTime >= start + stepTimes[flyStep - 1] + 0.15f ){
+		lastLogged = flyStep;
+		Ogre::Vector3 p = tumbu->mCamera->getDerivedPosition();
+		log( "flytest: state=" + Ogre::StringConverter::toString( (int) tumbu->getGameState() ) + " (PLAYING=" + Ogre::StringConverter::toString( (int) TumbuEnums::PLAYING ) + ", FLYING=" + Ogre::StringConverter::toString( (int) TumbuEnums::FLYING ) + ") camera=" + Ogre::StringConverter::toString( p ) + " pauseMenu=" + Ogre::StringConverter::toString( isVisible( "PauseMenu" ) ) );
+	}
 }
 //-------------------------------------------------------------------------------------
 void DevTest::click( const Ogre::String &buttonName ){

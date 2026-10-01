@@ -23,6 +23,7 @@ Demo::Demo(){
 	physicWorld					= NULL;
 	sky							= NULL;
 	lighting					= NULL;
+	flyCamera					= NULL;
 }
 //-------------------------------------------------------------------------------------
 Demo::~Demo(void){
@@ -58,6 +59,12 @@ Demo::~Demo(void){
 	if( sky != NULL ){
 		tumbu->getRoot()->removeFrameListener( sky );
 		delete sky;
+	}
+	if( flyCamera != NULL ){
+		tumbu->getRoot()->removeFrameListener( flyCamera );
+		tumbu->removeKeyListener( flyCamera );
+		tumbu->removeMouseListener( flyCamera );
+		delete flyCamera;
 	}
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Camera...");
 	if( camera != NULL ){
@@ -246,7 +253,7 @@ void Demo::initializeDemo(){
 	backGroundSound = soundManager->createSound( "backgroundSound", "battle_music.ogg", Ogre::Vector3(0,0,0), true, false, false );
 	backGroundSound->play();
 
-	gui->stopLoad();
+	// The loading cover comes down in TUMBU::initializeDemo, once the match has rendered behind it.
 
 	tumbu->renderOneFrame();
 
@@ -503,6 +510,14 @@ void Demo::setupCamera(void){
 	tumbu->addJoystickListener( camera, "CameraKeyListener" );
 	mainChar->setActiveCameraNode(camera->mCameraNode);
 	enemy->setActiveCameraNode(camera->mCameraNode);
+
+	// Free camera to look around the arena (F); camera.object flyCamera 0 turns it off.
+	if( FlyCamera::isEnabled() ){
+		flyCamera = new FlyCamera( tumbu->mCamera );
+		tumbu->getRoot()->addFrameListener( flyCamera );
+		tumbu->addKeyListener( flyCamera, "FlyCameraKeyListener" );
+		tumbu->addMouseListener( flyCamera, "FlyCameraMouseListener" );
+	}
 }
 //-------------------------------------------------------------------------------------
 void Demo::createLightEffects(void){

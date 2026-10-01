@@ -57,7 +57,9 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
   `-fpscap=N`, `-quitafter=S`, `-hour=H`, `-mute` (all sounds at volume 0; also works for a normal game) and
   `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
-  `devtest.ps1 -FaceShot [-Jyn]`).
+  `devtest.ps1 -FaceShot [-Jyn]`), `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point:
+  `devtest.ps1 -Camera "…"`, handy for close-ups of the arena) and `-flytest` (fly camera: F, fly, Esc
+  without opening the pause menu, F again; logs the game state and camera after each step).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`
@@ -174,6 +176,9 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   - WASD to move, Left Shift to run.
   - **U/1 kick, O/2 punch, I/3 special "Jyn"**. Left Ctrl/P to guard.
   - Q/E rotate the camera, and PageUp/PageDown/Home/End zoom and tilt it.
+  - **F: fly camera** (`FlyCamera`) to look around the arena. The match freezes (game state `FLYING`);
+    WASD move, mouse or arrow keys look, Space/C up/down, Shift faster, F or Esc back to the match. On by
+    default; `flyCamera 0` in `camera.object` turns it off (`flySpeed` sets the speed).
   - ESC for the menu or cancel, Space/Enter to confirm.
   - Gamepad (see `Input.h`): Y special, X punch, A kick/OK, LB run, RB guard, Start menu, B cancel.
 - **Debug keys (RelWithDebInfo):** G camera panel, R wireframe, F5 reload textures, PrintScreen screenshot,
@@ -191,7 +196,7 @@ through a listener registry in `BaseApplication`.
   - It keeps the listener registry and `setMouseCaptured`.
 - `TUMBU` (singleton, extends BaseApplication) is the game root.
   - It holds the game state (`TumbuEnums::GameState`: NONE, START_SCREEN, IN_DIALOG, PAUSED, LOADING,
-    PLAYING) and the options (shadows, sky quality, frame limit), with save/load in `options.cfg`.
+    PLAYING, FLYING) and the options (shadows, sky quality, frame limit), with save/load in `options.cfg`.
   - It owns the StartScreen, AIManager, SoundManager, Clock and GUI.
   - `initializeDemo()` / `finishDemo()` switch between the menu and a match.
 - `StartScreen` / `CutScene` is the title-screen background, drawn in `RENDER_QUEUE_BACKGROUND`.

@@ -66,7 +66,10 @@ void Camera::initiateCameraPosition(void){
 	mCameraGoal->setFixedYawAxis(true);
 	mCameraNode->setFixedYawAxis(true);
 	
-	mCameraNode->setPosition(mCameraPivot->getPosition() + mCameraGoal->getPosition());
+	// Start in place behind the hero. The pivot used to start at the world origin, so when play began the camera
+	// swooped in from there.
+	mCameraPivot->setPosition( chaseNode->getPosition() + Ogre::Vector3::UNIT_Y * cameraHeight );
+	mCameraNode->setPosition( mCameraPivot->getPosition() + mCameraPivot->getOrientation() * mCameraGoal->getPosition() );
 
 	mCameraNode->setAutoTracking(true, mCameraPivot);
 

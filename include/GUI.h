@@ -195,6 +195,7 @@ private:
 	MyGUI::Widget *statusPanel, *inventoryPanel, *skillsPanel, *helpPanel, *skillsList;
 	MyGUI::Window *optionsWindow, *alertWindow, *confirmWindow, *showPartWindow, *conversationTop, *conversationBottom, *skillDetails;
 	MyGUI::TextBox *loadingText, *clockText;
+	MyGUI::ImageBox *loadingScreen;	// full-screen cover while a match loads
 	MyGUI::TextBox *logLines[4];
 	MyGUI::ProgressBar *heroHpBar, *heroApBar, *enemyHpBar, *enemyApBar;
 	MyGUI::TextBox *heroHpValue, *heroApValue;

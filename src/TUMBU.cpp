@@ -250,6 +250,14 @@ void TUMBU::initializeDemo(void){
 
 	cutScene = NULL;
 	renderOneFrame();
+
+	// A few frames of the finished match behind the loading cover load the remaining textures and fill the
+	// shadow map, so nothing pops in when the cover comes down.
+	gui->startLoad( "Starting..." );
+	for( int i = 0; i < 5; i++ ){
+		renderOneFrame();
+	}
+	gui->stopLoad();
 }
 //-------------------------------------------------------------------------------------
 void TUMBU::finishDemo(void){

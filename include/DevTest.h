@@ -17,6 +17,7 @@
  *   -faceshot        with -quitafter: the screenshot looks at the hero's face (eyes, glow, rim light);
  *                    -faceshot=jyn also charges the Jyn special just before it (eye flare)
  *   -camera=x,y,z,tx,ty,tz  with -quitafter: the screenshot looks from (x,y,z) at (tx,ty,tz)
+ *   -flytest         fly camera check: F, fly, Esc (no pause menu), F again; screenshot while flying
  *   -cycles=N        memory check: play N matches (3 enemy kills each, then Quit to the menu) through the
  *                    real UI, logging memory and Ogre object counts after each one, then Exit
  *
@@ -51,6 +52,9 @@ private:
 	void measureWalkCycles(void);
 	void screenshot( const Ogre::String &name );
 	void pressKey( int key );
+	void releaseKey( int key );
+	void runFlyTest(void);
+	int flyStep;
 	void click( const Ogre::String &buttonName );
 	bool isVisible( const Ogre::String &widgetName );
 
@@ -79,6 +83,7 @@ private:
 	static bool mute;
 	static int faceShot;
 	static bool fixedCamera;
+	static bool flyTest;
 	static Ogre::Vector3 cameraEye, cameraTarget;
 };
 

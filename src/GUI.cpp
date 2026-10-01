@@ -110,6 +110,7 @@ void GUI::loadLayouts(void){
 	heroHpValue			= widget<MyGUI::TextBox>( "HeroHpValue" );
 	heroApValue			= widget<MyGUI::TextBox>( "HeroApValue" );
 	loadingText			= widget<MyGUI::TextBox>( "LoadingText" );
+	loadingScreen		= widget<MyGUI::ImageBox>( "LoadingScreen" );
 	for( int i = 0; i < 4; i++ ){
 		logLines[i] = widget<MyGUI::TextBox>( "Log" + toString( i + 1 ) );
 		logLines[i]->setCaption( "" );
@@ -473,11 +474,14 @@ void GUI::updateHud(void){
 }
 //-------------------------------------------------------------------------------------
 void GUI::startLoad( const Ogre::String &message ){
+	// The cover stays up until stopLoad (TUMBU::initializeDemo, once the match has rendered behind it).
+	loadingScreen->setVisible( true );
 	loadingText->setCaption( message );
 	loadingText->setVisible( true );
 }
 //-------------------------------------------------------------------------------------
 void GUI::stopLoad(void){
+	loadingScreen->setVisible( false );
 	loadingText->setVisible( false );
 }
 //-------------------------------------------------------------------------------------
@@ -856,6 +860,8 @@ bool GUI::keyPressed( const OgreBites::KeyboardEvent &evt ){
 		}else if( key == TumbuInput::KEY_ESCAPE ){
 			gameExit();
 		}
+	}else if( state == TumbuEnums::FLYING ){
+		// FlyCamera handles Esc (back to the match).
 	}else if( key == TumbuInput::KEY_ESCAPE ){
 		togglePauseMenu();
 	}

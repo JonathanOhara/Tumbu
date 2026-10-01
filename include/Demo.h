@@ -18,6 +18,7 @@
 #include "Tutorial.h"
 #include "Sky.h"
 #include "Lighting.h"
+#include "FlyCamera.h"
 #include "SimpleRigidBody.h"
 
 #include "DotSceneLoader.h"
@@ -106,6 +107,7 @@ private:
 	SoundManager	*soundManager;
 	Sky				*sky;
 	Lighting		*lighting;
+	FlyCamera		*flyCamera;
 	TUMBU			*tumbu;
 	Tutorial		*tutorial;
 

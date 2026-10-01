@@ -1,4 +1,7 @@
 camera configuration{
+	// Fly camera (FlyCamera, F during a match): 1 = on, 0 = off. flySpeed in units per second (Shift = x4).
+	flyCamera 1
+	flySpeed 8
 	cameraZDistance 1.5
 	cameraHeight 0.2
 	cameraTranslate 9.0
