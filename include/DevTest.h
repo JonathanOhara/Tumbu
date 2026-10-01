@@ -16,6 +16,8 @@
  *   -mute            silence all sounds (the game and every other switch work as usual)
  *   -faceshot        with -quitafter: the screenshot looks at the hero's face (eyes, glow, rim light);
  *                    -faceshot=jyn also charges the Jyn special just before it (eye flare)
+ *   -jynwalk         -walktest that also casts and concentrates Jyn while walking; logs the ball's offset
+ *                    from the point it gathers at (it must not grow while the hero moves)
  *   -camera=x,y,z,tx,ty,tz  with -quitafter: the screenshot looks from (x,y,z) at (tx,ty,tz)
  *   -flytest         fly camera check: F, fly, Esc (no pause menu), F again; screenshot while flying
  *   -cycles=N        memory check: play N matches (3 enemy kills each, then Quit to the menu) through the
@@ -82,6 +84,7 @@ private:
 	static bool measureAnims;
 	static bool mute;
 	static int faceShot;
+	static bool jynWalk;
 	static bool fixedCamera;
 	static bool flyTest;
 	static Ogre::Vector3 cameraEye, cameraTarget;

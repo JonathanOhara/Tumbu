@@ -74,9 +74,13 @@ SpecialJyn::~SpecialJyn(void){
 //-------------------------------------------------------------------------------------
 void SpecialJyn::update(const Ogre::Real time){
 
-	if ( getSpecialStatus() == SpecialInterface::CONCENTRATED ){
-		moverTodasParticulas( robotSpeller->robotNode->getPosition() );
-	}else if ( getSpecialStatus() == SpecialInterface::CONCENTRATING ){
+	// From the cast until the ball is thrown, the whole swarm (and its PSO memory) follows the speller.
+	if ( getSpecialStatus() == SpecialInterface::NONE || getSpecialStatus() == SpecialInterface::CONCENTRATING
+		|| getSpecialStatus() == SpecialInterface::CONCENTRATED ){
+		moverTodasParticulas( getChargeAnchor() );
+	}
+
+	if ( getSpecialStatus() == SpecialInterface::CONCENTRATING ){
 		timePSO += time;
 		if( timePSO > 0.05f ) {
 			timePSO -= 0.05f;
@@ -306,9 +310,7 @@ void SpecialJyn::createRandomParticles(){
 	timePSO = 0;
 
 	tamanhoMaiorParticula = 0;
-	targetVector.x = robotSpeller->robotNode->getPosition().x;
-	targetVector.y = robotSpeller->robotNode->getPosition().y + 2.5f;
-	targetVector.z = robotSpeller->robotNode->getPosition().z;
+	targetVector = getChargeAnchor();
 
 	particleSystem->_update(1);
 	particleSystem->setDefaultDimensions( PARTICLE_WIDTH, PARTICLE_HEIGHT );
@@ -475,29 +477,25 @@ double SpecialJyn::avaliarDesempenho(const Ogre::Vector3 pos){
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::moverTodasParticulas(Ogre::Vector3 moveTarget){
-	if(targetVector.x != moveTarget.x && targetVector.y != moveTarget.y+3 && targetVector.z != moveTarget.z){
-		for(unsigned int i = 0; i < NUMBER_OF_PARTICLES; i++){
-			if(particleList[i]->active){
-				particleList[i]->particle->mPosition.x += moveTarget.x - targetVector.x;
-				particleList[i]->bestPosition.x += moveTarget.x - targetVector.x;
-				everBestPosition.x += (moveTarget.x - targetVector.x); 
-
-				particleList[i]->particle->mPosition.y += (moveTarget.y - targetVector.y) + 2.5f;
-				particleList[i]->bestPosition.y += ( moveTarget.y - targetVector.y) + 2.5f;
-				everBestPosition.y += (moveTarget.y - targetVector.y) + 2.5f; 
-
-				particleList[i]->particle->mPosition.z += moveTarget.z - targetVector.z;
-				particleList[i]->bestPosition.z += moveTarget.z - targetVector.z;
-				everBestPosition.z += (moveTarget.z - targetVector.z); 
-			}
+	// Translate the swarm, the personal bests, the global best and the target by how far the anchor moved, so
+	// the PSO keeps converging (and the ball keeps its place) while the speller walks.
+	Ogre::Vector3 delta = moveTarget - targetVector;
+	if( delta != Ogre::Vector3::ZERO ){
+		for(unsigned int i = 0; i < particleList.size(); i++){
+			particleList[i]->particle->mPosition += delta;
+			particleList[i]->bestPosition += delta;
 		}
-
-		targetVector.x = moveTarget.x;
-		targetVector.y = moveTarget.y +2.5f;
-		targetVector.z = moveTarget.z;
-
-		specialLight->getParentSceneNode()->setPosition( particleList[melhorParticula]->particle->mPosition );
-
+		everBestPosition += delta;
+		targetVector = moveTarget;
 	}
+
+	if( specialLight != NULL && !particleList.empty() ){
+		specialLight->getParentSceneNode()->setPosition( particleList[melhorParticula]->particle->mPosition );
+	}
+}
+//-------------------------------------------------------------------------------------
+Ogre::Vector3 SpecialJyn::getChargeAnchor(void){
+	// The ball gathers above the speller's head (its raised hand in pre_special_jyn).
+	return robotSpeller->robotNode->_getDerivedPosition() + Ogre::Vector3( 0, 2.5f, 0 );
 }
 //-------------------------------------------------------------------------------------

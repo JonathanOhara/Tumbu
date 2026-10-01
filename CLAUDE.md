@@ -60,7 +60,9 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
   `devtest.ps1 -FaceShot [-Jyn]`), `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point:
   `devtest.ps1 -Camera "…"`, handy for close-ups of the arena) and `-flytest` (fly camera: F, fly, Esc
-  without opening the pause menu, F again; logs the game state and camera after each step).
+  without opening the pause menu, F again; logs the game state and camera after each step) and `-jynwalk`
+  (`devtest.ps1 -JynWalk`: casts and concentrates Jyn while the hero walks and logs the ball's offset from the point
+  above the hero where it gathers; it must converge while walking).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`

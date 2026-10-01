@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-Camera "x,y,z,tx,ty,tz"]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-Camera "x,y,z,tx,ty,tz"]
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # The game runs muted (-mute) unless -Sound is given.
 param(
@@ -11,6 +11,7 @@ param(
     [switch]$Sound,
     [switch]$FaceShot,
     [switch]$Jyn,
+    [switch]$JynWalk,
     [string]$Camera = '',
     [string]$Name = 'run',
     [int]$TimeoutSeconds = 180
@@ -28,6 +29,7 @@ if ($FpsCap -gt 0) { $gameArgs += "-fpscap=$FpsCap" }
 if ($Hour -ge 0)   { $gameArgs += "-hour=$Hour" }
 if (-not $Sound)  { $gameArgs += '-mute' }
 if ($FaceShot)    { $gameArgs += $(if ($Jyn) { '-faceshot=jyn' } else { '-faceshot' }) }
+if ($JynWalk)     { $gameArgs += "-jynwalk" }
 if ($Camera)      { $gameArgs += "-camera=$Camera" }
 
 Remove-Item "$work\devtest.png" -ErrorAction SilentlyContinue

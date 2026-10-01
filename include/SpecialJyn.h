@@ -30,6 +30,8 @@ public:
 	double avaliarDesempenho(const Ogre::Vector3 pos);
 
 	void moverTodasParticulas(Ogre::Vector3 moveTarget);
+	/// Where the ball gathers: above the speller, followed from the cast until the attack.
+	Ogre::Vector3 getChargeAnchor(void);
 	void startAttack(Ogre::Quaternion orientation);
 	
 	void clearParticleSystem();

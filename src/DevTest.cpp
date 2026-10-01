@@ -1,5 +1,6 @@
 #include "DevTest.h"
 #include "TUMBU.h"
+#include "SpecialJyn.h"
 
 #include <MyGUI.h>
 
@@ -21,6 +22,7 @@ int DevTest::cycles = 0;
 bool DevTest::measureAnims = false;
 bool DevTest::mute = false;
 int DevTest::faceShot = 0;
+bool DevTest::jynWalk = false;
 bool DevTest::fixedCamera = false;
 bool DevTest::flyTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
@@ -46,6 +48,9 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			mute = true;
 		}else if( arg == "-flytest" ){
 			flyTest = true;
+		}else if( arg == "-jynwalk" ){
+			jynWalk = true;
+			walkTest = true;
 		}else if( arg == "-faceshot" ){
 			faceShot = 1;
 		}else if( arg == "-faceshot=jyn" ){
@@ -169,6 +174,13 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 			}
 		}
 
+		// -jynwalk: cast Jyn and concentrate it while the hero walks; the log shows whether the ball follows.
+		if( jynWalk && faceJynPresses < 2 && playTime >= 1.3f + faceJynPresses * 0.5f ){
+			log( faceJynPresses == 0 ? "jynwalk: Jyn cast" : "jynwalk: Jyn concentrate" );
+			pressKey( 'i' );
+			faceJynPresses++;
+		}
+
 		if( playTime >= nextLogTime ){
 			logPositions();
 			nextLogTime += 0.5f;
@@ -249,6 +261,13 @@ void DevTest::logPositions(void){
 		" fps=" + Ogre::StringConverter::toString( stats.lastFPS, 4 ) +
 		" hero=" + Ogre::StringConverter::toString( hero ) +
 		" enemy=" + Ogre::StringConverter::toString( enemy ) );
+
+	// A charging Jyn: where its ball is, relative to the point it gathers at (it must stay there while the hero walks).
+	SpecialJyn* jyn = demo->mainChar->jyn != NULL ? dynamic_cast<SpecialJyn*>( demo->mainChar->jyn->special ) : NULL;
+	if( jyn != NULL && !jyn->particleList.empty() && jyn->getSpecialStatus() <= SpecialInterface::CONCENTRATED ){
+		log( "jyn: status=" + Ogre::StringConverter::toString( (int)jyn->getSpecialStatus() ) +
+			" ball-anchor=" + Ogre::StringConverter::toString( jyn->particleList[jyn->melhorParticula]->particle->mPosition - ( demo->mainChar->robotNode->_getDerivedPosition() + Ogre::Vector3( 0, 2.5f, 0 ) ) ) );
+	}
 }
 //-------------------------------------------------------------------------------------
 void DevTest::limitFrameRate(void){
