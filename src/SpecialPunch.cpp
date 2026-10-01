@@ -159,6 +159,11 @@ void SpecialPunch::attack(Ogre::Quaternion orientation){
 
 	TUMBU::getInstance()->addCollisionDetectionListener( this, specialRigidBody->getName() );
 
+	// Release flash where the blast leaves the robot.
+	if( EffectsManager::getInstance() != NULL ){
+		EffectsManager::getInstance()->spawn( "punch_muzzle", rigidBodyPosition, getKiColour( "punch" ) );
+	}
+
 	timeToResest = 3;
 }
 //-------------------------------------------------------------------------------------

@@ -32,6 +32,10 @@ class Effect;
 #define ORB_SCALE 2.2f
 #define ORB_MATERIAL "Tumbu/EnergyOrb"
 #define JYN_ORB_MATERIAL "Tumbu/EnergyOrb/Jyn"
+// The kick's crescent wave (oriented along its flight): width x height of its billboard.
+#define CRESCENT_MATERIAL "Tumbu/EnergyCrescent"
+#define CRESCENT_WIDTH 1.3f
+#define CRESCENT_HEIGHT 0.75f
 
 class SpecialInterface: public CollisionDetectionListener{
 public:

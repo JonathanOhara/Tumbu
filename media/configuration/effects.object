@@ -113,7 +113,7 @@ effect kick_ball
 	trail
 	{
 		colour ki
-		width 0.4
+		width 0.7
 		length 1.8
 		fadeTime 0.25
 	}
@@ -368,5 +368,48 @@ effect jyn_charge
 		interval 0.07
 		chance 0.55
 		leap 0.35
+	}
+}
+
+// ---- Release flashes: where a punch or kick blast leaves the robot ----
+effect punch_muzzle
+{
+	particles
+	{
+		template Tumbu/Fx/MuzzleFlash
+		colour ki
+		follow 0
+	}
+	light
+	{
+		colour ki
+		intensity 2
+		radius 2.5
+		rise 0
+		time 0.15
+	}
+}
+
+effect kick_muzzle
+{
+	particles
+	{
+		template Tumbu/Fx/MuzzleFlash
+		colour ki
+		follow 0
+	}
+	particles
+	{
+		template Tumbu/Fx/HitSparks
+		colour ki
+		follow 0
+	}
+	light
+	{
+		colour ki
+		intensity 2
+		radius 2.5
+		rise 0
+		time 0.15
 	}
 }

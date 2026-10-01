@@ -3,6 +3,7 @@
 #include "Robot.h"
 #include "GUI.h"
 #include "EffectsManager.h"
+#include <OgreParticleSystemRenderer.h>
 //-------------------------------------------------------------------------------------
 SpecialKick::SpecialKick( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller, Physics::DynamicsWorld* _world, int _count, float _damage ){
 	world = _world;
@@ -19,7 +20,9 @@ SpecialKick::SpecialKick( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _parti
 
 	particleSystem->_update(1);
 	particleSystem->setDefaultDimensions( PARTICLE_WIDTH, PARTICLE_HEIGHT );
-	particleSystem->setMaterialName(ORB_MATERIAL);
+	particleSystem->setMaterialName(CRESCENT_MATERIAL);
+	// The wave lies along its flight (mDirection), its curve forward.
+	particleSystem->getRenderer()->setParameter( "billboard_type", "oriented_self" );
 	particleSystem->setSpeedFactor(0);
 
 	specialRigidNode = NULL;
@@ -110,10 +113,10 @@ void SpecialKick::concentrate(){
 	Ogre::Vector3 position(	robotSpeller->legsNode->_getDerivedPosition() );
 	position += robotSpeller->robotNode->getOrientation() * Ogre::Vector3(0, 0, 0.5f);
 			
-	setOrbSize( particula->particle, PARTICLE_WIDTH * 2 );
+	particula->particle->setDimensions( CRESCENT_WIDTH, CRESCENT_HEIGHT );
 	particula->particle->mTimeToLive = PARTICLE_LIVE_TIME;
 	particula->particle->mColour = orbColour( getKiColour( "kick" ) );
-	particula->particle->mDirection = Ogre::Vector3::ZERO;
+	particula->particle->mDirection = robotSpeller->robotNode->getOrientation() * Ogre::Vector3::UNIT_Z;	// it faces where it will fly
 	particula->particle->mRotationSpeed = 0;
 	particula->particle->mPosition = Ogre::Vector3(position);
 
@@ -149,6 +152,9 @@ void SpecialKick::attack(Ogre::Quaternion orientation){
 	specialRigidBody->getBulletRigidBody()->setGravity( btVector3(0,0,0) );
 
 	Ogre::Vector3 translation = orientation * Ogre::Vector3(0, 0, 200);
+	if( !particleList.empty() ){
+		particleList[0]->particle->mDirection = ( orientation * Ogre::Vector3::UNIT_Z ).normalisedCopy();
+	}
 
 	specialRigidBody->applyImpulse( 
 		translation, Ogre::Vector3(0, 0, 0) );
@@ -156,6 +162,11 @@ void SpecialKick::attack(Ogre::Quaternion orientation){
 	specialRigidBodyList.push_back( specialRigidBody );
 
 	TUMBU::getInstance()->addCollisionDetectionListener( this, specialRigidBody->getName() );
+
+	// Release flash where the blast leaves the robot.
+	if( EffectsManager::getInstance() != NULL ){
+		EffectsManager::getInstance()->spawn( "kick_muzzle", rigidBodyPosition, getKiColour( "kick" ) );
+	}
 
 	timeToResest = 3;
 }

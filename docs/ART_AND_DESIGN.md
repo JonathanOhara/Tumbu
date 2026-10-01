@@ -85,7 +85,8 @@ points compatible across sets.
   `kiColour` of its head's set (`robotNNN.object`), matching its eyes. Every ball is a procedural toon orb
   (`Tumbu/EnergyOrb`, `media/tumbu/effects/`): white-hot core, saturated ki-coloured ball with spiral streaks, a
   halo that blooms, and a dark ink ring so it reads on the white arena floor. Balls leave toon ribbon trails and shed
-  sparks, and light the robots and the floor in their colour. Impacts: punch and kick blasts burst into a star flash,
+  sparks, and light the robots and the floor in their colour. The punch fires a ki ball from a star flash at the
+  fist; the kick throws a crescent energy wave (`Tumbu/EnergyCrescent`) from a flash at the foot. Impacts: punch and kick blasts burst into a star flash,
   a shockwave ring and sparks; the Genki Dama explodes in a white frame and a short hit-stop, a banded toon
   explosion ball, a shockwave along the ground, debris and smoke, with a camera shake (`effects.object`).
 - Robot stats are the **sum of the 5 parts** (hp, ap, attack, defense, velocity), so each part is a

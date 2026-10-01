@@ -301,3 +301,40 @@ material Tumbu/Fx/Dust
         }
     }
 }
+
+// Kick: a crescent energy wave flying along its curve (oriented_self billboards, SpecialKick).
+// $crescentParams: brightness, thickness, glow, underlay darkness (energy_crescent.frag).
+material Tumbu/EnergyCrescent
+{
+    technique
+    {
+        pass underlay
+        {
+            scene_blend alpha_blend
+            depth_write off
+            lighting off
+            cull_hardware none
+            vertex_program_ref energy_vs
+            {
+            }
+            fragment_program_ref energy_crescent_underlay_ps
+            {
+                param_named crescentParams float4 1.1 0.6 0.5 0.6
+            }
+        }
+        pass glow
+        {
+            scene_blend add
+            depth_write off
+            lighting off
+            cull_hardware none
+            vertex_program_ref energy_vs
+            {
+            }
+            fragment_program_ref energy_crescent_ps
+            {
+                param_named crescentParams float4 1.1 0.6 0.5 0.6
+            }
+        }
+    }
+}

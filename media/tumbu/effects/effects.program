@@ -168,3 +168,27 @@ fragment_program energy_burst_dust_ps glsl glsles hlsl
         param_named burstParams float4 1 0 0 0.4
     }
 }
+
+fragment_program energy_crescent_ps glsl glsles hlsl
+{
+    source energy_crescent.frag
+    target ps_4_0
+
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named crescentParams float4 1.2 0.35 0.5 0.6
+    }
+}
+
+fragment_program energy_crescent_underlay_ps glsl glsles hlsl
+{
+    source energy_crescent.frag
+    target ps_4_0
+    preprocessor_defines UNDERLAY=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named crescentParams float4 1.2 0.35 0.5 0.6
+    }
+}
