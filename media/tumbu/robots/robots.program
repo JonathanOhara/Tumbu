@@ -11,6 +11,7 @@ vertex_program robot_toon_vs glsl glsles hlsl
         param_named_auto wMat world_matrix
         param_named_auto wvpMat worldviewproj_matrix
         param_named_auto texViewProj texture_viewproj_matrix 0
+        shared_params_ref TumbuLighting
     }
 }
 

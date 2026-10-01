@@ -1,5 +1,20 @@
 // Toon-shaded arena materials (same lighting as the robots) and the post-processing materials.
 
+// Shadow caster with no culling (depth only), used by Tumbu/EnvironmentToon.
+material Tumbu/ShadowCasterTwoSided{
+    technique{
+        pass{
+            cull_hardware none
+
+            vertex_program_ref shadow_caster_vs{
+            }
+
+            fragment_program_ref shadow_caster_ps{
+            }
+        }
+    }
+}
+
 // Base of the arena and coliseum materials: set $diffuseMap and $diffuseCol, and $aoMap (baked by
 // scripts/bake-arena-ao.ps1, read through the mesh's second UV set).
 material Tumbu/EnvironmentToon{
@@ -12,6 +27,11 @@ material Tumbu/EnvironmentToon{
     receive_shadows on
 
     technique toon{
+        // Casts from both sides: the shadow map normally holds only faces turned away from the sun, which
+        // left the sun-facing slope under the lower ring out of it, and light leaked along the joint where the
+        // wall above meets that slope. (Self-shadowing is handled by the normal offset, TumbuToon.h.)
+        shadow_caster_material Tumbu/ShadowCasterTwoSided
+
         pass{
             diffuse $diffuseCol
             specular $specularCol $shininess

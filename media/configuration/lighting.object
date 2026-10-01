@@ -19,9 +19,11 @@ lighting configuration{
 	rimPower 3.5
 	specularSoftness 0.05
 
-	// Shadow map: depth bias (raise it if surfaces shadow themselves in stripes, lower it if shadows float away
-	// from their object) and the width of the soft edge in shadow-map texels.
-	shadowBias 0.0012
+	// Shadow map: depth bias, normal offset (world units the lookup moves out along the surface normal) and the
+	// width of the soft edge in shadow-map texels. Stripes on lit surfaces: raise shadowNormalOffset (or the bias).
+	// Light leaking where a wall meets the ground: lower shadowBias.
+	shadowBias 0.0003
+	shadowNormalOffset 0.04
 	shadowSoftness 1.5
 
 	// Bloom: glow around what is brighter than the threshold in the HDR image (eyes, energy balls, hot

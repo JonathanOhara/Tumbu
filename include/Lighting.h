@@ -64,6 +64,7 @@ private:
 		vignette,
 		shadowBias,
 		shadowSoftness,
+		shadowNormalOffset,
 		bloomThreshold,
 		bloomSoftKnee,
 		bloomStrength,

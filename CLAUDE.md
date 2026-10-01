@@ -127,6 +127,10 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). The old modulative/additive receiver
   passes did not work with our shaders. `shadowParams.x` tells the shaders whether a map is bound.
   RTSS-lit objects (terrain, particles) do not receive shadows.
+  The arena casts with `Tumbu/ShadowCasterTwoSided` (no culling): with Ogre's default back-face casting,
+  sun-facing surfaces were missing from the map and light leaked as bright slits where a wall meets a
+  slope. Self-shadow stripes are avoided with a normal-offset lookup (`shadowNormalOffset`), so
+  `shadowBias` stays small; a large bias let light leak at joints.
 - **Every shader source starts with `OGRE_NATIVE_GLSL_VERSION_DIRECTIVE`.** Without it OpenGL compiles the
   file as old GLSL: `SAMPLER2D(name, n)` then has no binding, so every sampler reads texture unit 0 (this
   broke shadows and bloom on OpenGL), and `shadow2D` returns a vec4. For HLSL the token is empty.

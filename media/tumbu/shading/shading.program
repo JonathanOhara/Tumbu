@@ -10,6 +10,7 @@ vertex_program env_toon_vs glsl glsles hlsl
         param_named_auto wMat world_matrix
         param_named_auto wvpMat worldviewproj_matrix
         param_named_auto texViewProj texture_viewproj_matrix 0
+        shared_params_ref TumbuLighting
     }
 }
 
@@ -68,6 +69,23 @@ fragment_program postprocess_blur_ps glsl glsles hlsl
         param_named_auto sourceTexel inverse_texture_size 0
         param_named blurDirection float4 1 0 0 0
     }
+}
+
+// Shadow caster for the arena (Tumbu/EnvironmentToon): depth only.
+vertex_program shadow_caster_vs glsl glsles hlsl
+{
+    source shadow_caster.vert
+    target vs_4_0
+    default_params
+    {
+        param_named_auto wvpMat worldviewproj_matrix
+    }
+}
+
+fragment_program shadow_caster_ps glsl glsles hlsl
+{
+    source shadow_caster.frag
+    target ps_4_0
 }
 
 // Depth-comparison sampler of the sun's shadow map (TumbuToon.h: tumbuShadow). Defined here because program

@@ -6,6 +6,8 @@ OGRE_UNIFORMS(
     uniform mat4 wMat;
     uniform mat4 wvpMat;
     uniform mat4 texViewProj;
+    // x: normal offset of the shadow lookup in world units (Lighting.cpp, shadowNormalOffset)
+    uniform vec4 shadowOffset;
 )
 
 MAIN_PARAMETERS
@@ -23,8 +25,10 @@ MAIN_DECLARATION
     gl_Position = mul(wvpMat, vertex);
     vec4 worldPos = mul(wMat, vertex);
     oWorldPos = worldPos.xyz;
-    oLightSpacePos = mul(texViewProj, worldPos);    // position in the sun's shadow map
     oNormal = mul(wMat, vec4(normal, 0.0)).xyz;
+    // Position in the sun's shadow map, pushed out along the normal (normal-offset shadows: no stripes on the
+    // surface, with a small depth bias that does not let light leak where two surfaces meet).
+    oLightSpacePos = mul(texViewProj, vec4(oWorldPos + normalize(oNormal) * shadowOffset.x, 1.0));
     oUv = uv0;
     oAoUv = uv1;    // second UV set: the baked ambient occlusion (scripts/bake-arena-ao.ps1)
 }

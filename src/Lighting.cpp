@@ -48,6 +48,7 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	vignette			= requireChild( cfg, name, "vignette" )->getValueF();
 	shadowBias			= requireChild( cfg, name, "shadowBias" )->getValueF();
 	shadowSoftness		= requireChild( cfg, name, "shadowSoftness" )->getValueF();
+	shadowNormalOffset	= requireChild( cfg, name, "shadowNormalOffset" )->getValueF();
 	bloomThreshold		= requireChild( cfg, name, "bloomThreshold" )->getValueF();
 	bloomSoftKnee		= requireChild( cfg, name, "bloomSoftKnee" )->getValueF();
 	bloomStrength		= requireChild( cfg, name, "bloomStrength" )->getValueF();
@@ -85,7 +86,7 @@ Lighting* Lighting::getInstance(){
 //-------------------------------------------------------------------------------------
 void Lighting::declareSharedParameters(void){
 	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().createSharedParameters( SHARED_PARAMS );
-	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams" };
+	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -101,6 +102,7 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "postParams", Ogre::Vector4( 1, 1, 1, 0 ) );
 	params->setNamedConstant( "bloomParams", Ogre::Vector4( 1.5f, 0.5f, 0, 0 ) );
 	params->setNamedConstant( "aoParams", Ogre::Vector4( 1, 0.5f, 0.5f, 0 ) );
+	params->setNamedConstant( "shadowOffset", Ogre::Vector4( 0, 0, 0, 0 ) );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
@@ -208,6 +210,7 @@ void Lighting::apply( const Keyframe &k ){
 	bool shadows = sun != NULL && sun->getCastShadows() && mSceneMgr->isShadowTechniqueTextureBased();
 	Ogre::Real texelSize = shadows ? 1.0f / mSceneMgr->getShadowTextureConfigList()[0].width : 0.0f;
 	params->setNamedConstant( "shadowParams", Ogre::Vector4( shadows ? 1.0f : 0.0f, shadowBias, texelSize, shadowSoftness ) );
+	params->setNamedConstant( "shadowOffset", Ogre::Vector4( shadowNormalOffset, 0, 0, 0 ) );
 
 	// Materials lit by the shader generator (terrain, particles) use the scene's ambient light and the sun.
 	Ogre::ColourValue ambient = getAmbientColour();
