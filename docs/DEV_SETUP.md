@@ -159,16 +159,28 @@ project.
 
 ### Blender models
 
-- All robots, the arena, the gym, the house, the trees and the splash screen are **Blender 2.49** files.
-  One exception: `media/tumbu/arena/coliseum.blend` was **re-saved in Blender 4.0.1** in Jul 2024 (the
-  2.49 original is kept in git history, tag `legacy-2011`).
-- Modern Blender (5.2 is installed) can **open** 2.49 files. Armatures and actions usually survive, but
-  materials and some settings are converted. **Always "Save As" a new file.** Never overwrite the 2.49
-  originals.
+- All robots, the arena, the gym, the house, the trees and the splash screen are **Blender 2.49** files
+  (Blender 5.2 also reports `media/tumbu/arena/coliseum.blend` as 2.49).
+- **The `.blend` files match the game's `.mesh` files** (checked Sep 2026: identical triangle counts and
+  sizes for the coliseum, the arena floor in `gym.blend` and the robot001 parts). Ogre has more vertices
+  only because it splits them at UV seams. In the `.blend` the robot parts sit on the armature; each exported
+  part `.mesh` is re-centred on its own origin, and the attach points in `robot00N.object` rely on that.
+- Blender 5.2 (installed) **opens** 2.49 files with meshes, UVs, materials and action names, but:
+  - **it no longer converts pre-2.50 animation data** ("Open & save the file with Blender v4.5"). Robot
+    files with animations must go through **Blender 4.5 LTS** once (open, save as a new file);
+  - `robot002.blend` crashes Blender 5.2 on load (access violation);
+  - material node groups are not read (harmless: the game's materials are hand-written `.material` files).
+  **Always "Save As" a new file.** Never overwrite the 2.49 originals.
 - The original exporter was the Blender 2.49 Python "Ogre Meshes Exporter" plus `OgreXMLConverter`. It no
   longer exists for current Blender.
-- **The current exporter is blender2ogre** (github.com/OGRECave/blender2ogre), which supports current
-  Blender. Check its README for Blender 5.x support.
+- **The current exporter is blender2ogre** (github.com/OGRECave/blender2ogre), import and export of
+  `.mesh`/`.skeleton`/`.scene`. Installed in Blender 5.2 (Sep 2026, master commit `0d094a4`, recorded in
+  `%APPDATA%\Blender Foundation\Blender\5.2\scripts\addons\io_ogre\BLENDER2OGRE_COMMIT.txt`), with its
+  converter set to `D:\TumbuDeps\modern\install\bin\OgreXMLConverter.exe`. Its releases only state support
+  up to Blender 4.4, but static meshes export correctly from 5.2: the coliseum re-export is identical to
+  the game's file. Skinned robot parts are not verified yet. If 5.2 causes problems, use Blender 4.5 LTS.
+  - Scripted (headless) use: `blender.exe --background file.blend --python script.py`, then in the script
+    `from io_ogre import api; api.dot_mesh(obj, out_dir, overwrite=True)`.
 - **Mesh formats:** the modern build uses Ogre 14 meshes. All 53 meshes and skeletons were upgraded with
   `scripts/upgrade-meshes.ps1`:
   1. The old 1.7 tool converts each binary 1.7 file to XML.
