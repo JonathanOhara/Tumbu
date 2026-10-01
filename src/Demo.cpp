@@ -193,6 +193,7 @@ void Demo::initializeDemo(){
 	lighting = Lighting::getInstance();
 	lighting->setClock( tumbu->getClock() );
 	mLoader->parseDotScene("Arena.scene", "General", mSceneMgr);
+	waitForTerrainLighting();
 
 	gui->startLoad("Loading Scene...");
 	tumbu->renderOneFrame();
@@ -461,6 +462,26 @@ void Demo::startInitialConversation(void){
 
 	gui->showNextDialog(true);
 
+}
+//-------------------------------------------------------------------------------------
+void Demo::waitForTerrainLighting(void){
+	// The terrain computes its light map and composite map in a background thread after loading. Until the
+	// result arrives (a few seconds) the grass renders dark, so wait for it on the loading screen. Frames must
+	// be rendered meanwhile: the work queue hands the result over on the main thread.
+	Ogre::TerrainGroup* terrain = mLoader->getTerrainGroup();
+	if( terrain == NULL ){
+		return;
+	}
+	gui->startLoad( "Lighting Terrain..." );
+	Ogre::Timer timer;
+	while( terrain->isDerivedDataUpdateInProgress() && timer.getMilliseconds() < 30000 ){
+		tumbu->renderOneFrame();
+	}
+	if( terrain->isDerivedDataUpdateInProgress() ){
+		Ogre::LogManager::getSingleton().logWarning( "[Demo] terrain lighting still updating after 30 s; continuing" );
+	}else{
+		Ogre::LogManager::getSingleton().logMessage( "[Demo] terrain lighting ready after " + Ogre::StringConverter::toString( timer.getMilliseconds() ) + " ms" );
+	}
 }
 //-------------------------------------------------------------------------------------
 void Demo::initialiseGameResources(void){

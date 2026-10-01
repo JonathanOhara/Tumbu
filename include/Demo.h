@@ -58,6 +58,8 @@ public:
 	Physics::DynamicsWorld* getPhysicWorld();
 
 	void initialiseGameResources(void);
+	/// Waits on the loading screen until the terrain's background light map calculation is done.
+	void waitForTerrainLighting(void);
 
 protected:
 
