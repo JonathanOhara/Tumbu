@@ -50,11 +50,6 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	particleSystemNode->attachObject( particleSystem );
 
 	createRandomParticles();
-	// The Genki Dama's light (and later its trail): it follows the ball and grows as the swarm merges into it.
-	startBallEffect( "jyn_ball", targetVector, getKiColour( "jyn" ) );
-	if( EffectsManager::getInstance() != NULL ){
-		chargeEffect = EffectsManager::getInstance()->spawn( "jyn_charge", targetVector, getKiColour( "jyn" ), true );
-	}
 
 	setSpecialStatus( SpecialInterface::NONE );
 
@@ -133,20 +128,29 @@ void SpecialJyn::update(const Ogre::Real time){
 	if( !particleList.empty() ){
 		bool charging = getSpecialStatus() <= SpecialInterface::CONCENTRATED;
 		if( charging ){
+			// Once the first swarm ball has merged, the ball settles at the gathering point above the hand (where the
+			// light, the lightning and the motes are) and stays there; the PSO keeps steering the other balls.
+			if( tamanhoMaiorParticula > 0 ){
+				EnergyParticle* ball = particleList[melhorParticula];
+				ball->particle->mPosition += ( targetVector - ball->particle->mPosition ) * std::min( 1.0f, 8.0f * time );
+				ball->velocity = Ogre::Vector3::ZERO;
+				ball->bestPosition = targetVector;
+			}
 			// Each swarm ball that arrives makes the ball grow a little: the shown size eases towards the merged size
 			// (about a second to catch up), instead of jumping.
 			Ogre::Real missing = tamanhoMaiorParticula - tamanhoVisivel;
 			if( missing > 0 ){
 				tamanhoVisivel += std::min( missing, std::max( missing * 4.0f, 0.06f ) * time );
 			}
-			setOrbSize( particleList[melhorParticula]->particle, PARTICLE_WIDTH + tamanhoVisivel );
+			if( getSpecialStatus() != SpecialInterface::NONE ){	// hidden until the concentrate press
+				setOrbSize( particleList[melhorParticula]->particle, PARTICLE_WIDTH + tamanhoVisivel );
+			}
 		}
 		// Charging: the light and the lightning grow with the ball (0 until the first swarm ball arrives); thrown: full.
 		Ogre::Real grown = Ogre::Math::saturate( tamanhoVisivel / ( ( NUMBER_OF_PARTICLES - 1 ) * ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20 ) );
 		Ogre::Real intensity = charging ? 0.3f + 0.7f * grown : 1.0f;
-		// While charging, the light and the gathering stay at the raised hand, where the ball forms: the swarm ball
-		// that leads the PSO can still be far away at first.
-		Ogre::Vector3 ballPosition = charging ? targetVector : particleList[melhorParticula]->particle->mPosition;
+		// The light follows the ball; the gathering (chargeEffect) stays at the raised hand, where the ball settles.
+		Ogre::Vector3 ballPosition = particleList[melhorParticula]->particle->mPosition;
 		updateBallEffect( ballPosition, intensity );
 		// The layers that wrap the ball (lightning, where the motes arrive) measure in its radius.
 		Ogre::Real ballRadius = ( PARTICLE_WIDTH + tamanhoVisivel ) * 0.5f;
@@ -218,6 +222,22 @@ Physics::RigidBody* SpecialJyn::getOgreBulletRigidBody( const std::string& insta
 //-------------------------------------------------------------------------------------
 void SpecialJyn::concentrate(){
 	setSpecialStatus( SpecialInterface::CONCENTRATING );
+
+	// The gathering starts now (not at the cast): the swarm balls appear and stream in, the Genki Dama's light
+	// follows the ball, and the motes, dust and lightning gather at the raised hand.
+	Ogre::ColourValue ki = getKiColour( "jyn" );
+	for( unsigned int i = 0; i < particleList.size(); i++ ){
+		setOrbSize( particleList[i]->particle, PARTICLE_WIDTH );
+		if( EffectsManager::getInstance() != NULL && particleList[i]->stream == NULL ){
+			particleList[i]->stream = EffectsManager::getInstance()->spawn( "jyn_mote", particleList[i]->particle->mPosition, ki, true );
+		}
+	}
+	if( !particleList.empty() ){
+		startBallEffect( "jyn_ball", particleList[melhorParticula]->particle->mPosition, ki );
+	}
+	if( EffectsManager::getInstance() != NULL && chargeEffect == NULL ){
+		chargeEffect = EffectsManager::getInstance()->spawn( "jyn_charge", targetVector, ki, true );
+	}
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::attack(Ogre::Quaternion orientation){
@@ -389,7 +409,8 @@ void SpecialJyn::createRandomParticles(){
 			
 		fitnessAtual = Ogre::Real(avaliarDesempenho(position));
 
-		setOrbSize( particula->particle, PARTICLE_WIDTH );
+		// Hidden until the concentrate press (concentrate()): the cast only makes the eyes flare.
+		particula->particle->setDimensions( 0, 0 );
 		particula->particle->mTimeToLive = PARTICLE_LIVE_TIME;
 		particula->particle->mColour = orbColour( kiColour );
 		particula->particle->mDirection = Ogre::Vector3::ZERO;
@@ -401,9 +422,6 @@ void SpecialJyn::createRandomParticles(){
 		particula->bestFitness = fitnessAtual;
 		particula->bestPosition = position;
 
-		if( EffectsManager::getInstance() != NULL ){
-			particula->stream = EffectsManager::getInstance()->spawn( "jyn_mote", position, kiColour, true );
-		}
 
 		particleList.push_back(particula);
 	}
@@ -566,7 +584,9 @@ Ogre::Vector3 SpecialJyn::getChargeAnchor(void){
 		best = hand;
 		found = true;
 	}
-	return found ? best + Ogre::Vector3( 0, 0.35f, 0 ) : best;
+	// The ball's lower edge stays 0.25 above the knuckles, however big it has grown.
+	Ogre::Real radius = ( PARTICLE_WIDTH + tamanhoVisivel ) * 0.5f;
+	return found ? best + Ogre::Vector3( 0, 0.25f + radius, 0 ) : best;
 }
 //-------------------------------------------------------------------------------------
 bool SpecialJyn::getBonePosition( Part* part, const char* boneName, Ogre::Vector3 &position ){
