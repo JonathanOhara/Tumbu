@@ -9,6 +9,7 @@ Effect::Effect( EffectsManager* _manager, ConfigNode* definition, const Ogre::Ve
 	held = _held;
 	age = 0;
 	intensity = 1;
+	scale = 1;
 
 	std::vector<ConfigNode*> &children = definition->getChildren();
 	for( size_t i = 0; i < children.size(); i++ ){

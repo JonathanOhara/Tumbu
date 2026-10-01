@@ -43,6 +43,9 @@ public:
 	/// Multiplies the strength of the layers that support it (lights, glow): 0..1 while an attack builds up.
 	void setIntensity( Ogre::Real _intensity ){ intensity = _intensity; }
 	Ogre::Real getIntensity(void) const{ return intensity; }
+	/// Size of what the effect wraps (the Genki Dama's radius): layers that say so measure in it (lightning radius).
+	void setScale( Ogre::Real _scale ){ scale = _scale; }
+	Ogre::Real getScale(void) const{ return scale; }
 	EffectsManager* getManager(void){ return manager; }
 
 	/// The owner of a held effect lets it go: looping layers stop, and the effect is deleted once they finish.
@@ -62,6 +65,7 @@ private:
 	Ogre::ColourValue kiColour;
 	Ogre::Real age;
 	Ogre::Real intensity;
+	Ogre::Real scale;
 	bool held;
 };
 

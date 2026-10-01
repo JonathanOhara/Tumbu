@@ -156,3 +156,15 @@ fragment_program energy_burst_debris_ps glsl glsles hlsl
         param_named burstParams float4 2 0.85 0.3 0.6
     }
 }
+
+fragment_program energy_burst_dust_ps glsl glsles hlsl
+{
+    source energy_burst.frag
+    target ps_4_0
+    preprocessor_defines DUST=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named burstParams float4 1 0 0 0.4
+    }
+}

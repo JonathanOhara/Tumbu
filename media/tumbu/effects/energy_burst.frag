@@ -5,6 +5,7 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 //   RING   shockwave: a ring that thins out as it grows (Scaler affector); UNDERLAY = its dark alpha pass
 //   DOME   toon explosion: a banded ball (white core, ki body) that erodes into holes as it dies; UNDERLAY darkens
 //   SMOKE  toon smoke puff: two-tone grey with a hard, noisy edge that erodes away (alpha blended)
+//   DUST   a soft, faint puff of dust (alpha blended)
 //   DEBRIS a dark chunk flung from the ground (alpha blended, oriented along its flight)
 #include <OgreUnifiedShader.h>
 
@@ -95,6 +96,12 @@ MAIN_DECLARATION
     float lit = step(0.0, p.y * 0.8 - p.x * 0.3 + (n - 0.5) * 0.4);
     vec3 colour = mix(ki * 0.62, ki, lit);
     gl_FragColor = vec4(colour, puff * burstParams.w);
+
+#elif defined(DUST)
+    // Soft, faint dust dragged over the floor (the Genki Dama gathering): no hard edge, fades with the life.
+    float n = burstNoise(p * 2.5 + vec2(time * 0.4, 0.0));
+    float puff = (1.0 - smoothstep(0.2, 1.0, r)) * (0.6 + 0.4 * n);
+    gl_FragColor = vec4(ki, puff * life * burstParams.w);
 
 #elif defined(DEBRIS)
     vec2 q = abs(p);

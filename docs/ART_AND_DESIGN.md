@@ -80,7 +80,8 @@ points compatible across sets.
   multi-ball specials.
 - Energy look (being reworked in 2026 towards anime ki attacks: DBZ, Naruto, Saint Seiya). **Jyn is Dragon Ball Z's
   Genki Dama (Spirit Bomb)**: energy gathered from all around (the PSO swarm) into a ball above the raised hand,
-  blue-white (`kiColour` of `skill jyn` in `skills.object`). Punch and kick are ki blasts in the robot's own colour:
+  blue-white (`kiColour` of `skill jyn` in `skills.object`). While it gathers, energy streaks in from the air and rises from
+  the ground, faint dust is dragged over the floor and lightning crackles over the growing ball. Punch and kick are ki blasts in the robot's own colour:
   `kiColour` of its head's set (`robotNNN.object`), matching its eyes. Every ball is a procedural toon orb
   (`Tumbu/EnergyOrb`, `media/tumbu/effects/`): white-hot core, saturated ki-coloured ball with spiral streaks, a
   halo that blooms, and a dark ink ring so it reads on the white arena floor. Balls leave toon ribbon trails and shed

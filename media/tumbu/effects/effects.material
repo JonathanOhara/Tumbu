@@ -273,3 +273,31 @@ material Tumbu/Fx/Debris
         }
     }
 }
+
+// Lightning crackling on the Genki Dama ("lightning" layer): a thin, very bright core line, little glow.
+material Tumbu/EnergyTrail/Lightning : Tumbu/EnergyTrailBase
+{
+    set $trailParams "1.2 2.2 0.25 0.6"
+    set $trailUnderlay "0.35 0 0 0"
+}
+
+// Soft dust dragged over the floor while the Genki Dama gathers.
+material Tumbu/Fx/Dust
+{
+    technique
+    {
+        pass
+        {
+            scene_blend alpha_blend
+            depth_write off
+            lighting off
+            vertex_program_ref energy_vs
+            {
+            }
+            fragment_program_ref energy_burst_dust_ps
+            {
+                param_named burstParams float4 1 0 0 0.4
+            }
+        }
+    }
+}

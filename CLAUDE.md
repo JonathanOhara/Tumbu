@@ -323,6 +323,9 @@ through a listener registry in `BaseApplication`.
   Orbs and trails have an alpha-blended dark underlay pass: additive alone turns white over the sunlit arena.
   Impacts are one-billboard particles drawn by `energy_burst.frag` (FLASH, RING, DOME, SMOKE, DEBRIS): the particle
   alpha is the life left (ColourFader), so the shader animates without extra uniforms.
+  Effect layers: `light`, `screen`, `trail`, `particles`, `converge` (a pool of motes moved in C++: the Genki Dama
+  gathering) and `lightning` (a BillboardChain of jagged arcs); `Effect::setScale` gives layers the ball radius.
+  Renderer settings such as `billboard_type` go through `ParticleSystem::getRenderer()->setParameter`.
 - `media/tumbu/shading/` holds the shared toon lighting (`TumbuToon.h`), the arena shaders and base
   material (`Tumbu/EnvironmentToon`, used by `arena.material` and `coliseum.material`), and the
   post-processing compositor, material and shaders.

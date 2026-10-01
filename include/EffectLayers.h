@@ -75,4 +75,56 @@ private:
 	bool emitting;
 };
 
+/**
+ * "converge": motes pulled into the effect from around it (the Genki Dama gathering energy). A fixed pool of
+ * particles moved here every frame: each starts somewhere around the target ("from sphere": a shell in the air,
+ * "from ground": a ring on the floor), swirls and accelerates in, fades in and out, then starts again. The pool
+ * follows the effect, so the gathering keeps up with a walking robot. Once the effect is released, motes finish
+ * their trip and the layer ends.
+ */
+class EffectConvergeLayer: public EffectLayer{
+public:
+	EffectConvergeLayer( Effect* _effect, ConfigNode* node );
+	virtual ~EffectConvergeLayer(void);
+	bool update( Ogre::Real age, Ogre::Real time );
+	void stop(void);
+private:
+	struct Mote{
+		Ogre::Particle* particle;
+		Ogre::Vector3 offset;	// start, relative to the target
+		Ogre::Real age, life, delay;
+		bool alive;
+	};
+	void restart( Mote &mote );
+	Ogre::Vector3 target(void);
+
+	Ogre::ParticleSystem* system;
+	Ogre::SceneNode* node;
+	std::vector<Mote> motes;
+	Ogre::ColourValue colour;
+	Ogre::Real radiusMin, radiusMax, heightMin, heightMax, travel, swirl, endRadius, width, length;
+	bool fromGround, toGround, stopped;
+	Ogre::Vector3 lastTarget;
+};
+
+/**
+ * "lightning": jagged arcs crackling over a sphere around the effect (radius x the effect's scale), rebuilt every
+ * "interval" seconds; some arcs leap outwards. Drawn as a BillboardChain with an energy trail material.
+ */
+class EffectLightningLayer: public EffectLayer{
+public:
+	EffectLightningLayer( Effect* _effect, ConfigNode* node );
+	virtual ~EffectLightningLayer(void);
+	bool update( Ogre::Real age, Ogre::Real time );
+	void stop(void);
+private:
+	void rebuild(void);
+
+	Ogre::BillboardChain* chain;
+	Ogre::ColourValue colour;
+	Ogre::Real radius, width, interval, chance, leap, timer;
+	int arcs, segments;
+	bool stopped;
+};
+
 #endif // #ifndef __EffectLayers_h_

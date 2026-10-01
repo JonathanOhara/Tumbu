@@ -60,6 +60,9 @@ private:
 
 	/// The thrown ball's wake and sparks (held), or NULL.
 	Effect* throwEffect;
+	/// The gathering (motes, dust, lightning) from the cast until the throw (held), or NULL.
+	Effect* chargeEffect;
+	void releaseChargeEffect(void);
 
 	Ogre::Vector3 
 		everBestPosition,

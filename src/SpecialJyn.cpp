@@ -28,6 +28,7 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	specialShape = NULL;
 	specialRigidNode = NULL;
 	throwEffect = NULL;
+	chargeEffect = NULL;
 	specialLight = NULL;
 
 	Ogre::String lightName = robotSpeller->robotName +  "_jyn_light_ " + Ogre::StringConverter::toString(count);
@@ -48,6 +49,9 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	createRandomParticles();
 	// The Genki Dama's light (and later its trail): it follows the ball and grows as the swarm merges into it.
 	startBallEffect( "jyn_ball", targetVector, getKiColour( "jyn" ) );
+	if( EffectsManager::getInstance() != NULL ){
+		chargeEffect = EffectsManager::getInstance()->spawn( "jyn_charge", targetVector, getKiColour( "jyn" ), true );
+	}
 
 	setSpecialStatus( SpecialInterface::NONE );
 
@@ -124,6 +128,16 @@ void SpecialJyn::update(const Ogre::Real time){
 		Ogre::Real grown = Ogre::Math::saturate( tamanhoMaiorParticula / ( ( NUMBER_OF_PARTICLES - 1 ) * ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20 ) );
 		Ogre::Real intensity = getSpecialStatus() == SpecialInterface::ATTACKING ? 1.0f : 0.3f + 0.7f * grown;
 		updateBallEffect( particleList[melhorParticula]->particle->mPosition, intensity );
+		// The layers that wrap the ball (lightning, where the motes arrive) measure in its radius.
+		Ogre::Real ballRadius = ( PARTICLE_WIDTH + tamanhoMaiorParticula ) * 0.5f;
+		if( ballEffect != NULL ){
+			ballEffect->setScale( ballRadius );
+		}
+		if( chargeEffect != NULL ){
+			chargeEffect->setPosition( particleList[melhorParticula]->particle->mPosition );
+			chargeEffect->setIntensity( intensity );
+			chargeEffect->setScale( ballRadius );
+		}
 		updateStreams();
 		if( throwEffect != NULL ){
 			throwEffect->setPosition( particleList[melhorParticula]->particle->mPosition );
@@ -189,6 +203,7 @@ void SpecialJyn::concentrate(){
 void SpecialJyn::attack(Ogre::Quaternion orientation){
 	setSpecialStatus( SpecialInterface::ATTACKING );
 
+	releaseChargeEffect();
 	releaseStreams();
 	if( EffectsManager::getInstance() != NULL && !particleList.empty() ){
 		throwEffect = EffectsManager::getInstance()->spawn( "jyn_throw", particleList[melhorParticula]->particle->mPosition, getKiColour( "jyn" ), true );
@@ -267,6 +282,7 @@ void SpecialJyn::toDelete(){
 void SpecialJyn::clear(){
 	releaseBallEffect();
 	releaseStreams();
+	releaseChargeEffect();
 	if( throwEffect != NULL ){
 		throwEffect->release();
 		throwEffect = NULL;
@@ -539,6 +555,13 @@ void SpecialJyn::releaseStreams(void){
 			particleList[i]->stream->release();
 			particleList[i]->stream = NULL;
 		}
+	}
+}
+//-------------------------------------------------------------------------------------
+void SpecialJyn::releaseChargeEffect(void){
+	if( chargeEffect != NULL ){
+		chargeEffect->release();
+		chargeEffect = NULL;
 	}
 }
 //-------------------------------------------------------------------------------------
