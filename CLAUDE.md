@@ -64,8 +64,8 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   (`devtest.ps1 -JynWalk`: casts and concentrates Jyn while the hero walks and logs the ball's offset from the point
   above the hero where it gathers; it must converge while walking), `-fxtest=NAME` / `-fxtime=S` (starts
   `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the
-  side: `devtest.ps1 -FxTest NAME [-FxTime 0.3]`; `effect test` is a calibration light + flash; held, it circles
-  the spot so trails show; `-fxtest=special:jyn|punch|kick|jynthrow` makes the hero attack instead, `-fxdistance=D`
+  side: `devtest.ps1 -FxTest NAME [-FxTime 0.3]`; `effect test` is a calibration light + flash; `move:NAME` holds
+  it and circles the spot so trails show; `-fxtest=special:jyn|punch|kick|jynthrow` makes the hero attack instead, `-fxdistance=D`
   sets the camera distance).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
@@ -321,6 +321,8 @@ through a listener registry in `BaseApplication`.
   = ki colour, alpha = random seed; `ORB_SCALE` in `SpecialInterface.h`), `Tumbu/EnergyTrail*` the ribbon trails
   (RibbonTrail: **U runs across the ribbon**, V along it) and `Tumbu/EnergySpark` the sparks of `effects.particle`.
   Orbs and trails have an alpha-blended dark underlay pass: additive alone turns white over the sunlit arena.
+  Impacts are one-billboard particles drawn by `energy_burst.frag` (FLASH, RING, DOME, SMOKE, DEBRIS): the particle
+  alpha is the life left (ColourFader), so the shader animates without extra uniforms.
 - `media/tumbu/shading/` holds the shared toon lighting (`TumbuToon.h`), the arena shaders and base
   material (`Tumbu/EnvironmentToon`, used by `arena.material` and `coliseum.material`), and the
   post-processing compositor, material and shaders.

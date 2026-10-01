@@ -162,8 +162,17 @@ EffectParticlesLayer::EffectParticlesLayer( Effect* _effect, ConfigNode* node ):
 	duration = Effect::readReal( node, "time", 0 );
 	// "follow 0": the system stays where the effect started (an explosion); otherwise it follows the effect.
 	follow = Effect::readReal( node, "follow", 1 ) != 0;
+	offset = Effect::readVector( node, "offset", Ogre::Vector3::ZERO );
+	onGround = Effect::readReal( node, "ground", 0 ) != 0;
+	if( duration <= 0 && effect->isReleased() ){
+		duration = 0.2f;	// one-shot effect: a burst, so the layer always ends
+	}
+	Ogre::Vector3 start = effect->getPosition();
+	if( onGround ){
+		start = effect->getManager()->groundBelow( start ) + Ogre::Vector3( 0, 0.03f, 0 );
+	}
 
-	this->node = sceneMgr->getRootSceneNode()->createChildSceneNode( effect->getPosition() );
+	this->node = sceneMgr->getRootSceneNode()->createChildSceneNode( start + offset );
 	system = sceneMgr->createParticleSystem( "TumbuFx" + Ogre::StringConverter::toString( counter++ ), templateName );
 	system->setCastShadows( false );
 	// The emitters take the effect's colour (the shader brightens it; particle colours stop at 1).
@@ -189,7 +198,7 @@ EffectParticlesLayer::~EffectParticlesLayer(void){
 //-------------------------------------------------------------------------------------
 bool EffectParticlesLayer::update( Ogre::Real age, Ogre::Real time ){
 	if( follow ){
-		node->setPosition( effect->getPosition() );
+		node->setPosition( effect->getPosition()  + offset );
 	}
 	if( emitting && duration > 0 && age >= duration ){
 		stop();

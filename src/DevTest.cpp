@@ -301,9 +301,13 @@ void DevTest::runFxTest(void){
 		fxSpawned = true;
 	}else if( !fxSpawned && playTime >= quitAfter - fxTime ){
 		fxSpot = front;
-		// Held, so it can be moved: it circles the spot (trails and sparks need motion).
-		fxEffect = EffectsManager::getInstance()->spawn( fxTest, fxSpot, Ogre::ColourValue( 1.0f, 0.3f, 0.15f ), true );
-		log( "fxtest: " + fxTest + ( fxEffect != NULL ? " started at " + Ogre::StringConverter::toString( fxSpot ) : " is not defined" ) );
+		// move:NAME is held, so it can be moved: it circles the spot (trails and sparks need motion). Otherwise the
+		// effect plays once, as in a match.
+		bool move = Ogre::StringUtil::startsWith( fxTest, "move:", false );
+		Ogre::String name = move ? fxTest.substr( 5 ) : fxTest;
+		Effect* effect = EffectsManager::getInstance()->spawn( name, fxSpot, Ogre::ColourValue( 1.0f, 0.3f, 0.15f ), move );
+		fxEffect = move ? effect : NULL;
+		log( "fxtest: " + name + ( effect != NULL ? " started at " + Ogre::StringConverter::toString( fxSpot ) : " is not defined" ) );
 		fxSpawned = true;
 	}
 	if( fxEffect != NULL ){

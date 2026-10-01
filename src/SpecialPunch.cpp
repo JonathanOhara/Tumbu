@@ -2,6 +2,7 @@
 #include "TUMBU.h"
 #include "Robot.h"
 #include "GUI.h"
+#include "EffectsManager.h"
 //-------------------------------------------------------------------------------------
 SpecialPunch::SpecialPunch( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller, Physics::DynamicsWorld* _world, int _count, float _damage ){
 	world = _world;
@@ -43,6 +44,12 @@ void SpecialPunch::update(const Ogre::Real time){
 			particleList[0]->particle->mPosition = specialRigidBodyList.front()->getWorldPosition();
 			updateBallEffect( particleList[0]->particle->mPosition );
 		}
+		if( getSpecialStatus() == SpecialInterface::HITTED && particleList[0]->active ){
+			// The impact effect took over: the ball is gone (its body flies on, harmless, until the timeout).
+			particleList[0]->active = false;
+			particleList[0]->particle->setDimensions( 0, 0 );
+			releaseBallEffect();
+		}
 
 		if(timeToResest <= 0){
 			setSpecialStatus( SpecialInterface::TO_DELETE );
@@ -52,6 +59,10 @@ void SpecialPunch::update(const Ogre::Real time){
 //-------------------------------------------------------------------------------------
 void SpecialPunch::collision( CollisionDetectionListener *other ){
 	if( getSpecialStatus() == SpecialInterface::ATTACKING ){
+		if( ( other->objectTag == TumbuEnums::TERRAIN || other->objectTag == TumbuEnums::SCENE_OBJECT ) && timeToResest < 2.9f ){
+			hitScenario( particleList[0]->particle->mPosition );
+			return;
+		}
 		Robot *enemy;
 
 		btRigidBody* otherRigidBody = other->getOgreBulletRigidBody( other->rigidBodyName )->getBulletRigidBody();
@@ -152,10 +163,16 @@ void SpecialPunch::attack(Ogre::Quaternion orientation){
 }
 //-------------------------------------------------------------------------------------
 void SpecialPunch::hit(Ogre::SceneNode* hittedNode){
+	if( EffectsManager::getInstance() != NULL && !particleList.empty() ){
+		EffectsManager::getInstance()->spawn( "blast_hit", particleList[0]->particle->mPosition, getKiColour( "punch" ) );
+	}
 	setSpecialStatus( SpecialInterface::HITTED );
 }
 //-------------------------------------------------------------------------------------
 void SpecialPunch::hitScenario( Ogre::Vector3 position ){
+	if( EffectsManager::getInstance() != NULL ){
+		EffectsManager::getInstance()->spawn( "blast_wall", position, getKiColour( "punch" ) );
+	}
 	setSpecialStatus( SpecialInterface::HITTED );
 }
 //-------------------------------------------------------------------------------------

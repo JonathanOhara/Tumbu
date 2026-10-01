@@ -20,6 +20,7 @@
  *                    from the point it gathers at (it must not grow while the hero moves)
  *   -fxtest=NAME     with -quitafter: start the effect "effect NAME" (effects.object) in front of the hero and
  *                    screenshot it from the side; -fxtime=S: seconds between the start and the screenshot (0.3)
+ *                    -fxtest=move:NAME: held, it circles the spot (to see trails and sparks)
  *                    -fxtest=special:jyn|punch|kick: the hero uses that attack instead (fxtime before the shot)
  *                    -fxtest=special:jynthrow: charge Jyn from 1 s, throw it when ready, shot fxtime after the throw
  *                    -fxdistance=D: camera distance (4; under 3 the shot frames only the effect)

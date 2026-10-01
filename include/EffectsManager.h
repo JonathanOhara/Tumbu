@@ -49,6 +49,8 @@ public:
 	bool frameRenderingQueued( const Ogre::FrameEvent &evt );
 
 	Ogre::SceneManager* getSceneManager(void){ return sceneMgr; }
+	/// The floor (or any physics surface) below a point, or the point itself when there is none within 10 units.
+	Ogre::Vector3 groundBelow( const Ogre::Vector3 &position );
 
 private:
 	struct LightRequest{

@@ -2,6 +2,7 @@
 #include "Effect.h"
 #include "ConfigScript.h"
 #include "TUMBU.h"
+#include "Demo.h"
 #include <algorithm>
 
 EffectsManager* EffectsManager::instance = NULL;
@@ -178,5 +179,33 @@ void EffectsManager::updateScreen( Ogre::Real time ){
 		shakeOffset.y = amplitude * ( 0.7f * Ogre::Math::Sin( shakeTime * 53 + 2.1f ) + 0.3f * Ogre::Math::Sin( shakeTime * 97 + 0.4f ) );
 		shakeAge += time;
 	}
+}
+//-------------------------------------------------------------------------------------
+Ogre::Vector3 EffectsManager::groundBelow( const Ogre::Vector3 &position ){
+	Demo* demo = TUMBU::getInstance()->getDemo();
+	if( demo == NULL || demo->getPhysicWorld() == NULL ){
+		return position;
+	}
+	// The closest surface that is not a robot or an energy ball (the floor, terrain or coliseum).
+	struct GroundCallback: public btCollisionWorld::ClosestRayResultCallback{
+		GroundCallback( const btVector3 &from, const btVector3 &to ): btCollisionWorld::ClosestRayResultCallback( from, to ){}
+		bool needsCollision( btBroadphaseProxy* proxy ) const{
+			const btCollisionObject* object = (const btCollisionObject*)proxy->m_clientObject;
+			const btRigidBody* body = btRigidBody::upcast( object );
+			// Static surfaces only: robots and energy balls are dynamic.
+			if( body != NULL && body->getInvMass() > 0 ){
+				return false;
+			}
+			return btCollisionWorld::ClosestRayResultCallback::needsCollision( proxy );
+		}
+	};
+	btVector3 from = Physics::OgreBtConverter::to( position + Ogre::Vector3( 0, 0.5f, 0 ) );
+	btVector3 to = Physics::OgreBtConverter::to( position - Ogre::Vector3( 0, 10, 0 ) );
+	GroundCallback hit( from, to );
+	demo->getPhysicWorld()->getBulletCollisionWorld()->rayTest( from, to, hit );
+	if( !hit.hasHit() ){
+		return position;
+	}
+	return Physics::BtOgreConverter::to( hit.m_hitPointWorld );
 }
 //-------------------------------------------------------------------------------------

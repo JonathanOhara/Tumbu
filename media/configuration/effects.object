@@ -24,6 +24,8 @@
 //     template    the particle_system name; colour: replaces the emitters' colour
 //     time        seconds of emission (a burst); 0 = until the effect is let go
 //     follow      1 (default) = follows the effect; 0 = stays where it started
+//     offset      x y z from the effect; ground: 1 = on the floor below the effect (physics ray)
+//     (a one-shot effect emits for 0.2 s when "time" is not given)
 //
 // screen: when the effect starts (once)
 //     flash       0..1, how far the whole frame turns to flashColour; flashTime: seconds to fade
@@ -173,5 +175,130 @@ effect trailtest
 	{
 		template Tumbu/Fx/Sparks
 		colour ki
+	}
+}
+// ---- Impacts: one-shot effects at the hit point (the ball's colour) ----
+
+// Punch or kick blast hits a robot: star flash, shockwave, spark burst, a flash of light, a small jolt.
+effect blast_hit
+{
+	particles
+	{
+		template Tumbu/Fx/HitFlash
+		colour ki
+		follow 0
+	}
+	particles
+	{
+		template Tumbu/Fx/HitRing
+		colour ki
+		follow 0
+	}
+	particles
+	{
+		template Tumbu/Fx/HitSparks
+		colour ki
+		follow 0
+	}
+	light
+	{
+		colour ki
+		intensity 2
+		radius 3.5
+		rise 0
+		time 0.3
+	}
+	screen
+	{
+		shake 0.05
+		shakeTime 0.2
+		shakeRange 5
+	}
+}
+
+// Punch or kick blast hits the arena: a smaller flash and sparks.
+effect blast_wall
+{
+	particles
+	{
+		template Tumbu/Fx/HitFlash
+		colour ki
+		follow 0
+	}
+	particles
+	{
+		template Tumbu/Fx/HitSparks
+		colour ki
+		follow 0
+	}
+	light
+	{
+		colour ki
+		intensity 2
+		radius 2.5
+		rise 0
+		time 0.2
+	}
+}
+
+// Genki Dama impact: white frame, hit-stop, a toon explosion ball, a shockwave along the ground, sparks, debris and
+// smoke, a strong light and a camera shake.
+effect jyn_impact
+{
+	screen
+	{
+		flash 0.45
+		flashColour 1 1 1
+		flashTime 0.12
+		shake 0.16
+		shakeTime 0.5
+		shakeRange 10
+		hitStop 0.07
+	}
+	particles
+	{
+		template Tumbu/Fx/HitFlash
+		colour ki
+		follow 0
+	}
+	particles
+	{
+		template Tumbu/Fx/Dome
+		colour ki
+		follow 0
+	}
+	particles
+	{
+		template Tumbu/Fx/GroundRing
+		colour ki
+		follow 0
+		ground 1
+	}
+	particles
+	{
+		template Tumbu/Fx/HitSparks
+		colour ki
+		follow 0
+	}
+	particles
+	{
+		template Tumbu/Fx/Debris
+		follow 0
+		ground 1
+	}
+	particles
+	{
+		template Tumbu/Fx/Smoke
+		follow 0
+		ground 1
+		offset 0 0.3 0
+	}
+	light
+	{
+		colour ki
+		intensity 2.5
+		radius 5
+		rise 0
+		time 0.7
 	}
 }

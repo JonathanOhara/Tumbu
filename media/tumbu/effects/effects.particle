@@ -64,3 +64,208 @@ particle_system Tumbu/Fx/SparksBig
         force_vector 0 -3 0
     }
 }
+
+// ---- Impact pieces. A ColourFader takes alpha from 1 to 0 over the life (the shaders read it as "life left"), and
+// one burst of emission (duration) per piece. ----
+
+// Star flash at the hit point: one particle, very short, growing.
+particle_system Tumbu/Fx/HitFlash
+{
+    material Tumbu/Fx/Flash
+    particle_width 1.1
+    particle_height 1.1
+    quota 1
+    cull_each false
+    emitter Point
+    {
+        emission_rate 1000
+        duration 0.05
+        velocity 0
+        time_to_live 0.16
+        colour 1 1 1 1
+    }
+    affector ColourFader
+    {
+        alpha -6.25
+    }
+    affector Scaler
+    {
+        rate 4
+    }
+}
+
+// Shockwave facing the camera (punch and kick hits).
+particle_system Tumbu/Fx/HitRing
+{
+    material Tumbu/Fx/Ring
+    particle_width 0.3
+    particle_height 0.3
+    quota 1
+    cull_each false
+    emitter Point
+    {
+        emission_rate 1000
+        duration 0.05
+        velocity 0
+        time_to_live 0.3
+        colour 1 1 1 1
+    }
+    affector ColourFader
+    {
+        alpha -3.33
+    }
+    affector Scaler
+    {
+        rate 8
+    }
+}
+
+// Shockwave lying on the ground (Genki Dama impact).
+particle_system Tumbu/Fx/GroundRing
+{
+    material Tumbu/Fx/Ring
+    particle_width 0.6
+    particle_height 0.6
+    quota 1
+    cull_each false
+    billboard_type perpendicular_common
+    common_direction 0 1 0
+    common_up_vector 0 0 1
+    emitter Point
+    {
+        emission_rate 1000
+        duration 0.05
+        velocity 0
+        time_to_live 0.55
+        colour 1 1 1 1
+    }
+    affector ColourFader
+    {
+        alpha -1.82
+    }
+    affector Scaler
+    {
+        rate 16
+    }
+}
+
+// Spark burst flung out of a hit.
+particle_system Tumbu/Fx/HitSparks
+{
+    material Tumbu/EnergySpark
+    particle_width 0.04
+    particle_height 0.3
+    quota 30
+    billboard_type oriented_self
+    cull_each false
+    emitter Point
+    {
+        angle 180
+        emission_rate 600
+        duration 0.05
+        velocity_min 3
+        velocity_max 7
+        time_to_live_min 0.15
+        time_to_live_max 0.35
+        colour 1 1 1 1
+    }
+    affector ColourFader
+    {
+        alpha -3
+    }
+    affector LinearForce
+    {
+        force_vector 0 -6 0
+    }
+}
+
+// Toon explosion ball.
+particle_system Tumbu/Fx/Dome
+{
+    material Tumbu/Fx/Dome
+    particle_width 1.2
+    particle_height 1.2
+    quota 1
+    cull_each false
+    emitter Point
+    {
+        emission_rate 1000
+        duration 0.05
+        velocity 0
+        time_to_live 0.7
+        colour 1 1 1 1
+    }
+    affector ColourFader
+    {
+        alpha -1.43
+    }
+    affector Scaler
+    {
+        rate 5
+    }
+}
+
+// Smoke puffs rising from a big impact (grey-blue, not the ki colour).
+particle_system Tumbu/Fx/Smoke
+{
+    material Tumbu/Fx/Smoke
+    particle_width 0.6
+    particle_height 0.6
+    quota 8
+    cull_each false
+    emitter Point
+    {
+        angle 70
+        direction 0 1 0
+        emission_rate 200
+        duration 0.05
+        velocity_min 0.6
+        velocity_max 1.6
+        time_to_live_min 0.9
+        time_to_live_max 1.4
+        colour 0.9 0.9 0.95 1
+    }
+    affector ColourFader
+    {
+        alpha -0.8
+    }
+    affector Scaler
+    {
+        rate 1.2
+    }
+    affector LinearForce
+    {
+        force_vector 0 0.6 0
+    }
+}
+
+// Ground debris thrown up by a big impact.
+particle_system Tumbu/Fx/Debris
+{
+    material Tumbu/Fx/Debris
+    particle_width 0.08
+    particle_height 0.12
+    quota 24
+    billboard_type oriented_self
+    cull_each false
+    emitter Point
+    {
+        angle 55
+        direction 0 1 0
+        emission_rate 500
+        duration 0.05
+        velocity_min 3
+        velocity_max 7
+        time_to_live_min 0.6
+        time_to_live_max 1
+        colour 0.28 0.25 0.24 1
+    }
+    affector ColourFader
+    {
+        alpha -1
+    }
+    affector LinearForce
+    {
+        force_vector 0 -14 0
+    }
+}

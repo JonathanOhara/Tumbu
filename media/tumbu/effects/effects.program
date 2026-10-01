@@ -72,3 +72,87 @@ fragment_program energy_spark_ps glsl glsles hlsl
         param_named sparkParams float4 1.7 0.35 0 0
     }
 }
+
+fragment_program energy_burst_flash_ps glsl glsles hlsl
+{
+    source energy_burst.frag
+    target ps_4_0
+    preprocessor_defines FLASH=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named burstParams float4 2 0.85 0.3 0.6
+    }
+}
+
+fragment_program energy_burst_ring_ps glsl glsles hlsl
+{
+    source energy_burst.frag
+    target ps_4_0
+    preprocessor_defines RING=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named burstParams float4 2 0.85 0.3 0.6
+    }
+}
+
+fragment_program energy_burst_ring_underlay_ps glsl glsles hlsl
+{
+    source energy_burst.frag
+    target ps_4_0
+    preprocessor_defines RING=1,UNDERLAY=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named burstParams float4 2 0.85 0.3 0.6
+    }
+}
+
+fragment_program energy_burst_dome_ps glsl glsles hlsl
+{
+    source energy_burst.frag
+    target ps_4_0
+    preprocessor_defines DOME=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named burstParams float4 2 0.85 0.3 0.6
+    }
+}
+
+fragment_program energy_burst_dome_underlay_ps glsl glsles hlsl
+{
+    source energy_burst.frag
+    target ps_4_0
+    preprocessor_defines DOME=1,UNDERLAY=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named burstParams float4 2 0.85 0.3 0.6
+    }
+}
+
+fragment_program energy_burst_smoke_ps glsl glsles hlsl
+{
+    source energy_burst.frag
+    target ps_4_0
+    preprocessor_defines SMOKE=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named burstParams float4 2 0.85 0.3 0.6
+    }
+}
+
+fragment_program energy_burst_debris_ps glsl glsles hlsl
+{
+    source energy_burst.frag
+    target ps_4_0
+    preprocessor_defines DEBRIS=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named burstParams float4 2 0.85 0.3 0.6
+    }
+}

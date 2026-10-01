@@ -31,7 +31,6 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	specialLight = NULL;
 
 	Ogre::String lightName = robotSpeller->robotName +  "_jyn_light_ " + Ogre::StringConverter::toString(count);
-	Ogre::String particleSystemName = robotSpeller->robotName +  "_jyn_particle_ " +  Ogre::StringConverter::toString(count);
 
 	specialLight = sceneMgr->createLight( lightName );
 	specialLight->setType(Ogre::Light::LT_POINT);
@@ -43,9 +42,6 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	specialLight->getParentSceneNode()->setPosition(0, 10000, 0);
 
 	particleSystem = sceneMgr->createParticleSystem();
-	explosionParticleSystem = sceneMgr->createParticleSystem(particleSystemName, "TumbuSpecialExplosion");
-	explosionParticleSystem->setEmitting(false);
-	explosionParticleSystem->getEmitter(0)->setEnabled(false);
 
 	particleSystemNode->attachObject( particleSystem );
 
@@ -65,14 +61,7 @@ SpecialJyn::~SpecialJyn(void){
 		sceneMgr->destroyLight(specialLight);
 	}
 
-	explosionParticleSystem->clear();
-
-	if( explosionParticleSystem->isAttached() ){
-		explosionParticleSystem->getParentSceneNode()->detachObject( explosionParticleSystem );
-	}
-
 	sceneMgr->destroyParticleSystem( particleSystem );
-	sceneMgr->destroyParticleSystem( explosionParticleSystem );
 
 	setSpecialStatus( SpecialInterface::FINISHED );
 }
@@ -245,11 +234,10 @@ void SpecialJyn::hitScenario( Ogre::Vector3 position ){
 		i++;
 	}
 
-	TUMBU::getInstance()->getActiveSceneNode()->attachObject( explosionParticleSystem );
-
-	explosionParticleSystem->setEmitting(true);
-	explosionParticleSystem->getEmitter(0)->setEnabled(true);
-	explosionParticleSystem->getEmitter(0)->setPosition( position );
+	// The Genki Dama explodes (effects.object jyn_impact): flash, hit-stop, explosion ball, shockwave, debris, smoke.
+	if( EffectsManager::getInstance() != NULL ){
+		EffectsManager::getInstance()->spawn( "jyn_impact", position, getKiColour( "jyn" ) );
+	}
 
 	Sound *explosion = SoundManager::getInstance()->createSound("explosion", "explosion.ogg", position, false, false );
 
@@ -265,10 +253,9 @@ void SpecialJyn::hit(Ogre::SceneNode* hittedNode){
 		i++;
 	}
 
-	hittedNode->attachObject(explosionParticleSystem);
-
-	explosionParticleSystem->setEmitting(true);
-	explosionParticleSystem->getEmitter(0)->setEnabled(true);
+	if( EffectsManager::getInstance() != NULL && !particleList.empty() ){
+		EffectsManager::getInstance()->spawn( "jyn_impact", particleList[melhorParticula]->particle->mPosition, getKiColour( "jyn" ) );
+	}
 
 	setSpecialStatus( SpecialInterface::HITTED );
 }

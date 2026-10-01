@@ -54,9 +54,10 @@ private:
 };
 
 /**
- * "sparks" (or any particle template): an Ogre particle system following the effect; its emitters take the
+ * "particles": an Ogre particle system following the effect; its emitters take the
  * effect's colour. With "time" > 0 it emits for that long (a burst); otherwise until the effect is released. The
- * layer ends when no particle is left.
+ * layer ends when no particle is left. "offset x y z" moves it from the effect; "ground 1" puts it on the floor below.
+ * A one-shot (not held) effect emits for 0.2 s when "time" is not given.
  */
 class EffectParticlesLayer: public EffectLayer{
 public:
@@ -69,6 +70,8 @@ private:
 	Ogre::SceneNode* node;
 	Ogre::Real duration;
 	bool follow;
+	Ogre::Vector3 offset;
+	bool onGround;
 	bool emitting;
 };
 
