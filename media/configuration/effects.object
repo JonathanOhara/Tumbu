@@ -42,3 +42,53 @@ effect test
 		hitStop 0.06
 	}
 }
+
+// ---- Energy balls: held effects that follow the ball (SpecialInterface::startBallEffect) ----
+// The light stays while the ball lives ("time 0", times the effect's intensity) and fades when it is let go.
+// Moderate intensities keep the ki colour on the floor and robots; strong ones wash out to white.
+
+// Punch ki blast.
+effect punch_ball
+{
+	light
+	{
+		colour ki
+		intensity 1.4
+		radius 2.6
+		rise 0.06
+		time 0
+		fade 0.15
+		flicker 0.12
+	}
+}
+
+// Kick ki blast.
+effect kick_ball
+{
+	light
+	{
+		colour ki
+		intensity 1.4
+		radius 2.6
+		rise 0.06
+		time 0
+		fade 0.15
+		flicker 0.12
+	}
+}
+
+// Jyn (Genki Dama): from the cast it lights the robot from above, growing as the swarm merges into the ball
+// (intensity 0.3 -> 1), then lights the arena as it flies.
+effect jyn_ball
+{
+	light
+	{
+		colour ki
+		intensity 1.8
+		radius 4.5
+		rise 0.4
+		time 0
+		fade 0.3
+		flicker 0.08
+	}
+}

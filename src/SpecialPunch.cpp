@@ -41,6 +41,7 @@ void SpecialPunch::update(const Ogre::Real time){
 			
 		if( specialShape != NULL ){
 			particleList[0]->particle->mPosition = specialRigidBodyList.front()->getWorldPosition();
+			updateBallEffect( particleList[0]->particle->mPosition );
 		}
 
 		if(timeToResest <= 0){
@@ -107,6 +108,7 @@ void SpecialPunch::concentrate(){
 	particula->particle->mPosition = Ogre::Vector3(position);
 
 	particleList.push_back(particula);
+	startBallEffect( "punch_ball", position, getKiColour( "punch" ) );
 }
 //-------------------------------------------------------------------------------------
 void SpecialPunch::attack(Ogre::Quaternion orientation){
@@ -162,6 +164,7 @@ void SpecialPunch::toDelete(){
 }
 //-------------------------------------------------------------------------------------
 void SpecialPunch::clear(){
+	releaseBallEffect();
 	for(unsigned int i = 0; i < particleList.size(); i++){
 		delete particleList[i];
     }

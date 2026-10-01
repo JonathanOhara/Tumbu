@@ -1,9 +1,12 @@
 #include "SpecialInterface.h"
 #include "Robot.h"
 #include "ConfigScript.h"
+#include "EffectsManager.h"
+#include "Effect.h"
 //-------------------------------------------------------------------------------------
 SpecialInterface::SpecialInterface(){
 	specialStatus = NONE;
+	ballEffect = NULL;
 }
 //-------------------------------------------------------------------------------------
 SpecialInterface::~SpecialInterface(void){
@@ -51,5 +54,26 @@ Ogre::RGBA SpecialInterface::orbColour( const Ogre::ColourValue &ki ){
 	Ogre::ColourValue colour = ki;
 	colour.a = Ogre::Math::UnitRandom();
 	return colour.getAsBYTE();
+}
+//-------------------------------------------------------------------------------------
+void SpecialInterface::startBallEffect( const Ogre::String &effectName, const Ogre::Vector3 &position, const Ogre::ColourValue &ki ){
+	releaseBallEffect();
+	if( EffectsManager::getInstance() != NULL ){
+		ballEffect = EffectsManager::getInstance()->spawn( effectName, position, ki, true );
+	}
+}
+//-------------------------------------------------------------------------------------
+void SpecialInterface::updateBallEffect( const Ogre::Vector3 &position, Ogre::Real intensity ){
+	if( ballEffect != NULL ){
+		ballEffect->setPosition( position );
+		ballEffect->setIntensity( intensity );
+	}
+}
+//-------------------------------------------------------------------------------------
+void SpecialInterface::releaseBallEffect(void){
+	if( ballEffect != NULL ){
+		ballEffect->release();
+		ballEffect = NULL;
+	}
 }
 //-------------------------------------------------------------------------------------

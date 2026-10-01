@@ -45,13 +45,13 @@ abstract material Tumbu/EnergyOrbBase
 // Punch and kick ki blasts: a tight ball, fast spin.
 material Tumbu/EnergyOrb : Tumbu/EnergyOrbBase
 {
-    set $orbShape "0.13 0.45 0.55 1.0"
+    set $orbShape "0.13 0.45 0.85 1.0"
     set $orbMotion "1.4 1 0.03 0.8"
 }
 
 // Jyn (Genki Dama): a bigger white-hot core, slower heavy swirl, a stronger boil on the edge.
 material Tumbu/EnergyOrb/Jyn : Tumbu/EnergyOrbBase
 {
-    set $orbShape "0.17 0.45 0.7 0.85"
+    set $orbShape "0.17 0.45 1.0 0.85"
     set $orbMotion "0.7 1.3 0.03 0.85"
 }

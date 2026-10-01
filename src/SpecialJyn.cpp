@@ -47,6 +47,8 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	particleSystemNode->attachObject( particleSystem );
 
 	createRandomParticles();
+	// The Genki Dama's light (and later its trail): it follows the ball and grows as the swarm merges into it.
+	startBallEffect( "jyn_ball", targetVector, getKiColour( "jyn" ) );
 
 	setSpecialStatus( SpecialInterface::NONE );
 
@@ -125,6 +127,12 @@ void SpecialJyn::update(const Ogre::Real time){
 		}
 	}
 
+	if( !particleList.empty() ){
+		// Charging: the light grows with the ball (each merged swarm ball adds to it); thrown: full strength.
+		Ogre::Real grown = Ogre::Math::saturate( tamanhoMaiorParticula / ( ( NUMBER_OF_PARTICLES - 1 ) * ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20 ) );
+		Ogre::Real intensity = getSpecialStatus() == SpecialInterface::ATTACKING ? 1.0f : 0.3f + 0.7f * grown;
+		updateBallEffect( particleList[melhorParticula]->particle->mPosition, intensity );
+	}
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::collision( CollisionDetectionListener *other ){
@@ -258,6 +266,7 @@ void SpecialJyn::toDelete(){
 }
 //-------------------------------------------------------------------------------------
 void SpecialJyn::clear(){
+	releaseBallEffect();
 	times = 0;
     timePSO = 0;
     melhorFitness = 9999;

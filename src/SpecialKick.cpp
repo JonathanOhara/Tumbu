@@ -41,6 +41,7 @@ void SpecialKick::update(const Ogre::Real time){
 			
 		if( specialShape != NULL ){
 			particleList[0]->particle->mPosition = specialRigidBodyList.front()->getWorldPosition();
+			updateBallEffect( particleList[0]->particle->mPosition );
 		}
 
 		if(timeToResest <= 0){
@@ -106,6 +107,7 @@ void SpecialKick::concentrate(){
 	particula->particle->mPosition = Ogre::Vector3(position);
 
 	particleList.push_back(particula);
+	startBallEffect( "kick_ball", position, getKiColour( "kick" ) );
 }
 //-------------------------------------------------------------------------------------
 void SpecialKick::attack(Ogre::Quaternion orientation){
@@ -160,6 +162,7 @@ void SpecialKick::toDelete(){
 }
 //-------------------------------------------------------------------------------------
 void SpecialKick::clear(){
+	releaseBallEffect();
 	for(unsigned int i = 0; i < particleList.size(); i++){
 		delete particleList[i];
     }

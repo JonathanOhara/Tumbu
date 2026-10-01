@@ -11,6 +11,7 @@
 #include "CollisionDetectionListener.h"
 
 class Robot;
+class Effect;
 
 #define NUMBER_OF_PARTICLES 10
 
@@ -59,6 +60,14 @@ public:
 	/// Particle colour of an orb: the ki colour, and a random seed in alpha for the shader.
 	static Ogre::RGBA orbColour( const Ogre::ColourValue &ki );
 
+	/// Starts the effect that travels with this attack's ball (light, trail, sparks: effects.object); replaces one
+	/// already running.
+	void startBallEffect( const Ogre::String &effectName, const Ogre::Vector3 &position, const Ogre::ColourValue &ki );
+	/// Moves the ball effect (and sets its strength, 0..1).
+	void updateBallEffect( const Ogre::Vector3 &position, Ogre::Real intensity = 1 );
+	/// Lets the ball effect go: its light fades and its trail dies out on their own.
+	void releaseBallEffect(void);
+
 	Robot* getSpeller();
 	void setSpeller( Robot* _robotSpeller );
 
@@ -93,6 +102,8 @@ protected:
 	SpecialStatus specialStatus;
 	
 	int count;
+	/// The held effect following the ball (EffectsManager), or NULL.
+	Effect* ballEffect;
 private:
 };
 

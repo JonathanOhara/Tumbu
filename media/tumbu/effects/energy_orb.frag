@@ -56,6 +56,8 @@ MAIN_DECLARATION
     // Halo: bright near the edge, fading to nothing at the billboard border.
     float outside = max(rr - ball, 0.0);
     float halo = exp(-outside * 9.0) * (1.0 - smoothstep(0.75, 1.0, r)) * (1.0 - inside);
+    // The halo breathes a little, out of step between balls.
+    halo *= 0.85 + 0.15 * sin(t * 5.0);
 
     vec3 hot = mix(ki, vec3_splat(1.0), 0.75);
     vec3 colour = ki * halo * orbShape.z
