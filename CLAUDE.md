@@ -165,8 +165,11 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   the blur keeps alpha and the final pass mixes towards `skyColour x fogBrightness`. Sky pixels (beyond 600
   units) get none. `fogStart` / `fogDensity` / `fogMax` / `fogBrightness`. Works with shadows off too.
 - **Dust** (`dust.particle`, `Tumbu/Dust`, `Demo::createDust`): motes below the wall tops, additive, lit only
-  where the shadow map says sunlight reaches them, visible 3–10 units from the camera (closer ones would be
-  blobs, farther ones look like stars). `dustSunlight` (x the keyframe `shaftStrength`), `dustShadow`.
+  where the shadow map says sunlight reaches them. Each mote's random colour is a seed: `dust.vert` rebuilds
+  the billboard around its centre with its own size, a slow swirl and a twinkle (soft gaussian glow, not a
+  dot). Far motes grow and dim (always a few soft pixels, never a 1-pixel "star"); hidden within 3 units and
+  beyond 35. `billboardSize` in `shading.program` must match `particle_width`. `dustSunlight` (x the
+  keyframe `shaftStrength`), `dustShadow`.
 - **Screen-space AO** (`postprocess_ssao.frag`, `identifier 30`, half size + blur): world position and normal
   from depth, 12 spiral samples; the final pass multiplies the scene by it. `ssaoRadius`, `ssaoStrength`
   (0 = off). Note: the final pass cannot sample the depth texture (it reads zeros on Direct3D 11), so every
