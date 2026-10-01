@@ -27,6 +27,7 @@ int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
 Ogre::String DevTest::fxTest = "";
 Ogre::Real DevTest::fxTime = 0.3f;
+Ogre::Real DevTest::fxDistance = 4.0f;
 bool DevTest::fixedCamera = false;
 bool DevTest::flyTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
@@ -54,6 +55,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			flyTest = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-fxtest=" ) ){
 			fxTest = args[i].substr( 8 );	// effect names keep their case
+		}else if( Ogre::StringUtil::startsWith( arg, "-fxdistance=" ) ){
+			fxDistance = Ogre::StringConverter::parseReal( arg.substr( 12 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-fxtime=" ) ){
 			fxTime = Ogre::StringConverter::parseReal( arg.substr( 8 ) );
 		}else if( arg == "-jynwalk" ){
@@ -101,6 +104,7 @@ DevTest::DevTest(void){
 	walkDone	= false;
 	faceJynPresses = 0;
 	fxSpawned = false;
+	fxPresses = 0;
 	fxSpot = Ogre::Vector3::ZERO;
 	flyStep = 0;
 	tourStep	= 0;
@@ -253,6 +257,7 @@ void DevTest::faceCamera( const Ogre::FrameEvent &evt ){
 void DevTest::runFxTest(void){
 	// -fxtest=<effect>: start the effect in front of the hero fxTime seconds before the screenshot, and look at the
 	// hero and the effect from the side during the last half second (unless -camera or -faceshot place the camera).
+	// -fxtest=special:jyn|punch|kick: the hero uses that attack instead (Jyn: cast, then concentrate 0.3 s later).
 	Demo* demo = TUMBU::getInstance()->getDemo();
 	if( demo == NULL || demo->mainChar == NULL || EffectsManager::getInstance() == NULL ){
 		return;
@@ -261,17 +266,39 @@ void DevTest::runFxTest(void){
 	Ogre::Vector3 forward = hero->_getDerivedOrientation() * Ogre::Vector3::UNIT_Z;
 	forward.y = 0;
 	forward.normalise();
-	if( !fxSpawned && playTime >= quitAfter - fxTime ){
-		fxSpot = hero->_getDerivedPosition() + forward * 2.0f + Ogre::Vector3( 0, 1.2f, 0 );
+	Ogre::Vector3 front = hero->_getDerivedPosition() + forward * 2.0f + Ogre::Vector3( 0, 1.2f, 0 );
+
+	bool special = Ogre::StringUtil::startsWith( fxTest, "special:", false );
+	if( special ){
+		Ogre::String attack = fxTest.substr( 8 );
+		bool jyn = attack == "jyn";
+		int presses = jyn ? 2 : 1;
+		if( fxPresses < presses && playTime >= quitAfter - fxTime + fxPresses * 0.3f ){
+			char key = jyn ? 'i' : ( attack == "kick" ? 'u' : 'o' );
+			log( "fxtest: hero " + attack + ( fxPresses == 0 ? "" : " (concentrate)" ) );
+			pressKey( key );
+			releaseKey( key );
+			fxPresses++;
+		}
+		// Jyn gathers above the head; punch and kick fly forward.
+		fxSpot = jyn ? hero->_getDerivedPosition() + Ogre::Vector3( 0, 2.0f, 0 ) + forward * 0.6f : front;
+		SpecialJyn* charging = jyn && demo->mainChar->jyn != NULL ? dynamic_cast<SpecialJyn*>( demo->mainChar->jyn->special ) : NULL;
+		if( charging != NULL && !charging->particleList.empty() && charging->getSpecialStatus() <= SpecialInterface::CONCENTRATED ){
+			fxSpot = charging->particleList[charging->melhorParticula]->particle->mPosition;	// the ball itself
+		}
+		fxSpawned = true;
+	}else if( !fxSpawned && playTime >= quitAfter - fxTime ){
+		fxSpot = front;
 		Effect* effect = EffectsManager::getInstance()->spawn( fxTest, fxSpot, Ogre::ColourValue( 0.6f, 0.85f, 1.0f ) );
 		log( "fxtest: " + fxTest + ( effect != NULL ? " started at " + Ogre::StringConverter::toString( fxSpot ) : " is not defined" ) );
 		fxSpawned = true;
 	}
 	if( !fixedCamera && faceShot == 0 && playTime >= quitAfter - 0.5f ){
-		Ogre::Vector3 centre = fxSpawned ? fxSpot : hero->_getDerivedPosition() + forward * 2.0f + Ogre::Vector3( 0, 1.2f, 0 );
-		Ogre::Vector3 middle = ( centre + hero->_getDerivedPosition() + Ogre::Vector3( 0, 1.0f, 0 ) ) * 0.5f;
+		Ogre::Vector3 centre = fxSpawned ? fxSpot : front;
+		// From afar the shot frames the hero and the effect; close up (-fxdistance under 3) only the effect.
+		Ogre::Vector3 middle = fxDistance < 3.0f ? centre : ( centre + hero->_getDerivedPosition() + Ogre::Vector3( 0, 1.0f, 0 ) ) * 0.5f;
 		Ogre::Vector3 right = forward.crossProduct( Ogre::Vector3::UNIT_Y );
-		placeCamera( middle + right * 4.0f + Ogre::Vector3( 0, 0.8f, 0 ) - forward * 0.5f, middle );
+		placeCamera( middle + right * fxDistance + Ogre::Vector3( 0, 0.2f * fxDistance, 0 ) - forward * ( 0.125f * fxDistance ), middle );
 	}
 }
 //-------------------------------------------------------------------------------------

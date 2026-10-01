@@ -1,5 +1,7 @@
 robot002 set{
 	name Amber
+	// Colour of this robot's ki (punch and kick energy), set by its head: green, like its eyes
+	kiColour 0.3 1 0.35
 }
 
 robot002 head{

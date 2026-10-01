@@ -1,5 +1,7 @@
 robot004 set{
 	name Guardian
+	// Colour of this robot's ki (punch and kick energy), set by its head: jade green, like its eyes
+	kiColour 0.25 1 0.7
 }
 
 robot004 head{

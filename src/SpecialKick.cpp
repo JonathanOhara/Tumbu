@@ -18,7 +18,7 @@ SpecialKick::SpecialKick( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _parti
 
 	particleSystem->_update(1);
 	particleSystem->setDefaultDimensions( PARTICLE_WIDTH, PARTICLE_HEIGHT );
-	particleSystem->setMaterialName(PARTICLE_MATERIAL);
+	particleSystem->setMaterialName(ORB_MATERIAL);
 	particleSystem->setSpeedFactor(0);
 
 	specialRigidNode = NULL;
@@ -98,9 +98,9 @@ void SpecialKick::concentrate(){
 	Ogre::Vector3 position(	robotSpeller->legsNode->_getDerivedPosition() );
 	position += robotSpeller->robotNode->getOrientation() * Ogre::Vector3(0, 0, 0.5f);
 			
-	particula->particle->setDimensions( PARTICLE_WIDTH * 2, PARTICLE_HEIGHT * 2 );
+	setOrbSize( particula->particle, PARTICLE_WIDTH * 2 );
 	particula->particle->mTimeToLive = PARTICLE_LIVE_TIME;
-	particula->particle->mColour = (PARTICLE_COLOR).getAsBYTE();
+	particula->particle->mColour = orbColour( getKiColour( "kick" ) );
 	particula->particle->mDirection = Ogre::Vector3::ZERO;
 	particula->particle->mRotationSpeed = 0;
 	particula->particle->mPosition = Ogre::Vector3(position);

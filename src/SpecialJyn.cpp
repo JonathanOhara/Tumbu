@@ -314,9 +314,10 @@ void SpecialJyn::createRandomParticles(){
 
 	particleSystem->_update(1);
 	particleSystem->setDefaultDimensions( PARTICLE_WIDTH, PARTICLE_HEIGHT );
-	particleSystem->setMaterialName(PARTICLE_MATERIAL);
+	particleSystem->setMaterialName(JYN_ORB_MATERIAL);
 	particleSystem->setSpeedFactor(0);
 
+	Ogre::ColourValue kiColour = getKiColour( "jyn" );
 	EnergyParticle* particula;
 
 	//Cria Particulas (objeto EnergyParticle) com posicoes e velocidades randomicas
@@ -335,9 +336,9 @@ void SpecialJyn::createRandomParticles(){
 			
 		fitnessAtual = Ogre::Real(avaliarDesempenho(position));
 
-		particula->particle->setDimensions( PARTICLE_WIDTH, PARTICLE_HEIGHT );
+		setOrbSize( particula->particle, PARTICLE_WIDTH );
 		particula->particle->mTimeToLive = PARTICLE_LIVE_TIME;
-		particula->particle->mColour = (PARTICLE_COLOR).getAsBYTE();
+		particula->particle->mColour = orbColour( kiColour );
 		particula->particle->mDirection = Ogre::Vector3::ZERO;
 		particula->particle->mRotationSpeed = 0;
 		particula->particle->mPosition = Ogre::Vector3(position);
@@ -419,7 +420,7 @@ void SpecialJyn::executaComplementoPSO(){
  	// Varre todas as particulas para saber qual tem melhor fitness
 	for(int j = 0; j < NUMBER_OF_PARTICLES; j++){
 		if(particleList[j]->active){
-			particleList[j]->particle->setDimensions(PARTICLE_WIDTH,PARTICLE_HEIGHT);
+			setOrbSize( particleList[j]->particle, PARTICLE_WIDTH );
 		}
 		if( particleList[j]->fitness < particleList[g]->fitness ){
 			g = j;
@@ -442,7 +443,7 @@ void SpecialJyn::executaComplementoPSO(){
 
 
 	//Altera Cor e Tamanho da melhor Particula
-	particleList[g]->particle->setDimensions(PARTICLE_WIDTH + tamanhoMaiorParticula, PARTICLE_HEIGHT + tamanhoMaiorParticula);
+	setOrbSize( particleList[g]->particle, PARTICLE_WIDTH + tamanhoMaiorParticula );
 	particleList[g]->active = true;
 
 	melhorParticula = g;

@@ -78,8 +78,12 @@ points compatible across sets.
   Each ball tracks its personal best and the global best position toward the target, weighted by inertia
   and the random factors `AC1`/`AC2`. This organic "swarming ki" motion is intentional. Keep it for
   multi-ball specials.
-- Energy look: red-orange balls (`PARTICLE_COLOR` 0.93/0.11/0.14, material `PE/energy`) with a point light,
-  plus `TumbuSpecialExplosion.particle` on impact.
+- Energy look (being reworked in 2026 towards anime ki attacks: DBZ, Naruto, Saint Seiya). **Jyn is Dragon Ball Z's
+  Genki Dama (Spirit Bomb)**: energy gathered from all around (the PSO swarm) into a ball above the raised hand,
+  blue-white (`kiColour` of `skill jyn` in `skills.object`). Punch and kick are ki blasts in the robot's own colour:
+  `kiColour` of its head's set (`robotNNN.object`), matching its eyes. Every ball is a procedural toon orb
+  (`Tumbu/EnergyOrb`, `media/tumbu/effects/`): white-hot core, saturated ki-coloured ball with spiral streaks, a
+  halo that blooms, and a dark ink ring so it reads on the white arena floor.
 - Robot stats are the **sum of the 5 parts** (hp, ap, attack, defense, velocity), so each part is a
   gameplay choice, not only a cosmetic one.
 

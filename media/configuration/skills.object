@@ -28,6 +28,8 @@ skill kick{
 
 skill jyn{
 	name Jyn
+	// Genki Dama blue-white (punch and kick have no kiColour: they use the robot's, from its eyes)
+	kiColour 0.4 0.7 1
 	damage 30
 	ap 60
 	energyBalls 10

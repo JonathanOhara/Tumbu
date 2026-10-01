@@ -1,0 +1,39 @@
+// Special-attack effect programs (energy orbs, sparks, rings...). Unified GLSL/HLSL like the robot and shading
+// programs; HLSL at shader model 4 (the default level-9 profile is too small).
+
+vertex_program energy_vs glsl glsles hlsl
+{
+    source energy.vert
+    target vs_4_0
+    default_params
+    {
+        param_named_auto wvpMat worldviewproj_matrix
+    }
+}
+
+// Energy orb, bright pass (additive).
+fragment_program energy_orb_ps glsl glsles hlsl
+{
+    source energy_orb.frag
+    target ps_4_0
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named orbShape float4 0.2 0.45 1.2 2.5
+        param_named orbMotion float4 1 1 0.05 0.7
+    }
+}
+
+// Energy orb, dark ring under it (alpha blended).
+fragment_program energy_orb_underlay_ps glsl glsles hlsl
+{
+    source energy_orb.frag
+    target ps_4_0
+    preprocessor_defines UNDERLAY=1
+    default_params
+    {
+        param_named_auto time time_0_x 1000
+        param_named orbShape float4 0.2 0.45 1.2 2.5
+        param_named orbMotion float4 1 1 0.05 0.7
+    }
+}

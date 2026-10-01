@@ -310,10 +310,13 @@ through a listener registry in `BaseApplication`.
 - `media/tumbu/robot00{1..5}/` holds one robot "set" each:
   - parts: `head/body/leftArm/rightArm/legs_00N.mesh` + `.skeleton` (upgraded to the Ogre 14 format)
   - textures in TGA
-  - `robot00N.material`, `robot00N.object` (stats and attach points) and the source `robot00N.blend`
+  - `robot00N.material`, `robot00N.object` (stats and attach points, `kiColour`: the robot's energy colour) and the source `robot00N.blend`
     (Blender 2.49)
 - `media/tumbu/robots/` holds the robot shaders (`robot_toon.*`, `robot_outline.*`, `robots.program`) and the
   base `robots.material`: `$outlineWidth`/`$outlineColour` per robot.
+- `media/tumbu/effects/` holds the special-attack effect shaders and materials (`effects.program`,
+  `effects.material`): `Tumbu/EnergyOrb` and `Tumbu/EnergyOrb/Jyn` are the procedural toon energy balls (particle colour
+  = ki colour, alpha = random seed; `ORB_SCALE` in `SpecialInterface.h`).
 - `media/tumbu/shading/` holds the shared toon lighting (`TumbuToon.h`), the arena shaders and base
   material (`Tumbu/EnvironmentToon`, used by `arena.material` and `coliseum.material`), and the
   post-processing compositor, material and shaders.

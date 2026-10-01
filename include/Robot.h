@@ -32,6 +32,8 @@ public:
 	virtual bool frameRenderingQueued(const Ogre::FrameEvent &evt) = 0;
 	/// Eye flare, 0..1 (see updateEyeGlow).
 	Ogre::Real getEyeGlowBoost(void) const { return eyeGlowBoost; }
+	/// Colour of this robot's ki (punch and kick energy): "kiColour" of its head's set (robotNNN.object).
+	Ogre::ColourValue getKiColour(void);
 
 	enum MoveKey{ UNDEFINED, NONE, RUNNING, UP, LEFT, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, RIGHT, GUARD, KICK, PUNCH, JYN };
 

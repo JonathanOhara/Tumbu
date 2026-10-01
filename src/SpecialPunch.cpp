@@ -18,7 +18,7 @@ SpecialPunch::SpecialPunch( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _par
 
 	particleSystem->_update(1);
 	particleSystem->setDefaultDimensions( PARTICLE_WIDTH, PARTICLE_HEIGHT );
-	particleSystem->setMaterialName(PARTICLE_MATERIAL);
+	particleSystem->setMaterialName(ORB_MATERIAL);
 	particleSystem->setSpeedFactor(0);
 
 	specialRigidNode = NULL;
@@ -99,9 +99,9 @@ void SpecialPunch::concentrate(){
 	position += robotSpeller->robotNode->getOrientation() * Ogre::Vector3(0, 0, 0.5f);
 	position.y += 0.2f;
 			
-	particula->particle->setDimensions( PARTICLE_WIDTH * 2, PARTICLE_HEIGHT * 2 );
+	setOrbSize( particula->particle, PARTICLE_WIDTH * 2 );
 	particula->particle->mTimeToLive = PARTICLE_LIVE_TIME;
-	particula->particle->mColour = (PARTICLE_COLOR).getAsBYTE();
+	particula->particle->mColour = orbColour( getKiColour( "punch" ) );
 	particula->particle->mDirection = Ogre::Vector3::ZERO;
 	particula->particle->mRotationSpeed = 0;
 	particula->particle->mPosition = Ogre::Vector3(position);

@@ -124,6 +124,19 @@ Robot::~Robot(void){
 	}
 }
 //-------------------------------------------------------------------------------------
+Ogre::ColourValue Robot::getKiColour(void){
+	// The head carries the eyes, so it sets the colour; red-orange (the 2011 energy colour) when not given.
+	Ogre::ColourValue colour( 0.93f, 0.25f, 0.14f, 1 );
+	if( head != NULL ){
+		ConfigNode* cfg = ConfigScriptLoader::getSingleton().getConfigScript( head->setName, "set" );
+		ConfigNode* ki = cfg != NULL ? cfg->findChild( "kiColour" ) : NULL;
+		if( ki != NULL && ki->getValues().size() >= 3 ){
+			colour = Ogre::ColourValue( ki->getValueF( 0 ), ki->getValueF( 1 ), ki->getValueF( 2 ), 1 );
+		}
+	}
+	return colour;
+}
+//-------------------------------------------------------------------------------------
 void Robot::updateEyeGlow( const Ogre::Real time ){
 	bool charging = jyn != NULL && jyn->isAttacking() && jyn->special != NULL
 		&& ( jyn->special->getSpecialStatus() == SpecialInterface::NONE			// cast: energy gathering

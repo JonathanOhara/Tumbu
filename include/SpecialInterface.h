@@ -26,6 +26,12 @@ class Robot;
 #define PARTICLE_LIGHT_DIFFUSE_COLOR Ogre::ColourValue::White
 #define PARTICLE_LIGHT_SPECULAR_COLOR Ogre::ColourValue::White
 
+// Energy orbs (effects.material): the ball fills 0.45 of the billboard's half size, so a billboard is ORB_SCALE x the ball's
+// diameter and the halo fits around it.
+#define ORB_SCALE 2.2f
+#define ORB_MATERIAL "Tumbu/EnergyOrb"
+#define JYN_ORB_MATERIAL "Tumbu/EnergyOrb/Jyn"
+
 class SpecialInterface: public CollisionDetectionListener{
 public:
 	SpecialInterface(void);
@@ -45,6 +51,13 @@ public:
 	
 	Robot* getTarget();
 	void setTarget( Robot* _robotTarget );
+
+	/// Colour of this attack's energy: "kiColour" of the skill in skills.object, or else the speller's (its head's eyes).
+	Ogre::ColourValue getKiColour( const Ogre::String &skillName );
+	/// Sizes a particle as an energy orb whose ball is diameter wide (0 hides it).
+	static void setOrbSize( Ogre::Particle* particle, Ogre::Real diameter );
+	/// Particle colour of an orb: the ki colour, and a random seed in alpha for the shader.
+	static Ogre::RGBA orbColour( const Ogre::ColourValue &ki );
 
 	Robot* getSpeller();
 	void setSpeller( Robot* _robotSpeller );

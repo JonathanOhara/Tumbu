@@ -1,5 +1,7 @@
 robot001 set{
 	name Lesser
+	// Colour of this robot's ki (punch and kick energy), set by its head: red, like its eyes
+	kiColour 1 0.22 0.15
 }
 
 robot001 head{

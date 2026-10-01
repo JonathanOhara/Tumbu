@@ -1,5 +1,7 @@
 robot003 set{
 	name Buzzy
+	// Colour of this robot's ki (punch and kick energy), set by its head: crimson (red eyes; a pinker red than Lesser)
+	kiColour 1 0.18 0.45
 }
 
 robot003 head{
