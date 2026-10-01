@@ -98,6 +98,11 @@ material Tumbu/PostProcess/Final{
                 tex_address_mode clamp
                 filtering linear linear none
             }
+
+            texture_unit shafts{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
         }
     }
 }
@@ -151,6 +156,32 @@ material Tumbu/PostProcess/BlurV : Tumbu/PostProcess/BlurH{
         pass{
             fragment_program_ref postprocess_blur_ps{
                 param_named blurDirection float4 0 1 0 0
+            }
+        }
+    }
+}
+
+// God rays (postprocess.compositor): depth of the scene and the sun's shadow map (bound by Lighting.cpp).
+material Tumbu/PostProcess/LightShafts{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_shafts_ps{
+            }
+
+            texture_unit depth{
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit shadowMap{
+                sampler_ref Tumbu/ShadowSampler
             }
         }
     }

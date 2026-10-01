@@ -1,18 +1,53 @@
 // Post-processing of a match (Lighting.cpp adds it to the viewport): the scene is rendered into a
-// half-float (HDR) texture; the bright parts are extracted at quarter size and blurred twice (bloom); the
-// final pass adds the bloom, then tone maps and grades the image onto the screen. The GUI is drawn after the
+// half-float (HDR) texture with a readable depth buffer; god rays are marched through the sun's shadow map at
+// half size and blurred; the bright parts are extracted at quarter size and blurred twice (bloom); the final
+// pass adds both, then tone maps and grades the image onto the screen. The GUI is drawn after the
 // compositor, so it is not affected.
 compositor Tumbu/PostProcess
 {
     technique
     {
-        texture scene target_width target_height PF_FLOAT16_RGBA
+        // scene 0 = colour, scene 1 = depth (read by the god rays)
+        texture scene target_width target_height PF_FLOAT16_RGBA PF_DEPTH32F
+        texture shaftsA target_width_scaled 0.5 target_height_scaled 0.5 PF_FLOAT16_RGBA
+        texture shaftsB target_width_scaled 0.5 target_height_scaled 0.5 PF_FLOAT16_RGBA
         texture bloomA target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
         texture bloomB target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
 
         target scene
         {
             input previous
+        }
+
+        // God rays: march, then one horizontal + vertical blur.
+        target shaftsA
+        {
+            input none
+            pass render_quad
+            {
+                // Lighting::notifyMaterialRender sets the matrices and the shadow map for this pass.
+                identifier 10
+                material Tumbu/PostProcess/LightShafts
+                input 0 scene 1
+            }
+        }
+        target shaftsB
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BlurH
+                input 0 shaftsA
+            }
+        }
+        target shaftsA
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BlurV
+                input 0 shaftsB
+            }
         }
 
         // Bloom: bright pass, then horizontal + vertical blur, twice (a wide, soft glow).
@@ -71,6 +106,7 @@ compositor Tumbu/PostProcess
                 material Tumbu/PostProcess/Final
                 input 0 scene
                 input 1 bloomA
+                input 2 shaftsA
             }
         }
     }

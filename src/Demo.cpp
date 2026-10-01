@@ -541,6 +541,8 @@ void Demo::createLightEffects(void){
 void Demo::createSky(){
 	sky = Sky::getInstance();
 	sky->setClock( tumbu->getClock() );
+	// The visible sun (or moon) follows the lighting rig.
+	lighting->setSky( sky );
 	tumbu->getRoot()->addFrameListener( sky );
 
 	switch( tumbu->getSkyQuality() ){

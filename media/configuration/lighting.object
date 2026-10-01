@@ -10,7 +10,7 @@
 // (and wraps from the last one back to the first).
 
 lighting configuration{
-	keyframes night dawn morning afternoon sunset dusk
+	keyframes night dawn morning afternoon sunset twilight dusk
 
 	// Toon ramp, applied to N.L remapped to 0..1: where the lit side starts, and how soft the edge is.
 	rampThreshold 0.5
@@ -43,6 +43,19 @@ lighting configuration{
 	saturation 1.15
 	contrast 1.05
 	vignette 0.3
+
+	// Hours when the light plays the moon (the visible sky puts the moon in its direction; otherwise the sun).
+	// The twilight keyframe brings the sun down to the horizon first, so the switch is not seen.
+	moonFrom 19.6
+	moonUntil 5.5
+
+	// God rays (volumetric sunlight through the shadow map): strength per unit of lit air, longest march in units,
+	// forward scattering (0 = same from every angle, 0.9 = only looking at the sun) and samples per pixel (4..32).
+	// A keyframe can scale the strength with its own shaftStrength (1 when missing).
+	shaftStrength 0.008
+	shaftDistance 40
+	shaftAnisotropy 0.5
+	shaftSteps 32
 }
 
 // Each keyframe: the hour it applies to; sun elevation and azimuth in degrees (azimuth 0 = +Z, 90 = +X); the
@@ -60,6 +73,7 @@ lighting night{
 	rimColour 0.45 0.55 1.00
 	rimStrength 0.45
 	exposure 1.27
+	shaftStrength 0.15
 }
 
 lighting dawn{
@@ -73,6 +87,7 @@ lighting dawn{
 	rimColour 1.00 0.75 0.60
 	rimStrength 0.45
 	exposure 0.97
+	shaftStrength 1.2
 }
 
 lighting morning{
@@ -112,10 +127,25 @@ lighting sunset{
 	rimColour 1.00 0.60 0.40
 	rimStrength 0.5
 	exposure 0.97
+	shaftStrength 2.0
+}
+
+lighting twilight{
+	hour 19.5
+	sunElevation 1
+	sunAzimuth 145
+	sunColour 0.70 0.42 0.38
+	skyColour 0.30 0.28 0.45
+	groundColour 0.16 0.12 0.14
+	shadowColour 0.36 0.36 0.66
+	rimColour 0.90 0.55 0.50
+	rimStrength 0.5
+	exposure 1.05
+	shaftStrength 1.2
 }
 
 lighting dusk{
-	hour 20
+	hour 20.5
 	sunElevation 30
 	sunAzimuth 200
 	sunColour 0.40 0.40 0.62
@@ -125,4 +155,5 @@ lighting dusk{
 	rimColour 0.60 0.55 1.00
 	rimStrength 0.45
 	exposure 1.17
+	shaftStrength 0.25
 }

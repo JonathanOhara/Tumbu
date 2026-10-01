@@ -1,5 +1,6 @@
 #include "Lighting.h"
 #include "Clock.h"
+#include "Sky.h"
 #include "ConfigScript.h"
 #include "TUMBU.h"
 Lighting* Lighting::instance = NULL;
@@ -34,8 +35,10 @@ static Ogre::Vector4 toVector4( const Ogre::ColourValue &c, Ogre::Real w ){
 Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	mSceneMgr = sceneMgr;
 	sun = NULL;
+	sky = NULL;
 	clock = NULL;
 	postProcessViewport = NULL;
+	postProcess = NULL;
 
 	const Ogre::String name = "configuration";
 	ConfigNode* cfg = requireScript( name );
@@ -55,6 +58,12 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	aoAmbient			= requireChild( cfg, name, "aoAmbient" )->getValueF();
 	aoDirect			= requireChild( cfg, name, "aoDirect" )->getValueF();
 	aoTint				= requireChild( cfg, name, "aoTint" )->getValueF();
+	moonFrom			= requireChild( cfg, name, "moonFrom" )->getValueF();
+	moonUntil			= requireChild( cfg, name, "moonUntil" )->getValueF();
+	shaftStrength		= requireChild( cfg, name, "shaftStrength" )->getValueF();
+	shaftDistance		= requireChild( cfg, name, "shaftDistance" )->getValueF();
+	shaftAnisotropy		= requireChild( cfg, name, "shaftAnisotropy" )->getValueF();
+	shaftSteps			= std::min( 32.0f, std::max( 4.0f, requireChild( cfg, name, "shaftSteps" )->getValueF() ) );
 
 	std::vector<Ogre::String> &names = requireChild( cfg, name, "keyframes" )->getValues();
 	for( size_t i = 0; i < names.size(); i++ ){
@@ -71,6 +80,7 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 //-------------------------------------------------------------------------------------
 Lighting::~Lighting(void){
 	if( postProcessViewport != NULL ){
+		postProcess->removeListener( this );
 		Ogre::CompositorManager::getSingleton().setCompositorEnabled( postProcessViewport, POST_PROCESS, false );
 		Ogre::CompositorManager::getSingleton().removeCompositor( postProcessViewport, POST_PROCESS );
 	}
@@ -86,7 +96,7 @@ Lighting* Lighting::getInstance(){
 //-------------------------------------------------------------------------------------
 void Lighting::declareSharedParameters(void){
 	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().createSharedParameters( SHARED_PARAMS );
-	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset" };
+	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -103,6 +113,7 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "bloomParams", Ogre::Vector4( 1.5f, 0.5f, 0, 0 ) );
 	params->setNamedConstant( "aoParams", Ogre::Vector4( 1, 0.5f, 0.5f, 0 ) );
 	params->setNamedConstant( "shadowOffset", Ogre::Vector4( 0, 0, 0, 0 ) );
+	params->setNamedConstant( "shaftParams", Ogre::Vector4( 0, 40, 0.5f, 16 ) );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
@@ -113,6 +124,8 @@ Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
 	k.sunAzimuth	= requireChild( node, name, "sunAzimuth" )->getValueF();
 	k.rimStrength	= requireChild( node, name, "rimStrength" )->getValueF();
 	k.exposure		= requireChild( node, name, "exposure" )->getValueF();
+	ConfigNode* shafts = node->findChild( "shaftStrength" );	// optional: 1 when missing
+	k.shaftStrength	= shafts != NULL ? shafts->getValueF() : 1.0f;
 	k.sunColour		= readColour( node, name, "sunColour" );
 	k.skyColour		= readColour( node, name, "skyColour" );
 	k.groundColour	= readColour( node, name, "groundColour" );
@@ -130,6 +143,7 @@ Lighting::Keyframe Lighting::blend( const Keyframe &a, const Keyframe &b, Ogre::
 	k.sunAzimuth	= a.sunAzimuth + turn * t;
 	k.rimStrength	= Ogre::Math::lerp( a.rimStrength, b.rimStrength, t );
 	k.exposure		= Ogre::Math::lerp( a.exposure, b.exposure, t );
+	k.shaftStrength	= Ogre::Math::lerp( a.shaftStrength, b.shaftStrength, t );
 	k.sunColour		= Ogre::Math::lerp( a.sunColour, b.sunColour, t );
 	k.skyColour		= Ogre::Math::lerp( a.skyColour, b.skyColour, t );
 	k.groundColour	= Ogre::Math::lerp( a.groundColour, b.groundColour, t );
@@ -149,6 +163,11 @@ void Lighting::setSun( Ogre::Light* _sun ){
 	sun = _sun;
 	sun->setType( Ogre::Light::LT_DIRECTIONAL );
 	sun->setCastShadows( TUMBU::getInstance()->isCastShadows() );
+	apply( current );
+}
+//-------------------------------------------------------------------------------------
+void Lighting::setSky( Sky* _sky ){
+	sky = _sky;
 	apply( current );
 }
 //-------------------------------------------------------------------------------------
@@ -211,6 +230,7 @@ void Lighting::apply( const Keyframe &k ){
 	Ogre::Real texelSize = shadows ? 1.0f / mSceneMgr->getShadowTextureConfigList()[0].width : 0.0f;
 	params->setNamedConstant( "shadowParams", Ogre::Vector4( shadows ? 1.0f : 0.0f, shadowBias, texelSize, shadowSoftness ) );
 	params->setNamedConstant( "shadowOffset", Ogre::Vector4( shadowNormalOffset, 0, 0, 0 ) );
+	params->setNamedConstant( "shaftParams", Ogre::Vector4( shaftStrength * k.shaftStrength, shaftDistance, shaftAnisotropy, shaftSteps ) );
 
 	// Materials lit by the shader generator (terrain, particles) use the scene's ambient light and the sun.
 	Ogre::ColourValue ambient = getAmbientColour();
@@ -220,6 +240,11 @@ void Lighting::apply( const Keyframe &k ){
 		sun->setDiffuseColour( k.sunColour );
 		sun->setSpecularColour( k.sunColour * 0.5f );
 	}
+	if( sky != NULL ){
+		// Between moonFrom and moonUntil (across midnight) the light plays the moon.
+		bool moon = k.hour >= moonFrom || k.hour < moonUntil;
+		sky->setLightDirection( -towardsSun, moon );
+	}
 }
 //-------------------------------------------------------------------------------------
 void Lighting::enablePostProcessing( Ogre::Viewport* viewport ){
@@ -228,6 +253,8 @@ void Lighting::enablePostProcessing( Ogre::Viewport* viewport ){
 		Ogre::LogManager::getSingleton().logError( "Lighting: the post-processing compositor is not supported, the scene renders without tone mapping" );
 		return;
 	}
+	compositor->addListener( this );
+	postProcess = compositor;
 	Ogre::CompositorManager::getSingleton().setCompositorEnabled( viewport, POST_PROCESS, true );
 	postProcessViewport = viewport;
 	Ogre::LogManager::getSingleton().logMessage( "Lighting: post-processing enabled" );
@@ -238,4 +265,30 @@ bool Lighting::frameRenderingQueued( const Ogre::FrameEvent &evt ){
 		update( clock->getHours() );
 	}
 	return true;
+}
+//-------------------------------------------------------------------------------------
+void Lighting::notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &material ){
+	if( passId != 10 || postProcessViewport == NULL ){
+		return;
+	}
+	// God-ray pass (postprocess.compositor, identifier 10): set here, right before it renders, so the camera and
+	// the focused shadow camera of this very frame are used (no lag when the camera moves).
+	Ogre::Pass* pass = material->getBestTechnique()->getPass( 0 );
+	Ogre::GpuProgramParametersSharedPtr params = pass->getFragmentProgramParameters();
+	Ogre::Camera* camera = postProcessViewport->getCamera();
+	Ogre::Matrix4 viewProj = camera->getProjectionMatrixWithRSDepth() * camera->getViewMatrix();
+	params->setNamedConstant( "invViewProj", viewProj.inverse() );
+	// OpenGL stores render textures upside down.
+	bool flipped = Ogre::Root::getSingleton().getRenderSystem()->getName().find( "OpenGL" ) != Ogre::String::npos;
+	Ogre::Vector3 eye = camera->getDerivedPosition();
+	params->setNamedConstant( "camPos", Ogre::Vector4( eye.x, eye.y, eye.z, flipped ? 1.0f : 0.0f ) );
+
+	if( mSceneMgr->isShadowTechniqueTextureBased() && sun != NULL && sun->getCastShadows() ){
+		Ogre::TexturePtr shadowTexture = mSceneMgr->getShadowTexture( 0 );
+		Ogre::Camera* shadowCamera = shadowTexture->getBuffer()->getRenderTarget()->getViewport( 0 )->getCamera();
+		Ogre::Matrix4 shadowViewProj = Ogre::Matrix4::CLIPSPACE2DTOIMAGESPACE *
+			shadowCamera->getProjectionMatrixWithRSDepth() * shadowCamera->getViewMatrix();
+		params->setNamedConstant( "shadowViewProj", shadowViewProj );
+		pass->getTextureUnitState( 1 )->_setTexturePtr( shadowTexture );
+	}
 }

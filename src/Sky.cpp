@@ -10,6 +10,9 @@ Sky::Sky(Ogre::SceneManager* sceneMgr){
 	caelum = NULL;
 	quality = 0;
 	clock = NULL;
+	hasLightDirection = false;
+	lightIsMoon = false;
+	lightDirection = Ogre::Vector3::NEGATIVE_UNIT_Y;
 
 	timeMultiplier = TUMBU::getInstance()->getTimeMultiplier();
 
@@ -20,6 +23,7 @@ Sky::Sky(Ogre::SceneManager* sceneMgr){
 Sky::~Sky(void){
 	if( caelum != NULL ){
 		TUMBU::getInstance()->mWindow->removeListener( caelum );
+		TUMBU::getInstance()->mWindow->removeListener( this );
 		Ogre::Root::getSingleton().removeFrameListener( caelum );
 		caelum->shutdown( true );
 		caelum = NULL;
@@ -70,6 +74,8 @@ void Sky::skyHighQuality(Ogre::Camera* camera){
 	caelum->attachViewport( TUMBU::getInstance()->mWindow->getViewport( 0 ) );
 	// Before each viewport update Caelum centres the sky on the camera and sizes it to the far clip distance.
 	TUMBU::getInstance()->mWindow->addListener( caelum );
+	// Added after Caelum: preRenderTargetUpdate runs after its frame update and before it places the sky.
+	TUMBU::getInstance()->mWindow->addListener( this );
 	caelum->setTimeScale( 0 );	// the game's Clock drives the time of day (see frameRenderingQueued)
 	caelum->setManageAmbientLight( false );
 	caelum->setManageSceneFog( Ogre::FOG_NONE );
@@ -123,4 +129,36 @@ bool Sky::frameRenderingQueued(const Ogre::FrameEvent &evt){
 	}
 
 	return true;
+}
+//-------------------------------------------------------------------------------------
+void Sky::setLightDirection( const Ogre::Vector3 &direction, bool isMoon ){
+	lightDirection = direction.normalisedCopy();
+	lightIsMoon = isMoon;
+	hasLightDirection = true;
+}
+//-------------------------------------------------------------------------------------
+void Sky::preRenderTargetUpdate( const Ogre::RenderTargetEvent &evt ){
+	if( caelum == NULL || !hasLightDirection ){
+		return;
+	}
+	// Caelum works with the direction the light travels, like Lighting::getLightDirection.
+	if( lightIsMoon ){
+		if( caelum->getMoon() != NULL ){
+			caelum->getMoon()->setLightDirection( lightDirection );
+		}
+		return;
+	}
+	Caelum::LongReal julianDay = caelum->getUniversalClock()->getJulianDay();
+	Ogre::Real dayTime = (Ogre::Real) fmod( julianDay, 1.0 );
+	Ogre::ColourValue sunLight = caelum->getSunLightColour( dayTime, lightDirection );
+	Ogre::ColourValue sunSphere = caelum->getSunSphereColour( dayTime, lightDirection );
+	if( caelum->getSun() != NULL ){
+		caelum->getSun()->update( lightDirection, sunLight, sunSphere );
+	}
+	if( caelum->getSkyDome() != NULL ){
+		caelum->getSkyDome()->setSunDirection( lightDirection );
+	}
+	if( caelum->getCloudSystem() != NULL ){
+		caelum->getCloudSystem()->update( 0, lightDirection, sunLight, caelum->getFogColour( dayTime, lightDirection ), sunSphere );
+	}
 }

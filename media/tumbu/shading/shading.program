@@ -71,6 +71,18 @@ fragment_program postprocess_blur_ps glsl glsles hlsl
     }
 }
 
+// God rays (Lighting.cpp sets invViewProj, shadowViewProj and camPos before the pass renders).
+fragment_program postprocess_shafts_ps glsl glsles hlsl
+{
+    source postprocess_shafts.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto viewportSize viewport_size
+    }
+}
+
 // Shadow caster for the arena (Tumbu/EnvironmentToon): depth only.
 vertex_program shadow_caster_vs glsl glsles hlsl
 {

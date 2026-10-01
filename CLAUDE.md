@@ -87,7 +87,7 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 | GUI | **MyGUI 3.5.1** (Ogre platform, BlackBlue theme). Layouts are in `media/gui/*.layout` | `GUI.cpp/.h` |
 | Audio | **miniaudio 0.11.25** + stb_vorbis. Files are loaded through Ogre resources; 3D sounds follow scene nodes | `Sound`, `SoundManager` |
 | Sky | Low: skydome material. High: **Caelum** day/night, **Direct3D 11 only** (Caelum ships only cg/hlsl shaders), driven by `Clock` | `Sky` |
-| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, integrated depth shadow map, HDR compositor with tone mapping | `Lighting`, `media/tumbu/shading/` |
+| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, integrated depth shadow map, HDR compositor with god rays, bloom and tone mapping; Caelum sun follows it | `Lighting`, `media/tumbu/shading/` |
 | Shaders | Robot and arena shaders in unified GLSL/HLSL (`OgreUnifiedShader.h`), sharing `TumbuToon.h`; materials set textures through `set $var` | `media/tumbu/robots/`, `media/tumbu/shading/` |
 | Scene format | `.scene` from Ogitor 0.4.4 + terrain page `.ogt`, parsed by our `DotSceneLoader` (rapidxml) | `media/scenes/arena` |
 | Installer | NSIS `Tumbu.nsi` (still the 2011 x86 layout; needs updating) | root |
@@ -143,6 +143,19 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
 - **Emissive glow:** robot materials set `$glowMap` (the `GMheadUV_00N.tga` masks) and `$glowColour`
   (tint, strength). The glow is the part's own texture colour where the mask is white, so each robot glows in
   its eye colour. `Robot::updateEyeGlow` passes a 0..1 flare (custom parameter 0) while Jyn builds up.
+- **God rays** (`postprocess_shafts.frag`): the scene texture has a readable depth attachment
+  (`PF_FLOAT16_RGBA PF_DEPTH32F`, `input 0 scene 1`). At half size each pixel marches up to 32 steps from the
+  camera to the visible surface through the sun's shadow map and adds scattered sunlight (Henyey-Greenstein
+  forward scattering, capped at 10x, soft-saturated), then one blur; the final pass adds it before tone
+  mapping. The pass has `identifier 10`: `Lighting::notifyMaterialRender` (a compositor listener) sets the
+  camera and shadow-camera matrices and binds the shadow texture right before it renders, so there is no
+  frame of lag. No shadows → no god rays. OpenGL stores the depth texture upside down (`camPos.w`).
+  Tuning: `shaftStrength` / `shaftDistance` / `shaftAnisotropy` / `shaftSteps`, plus an optional per-keyframe
+  `shaftStrength` multiplier (strong at dawn and sunset, weak at night).
+- **Visible sun = lighting sun.** `Sky` is a `RenderTargetListener` added after Caelum: in
+  `preRenderTargetUpdate` (after Caelum's frame update, before it places the sky) it sets Caelum's sun, sky
+  dome and clouds to `Lighting`'s direction, or its moon between `moonFrom` and `moonUntil`. The `twilight`
+  keyframe brings the sun to the horizon before the moon takes over.
 
 ### Object lifetime rules (each one was a real leak or crash)
 

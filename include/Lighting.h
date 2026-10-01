@@ -5,14 +5,15 @@
 #include <vector>
 
 class Clock;
+class Sky;
 
 /**
  * Lighting rig of a match: the sun, the ambient light, the shared toon-shading parameters ("TumbuLighting",
- * used by the robot and arena shaders) and the post-processing compositor (tone mapping and grading).
+ * used by the robot and arena shaders) and the post-processing compositor (god rays, bloom, tone mapping and grading).
  * The values come from media/configuration/lighting.object, as keyframes that the game clock blends through
  * the day.
  */
-class Lighting: public Ogre::FrameListener{
+class Lighting: public Ogre::FrameListener, public Ogre::CompositorInstance::Listener{
 public:
 	Lighting( Ogre::SceneManager* sceneMgr );
 	virtual ~Lighting(void);
@@ -24,6 +25,8 @@ public:
 	void setClock( Clock* _clock );
 	/// The directional light that plays the sun (and the moon at night); it also casts the shadows.
 	void setSun( Ogre::Light* _sun );
+	/// The visible sky (High quality) follows the lighting sun by day and puts the moon there at night.
+	void setSky( Sky* _sky );
 	/// Applies the lighting of the given time of day (0..24 hours).
 	void update( float hours );
 	/// Renders the viewport through the post-processing compositor until this object is deleted.
@@ -35,10 +38,12 @@ public:
 	Ogre::ColourValue getAmbientColour(void);
 
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
+	/// Before the god-ray pass: camera and shadow-map matrices, and the shadow map itself.
+	void notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &material );
 
 private:
 	struct Keyframe{
-		Ogre::Real hour, sunElevation, sunAzimuth, rimStrength, exposure;
+		Ogre::Real hour, sunElevation, sunAzimuth, rimStrength, exposure, shaftStrength;
 		Ogre::ColourValue sunColour, skyColour, groundColour, shadowColour, rimColour;
 	};
 
@@ -48,8 +53,10 @@ private:
 
 	Ogre::SceneManager* mSceneMgr;
 	Ogre::Light* sun;
+	Sky* sky;
 	Clock* clock;
 	Ogre::Viewport* postProcessViewport;
+	Ogre::CompositorInstance* postProcess;
 
 	std::vector<Keyframe> keyframes;
 	Keyframe current;
@@ -67,10 +74,16 @@ private:
 		shadowNormalOffset,
 		bloomThreshold,
 		bloomSoftKnee,
+		moonFrom,
+		moonUntil,
 		bloomStrength,
 		aoAmbient,
 		aoDirect,
-		aoTint;
+		aoTint,
+		shaftStrength,
+		shaftDistance,
+		shaftAnisotropy,
+		shaftSteps;
 
 	static Lighting* instance;
 };

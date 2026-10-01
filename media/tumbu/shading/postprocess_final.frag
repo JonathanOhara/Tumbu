@@ -4,6 +4,7 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 
 SAMPLER2D(scene, 0);
 SAMPLER2D(bloom, 1);
+SAMPLER2D(shafts, 2);
 
 OGRE_UNIFORMS(
     // x = exposure, y = saturation, z = contrast, w = vignette
@@ -26,7 +27,8 @@ MAIN_PARAMETERS
 IN(vec2 oUv, TEXCOORD0)
 MAIN_DECLARATION
 {
-    vec3 colour = (texture2D(scene, oUv).rgb + texture2D(bloom, oUv).rgb * bloomParams.z) * postParams.x;
+    vec3 colour = (texture2D(scene, oUv).rgb + texture2D(bloom, oUv).rgb * bloomParams.z + texture2D(shafts, oUv).rgb)
+        * postParams.x;
     colour = softShoulder(colour);
 
     float luma = dot(colour, vec3(0.2126, 0.7152, 0.0722));

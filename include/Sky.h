@@ -11,7 +11,7 @@
 class Clock;
 namespace Caelum{ class CaelumSystem; }
 
-class Sky: public Ogre::FrameListener{
+class Sky: public Ogre::FrameListener, public Ogre::RenderTargetListener{
 public:
 	Sky( Ogre::SceneManager* sceneMgr );
 	virtual ~Sky(void);
@@ -25,6 +25,12 @@ public:
 	void updateCaelumTime(void);
 	
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
+
+	/** The lighting sun (or moon, at night) that the visible sky follows (Lighting::apply). Caelum computes an
+	 *  astronomical sun from the date; without this its sun disc did not match the shadows. */
+	void setLightDirection( const Ogre::Vector3 &direction, bool isMoon );
+	/// Applies the lighting direction to Caelum after its own per-frame update, before the frame renders.
+	void preRenderTargetUpdate( const Ogre::RenderTargetEvent &evt );
 
 protected:
 
@@ -43,6 +49,9 @@ private:
 
 	/// Day/night sky for the "High" quality (Direct3D 11 only: Caelum has no GLSL shaders).
 	Caelum::CaelumSystem* caelum;
+
+	bool hasLightDirection, lightIsMoon;
+	Ogre::Vector3 lightDirection;
 
 	static Sky* instance;
 };
