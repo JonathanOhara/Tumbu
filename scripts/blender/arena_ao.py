@@ -109,7 +109,7 @@ def clean_mesh(ob):
                 if v in e.verts:
                     continue
                 point, t = intersect_point_line(v.co, a, b)
-                if 0.001 < t < 0.999 and (point - v.co).length < 0.002:
+                if 0.001 < t < 0.999 and (point - v.co).length < 0.02:	# up to 2 cm: the 2011 model has 1-2 cm gaps
                     found = (e, v, t)
                     break
             if found:

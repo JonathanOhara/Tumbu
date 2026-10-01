@@ -214,7 +214,7 @@ project.
      names the materials as the game does;
   2. every run: bakes Cycles AO through the `AO` UV map into `media/tumbu/arena/<mesh>_ao.png` (every
      object in the scene occludes) and exports `<mesh>.mesh` with blender2ogre (two UV sets).
-- The build also cleans the 2011 meshes (`clean_mesh`): it stitches T-junctions (the coliseum had two,
+- The build also cleans the 2011 meshes (`clean_mesh`): it stitches T-junctions within 2 cm (the coliseum had six,
   hairline cracks on the upper ring), removes loose edges, and marks edges sharper than 30 degrees as hard.
   Every face used to be smooth-shaded, so the window jambs and flat walls showed diagonal gradients.
 - **AO textures use clamp addressing** (`tex_address_mode clamp` in `Tumbu/EnvironmentToon`).
