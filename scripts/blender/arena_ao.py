@@ -19,7 +19,9 @@ import bpy
 import os
 import sys
 import addon_utils
+import bmesh
 import math
+from mathutils.geometry import intersect_point_line
 from mathutils import Matrix
 
 args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
@@ -70,6 +72,7 @@ def build():
         ob["tumbu_ao_size"] = size
         if ob.material_slots and ob.material_slots[0].material:
             ob.material_slots[0].material.name = material
+        clean_mesh(ob)
         add_ao_uv(ob)
         log("imported %s from %s (%d vertices)" % (name, source, len(ob.data.vertices)))
 
@@ -79,6 +82,54 @@ def build():
     os.makedirs(ART, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=BLEND)
     log("created " + BLEND)
+
+
+def clean_mesh(ob):
+    """Fixes 2011 modelling problems that show up under the toon lighting.
+
+    - T-junctions (a vertex on another face's open edge, not connected to it) leave hairline cracks that
+      show the dark inside: the edge is split there and welded to the vertex.
+    - Loose edges and vertices (no faces) are removed.
+    - Every face was smooth-shaded with no sharp edges, so normals were averaged across 90-degree corners
+      and flat walls showed diagonal gradients: edges sharper than 30 degrees become hard edges.
+    """
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bmesh.ops.delete(bm, geom=[e for e in bm.edges if e.is_wire], context='EDGES')
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_edges], context='VERTS')
+
+    stitched = 0
+    while True:
+        found = None
+        boundary = [e for e in bm.edges if e.is_boundary]
+        boundary_verts = {v for e in boundary for v in e.verts}
+        for e in boundary:
+            a, b = e.verts[0].co, e.verts[1].co
+            for v in boundary_verts:
+                if v in e.verts:
+                    continue
+                point, t = intersect_point_line(v.co, a, b)
+                if 0.001 < t < 0.999 and (point - v.co).length < 0.002:
+                    found = (e, v, t)
+                    break
+            if found:
+                break
+        if not found:
+            break
+        e, v, t = found
+        new_edge, new_vert = bmesh.utils.edge_split(e, e.verts[0], t)
+        bmesh.ops.pointmerge(bm, verts=[new_vert, v], merge_co=v.co)
+        stitched += 1
+
+    bm.to_mesh(ob.data)
+    bm.free()
+
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active = ob
+    ob.select_set(True)
+    bpy.ops.object.shade_smooth_by_angle(angle=math.radians(30), keep_sharp_edges=True)
+    sharp = sum(1 for e in ob.data.edges if e.use_edge_sharp)
+    log("cleaned %s: %d T-junctions stitched, %d hard edges" % (ob.name, stitched, sharp))
 
 
 def add_ao_uv(ob):
@@ -115,6 +166,21 @@ def bake_target(ob, image):
         nodes.active = node
 
 
+def clean_ao(image, passes=2):
+    """Median filter (3x3, `passes` times): removes bake noise and one-texel speckles while keeping the
+    edges of the occlusion gradients."""
+    import numpy as np
+    w, h = image.size
+    px = np.array(image.pixels[:], dtype=np.float32).reshape(h, w, 4)
+    ao = px[:, :, 0]
+    for _ in range(passes):
+        padded = np.pad(ao, 1, mode='edge')
+        stack = np.stack([padded[y:y + h, x:x + w] for y in range(3) for x in range(3)])
+        ao = np.median(stack, axis=0)
+    px[:, :, 0] = px[:, :, 1] = px[:, :, 2] = ao
+    image.pixels[:] = px.ravel()
+
+
 def bake(ob, scene):
     size = int(ob.get("tumbu_ao_size", 1024))
     name = ob.name + "_ao"
@@ -130,6 +196,7 @@ def bake(ob, scene):
     bpy.context.view_layer.objects.active = ob
     ob.select_set(True)
     bpy.ops.object.bake(type='AO', uv_layer=AO_UV, margin=8, margin_type='EXTEND')
+    clean_ao(image)
 
     path = os.path.join(MEDIA, name + ".png")
     image.filepath_raw = path

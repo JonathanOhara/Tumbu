@@ -38,7 +38,7 @@ lighting configuration{
 	aoTint 0.5
 
 	// Final image: saturation and contrast (1 = unchanged), and how much the corners darken.
-	saturation 1.1
+	saturation 1.15
 	contrast 1.05
 	vignette 0.3
 }
@@ -57,7 +57,7 @@ lighting night{
 	shadowColour 0.30 0.34 0.60
 	rimColour 0.45 0.55 1.00
 	rimStrength 0.45
-	exposure 1.35
+	exposure 1.27
 }
 
 lighting dawn{
@@ -67,36 +67,36 @@ lighting dawn{
 	sunColour 1.00 0.68 0.48
 	skyColour 0.36 0.38 0.54
 	groundColour 0.22 0.17 0.16
-	shadowColour 0.38 0.36 0.62
+	shadowColour 0.36 0.38 0.68
 	rimColour 1.00 0.75 0.60
 	rimStrength 0.45
-	exposure 1.05
+	exposure 0.97
 }
 
 lighting morning{
 	hour 9
 	sunElevation 38
 	sunAzimuth 75
-	sunColour 1.00 0.95 0.86
-	skyColour 0.36 0.44 0.60
-	groundColour 0.24 0.23 0.22
-	shadowColour 0.46 0.52 0.74
+	sunColour 1.00 0.88 0.70
+	skyColour 0.32 0.42 0.62
+	groundColour 0.25 0.22 0.18
+	shadowColour 0.42 0.50 0.78
 	rimColour 0.80 0.90 1.00
 	rimStrength 0.35
-	exposure 1.0
+	exposure 0.92
 }
 
 lighting afternoon{
 	hour 15
 	sunElevation 42
 	sunAzimuth 120
-	sunColour 1.00 0.93 0.80
-	skyColour 0.36 0.44 0.60
-	groundColour 0.25 0.23 0.21
-	shadowColour 0.46 0.51 0.74
+	sunColour 1.00 0.88 0.70
+	skyColour 0.32 0.42 0.62
+	groundColour 0.25 0.22 0.18
+	shadowColour 0.42 0.50 0.78
 	rimColour 0.85 0.90 1.00
 	rimStrength 0.35
-	exposure 1.0
+	exposure 0.92
 }
 
 lighting sunset{
@@ -106,10 +106,10 @@ lighting sunset{
 	sunColour 1.00 0.64 0.40
 	skyColour 0.34 0.36 0.52
 	groundColour 0.21 0.17 0.16
-	shadowColour 0.40 0.40 0.66
+	shadowColour 0.38 0.42 0.72
 	rimColour 1.00 0.60 0.40
 	rimStrength 0.5
-	exposure 1.05
+	exposure 0.97
 }
 
 lighting dusk{
@@ -122,5 +122,5 @@ lighting dusk{
 	shadowColour 0.32 0.32 0.60
 	rimColour 0.60 0.55 1.00
 	rimStrength 0.45
-	exposure 1.25
+	exposure 1.17
 }
