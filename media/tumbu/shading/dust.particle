@@ -1,11 +1,14 @@
-// Dust floating in the arena air: tiny motes that drift slowly and only shine in sunlight (Tumbu/Dust), so
-// they sparkle inside the god rays. Created by Demo::createDust over the arena centre.
+// Dust floating in the arena air: tiny motes that drift and swirl slowly and only shine in sunlight
+// (Tumbu/Dust), so they sparkle inside the god rays. Created by Demo::createDust over the arena centre.
+// Each mote's colour is a random seed for the shader (size, brightness, twinkle and swirl), not a colour;
+// alpha fades the mote in and out.
 particle_system Tumbu/ArenaDust
 {
     material Tumbu/Dust
-    particle_width 0.06
-    particle_height 0.06
-    quota 1000
+    // Base size: the shader scales each mote 0.4x..1.4x (it must know this value: dust.vert billboardSize).
+    particle_width 0.08
+    particle_height 0.08
+    quota 2000
     billboard_type point
     cull_each false
 
@@ -14,32 +17,35 @@ particle_system Tumbu/ArenaDust
         width 44
         height 9
         depth 44
-        emission_rate 100
+        emission_rate 200
         time_to_live_min 8
         time_to_live_max 12
         direction 0 1 0
         angle 180
-        velocity_min 0.02
-        velocity_max 0.1
-        colour 1 1 1 1
+        velocity_min 0.06
+        velocity_max 0.18
+        colour_range_start 0 0 0 0
+        colour_range_end 1 1 1 0
     }
 
-    // Fade in and out, so motes never pop.
-    affector ColourInterpolator
+    // Fade in over 2 s, out over the last 2 s (rgb, the seed, stays the same).
+    affector ColourFader2
     {
-        colour0 1 1 1 0
-        time0 0
-        colour1 1 1 1 1
-        time1 0.2
-        colour2 1 1 1 1
-        time2 0.8
-        colour3 1 1 1 0
-        time3 1
+        red1 0
+        green1 0
+        blue1 0
+        alpha1 0.5
+        state_change 2
+        red2 0
+        green2 0
+        blue2 0
+        alpha2 -0.5
     }
 
+    // Air currents: the direction keeps changing a little.
     affector DirectionRandomiser
     {
-        randomness 0.08
+        randomness 0.25
         scope 1
         keep_velocity true
     }

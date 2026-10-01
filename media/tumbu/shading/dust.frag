@@ -1,5 +1,5 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
-// Dust motes: a soft dot that only shines where the sun reaches it (inside the god rays), additive.
+// Dust motes: a soft glow that only shines where the sun reaches it (inside the god rays), additive.
 #include <OgreUnifiedShader.h>
 #include "TumbuToon.h"
 
@@ -18,7 +18,8 @@ IN(vec4 oColour, TEXCOORD2)
 MAIN_DECLARATION
 {
     float dist = length(oUv - vec2(0.5, 0.5)) * 2.0;
-    float disc = 1.0 - smoothstep(0.2, 1.0, dist);
+    // Soft gaussian glow (a faint haze of light, not a hard dot), reaching zero at the billboard edge.
+    float disc = exp(-dist * dist * 5.0) * (1.0 - smoothstep(0.8, 1.0, dist));
     float lit = 0.0;
     if (shadowParams.x > 0.5)
     {

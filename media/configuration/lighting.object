@@ -73,7 +73,7 @@ lighting configuration{
 
 	// Dust motes (dust.particle): brightness in sunlight (scaled by the keyframe shaftStrength) and in shadow.
 	// dustSunlight 0 hides them.
-	dustSunlight 0.6
+	dustSunlight 4.0
 	dustShadow 0.02
 
 	// Screen-space AO: contact darkening between moving things (robots and floor, robots and walls). Radius in

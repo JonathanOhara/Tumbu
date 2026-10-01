@@ -132,6 +132,9 @@ vertex_program dust_vs glsl glsles hlsl
     target vs_4_0
     default_params
     {
+        param_named_auto invViewMat inverse_view_matrix
+        param_named_auto time time_0_x 1000
+        param_named billboardSize float 0.08
         param_named_auto camPos camera_position
         param_named_auto wMat world_matrix
         param_named_auto vpMat viewproj_matrix
