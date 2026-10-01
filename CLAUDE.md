@@ -8,6 +8,7 @@ Jonathan made all code, models, textures, music and UI. In Sep 2026 it was reviv
 - Step-by-step setup (tools, dependencies, building in Visual Studio, tests, troubleshooting):
   **[docs/DEV_SETUP.md](docs/DEV_SETUP.md)**.
 - Port history and decisions: **[docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md)**.
+- Backlog of lighting, shadow and environment ideas: **[docs/IMPROVEMENT_IDEAS.md](docs/IMPROVEMENT_IDEAS.md)**.
 - **Before any work on robots, models, parts, animations, specials or the game's look and feel, read
   [docs/ART_AND_DESIGN.md](docs/ART_AND_DESIGN.md).** It covers:
   - the vision: robot customization is the core, with energy/ki combat
