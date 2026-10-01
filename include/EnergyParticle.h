@@ -21,6 +21,10 @@ public:
 	Ogre::Vector3 velocity;
 	/// Its stream (trail) while it flies into the Genki Dama (EffectsManager, held), or NULL.
 	Effect* stream;
+	/// Homing flight into the Genki Dama (SpecialJyn, gather homing): start offset from the gathering point, and the
+	/// seconds it waits, has flown and takes.
+	Ogre::Vector3 startOffset;
+	Ogre::Real flightDelay, flightAge, flightTime;
 protected:
 private:
 };

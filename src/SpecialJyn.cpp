@@ -6,6 +6,7 @@
 #include "SoundManager.h"
 #include "EffectsManager.h"
 #include "Effect.h"
+#include "ConfigScript.h"
 //-------------------------------------------------------------------------------------
 SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particleSystemNode, Robot* _speller, Physics::DynamicsWorld* _world, int _count, float _damage ){
 	world = _world;
@@ -26,6 +27,9 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	tamanhoMaiorParticula = 0;
 	tamanhoVisivel = 0;
 	convergiu = false;
+	// skills.object, skill jyn: "gather homing" (default) or "gather pso" (the 2011 Particle Swarm Optimization).
+	ConfigNode* gather = ConfigScriptLoader::getSingleton().getConfigScript( "skill", "jyn" )->findChild( "gather" );
+	usePSO = gather != NULL && gather->getValue() == "pso";
 
 	explosionParticleSystem = NULL;	
 	specialShape = NULL;
@@ -77,6 +81,9 @@ void SpecialJyn::update(const Ogre::Real time){
 	}
 
 	if ( getSpecialStatus() == SpecialInterface::CONCENTRATING ){
+		if( !usePSO ){
+			executaHoming( time );
+		}else{
 		timePSO += time;
 		if( timePSO > 0.05f ) {
 			timePSO -= 0.05f;
@@ -99,6 +106,7 @@ void SpecialJyn::update(const Ogre::Real time){
 			}else{
 				convergiu = true;
 			}
+		}
 		}
 		// Ready to throw once the swarm has converged and the ball has finished growing.
 		if( convergiu && tamanhoVisivel >= tamanhoMaiorParticula - 0.001f ){
@@ -128,9 +136,11 @@ void SpecialJyn::update(const Ogre::Real time){
 	if( !particleList.empty() ){
 		bool charging = getSpecialStatus() <= SpecialInterface::CONCENTRATED;
 		if( charging ){
-			// Once the first swarm ball has merged, the ball settles at the gathering point above the hand (where the
-			// light, the lightning and the motes are) and stays there; the PSO keeps steering the other balls.
-			if( tamanhoMaiorParticula > 0 ){
+			// The ball sits at the gathering point above the hand (where the light, the lightning and the motes are).
+			// Homing: always (particle 0 is the ball). PSO: once the first swarm ball has merged.
+			if( !usePSO ){
+				particleList[melhorParticula]->particle->mPosition = targetVector;
+			}else if( tamanhoMaiorParticula > 0 ){
 				EnergyParticle* ball = particleList[melhorParticula];
 				ball->particle->mPosition += ( targetVector - ball->particle->mPosition ) * std::min( 1.0f, 8.0f * time );
 				ball->velocity = Ogre::Vector3::ZERO;
@@ -142,7 +152,11 @@ void SpecialJyn::update(const Ogre::Real time){
 			if( missing > 0 ){
 				tamanhoVisivel += std::min( missing, std::max( missing * 4.0f, 0.06f ) * time );
 			}
-			if( getSpecialStatus() != SpecialInterface::NONE ){	// hidden until the concentrate press
+			if( !usePSO ){
+				// Homing: the ball grows from nothing to its full size as the swarm balls arrive.
+				Ogre::Real full = ( NUMBER_OF_PARTICLES - 1 ) * ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20;
+				setOrbSize( particleList[melhorParticula]->particle, ( PARTICLE_WIDTH + full ) * tamanhoVisivel / full );
+			}else if( getSpecialStatus() != SpecialInterface::NONE ){
 				setOrbSize( particleList[melhorParticula]->particle, PARTICLE_WIDTH + tamanhoVisivel );
 			}
 		}
@@ -223,13 +237,23 @@ Physics::RigidBody* SpecialJyn::getOgreBulletRigidBody( const std::string& insta
 void SpecialJyn::concentrate(){
 	setSpecialStatus( SpecialInterface::CONCENTRATING );
 
-	// The gathering starts now (not at the cast): the swarm balls appear and stream in, the Genki Dama's light
+	// The swarm balls show from the cast; the gathering at the hand starts now: they fly in, the Genki Dama's light
 	// follows the ball, and the motes, dust and lightning gather at the raised hand.
 	Ogre::ColourValue ki = getKiColour( "jyn" );
 	for( unsigned int i = 0; i < particleList.size(); i++ ){
-		setOrbSize( particleList[i]->particle, PARTICLE_WIDTH );
-		if( EffectsManager::getInstance() != NULL && particleList[i]->stream == NULL ){
-			particleList[i]->stream = EffectsManager::getInstance()->spawn( "jyn_mote", particleList[i]->particle->mPosition, ki, true );
+		EnergyParticle* ball = particleList[i];
+		if( !usePSO ){
+			if( i == 0 ){
+				continue;	// the Genki Dama itself
+			}
+			// One after another over about 1.2 s, each flight 0.7..1 s, from where it is now.
+			ball->startOffset = ball->particle->mPosition - targetVector;
+			ball->flightAge = 0;
+			ball->flightDelay = ( i - 1 ) * 1.2f / ( NUMBER_OF_PARTICLES - 1 ) + Ogre::Math::RangeRandom( 0, 0.15f );
+			ball->flightTime = Ogre::Math::RangeRandom( 0.7f, 1.0f );
+		}
+		if( EffectsManager::getInstance() != NULL && ball->stream == NULL ){
+			ball->stream = EffectsManager::getInstance()->spawn( "jyn_mote", ball->particle->mPosition, ki, true );
 		}
 	}
 	if( !particleList.empty() ){
@@ -402,6 +426,13 @@ void SpecialJyn::createRandomParticles(){
 		Ogre::Vector3 position(	Ogre::Math::RangeRandom( targetVector.x - 10, targetVector.x + 10), 
 			Ogre::Math::RangeRandom(targetVector.y -2, targetVector.y + 2), 
 			Ogre::Math::RangeRandom(targetVector.z - 10, targetVector.z + 10));
+		if( !usePSO ){
+			// Homing: the ball (0) at the gathering point; the swarm on a ring 3..6 units around, at varied heights.
+			Ogre::Radian angle( Ogre::Math::RangeRandom( 0, Ogre::Math::TWO_PI ) );
+			Ogre::Real distance = Ogre::Math::RangeRandom( 3, 6 );
+			position = i == 0 ? targetVector : targetVector + Ogre::Vector3( Ogre::Math::Cos( angle ) * distance,
+				Ogre::Math::RangeRandom( -1.0f, 2.0f ), Ogre::Math::Sin( angle ) * distance );
+		}
 
 		Ogre::Vector3 velocity(	Ogre::Math::RangeRandom(-4.0f, 4.0f), 
 			Ogre::Math::RangeRandom(-5.0f, 5.0f), 
@@ -409,8 +440,8 @@ void SpecialJyn::createRandomParticles(){
 			
 		fitnessAtual = Ogre::Real(avaliarDesempenho(position));
 
-		// Hidden until the concentrate press (concentrate()): the cast only makes the eyes flare.
-		particula->particle->setDimensions( 0, 0 );
+		// The swarm shows from the cast; with homing the ball (0) starts with no size and grows as the swarm arrives.
+		setOrbSize( particula->particle, !usePSO && i == 0 ? 0 : PARTICLE_WIDTH );
 		particula->particle->mTimeToLive = PARTICLE_LIVE_TIME;
 		particula->particle->mColour = orbColour( kiColour );
 		particula->particle->mDirection = Ogre::Vector3::ZERO;
@@ -630,6 +661,39 @@ void SpecialJyn::releaseChargeEffect(void){
 	if( chargeEffect != NULL ){
 		chargeEffect->release();
 		chargeEffect = NULL;
+	}
+}
+//-------------------------------------------------------------------------------------
+void SpecialJyn::executaHoming( Ogre::Real time ){
+	// Each swarm ball waits its turn, then flies into the gathering point: slow at first, fast at the end, turning a
+	// little around it and arcing up. Positions are relative to the gathering point, so they follow the robot. On
+	// arrival it merges: the ball grows by one step (tamanhoVisivel then eases towards it in update).
+	melhorParticula = 0;
+	bool flying = false;
+	for( unsigned int i = 1; i < particleList.size(); i++ ){
+		EnergyParticle* ball = particleList[i];
+		if( !ball->active ){
+			continue;
+		}
+		flying = true;
+		ball->flightAge += time;
+		Ogre::Real t = ( ball->flightAge - ball->flightDelay ) / ball->flightTime;
+		if( t >= 1 ){
+			ball->active = false;
+			ball->particle->setDimensions( 0, 0 );
+			ball->particle->mPosition = targetVector;
+			tamanhoMaiorParticula += ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20;
+			continue;
+		}
+		t = std::max<Ogre::Real>( t, 0 );
+		Ogre::Real e = t * t;
+		Ogre::Quaternion turn( Ogre::Radian( 0.9f * e ), Ogre::Vector3::UNIT_Y );
+		Ogre::Vector3 offset = turn * ( ball->startOffset * ( 1 - e ) );
+		offset.y += Ogre::Math::Sin( Ogre::Math::PI * t ) * 0.6f;
+		ball->particle->mPosition = targetVector + offset;
+	}
+	if( !flying ){
+		convergiu = true;
 	}
 }
 //-------------------------------------------------------------------------------------

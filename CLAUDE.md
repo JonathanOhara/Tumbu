@@ -272,7 +272,8 @@ through a listener registry in `BaseApplication`.
 - `Skill` (punch, kick, jyn): damage, AP cost, energy balls and XP/levels from `skills.object`.
   - `SpecialManager` spawns `SpecialPunch` / `SpecialKick` / `SpecialJyn`, which are physics projectiles
     built from `EnergyParticle`s.
-  - Jyn uses **Particle Swarm Optimization**, which is intentional.
+  - Jyn's swarm flies into the ball by homing (`SpecialJyn::executaHoming`); the 2011 **Particle Swarm
+    Optimization** (college project) is kept and selected with `gather pso` in `skill jyn` (`skills.object`).
   - `SkillHit` / `SkillHitManager` show floating damage text.
 - `AIManager` → `RobotAI` → `RobotDefensiveAI` simulates key presses on the enemy.
 - `Camera` is a third-person chase/lock camera configured by `camera.object`.

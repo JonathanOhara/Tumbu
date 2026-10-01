@@ -74,12 +74,14 @@ points compatible across sets.
     releases a swarm of 10 energy balls.
   - Skills cost **AP** (energy, which regenerates) and gain XP and levels.
 - **Guard** blocks. The `*_deflect` animations handle deflects.
-- The Jyn swarm's flight uses **Particle Swarm Optimization (PSO)** (`SpecialJyn.cpp`, `EnergyParticle`).
-  Each ball tracks its personal best and the global best position toward the target, weighted by inertia
-  and the random factors `AC1`/`AC2`. This organic "swarming ki" motion is intentional. Keep it for
-  multi-ball specials.
+- The Jyn swarm gathers by **homing** (default since 2026-10): each energy ball waits its turn, then flies into
+  the Genki Dama (accelerating, turning a little, arcing up) and merges, so the ball grows one step per arrival.
+  The 2011 **Particle Swarm Optimization (PSO)** of the college project is kept (`gather pso` in `skill jyn`,
+  `skills.object`): each ball tracks its personal best and the global best position toward the target, weighted
+  by inertia and the random factors `AC1`/`AC2`. It was replaced as the default because it sometimes left the
+  ball away from the hand.
 - Energy look (being reworked in 2026 towards anime ki attacks: DBZ, Naruto, Saint Seiya). **Jyn is Dragon Ball Z's
-  Genki Dama (Spirit Bomb)**: energy gathered from all around (the PSO swarm) into a ball above the raised hand (`SpecialJyn::getChargeAnchor`:
+  Genki Dama (Spirit Bomb)**: energy gathered from all around (the swarm) into a ball above the raised hand (`SpecialJyn::getChargeAnchor`:
   the higher of the two hands' `finger_3_1` bones), growing a little with every swarm ball that arrives,
   blue-white (`kiColour` of `skill jyn` in `skills.object`). While it gathers, energy streaks in from the air and rises from
   the ground, faint dust is dragged over the floor and lightning crackles over the growing ball. Punch and kick are ki blasts in the robot's own colour:

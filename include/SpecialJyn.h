@@ -52,6 +52,11 @@ public:
 	float tamanhoVisivel;
 	/// The PSO has converged; the special becomes CONCENTRATED once the ball has finished growing.
 	bool convergiu;
+	/// "gather" of skill jyn (skills.object): false = homing (default: each swarm ball flies straight into the ball, one
+	/// after another; ball = particle 0), true = the 2011 Particle Swarm Optimization.
+	bool usePSO;
+	/// Homing: moves the swarm balls into the gathering point and merges them.
+	void executaHoming( Ogre::Real time );
 	double fitnessMedio;
 protected:
 
