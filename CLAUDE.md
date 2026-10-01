@@ -275,6 +275,10 @@ through a listener registry in `BaseApplication`.
   baked AO maps (`*_ao.png`, second UV set): edit it, then run `.\scripts\bake-arena-ao.ps1` (headless Blender
   5.2 + blender2ogre; `-Rebuild` recreates it from the 2011 files and **discards manual edits**, so never use
   it once `Arena.blend` has been edited by hand). Details in DEV_SETUP Part B.
+  `art/robots/robot00N.blend` are the robots, converted once from 2.49 with Blender 4.5 LTS
+  (`scripts/convert-legacy-blend.ps1`, which keeps the animations). They are the source for any robot change.
+  `.\scripts\bake-robot-ao.ps1` bakes `media/tumbu/robot00N/AO<part>UV_00N.png` through the texture UVs (each
+  part occludes only itself, rest pose); the robot `.mesh` files stay as they are.
 - The `.mesh` files in `media/` are **generated** from Blender: see "Geometry" under Conventions.
 
 ## Conventions when editing

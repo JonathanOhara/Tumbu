@@ -4,6 +4,7 @@ material headUV_005/TEXFACE/headUV_005.tga : base_material{
     set $diffuseMap "headUV_005.tga"
     set $specMap "SMheadUV_005.tga"
     set $normalMap "NMheadUV_005.tga"
+    set $aoMap "AOheadUV_005.png"
     set $glowMap "GMheadUV_005.tga"
     set $glowColour "1 1 1 2.5"
 
@@ -16,6 +17,7 @@ material bodyUV_005/TEXFACE/bodyUV_005.tga : base_material{
     set $diffuseMap "bodyUV_005.tga"
     set $specMap "SMbodyUV_005.tga"
     set $normalMap "NMbodyUV_005.tga"
+    set $aoMap "AObodyUV_005.png"
 
     set $diffuseCol "1 1 1 1"
     set $specularCol "0 0 0 1"
@@ -26,6 +28,7 @@ material leftArmUV_005/TEXFACE/leftArmUV_005.tga : base_material{
     set $diffuseMap "leftArmUV_005.tga"
     set $specMap "SMleftArmUV_005.tga"
     set $normalMap "NMleftArmUV_005.tga"
+    set $aoMap "AOleftArmUV_005.png"
 
     set $diffuseCol "1 1 1 1"
     set $specularCol "0 0 0 1"
@@ -36,6 +39,7 @@ material rightArmUV_005/TEXFACE/rightArmUV_005.tga : base_material{
     set $diffuseMap "rightArmUV_005.tga"
     set $specMap "SMrightArmUV_005.tga"
     set $normalMap "NMrightArmUV_005.tga"
+    set $aoMap "AOrightArmUV_005.png"
 
     set $diffuseCol "1 1 1 1"
     set $specularCol "0 0 0 1"
@@ -46,6 +50,7 @@ material legsUV_005/TEXFACE/legsUV_005.tga : base_material{
     set $diffuseMap "legsUV_005.tga"
     set $specMap "SMlegsUV_005.tga"
     set $normalMap "NMlegsUV_005.tga"
+    set $aoMap "AOlegsUV_005.png"
 
     set $diffuseCol "1 1 1 1"
     set $specularCol "0 0 0 1"

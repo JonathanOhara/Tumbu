@@ -197,6 +197,9 @@ def clean_ao(image, passes=2):
     w, h = image.size
     px = np.array(image.pixels[:], dtype=np.float32).reshape(h, w, 4)
     ao = px[:, :, 0]
+    # The bake writes exactly 0 outside the UV islands (and their margin): make that white, or texture
+    # filtering at a distance pulls black into the island edges.
+    ao = np.where(ao == 0.0, 1.0, ao)
     for _ in range(passes):
         padded = np.pad(ao, 1, mode='edge')
         stack = np.stack([padded[y:y + h, x:x + w] for y in range(3) for x in range(3)])
@@ -212,9 +215,6 @@ def bake(ob, scene):
     if old is not None:
         bpy.data.images.remove(old)
     image = bpy.data.images.new(name, size, size, alpha=False)
-    # White background: texture filtering at a distance (smaller mip levels) mixes the space around small UV
-    # islands into them; black there turned thin faces seen edge-on into dark lines.
-    image.generated_color = (1.0, 1.0, 1.0, 1.0)
     image.colorspace_settings.name = "Non-Color"
     bake_target(ob, image)
 

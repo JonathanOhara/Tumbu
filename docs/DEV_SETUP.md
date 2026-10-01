@@ -175,7 +175,12 @@ project.
 - Blender 5.2 (installed) **opens** 2.49 files with meshes, UVs, materials and action names, but:
   - **it no longer converts pre-2.50 animation data** ("Open & save the file with Blender v4.5"). Robot
     files with animations must go through **Blender 4.5 LTS** once (open, save as a new file);
-  - `robot002.blend` crashes Blender 5.2 on load (access violation);
+  - the 2011 `robot002.blend` crashes Blender 5.2 on load (access violation);
+  - **Done for the robots:** `.\scripts\convert-legacy-blend.ps1 -Robots` used the portable Blender 4.5.14
+    in `D:\TumbuDeps\tools\blender-4.5.14-windows-x64\` (no installer: unzip from
+    download.blender.org/release/Blender4.5/) to write `art/robots/robot00N.blend`. All 14 animations of
+    each robot survived, and Blender 5.2 opens all five, robot002 included. The same script converts any
+    other 2.49 file (`-Source … -Target art\…`) and refuses to overwrite an existing working file;
   - material node groups are not read (harmless: the game's materials are hand-written `.material` files).
   **Always "Save As" a new file.** Never overwrite the 2.49 originals.
 - The original exporter was the Blender 2.49 Python "Ogre Meshes Exporter" plus `OgreXMLConverter`. It no
@@ -235,6 +240,18 @@ project.
   the old mesh.
 - blender2ogre exports only **selected** objects (its `SELECTED_ONLY` setting) and silently skips the
   others: select the object before calling `api.dot_mesh`.
+
+### Robot ambient occlusion (`art/robots/robot00N.blend`)
+
+- `.\scripts\bake-robot-ao.ps1 [-Robot 1,3]` runs `scripts/blender/robot_ao.py` in headless Blender 5.2 and
+  writes `media/tumbu/robot00N/AO<part>UV_00N.png` (for example `AOlegsUV_001.png`), the size of the part's
+  diffuse texture. `robot00N.material` uses them through `$aoMap`.
+- The bake goes through each part's **texture UVs** (their overlap is 0–7%), so the `.mesh` files are not
+  re-exported. Each part occludes **only itself**, in the **rest pose**: parts are swapped between robots and
+  animated, so occlusion from neighbouring parts would be wrong most of the time.
+- Settings are scene custom properties of each robot file: `tumbu_ao_distance` (0.25 units) and
+  `tumbu_ao_samples` (512).
+- The 2011 hand-made `AOheadUV_001.tga` is kept, but no longer used.
 
 ### Other tools (backed up in `D:\Backup\OgreSDK\OGRE_tools`)
 
