@@ -18,6 +18,8 @@
  *                    -faceshot=jyn also charges the Jyn special just before it (eye flare)
  *   -jynwalk         -walktest that also casts and concentrates Jyn while walking; logs the ball's offset
  *                    from the point it gathers at (it must not grow while the hero moves)
+ *   -fxtest=NAME     with -quitafter: start the effect "effect NAME" (effects.object) in front of the hero and
+ *                    screenshot it from the side; -fxtime=S: seconds between the start and the screenshot (0.3)
  *   -camera=x,y,z,tx,ty,tz  with -quitafter: the screenshot looks from (x,y,z) at (tx,ty,tz)
  *   -flytest         fly camera check: F, fly, Esc (no pause menu), F again; screenshot while flying
  *   -cycles=N        memory check: play N matches (3 enemy kills each, then Quit to the menu) through the
@@ -46,6 +48,9 @@ private:
 	void logPositions(void);
 	void faceCamera( const Ogre::FrameEvent &evt );
 	void placeCamera( const Ogre::Vector3 &eye, const Ogre::Vector3 &target );
+	void runFxTest(void);
+	bool fxSpawned;
+	Ogre::Vector3 fxSpot;
 	int faceJynPresses;
 	void limitFrameRate(void);
 	void runGuiTour( const Ogre::FrameEvent &evt );
@@ -85,6 +90,8 @@ private:
 	static bool mute;
 	static int faceShot;
 	static bool jynWalk;
+	static Ogre::String fxTest;
+	static Ogre::Real fxTime;
 	static bool fixedCamera;
 	static bool flyTest;
 	static Ogre::Vector3 cameraEye, cameraTarget;

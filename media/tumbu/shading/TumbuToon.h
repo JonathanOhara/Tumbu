@@ -16,7 +16,15 @@
     uniform vec4 aoParams; \
     uniform vec4 contactShadowA; \
     uniform vec4 contactShadowB; \
-    uniform vec4 fogParams;
+    uniform vec4 fogParams; \
+    uniform vec4 energyLightPos0; \
+    uniform vec4 energyLightPos1; \
+    uniform vec4 energyLightPos2; \
+    uniform vec4 energyLightPos3; \
+    uniform vec4 energyLightColour0; \
+    uniform vec4 energyLightColour1; \
+    uniform vec4 energyLightColour2; \
+    uniform vec4 energyLightColour3;
 
 // sunDirection.xyz: unit vector towards the sun (world space)
 // rimColour.w: rim strength
@@ -28,6 +36,8 @@
 //            (fog colour = sky ambient colour x w)
 // shadowParams: x = 1 when the shadow map is in use, y = depth bias, z = 1 / shadow map size, w = filter radius
 //               in texels
+// energyLightPosN: xyz = position of a light cast by a special attack (energy ball, impact), w = radius (0 = off);
+// energyLightColourN: rgb = colour x intensity (EffectsManager::updateLights, the four strongest)
 
 // One depth comparison: 1 = lit. Some GLSL compilers return a vec4 from shadow2D, HLSL a float; the splat
 // accepts both.
@@ -73,6 +83,33 @@ float tumbuContact(vec3 p, vec3 n, vec4 robot)
     float fade = 1.0 - saturate(height / 1.5);
     return facingUp * below * fade * (1.0 - smoothstep(0.2, 1.0, r));
 }
+
+// One energy light: a toon band (lit side / softer far side, not a smooth gradient) inside its radius, with a
+// quadratic falloff so it reads as a glow around the ball rather than a flat disc.
+vec3 tumbuEnergyLight(vec3 p, vec3 n, vec4 lightPos, vec4 lightColour)
+{
+    if (lightPos.w <= 0.0)
+        return vec3_splat(0.0);
+    vec3 toLight = lightPos.xyz - p;
+    float dist = length(toLight);
+    float falloff = saturate(1.0 - dist / lightPos.w);
+    falloff *= falloff;
+    float facing = dot(n, toLight / max(dist, 0.0001)) * 0.5 + 0.5;
+    float band = mix(0.25, 1.0, smoothstep(0.45, 0.6, facing));
+    return lightColour.rgb * falloff * band;
+}
+
+// Light from special attacks (up to four, see EffectsManager), to add to a lit colour as albedo x this.
+vec3 tumbuEnergyLights(vec3 p, vec3 n, vec4 pos0, vec4 col0, vec4 pos1, vec4 col1, vec4 pos2, vec4 col2,
+                       vec4 pos3, vec4 col3)
+{
+    return tumbuEnergyLight(p, n, pos0, col0) + tumbuEnergyLight(p, n, pos1, col1)
+        + tumbuEnergyLight(p, n, pos2, col2) + tumbuEnergyLight(p, n, pos3, col3);
+}
+
+// Shorthand for shaders that declare TUMBU_LIGHTING_UNIFORMS.
+#define TUMBU_ENERGY_LIGHTS(p, n) tumbuEnergyLights(p, n, energyLightPos0, energyLightColour0, \
+    energyLightPos1, energyLightColour1, energyLightPos2, energyLightColour2, energyLightPos3, energyLightColour3)
 
 // albedo: surface colour; n: unit world normal; v: unit vector towards the camera; ao: ambient occlusion
 // (1 = open); specMask: specular colour (0 = matte); shadow: 1 = lit, 0 = in a cast shadow.

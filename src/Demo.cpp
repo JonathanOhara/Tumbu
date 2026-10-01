@@ -25,6 +25,7 @@ Demo::Demo(){
 	lighting					= NULL;
 	flyCamera					= NULL;
 	dust						= NULL;
+	effects						= NULL;
 	dustNode					= NULL;
 }
 //-------------------------------------------------------------------------------------
@@ -55,6 +56,11 @@ Demo::~Demo(void){
 	if( dust != NULL ){
 		mSceneMgr->destroyParticleSystem( dust );
 		mSceneMgr->destroySceneNode( dustNode );
+	}
+	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Effects...");
+	if( effects != NULL ){
+		tumbu->getRoot()->removeFrameListener( effects );
+		delete effects;
 	}
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Lighting...");
 	if( lighting != NULL ){
@@ -120,7 +126,7 @@ Demo::~Demo(void){
 }
 //-------------------------------------------------------------------------------------
 bool Demo::frameRenderingQueued(const Ogre::FrameEvent &evt){
-	const Ogre::Real timeSinceLastFrame = evt.timeSinceLastFrame;
+	const Ogre::Real timeSinceLastFrame = EffectsManager::gameTime( evt.timeSinceLastFrame );	// slowed down during a hit-stop
 
 	switch( tumbu->getGameState() ){
 	case TumbuEnums::PLAYING:
@@ -541,6 +547,10 @@ void Demo::createLightEffects(void){
 	// Tone mapping and grading of the final image; the lighting follows the clock (lighting.object).
 	lighting->enablePostProcessing( tumbu->mWindow->getViewport( 0 ) );
 	tumbu->getRoot()->addFrameListener( lighting );
+
+	// Special-attack effects: energy lights, screen flash, camera shake and hit-stop (effects.object).
+	effects = new EffectsManager( mSceneMgr );
+	tumbu->getRoot()->addFrameListener( effects );
 
 	// A depth shadow map that the robot and arena shaders sample themselves (TumbuToon.h). Every object
 	// also shadows itself (a robot's arm on its body, the coliseum walls on the floor).

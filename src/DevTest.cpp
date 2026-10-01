@@ -1,6 +1,8 @@
 #include "DevTest.h"
 #include "TUMBU.h"
 #include "SpecialJyn.h"
+#include "EffectsManager.h"
+#include "Effect.h"
 
 #include <MyGUI.h>
 
@@ -23,6 +25,8 @@ bool DevTest::measureAnims = false;
 bool DevTest::mute = false;
 int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
+Ogre::String DevTest::fxTest = "";
+Ogre::Real DevTest::fxTime = 0.3f;
 bool DevTest::fixedCamera = false;
 bool DevTest::flyTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
@@ -48,6 +52,10 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			mute = true;
 		}else if( arg == "-flytest" ){
 			flyTest = true;
+		}else if( Ogre::StringUtil::startsWith( arg, "-fxtest=" ) ){
+			fxTest = args[i].substr( 8 );	// effect names keep their case
+		}else if( Ogre::StringUtil::startsWith( arg, "-fxtime=" ) ){
+			fxTime = Ogre::StringConverter::parseReal( arg.substr( 8 ) );
 		}else if( arg == "-jynwalk" ){
 			jynWalk = true;
 			walkTest = true;
@@ -92,6 +100,8 @@ DevTest::DevTest(void){
 	walking		= false;
 	walkDone	= false;
 	faceJynPresses = 0;
+	fxSpawned = false;
+	fxSpot = Ogre::Vector3::ZERO;
 	flyStep = 0;
 	tourStep	= 0;
 	tourTimer	= 0;
@@ -186,6 +196,9 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 			nextLogTime += 0.5f;
 		}
 
+		if( !fxTest.empty() && quitAfter > 0 ){
+			runFxTest();
+		}
 		if( faceShot > 0 && quitAfter > 0 ){
 			faceCamera( evt );
 		}
@@ -235,6 +248,31 @@ void DevTest::faceCamera( const Ogre::FrameEvent &evt ){
 	forward.y = 0;
 	forward.normalise();
 	placeCamera( face + forward * 1.1f + Ogre::Vector3( 0.25f, 0.1f, 0 ), face );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::runFxTest(void){
+	// -fxtest=<effect>: start the effect in front of the hero fxTime seconds before the screenshot, and look at the
+	// hero and the effect from the side during the last half second (unless -camera or -faceshot place the camera).
+	Demo* demo = TUMBU::getInstance()->getDemo();
+	if( demo == NULL || demo->mainChar == NULL || EffectsManager::getInstance() == NULL ){
+		return;
+	}
+	Ogre::SceneNode* hero = demo->mainChar->robotNode;
+	Ogre::Vector3 forward = hero->_getDerivedOrientation() * Ogre::Vector3::UNIT_Z;
+	forward.y = 0;
+	forward.normalise();
+	if( !fxSpawned && playTime >= quitAfter - fxTime ){
+		fxSpot = hero->_getDerivedPosition() + forward * 2.0f + Ogre::Vector3( 0, 1.2f, 0 );
+		Effect* effect = EffectsManager::getInstance()->spawn( fxTest, fxSpot, Ogre::ColourValue( 0.6f, 0.85f, 1.0f ) );
+		log( "fxtest: " + fxTest + ( effect != NULL ? " started at " + Ogre::StringConverter::toString( fxSpot ) : " is not defined" ) );
+		fxSpawned = true;
+	}
+	if( !fixedCamera && faceShot == 0 && playTime >= quitAfter - 0.5f ){
+		Ogre::Vector3 centre = fxSpawned ? fxSpot : hero->_getDerivedPosition() + forward * 2.0f + Ogre::Vector3( 0, 1.2f, 0 );
+		Ogre::Vector3 middle = ( centre + hero->_getDerivedPosition() + Ogre::Vector3( 0, 1.0f, 0 ) ) * 0.5f;
+		Ogre::Vector3 right = forward.crossProduct( Ogre::Vector3::UNIT_Y );
+		placeCamera( middle + right * 4.0f + Ogre::Vector3( 0, 0.8f, 0 ) - forward * 0.5f, middle );
+	}
 }
 //-------------------------------------------------------------------------------------
 void DevTest::placeCamera( const Ogre::Vector3 &eye, const Ogre::Vector3 &target ){

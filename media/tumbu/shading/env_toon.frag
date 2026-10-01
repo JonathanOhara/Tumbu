@@ -35,6 +35,8 @@ MAIN_DECLARATION
 
     vec3 colour = tumbuToon(albedo, n, v, ao, matSpec.rgb, matShininess, shadow,
         sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams, aoParams);
+    // Coloured light from special attacks (energy balls, impacts).
+    colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
 
     gl_FragColor = vec4(colour, 1.0);
 }

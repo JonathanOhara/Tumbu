@@ -1,4 +1,5 @@
 #include "AIManager.h"
+#include "EffectsManager.h"
 #include "TUMBU.h"
 AIManager* AIManager::instance = NULL;
 //-------------------------------------------------------------------------------------
@@ -42,7 +43,7 @@ bool AIManager::frameRenderingQueued(const Ogre::FrameEvent& evt){
 			_robotAI = (*itAiList);
 
 			_robotAI->simulateKeyPressed();
-			_robotAI->update( evt.timeSinceLastFrame );
+			_robotAI->update( EffectsManager::gameTime( evt.timeSinceLastFrame ) );
 
 			if( _robotAI->getAIStatus() == RobotAI::TO_DELETE ){
 				// Erase through the loop's own iterator (erasing elsewhere would invalidate it).

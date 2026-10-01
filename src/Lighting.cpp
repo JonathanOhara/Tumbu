@@ -110,7 +110,10 @@ Lighting* Lighting::getInstance(){
 //-------------------------------------------------------------------------------------
 void Lighting::declareSharedParameters(void){
 	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().createSharedParameters( SHARED_PARAMS );
-	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams", "contactShadowA", "contactShadowB", "fogParams", "dustParams" };
+	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams", "contactShadowA", "contactShadowB", "fogParams", "dustParams",
+		// Special-attack effects (EffectsManager): energy lights and the screen flash.
+		"energyLightPos0", "energyLightPos1", "energyLightPos2", "energyLightPos3",
+		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -132,6 +135,11 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "contactShadowB", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "fogParams", Ogre::Vector4( 1000, 0, 0, 1 ) );
 	params->setNamedConstant( "dustParams", Ogre::Vector4( 0, 0, 0, 0 ) );
+	for( int i = 0; i < 4; i++ ){
+		params->setNamedConstant( "energyLightPos" + Ogre::StringConverter::toString( i ), Ogre::Vector4( 0, 0, 0, 0 ) );
+		params->setNamedConstant( "energyLightColour" + Ogre::StringConverter::toString( i ), Ogre::Vector4( 0, 0, 0, 0 ) );
+	}
+	params->setNamedConstant( "screenFlash", Ogre::Vector4( 1, 1, 1, 0 ) );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){

@@ -1,0 +1,44 @@
+// Visual effects of the special attacks (EffectsManager, Effect, EffectLayers). Read when an effect starts, so a
+// change shows on the next attack after a restart of the match.
+//
+// "effect <name>" holds one block per layer. Colours are "r g b" (values above 1 glow through the bloom) or
+// "ki [factor]": the colour of the attack that started the effect (Jyn: Genki Dama blue-white; punch and kick: the
+// robot's eye colour).
+//
+// light: a coloured point light on the robots and the arena (the four strongest at a time)
+//     colour      light colour
+//     intensity   multiplies the colour
+//     radius      world units where it fades to nothing
+//     rise        seconds to full strength
+//     time        seconds to fade out after the rise; 0 = stays (times the effect's intensity) until the owner
+//                 releases the effect, then fades over "fade" seconds
+//     flicker     0..1, uneven crackle of the strength
+//     offset      x y z from the effect position
+//
+// screen: when the effect starts (once)
+//     flash       0..1, how far the whole frame turns to flashColour; flashTime: seconds to fade
+//     shake       camera shake amplitude in world units; shakeTime: seconds; shakeRange: full shake within this
+//                 distance of the camera, none beyond twice it
+//     hitStop     seconds the game nearly stops (the impact "hangs"), real time
+
+// Calibration effect for DevTest -fxtest=test: a strong orange light, a flash and a shake.
+effect test
+{
+	light
+	{
+		colour 1 0.55 0.2
+		intensity 4
+		radius 6
+		rise 0.05
+		time 3
+	}
+	screen
+	{
+		flash 0.6
+		flashColour 1 1 1
+		flashTime 0.15
+		shake 0.12
+		shakeTime 0.4
+		hitStop 0.06
+	}
+}

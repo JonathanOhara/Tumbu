@@ -22,6 +22,8 @@ OGRE_UNIFORMS(
     // x = start, y = density, z = maximum, w = brightness of the fog colour (sky ambient x w)
     uniform vec4 fogParams;
     uniform vec4 viewportSize;
+    // Screen flash of an impact (EffectsManager::flash): rgb = colour, w = amount (0..1)
+    uniform vec4 screenFlash;
 )
 
 // Leaves values below the knee untouched (the art keeps its colours) and rolls everything above it smoothly
@@ -85,6 +87,9 @@ MAIN_DECLARATION
 
     vec2 fromCentre = oUv - vec2(0.5, 0.5);
     colour *= 1.0 - postParams.w * smoothstep(0.35, 0.9, length(fromCentre) * 1.4142);
+
+    // Impact flash: the whole frame leans towards the flash colour for an instant (anime "white frame").
+    colour = mix(colour, screenFlash.rgb, saturate(screenFlash.w));
 
     gl_FragColor = vec4(colour, 1.0);
 }

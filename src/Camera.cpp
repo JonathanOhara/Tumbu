@@ -1,6 +1,7 @@
 #include "Camera.h"
 #include "TUMBU.h"
 #include "GUI.h"
+#include "EffectsManager.h"
 #ifdef TUMBU_DEBUG
 #define MIN_CAMERA_DISTANCE 0
 #define MAX_CAMERA_DISTANCE 100
@@ -29,7 +30,9 @@ Camera::Camera( Ogre::Camera* camera, Ogre::SceneNode* mChaseNode){
 	mZoomNode = mCameraNode->createChildSceneNode( "camera_zoom_node" );
 	// In 2011 the camera kept its own local offset (0, 2, 4) under this node; the zoom range (2..5) is built on it.
 	mZoomNode->setPosition( 0, 2, 4 );
-	mZoomNode->attachObject(camera);
+	// Camera shake (EffectsManager) moves this node only, so the chase camera itself never drifts.
+	mShakeNode = mZoomNode->createChildSceneNode( "camera_shake_node" );
+	mShakeNode->attachObject(camera);
 
 	screenFull			= GUI::getInstance()->getScreenWidth();
 	
@@ -229,6 +232,7 @@ bool Camera::frameRenderingQueued(const Ogre::FrameEvent &evt){
 		Ogre::Vector3 goalOffset = mCameraGoal->_getDerivedPosition() - mCameraNode->getPosition();
 		// Clamp the catch-up factor so a long frame cannot overshoot the goal.
 		mCameraNode->translate(goalOffset * std::min<Ogre::Real>(1.0f, evt.timeSinceLastFrame * cameraTranslate));
+		mShakeNode->setPosition( EffectsManager::getShakeOffset() );
 
 		// always look at the pivot		
 		

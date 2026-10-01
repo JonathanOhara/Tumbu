@@ -1,4 +1,5 @@
 #include "Character.h"
+#include "EffectsManager.h"
 #include "Util.h"
 #include "TUMBU.h"
 //-------------------------------------------------------------------------------------
@@ -446,7 +447,7 @@ bool Character::mouseReleased( const OgreBites::MouseButtonEvent &arg ){
 //-------------------------------------------------------------------------------------
 bool Character::frameRenderingQueued( const Ogre::FrameEvent &evt ){
 	if( TUMBU::getInstance()->isPlaying() ){
-		Ogre::Real time = evt.timeSinceLastFrame;
+		Ogre::Real time = EffectsManager::gameTime( evt.timeSinceLastFrame );	// slowed down during a hit-stop
 		specialManager->update(time);
 	 
 		if( isGuard ){

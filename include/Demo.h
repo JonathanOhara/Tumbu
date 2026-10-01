@@ -18,6 +18,7 @@
 #include "Tutorial.h"
 #include "Sky.h"
 #include "Lighting.h"
+#include "EffectsManager.h"
 #include "FlyCamera.h"
 #include "SimpleRigidBody.h"
 
@@ -108,6 +109,7 @@ private:
 	SoundManager	*soundManager;
 	Sky				*sky;
 	Lighting		*lighting;
+	EffectsManager	*effects;
 	FlyCamera		*flyCamera;
 	Ogre::ParticleSystem	*dust;
 	Ogre::SceneNode		*dustNode;

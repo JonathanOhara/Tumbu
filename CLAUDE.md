@@ -62,7 +62,9 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   `devtest.ps1 -Camera "…"`, handy for close-ups of the arena) and `-flytest` (fly camera: F, fly, Esc
   without opening the pause menu, F again; logs the game state and camera after each step) and `-jynwalk`
   (`devtest.ps1 -JynWalk`: casts and concentrates Jyn while the hero walks and logs the ball's offset from the point
-  above the hero where it gathers; it must converge while walking).
+  above the hero where it gathers; it must converge while walking), `-fxtest=NAME` / `-fxtime=S` (starts
+  `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the
+  side: `devtest.ps1 -FxTest NAME [-FxTime 0.3]`; `effect test` is a calibration light + flash).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`
@@ -160,7 +162,12 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   five Bullet rays from the camera towards the sun (`updateSunVisibility`, eased over time), because the
   final pass could not read the scene depth (it sampled zeros on Direct3D 11). `lensFlare` in
   `lighting.object` (0 = off); never for the moon.
-- **Contact shadows** (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
+- **Energy lights** (`tumbuEnergyLights` / `TUMBU_ENERGY_LIGHTS` in `TumbuToon.h`): up to four coloured point lights
+  from special attacks (shared `energyLightPos0..3` = position + radius, `energyLightColour0..3` = colour x
+  intensity), a toon band with a quadratic falloff, added as albedo x light by the robot and arena shaders. The
+  screen flash is the shared `screenFlash` (rgb, amount), mixed in at the very end of the final pass.
+- **Contact shadows**
+ (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by
   `Lighting::updateContactShadows`; strength in `aoParams.w`). No extra geometry. `contactShadow`,
   `contactShadowRadius`.
@@ -273,6 +280,11 @@ through a listener registry in `BaseApplication`.
   (`getHours()` drives Caelum).
 - `Lighting` (owned by `Demo`) sets the sun, ambient light and the `TumbuLighting` shader values from
   `lighting.object`, blending its keyframes by the clock every frame, and owns the post-processing compositor.
+- `EffectsManager` (owned by `Demo`, `getInstance()` is NULL outside a match) runs the special-attack effects
+  (`Effect` + `EffectLayers`, defined in `effects.object`), so an impact outlives its projectile. Every frame it
+  sends the four strongest energy lights to the shaders and drives the screen flash, the camera shake (a node
+  between the zoom node and the camera, `Camera::mShakeNode`) and the hit-stop: robots, AI and physics take
+  `EffectsManager::gameTime(evt.timeSinceLastFrame)`, and particles slow down through the controller time factor.
 - `ConfigScriptLoader` (`ConfigScript.*`) is an Ogre `ScriptLoader` for `*.object` files:
   `ConfigScriptLoader::getSingleton().getConfigScript("<type>", "<name>")->findChild("key")->getValueI()`.
 - `DotSceneLoader` is the Ogitor dotScene loader. Lights and camera are placed by their nodes, and meshes are
@@ -293,6 +305,8 @@ through a listener registry in `BaseApplication`.
   - `lighting.object`: the lighting rig. Keyframes by hour (sun elevation/azimuth and colour, sky/ground
     ambient, shadow tint, rim light, exposure) plus fixed values (toon ramp, shadow bias/softness, grading).
     Read at match start, so a restart is enough to see a change.
+  - `effects.object`: the special-attack effects, one `effect <name>` with a block per layer (`light`, `screen`,
+    ...); the keys are documented at the top of the file. Colours can be `ki`: the attack's colour.
 - `media/tumbu/robot00{1..5}/` holds one robot "set" each:
   - parts: `head/body/leftArm/rightArm/legs_00N.mesh` + `.skeleton` (upgraded to the Ogre 14 format)
   - textures in TGA

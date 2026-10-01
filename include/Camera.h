@@ -41,7 +41,8 @@ public:
 		*mCameraNode, 
 		*mCameraPivot,
 		*mCameraGoal,
-		*mZoomNode;
+		*mZoomNode,
+		*mShakeNode;
 protected:
 
 private:
