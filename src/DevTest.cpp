@@ -124,6 +124,8 @@ DevTest::DevTest(void){
 	faceJynPresses = 0;
 	fxSpawned = false;
 	fxPresses = 0;
+	throwTime = -1;
+	jynOverLogged = false;
 	enemyHeld = false;
 	enemyPresses = 0;
 	heldEnemyAt = Ogre::Vector3::ZERO;
@@ -315,6 +317,14 @@ void DevTest::runFxTest(void){
 			releaseKey( 'i' );
 			fxPresses++;
 			quitAfter = playTime + fxTime;
+		}
+		// After the throw: when the hero's Jyn is over (its arm comes down), how long after the throw.
+		if( throwJyn && fxPresses == 3 && throwTime < 0 ){
+			throwTime = playTime;
+		}
+		if( throwJyn && throwTime >= 0 && !jynOverLogged && demo->mainChar->jyn != NULL && !demo->mainChar->jyn->isAttacking() ){
+			log( "fxtest: hero Jyn over (arm down) " + Ogre::StringConverter::toString( playTime - throwTime, 3 ) + " s after the throw" );
+			jynOverLogged = true;
 		}
 		int presses = jyn ? 2 : 1;
 		Ogre::Real start = throwJyn ? 1.0f : quitAfter - fxTime;

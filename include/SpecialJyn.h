@@ -37,7 +37,6 @@ public:
 	bool getBonePosition( Part* part, const char* boneName, Ogre::Vector3 &position );
 	void startAttack(Ogre::Quaternion orientation);
 	
-	void clearParticleSystem();
 
 	/// Streams of the swarm balls: follow them, and are let go when a ball merges into the Genki Dama.
 	void updateStreams(void);

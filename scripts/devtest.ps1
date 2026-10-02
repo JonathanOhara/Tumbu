@@ -35,7 +35,8 @@ if (-not $Sound)  { $gameArgs += '-mute' }
 if ($FaceShot)    { $gameArgs += $(if ($Jyn) { '-faceshot=jyn' } else { '-faceshot' }) }
 if ($JynWalk)     { $gameArgs += "-jynwalk" }
 if ($JynHit -gt 0) { $gameArgs += "-jynhit=" + $JynHit.ToString([cultureinfo]::InvariantCulture) }
-if ($FxTest)      { $gameArgs += "-fxtest=$FxTest"; $gameArgs += "-fxtime=" + $FxTime.ToString([cultureinfo]::InvariantCulture) }
+if ($FxTest)      { $gameArgs += "-fxtest=$FxTest" }
+if ($FxTest -or $JynHit -gt 0) { $gameArgs += "-fxtime=" + $FxTime.ToString([cultureinfo]::InvariantCulture) }
 if ($FxDistance -gt 0) { $gameArgs += "-fxdistance=" + $FxDistance.ToString([cultureinfo]::InvariantCulture) }
 if ($Camera)      { $gameArgs += "-camera=$Camera" }
 

@@ -137,7 +137,8 @@ void SpecialKick::attack(Ogre::Quaternion orientation){
 
 	specialRigidNode = particleSystemNode->getParentSceneNode()->getParentSceneNode()->createChildSceneNode( nodeName );
 
-	specialShape = new Physics::BoxCollisionShape( Ogre::Vector3( PARTICLE_WIDTH, PARTICLE_WIDTH, PARTICLE_WIDTH ) );
+	// Half extents: the crescent wave's width across, most of its height, a thin depth along the flight.
+	specialShape = new Physics::BoxCollisionShape( Ogre::Vector3( CRESCENT_WIDTH * 0.45f, CRESCENT_HEIGHT * 0.35f, PARTICLE_WIDTH ) );
 	specialRigidBody = new Physics::RigidBody( rightBodyName, world );
 
 	specialRigidBody->setShape( specialRigidNode, 

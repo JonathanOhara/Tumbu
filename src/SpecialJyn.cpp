@@ -31,24 +31,10 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	ConfigNode* gather = ConfigScriptLoader::getSingleton().getConfigScript( "skill", "jyn" )->findChild( "gather" );
 	usePSO = gather != NULL && gather->getValue() == "pso";
 
-	explosionParticleSystem = NULL;	
 	specialShape = NULL;
 	specialRigidNode = NULL;
 	throwEffect = NULL;
 	chargeEffect = NULL;
-	specialLight = NULL;
-
-	Ogre::String lightName = robotSpeller->robotName +  "_jyn_light_ " + Ogre::StringConverter::toString(count);
-
-	specialLight = sceneMgr->createLight( lightName );
-	specialLight->setType(Ogre::Light::LT_POINT);
-	specialLight->setDiffuseColour(PARTICLE_LIGHT_DIFFUSE_COLOR);
-	specialLight->setSpecularColour(PARTICLE_LIGHT_SPECULAR_COLOR);
-	specialLight->setAttenuation(1, 0, 0, 500);
-	// Ogre 14 lights are positioned by their scene node.
-	sceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject( specialLight );
-	specialLight->getParentSceneNode()->setPosition(0, 10000, 0);
-
 	particleSystem = sceneMgr->createParticleSystem();
 
 	particleSystemNode->attachObject( particleSystem );
@@ -61,11 +47,6 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 //-------------------------------------------------------------------------------------
 SpecialJyn::~SpecialJyn(void){
 	clear();
-
-	if( specialLight != NULL ){
-		sceneMgr->destroySceneNode( specialLight->getParentSceneNode() );
-		sceneMgr->destroyLight(specialLight);
-	}
 
 	sceneMgr->destroyParticleSystem( particleSystem );
 
@@ -123,14 +104,10 @@ void SpecialJyn::update(const Ogre::Real time){
 			setSpecialStatus( SpecialInterface::FINISHED );
 		}
 	}else if( getSpecialStatus() == SpecialInterface::HITTED ){
+		// The impact effects (EffectsManager) play on their own: the special is over at once, so the speller lowers its
+		// arm right after the explosion (the 2011 fade-out waited 4 s for the old explosion particles).
 		clear();
-		setSpecialStatus( SpecialInterface::FADEOUT );
-	}else if( getSpecialStatus() == SpecialInterface::FADEOUT ){
-		timeToResest -= time;
-
-		if(timeToResest <= 0){
-			setSpecialStatus( SpecialInterface::FINISHED );
-		}
+		setSpecialStatus( SpecialInterface::FINISHED );
 	}
 
 	if( !particleList.empty() ){
@@ -321,7 +298,12 @@ void SpecialJyn::attack(Ogre::Quaternion orientation){
 		translation = ( chest - start ).normalisedCopy() * translation.length();
 	}
 
-	specialRigidBody->applyImpulse( 
+	// Throw speed (units per second, "throwSpeed" of skill jyn in skills.object): the 2011 impulse gave about 33.5.
+	ConfigNode* speedNode = ConfigScriptLoader::getSingleton().getConfigScript( "skill", "jyn" )->findChild( "throwSpeed" );
+	Ogre::Real throwSpeed = speedNode != NULL ? speedNode->getValueF() : 33.5f;
+	translation = translation.normalisedCopy() * throwSpeed * 30;	// impulse = speed x mass (30, below)
+
+	specialRigidBody->applyImpulse(
 		translation, Ogre::Vector3(0, 0, 0) );
 
 	specialRigidBodyList.push_back( specialRigidBody );
@@ -414,12 +396,6 @@ void SpecialJyn::clear(){
 		specialRigidNode = NULL;
 	}
         
-    if( specialLight != NULL){
-		sceneMgr->destroySceneNode( specialLight->getParentSceneNode() );
-		sceneMgr->destroyLight(specialLight);
-		specialLight = NULL;
-    }
-
 	timeToResest = 4;
 }
 //-------------------------------------------------------------------------------------
@@ -619,10 +595,6 @@ void SpecialJyn::moverTodasParticulas(Ogre::Vector3 moveTarget){
 		}
 		everBestPosition += delta;
 		targetVector = moveTarget;
-	}
-
-	if( specialLight != NULL && !particleList.empty() ){
-		specialLight->getParentSceneNode()->setPosition( particleList[melhorParticula]->particle->mPosition );
 	}
 }
 //-------------------------------------------------------------------------------------

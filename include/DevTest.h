@@ -63,6 +63,8 @@ private:
 	void runFxTest(void);
 	bool fxSpawned;
 	int fxPresses;
+	Ogre::Real throwTime;
+	bool jynOverLogged;
 	void holdEnemy(void);
 	bool enemyHeld;
 	int enemyPresses;

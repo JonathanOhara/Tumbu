@@ -151,22 +151,3 @@ material PE/Streak
 		}
 	}
 }
-
-material PE/energy
-{
-	technique
-	{
-		pass
-		{
-			lighting off
-			diffuse vertexcolour
-			depth_write off
-			scene_blend add
-
-			texture_unit
-			{
-				texture energy.png
-			}
-		}
-	}
-}

@@ -35,6 +35,8 @@ skill jyn{
 	// How the swarm gathers into the Genki Dama: homing (each energy ball flies straight in, one after another) or pso
 	// (the 2011 Particle Swarm Optimization of the college project).
 	gather homing
+	// Speed of the thrown Genki Dama, units per second (2011: about 33.5; slower gives the target time to guard or dodge)
+	throwSpeed 25
 	damage 30
 	ap 60
 	energyBalls 10

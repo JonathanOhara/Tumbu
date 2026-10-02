@@ -20,12 +20,7 @@ class Effect;
 
 #define PARTICLE_WIDTH 0.25f
 #define PARTICLE_HEIGHT 0.25f
-#define PARTICLE_COLOR Ogre::ColourValue(0.93f, 0.11f, 0.14f, 1)
 #define PARTICLE_LIVE_TIME 600
-#define PARTICLE_MATERIAL "PE/energy"
-
-#define PARTICLE_LIGHT_DIFFUSE_COLOR Ogre::ColourValue::White
-#define PARTICLE_LIGHT_SPECULAR_COLOR Ogre::ColourValue::White
 
 // Energy orbs (effects.material): the ball fills 0.45 of the billboard's half size, so a billboard is ORB_SCALE x the ball's
 // diameter and the halo fits around it.
@@ -94,14 +89,11 @@ protected:
 		*robotTarget;
 	
 	Ogre::ParticleSystem
-		*explosionParticleSystem,
 		*particleSystem;
 	
 	Ogre::SceneNode 
 		*specialRigidNode,
 		*particleSystemNode;
-
-	Ogre::Light *specialLight;
 
 	SpecialStatus specialStatus;
 	
