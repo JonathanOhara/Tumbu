@@ -10,6 +10,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
+#include <map>
+#include <algorithm>
 #else
 #include <unistd.h>
 #endif
@@ -660,6 +662,67 @@ void DevTest::logMemory( const Ogre::String &label ){
 		HeapUnlock( heap );
 		memory += " heap=" + Ogre::StringConverter::toString( (unsigned long) ( busyBytes / 1024 ) ) + "KB/" + Ogre::StringConverter::toString( (unsigned long) busyBlocks );
 	}
+		// -cycles: which block sizes grow from one match to the next (the biggest growth in bytes), with a peek at the
+		// content of a few blocks of the top size, to find what keeps growing.
+		static std::map<unsigned long, unsigned long> previous;
+		std::map<unsigned long, unsigned long> sizes;
+		std::map<unsigned long, std::vector<const unsigned char*> > samples;
+		entry = PROCESS_HEAP_ENTRY();
+		if( HeapLock( heap ) ){
+			while( HeapWalk( heap, &entry ) ){
+				if( entry.wFlags & PROCESS_HEAP_ENTRY_BUSY ){
+					sizes[entry.cbData]++;
+					std::vector<const unsigned char*> &list = samples[entry.cbData];
+					if( list.size() < 4 ){
+						list.push_back( (const unsigned char*)entry.lpData );
+					}else{
+						list[list.size() - 1] = (const unsigned char*)entry.lpData;	// keep the last one walked
+					}
+				}
+			}
+			HeapUnlock( heap );
+		}
+		if( !previous.empty() ){
+			std::vector< std::pair<long long, unsigned long> > growth;
+			for( std::map<unsigned long, unsigned long>::iterator s = sizes.begin(); s != sizes.end(); s++ ){
+				long long delta = (long long)s->second - (long long)previous[s->first];
+				if( delta > 0 ){
+					growth.push_back( std::make_pair( -delta * (long long)s->first, s->first ) );
+				}
+			}
+			std::sort( growth.begin(), growth.end() );
+			Ogre::String top;
+			for( size_t i = 0; i < growth.size() && i < 8; i++ ){
+				top += " " + Ogre::StringConverter::toString( growth[i].second ) + "B+" + Ogre::StringConverter::toString( (unsigned long)( -growth[i].first / growth[i].second ) );
+			}
+			log( "heap growth by block size:" + top );
+			for( size_t g = 0; g < growth.size() && g < 4; g++ ){
+				unsigned long size = growth[g].second;
+				std::vector<const unsigned char*> &list = samples[size];
+				for( size_t i = 0; i < list.size() && i < 2; i++ ){
+					Ogre::String text;
+					for( unsigned long b = 0; b < size && b < 48; b++ ){
+						unsigned char c = list[i][b];
+						text += ( c >= 32 && c < 127 ) ? (char)c : '.';
+					}
+					log( "  sample " + Ogre::StringConverter::toString( size ) + "B: " + text );
+					// Pointers inside the block that land in a loaded module (a vtable or code): which DLL owns the object.
+					Ogre::String modules;
+					for( unsigned long q = 0; q + sizeof(void*) <= size && q < 64; q += sizeof(void*) ){
+						const void* pointer = *(const void* const*)( list[i] + q );
+						HMODULE module = NULL;
+						char name[MAX_PATH];
+						if( GetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)pointer, &module ) && module != NULL
+							&& GetModuleFileNameA( module, name, MAX_PATH ) ){
+							Ogre::String path( name );
+							modules += " +" + Ogre::StringConverter::toString( q ) + ":" + path.substr( path.find_last_of( "\/" ) + 1 );
+						}
+					}
+					log( "  sample modules:" + modules );
+				}
+			}
+		}
+		previous = sizes;
 #endif
 	Ogre::SceneManager *sceneMgr = TUMBU::getInstance()->mSceneMgr;
 	log( "memory " + label +

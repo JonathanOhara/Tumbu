@@ -95,8 +95,8 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 Lighting::~Lighting(void){
 	if( postProcessViewport != NULL ){
 		postProcess->removeListener( this );
+		// Disabled, not removed: the next match enables it again with the same render targets (no rebuild).
 		Ogre::CompositorManager::getSingleton().setCompositorEnabled( postProcessViewport, POST_PROCESS, false );
-		Ogre::CompositorManager::getSingleton().removeCompositor( postProcessViewport, POST_PROCESS );
 	}
 	instance = NULL;
 }
@@ -277,7 +277,12 @@ void Lighting::apply( const Keyframe &k ){
 }
 //-------------------------------------------------------------------------------------
 void Lighting::enablePostProcessing( Ogre::Viewport* viewport ){
-	Ogre::CompositorInstance* compositor = Ogre::CompositorManager::getSingleton().addCompositor( viewport, POST_PROCESS );
+	// The compositor stays on the viewport between matches (disabled), so it is created only once.
+	Ogre::CompositorManager &manager = Ogre::CompositorManager::getSingleton();
+	Ogre::CompositorInstance* compositor = manager.hasCompositorChain( viewport ) ? manager.getCompositorChain( viewport )->getCompositor( POST_PROCESS ) : NULL;
+	if( compositor == NULL ){
+		compositor = manager.addCompositor( viewport, POST_PROCESS );
+	}
 	if( compositor == NULL ){
 		Ogre::LogManager::getSingleton().logError( "Lighting: the post-processing compositor is not supported, the scene renders without tone mapping" );
 		return;

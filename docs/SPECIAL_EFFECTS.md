@@ -70,10 +70,19 @@ Measured on the dev PC (Direct3D 11, 1024x768): about 650 fps while a Genki Dama
 same as with `-nofx` within noise. Budget per attack: under ~200 particles, at most four lights, no extra
 full-screen passes (the flash is part of the final pass).
 
-## Known issue: memory drift on Direct3D 11
+## Known issue: NVIDIA driver memory grows per match on Direct3D 11
 
-The `-cycles` heap grows on Direct3D 11 by about 1 MB per match with effects, 0.3–0.7 MB without (`-nofx`). On
-OpenGL it is flat with and without effects (about +20 KB per match), and every Ogre object count returns to the same
-value each match. So the game destroys everything it creates; the growth is inside the Direct3D 11 render system or
-driver and grows with the number of dynamic buffers created (lightning chains, trails, particle systems). It is not
-fixed. A next step would be pooling the effect objects per match instead of creating and destroying them.
+On Direct3D 11 the `-cycles` heap grows about 1.3 MB per match; on OpenGL it is flat, and every Ogre object count
+returns to the same value each match, so the game frees everything it creates. Investigated in 2026-10 with the heap
+histogram of `-cycles` (`heap growth by block size`, plus the DLL that owns the pointers in a sample block):
+
+- The growing blocks (5944, 1680, 1552, 1048 and 2x1560 bytes, 40-100 sets per match) belong to the NVIDIA user-mode
+  driver (`nvwgf2umx.dll`).
+- **Not the effects:** spawning an effect every 0.5 s through whole matches with every other effect off adds nothing
+  measurable; pooling trails, chains and particle systems, and dynamic index buffers for the chains, changed nothing
+  (all reverted).
+- **Tied to post-processing:** without the compositor the growth drops to about 0.5 MB per match (twice, each way).
+  Keeping the compositor between matches (disabled, not removed: `Lighting::~Lighting`) and skipping the per-frame
+  shadow-map bind of the god-ray pass did not change it. The cause is inside the driver.
+- It only happens when you go back to the menu and start another match: a normal game (16 enemies in one match)
+  never triggers it.
