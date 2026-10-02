@@ -273,6 +273,8 @@ void SpecialJyn::attack(Ogre::Quaternion orientation){
 	);// orientation of the box
 
 	specialRigidBody->getBulletObject()->activate(true);
+	// No gravity: the throw is aimed at the target (with gravity the slower ball fell into the floor at long range).
+	specialRigidBody->getBulletRigidBody()->setGravity( btVector3( 0, 0, 0 ) );
 
 	// The 2011 throw: forward and a little down. The ball now starts above the raised hand, higher than the old fixed
 	// point, so a standing enemy in front is aimed at directly (its chest), at the same speed.
