@@ -81,7 +81,8 @@ points compatible across sets.
   by inertia and the random factors `AC1`/`AC2`. It was replaced as the default because it sometimes left the
   ball away from the hand.
 - Energy look (being reworked in 2026 towards anime ki attacks: DBZ, Naruto, Saint Seiya). **Jyn is Dragon Ball Z's
-  Genki Dama (Spirit Bomb)**: energy gathered from all around (the swarm) into a ball above the raised hand (`SpecialJyn::getChargeAnchor`:
+  Genki Dama (Spirit Bomb)**: energy gathered from all around (the swarm) into a ball above the raised hand (crimson when an enemy
+  throws it: `enemyKiColour`) (`SpecialJyn::getChargeAnchor`:
   the higher of the two hands' `finger_3_1` bones), growing a little with every swarm ball that arrives,
   blue-white (`kiColour` of `skill jyn` in `skills.object`). While it gathers, energy streaks in from the air and rises from
   the ground, faint dust is dragged over the floor and lightning crackles over the growing ball. Punch and kick are ki blasts in the robot's own colour:

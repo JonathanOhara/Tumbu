@@ -25,6 +25,9 @@
  *                    -fxtest=special:jyn|punch|kick: the hero uses that attack instead (fxtime before the shot)
  *                    -fxtest=special:jynthrow: charge Jyn from 1 s, throw it when ready, shot fxtime after the throw
  *                    -fxdistance=D: camera distance (4; under 3 the shot frames only the effect)
+ *   -jynhit[=D]      the enemy stands still D units (6) in front of the hero (no AI) and the hero throws a Genki
+ *                    Dama at it (-fxtest=special:jynthrow): screenshot of a real Jyn hit, fxtime after the throw
+ *                    -jynhit=enemy: the other way round, the enemy throws its Genki Dama at the hero
  *   -camera=x,y,z,tx,ty,tz  with -quitafter: the screenshot looks from (x,y,z) at (tx,ty,tz)
  *   -flytest         fly camera check: F, fly, Esc (no pause menu), F again; screenshot while flying
  *   -cycles=N        memory check: play N matches (3 enemy kills each, then Quit to the menu) through the
@@ -60,6 +63,10 @@ private:
 	void runFxTest(void);
 	bool fxSpawned;
 	int fxPresses;
+	void holdEnemy(void);
+	bool enemyHeld;
+	int enemyPresses;
+	Ogre::Vector3 heldEnemyAt;
 	Effect* fxEffect;	// the -fxtest effect (held; the match deletes it)
 	Ogre::Vector3 fxSpot;
 	int faceJynPresses;
@@ -105,6 +112,8 @@ private:
 	static Ogre::String fxTest;
 	static Ogre::Real fxTime;
 	static Ogre::Real fxDistance;
+	static Ogre::Real jynHit;
+	static bool enemyThrows;
 	static bool fixedCamera;
 	static bool flyTest;
 	static Ogre::Vector3 cameraEye, cameraTarget;

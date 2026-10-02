@@ -14,7 +14,8 @@ Anime ki attacks (Dragon Ball Z, Naruto, Saint Seiya), drawn in the same toon st
 - **Timing:** a long build-up, a fast release, an impact that hangs (hit-stop and a white frame), then a slow fade.
 - **Colours:** Jyn is always the Genki Dama blue-white (`kiColour` of `skill jyn`, `skills.object`). Punch and kick
   use the robot's ki colour: `kiColour` of its head's set (`robotNNN.object`), matching the eyes. Lesser red, Amber
-  green, Buzzy crimson, Guardian jade, Donn gold.
+  green, Buzzy crimson, Guardian jade, Donn gold. An enemy's Genki Dama uses `enemyKiColour` (crimson) instead, so it reads
+  as hostile.
 
 ## The attacks
 
@@ -62,6 +63,9 @@ Particle Swarm Optimization is kept as an option (`gather pso` in `skill jyn`).
 - `-FxTest special:punch|kick|jyn|jynthrow`: the hero uses the attack (`jynthrow` charges, throws, and shoots
   `FxTime` after the throw).
 - `-JynWalk`: charges Jyn while walking and logs the ball's offset from where it gathers.
+- `-JynHit [D]`: the enemy stands still D units (6) in front of the hero (no AI) and the hero throws a Genki Dama at
+  it: a real hit (the impact on a robot), shot `FxTime` after the throw. `TUMBU.exe -jynhit=enemy` reverses it: the
+  enemy charges and throws at the hero.
 - `TUMBU.exe -nofx`: no effects at all, to compare frame rate and memory.
 
 ## Performance

@@ -3,6 +3,7 @@
 #include "SpecialJyn.h"
 #include "EffectsManager.h"
 #include "Effect.h"
+#include "AIManager.h"
 
 #include <MyGUI.h>
 
@@ -31,6 +32,8 @@ bool DevTest::noFx = false;
 Ogre::String DevTest::fxTest = "";
 Ogre::Real DevTest::fxTime = 0.3f;
 Ogre::Real DevTest::fxDistance = 4.0f;
+Ogre::Real DevTest::jynHit = 0;
+bool DevTest::enemyThrows = false;
 bool DevTest::fixedCamera = false;
 bool DevTest::flyTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
@@ -58,6 +61,13 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			noFx = true;
 		}else if( arg == "-flytest" ){
 			flyTest = true;
+		}else if( arg == "-jynhit" || Ogre::StringUtil::startsWith( arg, "-jynhit=" ) ){
+			// The enemy stands still in front of the hero, in Jyn's range, and the hero throws a Genki Dama at it.
+			enemyThrows = arg == "-jynhit=enemy";
+			jynHit = arg.size() > 8 && !enemyThrows ? Ogre::StringConverter::parseReal( arg.substr( 8 ) ) : 6.0f;
+			if( fxTest.empty() ){
+				fxTest = "special:jynthrow";
+			}
 		}else if( Ogre::StringUtil::startsWith( arg, "-fxtest=" ) ){
 			fxTest = args[i].substr( 8 );	// effect names keep their case
 		}else if( Ogre::StringUtil::startsWith( arg, "-fxdistance=" ) ){
@@ -110,6 +120,9 @@ DevTest::DevTest(void){
 	faceJynPresses = 0;
 	fxSpawned = false;
 	fxPresses = 0;
+	enemyHeld = false;
+	enemyPresses = 0;
+	heldEnemyAt = Ogre::Vector3::ZERO;
 	fxEffect = NULL;
 	fxSpot = Ogre::Vector3::ZERO;
 	flyStep = 0;
@@ -207,7 +220,17 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 			nextLogTime += 0.5f;
 		}
 
-		if( !fxTest.empty() && quitAfter > 0 ){
+		if( jynHit > 0 ){
+			holdEnemy();
+		}
+		if( enemyThrows && enemyHeld && !fixedCamera && playTime >= quitAfter - 0.5f && tumbu->getDemo() != NULL ){
+			// From the side, between the two robots.
+			Ogre::Vector3 hero = tumbu->getDemo()->mainChar->robotNode->_getDerivedPosition();
+			Ogre::Vector3 middle = ( hero + heldEnemyAt ) * 0.5f + Ogre::Vector3( 0, 1.2f, 0 );
+			Ogre::Vector3 across = ( heldEnemyAt - hero ).crossProduct( Ogre::Vector3::UNIT_Y ).normalisedCopy();
+			placeCamera( middle + across * fxDistance + Ogre::Vector3( 0, 0.2f * fxDistance, 0 ), middle );
+		}
+		if( !fxTest.empty() && quitAfter > 0 && !enemyThrows ){
 			runFxTest();
 		}
 		if( faceShot > 0 && quitAfter > 0 ){
@@ -321,10 +344,60 @@ void DevTest::runFxTest(void){
 	}
 	if( !fixedCamera && faceShot == 0 && playTime >= quitAfter - 0.5f ){
 		Ogre::Vector3 centre = fxSpawned ? fxSpot : front;
+		if( jynHit > 0 && enemyHeld ){
+			centre = heldEnemyAt + Ogre::Vector3( 0, 1.2f, 0 );	// -jynhit: the hero and the enemy
+		}
 		// From afar the shot frames the hero and the effect; close up (-fxdistance under 3) only the effect.
 		Ogre::Vector3 middle = fxDistance < 3.0f ? centre : ( centre + hero->_getDerivedPosition() + Ogre::Vector3( 0, 1.0f, 0 ) ) * 0.5f;
 		Ogre::Vector3 right = forward.crossProduct( Ogre::Vector3::UNIT_Y );
 		placeCamera( middle + right * fxDistance + Ogre::Vector3( 0, 0.2f * fxDistance, 0 ) - forward * ( 0.125f * fxDistance ), middle );
+	}
+}
+//-------------------------------------------------------------------------------------
+void DevTest::holdEnemy(void){
+	// -jynhit: no AI, and the enemy is held jynHit units in front of the hero, facing it (placed once).
+	Demo* demo = TUMBU::getInstance()->getDemo();
+	if( demo == NULL || demo->mainChar == NULL || demo->enemy == NULL || demo->enemy->charRigidBody == NULL ){
+		return;
+	}
+	AIManager::getInstance()->active = false;
+	btRigidBody* body = demo->enemy->charRigidBody->getBulletRigidBody();
+	// Until the throw the enemy keeps to the spot in front of the hero (the hero may still turn); then it stays put.
+	bool thrown = fxPresses > 2;
+	if( !enemyHeld || !thrown ){
+		Ogre::Vector3 hero = demo->mainChar->robotNode->_getDerivedPosition();
+		Ogre::Vector3 forward = demo->mainChar->robotNode->_getDerivedOrientation() * Ogre::Vector3::UNIT_Z;
+		forward.y = 0;
+		forward.normalise();
+		heldEnemyAt = hero + forward * jynHit;
+		heldEnemyAt.y = body->getWorldTransform().getOrigin().y();
+		demo->enemy->robotNode->setOrientation( Ogre::Vector3::UNIT_Z.getRotationTo( -forward ) );
+		if( !enemyHeld )
+			log( "jynhit: enemy held at " + Ogre::StringConverter::toString( heldEnemyAt ) + ", " + Ogre::StringConverter::toString( jynHit ) + " units in front of the hero" );
+		enemyHeld = true;
+	}
+	btTransform transform = body->getWorldTransform();
+	transform.setOrigin( btVector3( heldEnemyAt.x, transform.getOrigin().y(), heldEnemyAt.z ) );
+	body->setWorldTransform( transform );
+	body->setInterpolationWorldTransform( transform );
+	body->setLinearVelocity( btVector3( 0, body->getLinearVelocity().y(), 0 ) );
+	body->setAngularVelocity( btVector3( 0, 0, 0 ) );
+
+	// -jynhit=enemy: the enemy charges a Genki Dama (cast, concentrate) and throws it at the hero when it is ready;
+	// the screenshot is fxtime after its throw.
+	if( enemyThrows && quitAfter > 0 ){
+		CharacterEnemy* enemy = demo->enemy;
+		SpecialJyn* charging = enemy->jyn != NULL ? dynamic_cast<SpecialJyn*>( enemy->jyn->special ) : NULL;
+		if( enemyPresses < 2 && playTime >= 1.0f + enemyPresses * 0.3f ){
+			log( enemyPresses == 0 ? "jynhit: enemy casts Jyn" : "jynhit: enemy concentrates" );
+			enemy->movePressed( Robot::JYN );
+			enemyPresses++;
+		}else if( enemyPresses == 2 && charging != NULL && charging->getSpecialStatus() == SpecialInterface::CONCENTRATED ){
+			log( "jynhit: enemy throws" );
+			enemy->movePressed( Robot::JYN );
+			enemyPresses++;
+			quitAfter = playTime + fxTime;
+		}
 	}
 }
 //-------------------------------------------------------------------------------------

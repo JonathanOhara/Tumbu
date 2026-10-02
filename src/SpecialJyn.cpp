@@ -297,7 +297,29 @@ void SpecialJyn::attack(Ogre::Quaternion orientation){
 
 	specialRigidBody->getBulletObject()->activate(true);
 
+	// The 2011 throw: forward and a little down. The ball now starts above the raised hand, higher than the old fixed
+	// point, so a standing enemy in front is aimed at directly (its chest), at the same speed.
 	Ogre::Vector3 translation = orientation * Ogre::Vector3(0,-100, 1000);
+	Ogre::Vector3 start = particleList.empty() ? targetVector : particleList[melhorParticula]->particle->mPosition;
+	Ogre::Vector3 facing = orientation * Ogre::Vector3::UNIT_Z;
+	facing.y = 0;
+	facing.normalise();
+	Robot* aimed = NULL;
+	Ogre::Real nearest = 0;
+	for( std::list<Robot*>::iterator e = robotSpeller->enemyList.begin(); e != robotSpeller->enemyList.end(); e++ ){
+		Ogre::Vector3 toEnemy = (*e)->robotNode->_getDerivedPosition() - start;
+		toEnemy.y = 0;
+		Ogre::Real distance = toEnemy.normalise();
+		// Roughly in front (within 60 degrees of where the speller faces).
+		if( facing.dotProduct( toEnemy ) > 0.5f && ( aimed == NULL || distance < nearest ) ){
+			aimed = *e;
+			nearest = distance;
+		}
+	}
+	if( aimed != NULL ){
+		Ogre::Vector3 chest = aimed->robotNode->_getDerivedPosition() + Ogre::Vector3( 0, 1.1f, 0 );
+		translation = ( chest - start ).normalisedCopy() * translation.length();
+	}
 
 	specialRigidBody->applyImpulse( 
 		translation, Ogre::Vector3(0, 0, 0) );

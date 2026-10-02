@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-Camera "x,y,z,tx,ty,tz"]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"]
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # The game runs muted (-mute) unless -Sound is given.
 param(
@@ -15,6 +15,7 @@ param(
     [string]$FxTest = "",
     [double]$FxTime = 0.3,
     [double]$FxDistance = 0,
+    [double]$JynHit = 0,
     [string]$Camera = '',
     [string]$Name = 'run',
     [int]$TimeoutSeconds = 180
@@ -33,6 +34,7 @@ if ($Hour -ge 0)   { $gameArgs += "-hour=$Hour" }
 if (-not $Sound)  { $gameArgs += '-mute' }
 if ($FaceShot)    { $gameArgs += $(if ($Jyn) { '-faceshot=jyn' } else { '-faceshot' }) }
 if ($JynWalk)     { $gameArgs += "-jynwalk" }
+if ($JynHit -gt 0) { $gameArgs += "-jynhit=" + $JynHit.ToString([cultureinfo]::InvariantCulture) }
 if ($FxTest)      { $gameArgs += "-fxtest=$FxTest"; $gameArgs += "-fxtime=" + $FxTime.ToString([cultureinfo]::InvariantCulture) }
 if ($FxDistance -gt 0) { $gameArgs += "-fxdistance=" + $FxDistance.ToString([cultureinfo]::InvariantCulture) }
 if ($Camera)      { $gameArgs += "-camera=$Camera" }

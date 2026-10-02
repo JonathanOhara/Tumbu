@@ -1,5 +1,6 @@
 #include "SpecialInterface.h"
 #include "Robot.h"
+#include "CharacterEnemy.h"
 #include "ConfigScript.h"
 #include "EffectsManager.h"
 #include "Effect.h"
@@ -39,7 +40,14 @@ void SpecialInterface::setSpecialStatus(SpecialInterface::SpecialStatus _special
 //-------------------------------------------------------------------------------------
 Ogre::ColourValue SpecialInterface::getKiColour( const Ogre::String &skillName ){
 	ConfigNode* cfg = ConfigScriptLoader::getSingleton().getConfigScript( "skill", skillName );
-	ConfigNode* ki = cfg != NULL ? cfg->findChild( "kiColour" ) : NULL;
+	// An enemy's specials can have their own colour ("enemyKiColour"), so its Genki Dama reads as hostile.
+	ConfigNode* ki = NULL;
+	if( cfg != NULL && dynamic_cast<CharacterEnemy*>( robotSpeller ) != NULL ){
+		ki = cfg->findChild( "enemyKiColour" );
+	}
+	if( ki == NULL && cfg != NULL ){
+		ki = cfg->findChild( "kiColour" );
+	}
 	if( ki != NULL && ki->getValues().size() >= 3 ){
 		return Ogre::ColourValue( ki->getValueF( 0 ), ki->getValueF( 1 ), ki->getValueF( 2 ), 1 );
 	}

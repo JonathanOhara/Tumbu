@@ -69,7 +69,8 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the
   side: `devtest.ps1 -FxTest NAME [-FxTime 0.3]`; `effect test` is a calibration light + flash; `move:NAME` holds
   it and circles the spot so trails show; `-fxtest=special:jyn|punch|kick|jynthrow` makes the hero attack instead, `-fxdistance=D`
-  sets the camera distance).
+  sets the camera distance), `-jynhit[=D]` (the enemy stands still D units in front, no AI, and the hero throws a Genki
+  Dama at it: a real hit; `-jynhit=enemy`: the enemy throws at the hero; `devtest.ps1 -JynHit 6`).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`

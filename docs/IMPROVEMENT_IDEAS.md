@@ -43,6 +43,26 @@ started. The special-attack visuals (DBZ/Naruto/Saint Seiya energy balls) are ha
    - Per-robot light direction and crisper two-tone shading options (Granblue Fantasy Versus).
    - Dust spawned only in sunlit air, so the beams carry more of it.
 
+## Special-attack ideas (to test)
+
+8. **Ki aura around the robot while Jyn charges** *(Dragon Ball Z, Saint Seiya cosmos)*
+   - A burning energy aura around the charging robot, in the attack's colour, that grows with the Genki Dama and
+     flares at the throw. Built as an effect layer in `effects.object` (`jyn_charge`), so setups can be swapped and
+     compared with `devtest.ps1 -FxTest special:jyn` without code changes.
+   - Setups to compare:
+     - **Body aura (DBZ):** stretched flame tongues rising around the silhouette. Cheapest good version: a few
+       camera-facing, vertically stretched billboards around the robot with a scrolling-noise flame shader (toon bands,
+       white inner edge, ki-coloured body, dark underlay like the orbs). Better but costlier: a second, inflated pass of
+       the robot meshes (the outline shader, pushed out along the normals) with the same flame shader, so the aura hugs
+       the robot's real shape.
+     - **Ground aura:** a ring of energy and wind on the floor around the feet (a flat ring billboard plus dust pushed
+       outwards), like the ground pressure under a powering-up fighter. Reuses the shockwave ring and dust pieces.
+     - **Both**, and a **calm version** (only a faint shimmer outline and rising motes): with the Genki Dama the energy
+       comes from outside, so a strong DBZ body aura may compete with the ball; the calm one keeps the focus on it.
+   - Things to decide in the test: whether the aura follows the robot's colour or the attack's, its intensity while
+     walking, and that it never hides the robot's face (the eye flare is part of the charge).
+   - Cost: a few dozen billboards per charging robot; the inflated-mesh variant draws each robot part a second time.
+
 ## Art side (not lighting, but the biggest visual gaps)
 
 - **The coliseum has no texture** (flat colour), and the arena floor texture is near-white and dominates
