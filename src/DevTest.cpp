@@ -1,3 +1,7 @@
+#ifdef _WIN32
+#include <d3d11.h>	// before the game headers (their "using namespace std" clashes with the SDK's byte)
+#include <d3d11sdklayers.h>
+#endif
 #include "DevTest.h"
 #include "TUMBU.h"
 #include "SpecialJyn.h"
@@ -715,6 +719,24 @@ static size_t countNodes( Ogre::Node *node ){
 }
 //-------------------------------------------------------------------------------------
 void DevTest::logMemory( const Ogre::String &label ){
+	// The Direct3D 11 per-match memory growth (docs/SPECIAL_EFFECTS.md, "Known issue") was measured with these versions.
+	// When the graphics driver or Ogre differs, say so: re-check whether it still happens (and whether the workarounds
+	// noted there are still needed), then update the doc and these values.
+	static bool versionsChecked = false;
+	if( !versionsChecked ){
+		versionsChecked = true;
+		const char* MEASURED_DRIVER = "32.0.16.1714";
+		const char* MEASURED_OGRE = "14.6.0";
+		Ogre::RenderSystem* renderSystem = Ogre::Root::getSingleton().getRenderSystem();
+		Ogre::String driver = renderSystem->getDriverVersion().toString();
+		Ogre::String ogre = Ogre::StringConverter::toString( OGRE_VERSION_MAJOR ) + "." + Ogre::StringConverter::toString( OGRE_VERSION_MINOR ) + "." + Ogre::StringConverter::toString( OGRE_VERSION_PATCH );
+		bool d3d11 = renderSystem->getName().find( "Direct3D11" ) != Ogre::String::npos;
+		if( d3d11 && ( driver != MEASURED_DRIVER || ogre != MEASURED_OGRE ) ){
+			log( "REMINDER: graphics driver " + driver + " / Ogre " + ogre + " differ from the ones the Direct3D 11 memory issue was measured with (driver " + MEASURED_DRIVER + ", Ogre " + MEASURED_OGRE + "): re-check it, see docs/SPECIAL_EFFECTS.md \"Known issue\"" );
+		}else{
+			log( "versions: graphics driver " + driver + ", Ogre " + ogre + ( d3d11 ? " (as measured for the Direct3D 11 memory issue)" : "" ) );
+		}
+	}
 	Ogre::String memory = "?";
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 	PROCESS_MEMORY_COUNTERS_EX counters;
@@ -797,6 +819,51 @@ void DevTest::logMemory( const Ogre::String &label ){
 		}
 		previous = sizes;
 #endif
+	{	// Live Direct3D 11 objects by type, when the D3D11 debug layer is on (docs/SPECIAL_EFFECTS.md, "Known issue")
+		TUMBU* app = TUMBU::getInstance();
+		ID3D11Device* device = NULL;
+		if( app->mWindow != NULL && Ogre::Root::getSingleton().getRenderSystem()->getName().find( "Direct3D11" ) != Ogre::String::npos ){
+			app->mWindow->getCustomAttribute( "D3DDEVICE", &device );
+		}
+		ID3D11Debug* debug = NULL;
+		ID3D11InfoQueue* queue = NULL;
+		if( device != NULL && SUCCEEDED( device->QueryInterface( __uuidof( ID3D11Debug ), (void**)&debug ) )
+			&& SUCCEEDED( device->QueryInterface( __uuidof( ID3D11InfoQueue ), (void**)&queue ) ) ){
+			queue->ClearStoredMessages();
+			queue->SetMessageCountLimit( (UINT64)-1 );
+			// Ogre only keeps corruption-level messages: let the report through, then restore its filters.
+			queue->PushEmptyStorageFilter();
+			queue->PushEmptyRetrievalFilter();
+			debug->ReportLiveDeviceObjects( D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL );
+			queue->PopStorageFilter();	// back to Ogre's filter before anything else is drawn
+			std::map<Ogre::String, int> types;
+			UINT64 count = queue->GetNumStoredMessages();
+			for( UINT64 m = 0; m < count; m++ ){
+				SIZE_T size = 0;
+				queue->GetMessage( m, NULL, &size );
+				std::vector<char> data( size );
+				D3D11_MESSAGE* message = (D3D11_MESSAGE*)&data[0];
+				if( SUCCEEDED( queue->GetMessage( m, message, &size ) ) ){
+					Ogre::String text( message->pDescription, message->DescriptionByteLength );
+					size_t at = text.find( "Live " );
+					if( at != Ogre::String::npos ){
+						size_t end = text.find_first_of( " ,:", at + 5 );
+						types[text.substr( at + 5, end - at - 5 )]++;
+					}
+				}
+			}
+			Ogre::String summary;
+			for( std::map<Ogre::String, int>::iterator t = types.begin(); t != types.end(); t++ ){
+				summary += " " + t->first + "=" + Ogre::StringConverter::toString( t->second );
+			}
+			queue->PopRetrievalFilter();
+			summary += " (messages " + Ogre::StringConverter::toString( (unsigned long)count ) + ")";
+			log( "d3d11 live objects:" + summary );
+			queue->ClearStoredMessages();
+		}
+		if( queue != NULL ) queue->Release();
+		if( debug != NULL ) debug->Release();
+	}
 	Ogre::SceneManager *sceneMgr = TUMBU::getInstance()->mSceneMgr;
 	log( "memory " + label +
 		" private=" + memory +

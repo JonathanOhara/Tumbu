@@ -94,6 +94,13 @@ histogram of `-cycles` (`heap growth by block size`, plus the DLL that owns the 
   (`ID3D11DeviceContext::ClearState` + `Flush`), shadows off, and the simple skydome instead of Caelum (about 1 MB per
   match in every case). Not worth more time: about 1 MB per return to the menu, and the driver frees it when the game
   closes.
+- Also tried, also without effect: `IDXGIDevice3::Trim()` after each match (asks the driver to free its internal
+  temporary memory, as Windows does when an app is suspended).
+- **Proof that nothing leaks on our side:** with the Direct3D 11 debug layer, the live Direct3D objects reported by
+  `ID3D11Debug::ReportLiveDeviceObjects` stay flat across 8 matches (647-655 objects; buffers 278-286, the per-frame
+  ones; every other type exactly equal), while the heap grows ~1 MB per match. Neither Ogre nor the game keeps any
+  Direct3D object; the memory is held inside the NVIDIA driver. The total private memory of the process is also
+  roughly flat (441-449 MB from match 2), so the real cost may be smaller than the heap count suggests.
 
 **Measured with** (re-check after updating any of these):
 
@@ -109,3 +116,14 @@ To re-check: `bin\Release\TUMBU.exe -cycles=8 -mute` on Direct3D 11, then compar
 `ogre.log` (about +1 MB per cycle with this setup; fixed if it stays within ~100 KB, as on OpenGL). The `heap growth
 by block size` lines show whether the growing blocks still belong to `nvwgf2umx.dll`. The current versions are in
 `ogre.log` (`Version 14.6.0`, `Driver Version:`).
+
+**Reminder:** `-cycles` logs `[DEVTEST] REMINDER: ...` when the graphics driver or Ogre differs from the versions above
+(the values are in `DevTest::logMemory`). Then re-check the issue, and whether the workaround is still needed: the
+post-processing compositor is kept between matches (`Lighting::~Lighting` disables it instead of removing it), which
+did not change the growth here. Update this section and the values in `DevTest::logMemory` afterwards.
+
+**Live Direct3D objects:** needs Windows' optional "Graphics Tools" (admin: `dism /online /add-capability
+/capabilityname:Tools.Graphics.DirectX~~~~0.0.1.0`). In the `[Direct3D11 Rendering Subsystem]` section of
+`%USERPROFILE%\Tumbu\ogre.cfg` set `Debug Layer=On` and `Information Queue Exceptions Bottom Level=Corruption` (Ogre
+only creates a debug device when that level is not "No information queue exceptions"); `-cycles` then logs
+`[DEVTEST] d3d11 live objects: ...` per type after each match. Set both back afterwards: the debug layer is slow.

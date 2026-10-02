@@ -78,7 +78,7 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   +25 KB per match). Every object count must return to the same value each cycle. Exception: on Direct3D 11 the NVIDIA driver
   grows about 1.3 MB per match, tied to the post-processing compositor, not the effects; OpenGL stays flat, and the object
   counts are flat on both (docs/SPECIAL_EFFECTS.md, "Known issue": measured with NVIDIA driver 617.14 and Ogre 14.6.0; re-check
-  after updating either). `-cycles` also logs `heap growth by block size` and
+  after updating either: `-cycles` logs a `REMINDER` line when they differ). `-cycles` also logs `heap growth by block size` and
   the DLL that owns sample blocks, to find what grows.
 - **Crash report:** any crash (access violation, uncaught exception, `abort`) writes the call stack to
   `ogre.log` and `%USERPROFILE%\Tumbu\crash.log` (`Main.cpp`). RelWithDebInfo has file:line for game code.
