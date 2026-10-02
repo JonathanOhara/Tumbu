@@ -94,3 +94,18 @@ histogram of `-cycles` (`heap growth by block size`, plus the DLL that owns the 
   (`ID3D11DeviceContext::ClearState` + `Flush`), shadows off, and the simple skydome instead of Caelum (about 1 MB per
   match in every case). Not worth more time: about 1 MB per return to the menu, and the driver frees it when the game
   closes.
+
+**Measured with** (re-check after updating any of these):
+
+| | Version |
+|---|---|
+| GPU | NVIDIA GeForce RTX 3070 |
+| NVIDIA driver | 617.14 (Windows driver version 32.0.16.1714, dated 2026-09-16) |
+| Ogre | 14.6.0 (Tsathoggua), Direct3D 11 render system |
+| Windows | 11 Pro, build 26300 |
+| Date | 2026-10-01 |
+
+To re-check: `bin\Release\TUMBU.exe -cycles=8 -mute` on Direct3D 11, then compare the `heap=` of `memory cycle 2..8` in
+`ogre.log` (about +1 MB per cycle with this setup; fixed if it stays within ~100 KB, as on OpenGL). The `heap growth
+by block size` lines show whether the growing blocks still belong to `nvwgf2umx.dll`. The current versions are in
+`ogre.log` (`Version 14.6.0`, `Driver Version:`).
