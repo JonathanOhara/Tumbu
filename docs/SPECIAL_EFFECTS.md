@@ -90,3 +90,7 @@ histogram of `-cycles` (`heap growth by block size`, plus the DLL that owns the 
   shadow-map bind of the god-ray pass did not change it. The cause is inside the driver.
 - It only happens when you go back to the menu and start another match: a normal game (16 enemies in one match)
   never triggers it.
+- Also tried without effect: forcing the driver to release deferred objects after each match
+  (`ID3D11DeviceContext::ClearState` + `Flush`), shadows off, and the simple skydome instead of Caelum (about 1 MB per
+  match in every case). Not worth more time: about 1 MB per return to the menu, and the driver frees it when the game
+  closes.
