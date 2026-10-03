@@ -11,10 +11,13 @@ Each idea notes which reference game does it.
      lights passed to the toon shaders as shared parameters (`tumbuEnergyLights` in `TumbuToon.h`,
      docs/SPECIAL_EFFECTS.md).
 
-2. **Robot "hero lighting"** *(Genshin)*
-   - A soft fill/rim light that follows the camera, so robots always read well, even inside the coliseum's
-     shadow.
-   - Characters are lit separately from the scene; only the robot shader would change.
+2. **Robot "hero lighting"** *(Genshin)* — **done (2026-10)**
+   - A soft toon fill light that follows the camera (above and to its right) and the rim kept on the shadow side, so
+     robots read in the coliseum's shadow, at dusk and at night; faint where the sun already lights them.
+   - Only the robot shader changed (`tumbuHeroLight` in `TumbuToon.h`, `hero*` keys in `lighting.object`); the arena
+     renders the same. Test any robot with `devtest.ps1 -Hero robot005`.
+   - Possible follow-ups: black parts stay black (the fill multiplies the albedo), so they read only through the rim
+     and outline; a Genshin-style screen-space depth rim, or softer cast shadows on robots, would go further.
 
 3. **Metallic highlights for the robots** *(Genshin)*
    - A stylised matcap / sky-colour reflection on metal parts, so robots read as painted metal, not plastic.

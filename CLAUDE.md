@@ -103,7 +103,7 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 | GUI | **MyGUI 3.5.1** (Ogre platform, BlackBlue theme). Layouts are in `media/gui/*.layout` | `GUI.cpp/.h` |
 | Audio | **miniaudio 0.11.25** + stb_vorbis. Files are loaded through Ogre resources; 3D sounds follow scene nodes | `Sound`, `SoundManager` |
 | Sky | Low: skydome material. High: **Caelum** day/night, **Direct3D 11 only** (Caelum ships only cg/hlsl shaders), driven by `Clock` | `Sky` |
-| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, integrated depth shadow map, HDR compositor with god rays, bloom and tone mapping; Caelum sun follows it | `Lighting`, `media/tumbu/shading/` |
+| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, a camera-relative "hero" fill on the robots, integrated depth shadow map, HDR compositor with god rays, bloom and tone mapping; Caelum sun follows it | `Lighting`, `media/tumbu/shading/` |
 | Shaders | Robot and arena shaders in unified GLSL/HLSL (`OgreUnifiedShader.h`), sharing `TumbuToon.h`; materials set textures through `set $var` | `media/tumbu/robots/`, `media/tumbu/shading/` |
 | Scene format | `.scene` from Ogitor 0.4.4 + terrain page `.ogt`, parsed by our `DotSceneLoader` (rapidxml) | `media/scenes/arena` |
 | Installer | NSIS `Tumbu.nsi` (still the 2011 x86 layout; needs updating) | root |
@@ -177,6 +177,15 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   from special attacks (shared `energyLightPos0..3` = position + radius, `energyLightColour0..3` = colour x
   intensity), a toon band with a quadratic falloff, added as albedo x light by the robot and arena shaders. The
   screen flash is the shared `screenFlash` (rgb, amount), mixed in at the very end of the final pass.
+- **Hero lighting** (robots only, Genshin / Guilty Gear style: characters are lit apart from the scene;
+  `tumbuHeroLight` + `TUMBU_HERO_UNIFORMS` in `TumbuToon.h`, called only by `robot_toon.frag`): a fill light that
+  follows the camera (`heroFillYaw` degrees to its right, `heroFillPitch` above; built in the shader from the
+  `view_side_vector` / `view_up_vector` / `view_direction` auto parameters, so no lag and the inventory preview gets
+  it too) through the sun's toon ramp, not shadowed, faded to `heroFillSunlit` where the sun lights the surface, so
+  it shows in the coliseum's shadow, at dusk and at night and barely by day. Plus the rim kept on the shadow side
+  (`heroRimShadow`; `tumbuToon` gives `TUMBU_RIM_SHADOW` = 0.35, which the arena keeps). Colour and strength per
+  keyframe (`heroFillColour`, `heroFillStrength`). Shared `heroFillColour` / `heroFillParams` / `heroRimParams`.
+  Black parts stay black (the fill multiplies the albedo); only their rim lifts.
 - **Contact shadows**
  (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by
