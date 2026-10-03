@@ -62,7 +62,8 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   special-attack effects, to compare frame rate or memory) and
   `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
   `devtest.ps1 -FaceShot [-Jyn]`), `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point:
-  `devtest.ps1 -Camera "…"`, handy for close-ups of the arena) and `-flytest` (fly camera: F, fly, Esc
+  `devtest.ps1 -Camera "…"`, handy for close-ups of the arena), `-hero=robotNNN` (the hero wears all five parts of that set: `devtest.ps1 -Hero robot005`, to check a
+  given robot's look) and `-flytest` (fly camera: F, fly, Esc
   without opening the pause menu, F again; logs the game state and camera after each step) and `-jynwalk`
   (`devtest.ps1 -JynWalk`: casts and concentrates Jyn while the hero walks and logs the ball's offset from the point
   above the hero where it gathers; it must converge while walking), `-fxtest=NAME` / `-fxtime=S` (starts

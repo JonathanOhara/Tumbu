@@ -1,4 +1,5 @@
 #include "Demo.h"
+#include "DevTest.h"
 //-------------------------------------------------------------------------------------
 Demo::Demo(){
 	gui				= GUI::getInstance();
@@ -426,11 +427,13 @@ void Demo::createMainCharacter(void){
 	/** CRIA UM NÓ PARA CADA PARTE DO CORPO */
 	mainChar->buildNodes();
 
-	mainChar->addPart( HEAD, cfg->findChild("head")->getValue(0) );
-	mainChar->addPart( BODY, cfg->findChild("body")->getValue(0) );
-	mainChar->addPart( RIGHT_ARM, cfg->findChild("rightArm")->getValue(0) );
-	mainChar->addPart( LEFT_ARM, cfg->findChild("leftArm")->getValue(0) );
-	mainChar->addPart( LEGS, cfg->findChild("legs")->getValue(0) );
+	// DevTest -hero=robotNNN: the hero wears all five parts of one set (to look at a given robot).
+	const Ogre::String &heroSet = DevTest::getHeroSet();
+	mainChar->addPart( HEAD, heroSet.empty() ? cfg->findChild("head")->getValue(0) : heroSet );
+	mainChar->addPart( BODY, heroSet.empty() ? cfg->findChild("body")->getValue(0) : heroSet );
+	mainChar->addPart( RIGHT_ARM, heroSet.empty() ? cfg->findChild("rightArm")->getValue(0) : heroSet );
+	mainChar->addPart( LEFT_ARM, heroSet.empty() ? cfg->findChild("leftArm")->getValue(0) : heroSet );
+	mainChar->addPart( LEGS, heroSet.empty() ? cfg->findChild("legs")->getValue(0) : heroSet );
 
 	mainChar->head		= mainChar->headList[0];
 	mainChar->body		= mainChar->bodyList[0];

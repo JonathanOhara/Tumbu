@@ -34,6 +34,7 @@ int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
 bool DevTest::noFx = false;
 Ogre::String DevTest::fxTest = "";
+Ogre::String DevTest::heroSet = "";
 Ogre::Real DevTest::fxTime = 0.3f;
 Ogre::Real DevTest::fxDistance = 4.0f;
 Ogre::Real DevTest::jynHit = 0;
@@ -95,6 +96,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			}
 		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
 			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-hero=" ) ){
+			heroSet = arg.substr( 6 );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
 			startHour = Ogre::StringConverter::parseInt( arg.substr( 6 ) ) % 24;
 		}else if( Ogre::StringUtil::startsWith( arg, "-quitafter=" ) ){
