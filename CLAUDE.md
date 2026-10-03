@@ -8,7 +8,7 @@ Jonathan made all code, models, textures, music and UI. In Sep 2026 it was reviv
 - Step-by-step setup (tools, dependencies, building in Visual Studio, tests, troubleshooting):
   **[docs/DEV_SETUP.md](docs/DEV_SETUP.md)**.
 - Port history and decisions: **[docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md)**.
-- Backlog of lighting, shadow and environment ideas: **[docs/IMPROVEMENT_IDEAS.md](docs/IMPROVEMENT_IDEAS.md)**.
+- Backlog of ideas (lighting, environment, special attacks, art, installer, gameplay): **[docs/IMPROVEMENT_IDEAS.md](docs/IMPROVEMENT_IDEAS.md)**.
 - Special-attack effects (Genki Dama Jyn, ki blasts, impacts; the effect system and its tests):
   **[docs/SPECIAL_EFFECTS.md](docs/SPECIAL_EFFECTS.md)**.
 - **Before any work on robots, models, parts, animations, specials or the game's look and feel, read

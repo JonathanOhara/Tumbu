@@ -1,17 +1,15 @@
-# TUMBU – improvement ideas (lighting, shadows, environment)
+# TUMBU – next steps and improvement ideas
 
 Backlog collected after the lighting overhaul (phases 0–5: toon shading, shadows, glow/bloom, baked AO, god rays,
-lens flare, contact shadows, fog, dust, SSAO). Each idea notes which reference game does it. Nothing here is
-started. The special-attack visuals (DBZ/Naruto/Saint Seiya energy balls) are handled separately.
+lens flare, contact shadows, fog, dust, SSAO) and the special-attack rework of 2026-10 (docs/SPECIAL_EFFECTS.md).
+Each idea notes which reference game does it.
 
 ## Ideas, in order of impact
 
-1. **Special attacks light the scene** *(Genshin, Astral Chain)*
-   - **Done (2026-10) in the special-attack rework** (docs/SPECIAL_EFFECTS.md): four energy lights in the toon shaders.
-   - Energy balls (Jyn, punch, kick) cast coloured light on the floor, walls and robots, and hits flash.
-   - Today the toon shaders (`TumbuToon.h`) only use the sun, so the Jyn point light lights nothing.
-   - A few point lights passed to the shaders as shared parameters (like `contactShadowA/B`) would do it.
-   - Probably part of the special-attack rework.
+1. **Special attacks light the scene** *(Genshin, Astral Chain)* — **done (2026-10)**
+   - Energy balls (Jyn, punch, kick) and impacts cast coloured light on the floor, walls and robots: four energy
+     lights passed to the toon shaders as shared parameters (`tumbuEnergyLights` in `TumbuToon.h`,
+     docs/SPECIAL_EFFECTS.md).
 
 2. **Robot "hero lighting"** *(Genshin)*
    - A soft fill/rim light that follows the camera, so robots always read well, even inside the coliseum's
@@ -63,6 +61,11 @@ started. The special-attack visuals (DBZ/Naruto/Saint Seiya energy balls) are ha
      walking, and that it never hides the robot's face (the eye flare is part of the charge).
    - Cost: a few dozen billboards per charging robot; the inflated-mesh variant draws each robot part a second time.
 
+9. **Tune Jyn in real fights** (no code: `skill jyn` in `media/configuration/skills.object`)
+   - Does `throwSpeed 25` leave enough time to guard or dodge? Is the auto-aim (nearest enemy within ~60 degrees in
+     front) fair? Does the enemy's crimson Genki Dama (`enemyKiColour`) read well? Is the ~2 s gathering too slow?
+   - Scripted tests (`devtest.ps1 -JynHit`, `-FxTest`) only check that it works, not how it feels.
+
 ## Art side (not lighting, but the biggest visual gaps)
 
 - **The coliseum has no texture** (flat colour), and the arena floor texture is near-white and dominates
@@ -70,3 +73,11 @@ started. The special-attack visuals (DBZ/Naruto/Saint Seiya energy balls) are ha
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first
   rule in CLAUDE.md.
+
+## Beyond the visuals
+
+- **Windows installer**: `Tumbu.nsi` still has the 2011 x86 layout (DLL names, folders, vcredist). Update it for the
+  x64 Ogre 14 build and its staged runtime (`cmake/StageRuntime.cmake`); the NSIS steps are in DEV_SETUP Part B.
+- **Gameplay beyond the battle demo**: customization is the core of the game (ART_AND_DESIGN), but today parts are only
+  won from defeated enemies. A part shop or loadout screen to build the robot between fights (buy parts, equip and
+  compare them), then more arenas or a mode beyond the 16 fixed fights.
