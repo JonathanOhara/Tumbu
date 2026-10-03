@@ -13,10 +13,15 @@ SAMPLER2D(glowMap, 5);
 
 OGRE_UNIFORMS(
     TUMBU_LIGHTING_UNIFORMS
+    TUMBU_HERO_UNIFORMS
     uniform vec4 matDif;
     uniform vec4 matSpec;
     uniform float matShininess;
     uniform vec3 camPos;
+    // the camera's world axes (the hero fill light follows the camera)
+    uniform vec3 camRight;
+    uniform vec3 camUp;
+    uniform vec3 camForward;
     // rgb: tint of the glow (multiplies the texture colour), w: strength (0 = no glow)
     uniform vec4 glowColour;
     // x: flare while a special attack charges (0..1, set per robot by Robot::updateEyeGlow)
@@ -46,6 +51,10 @@ MAIN_DECLARATION
 
     vec3 colour = tumbuToon(albedo, n, v, ao, specMask, matShininess, shadow,
         sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams, aoParams);
+    // Hero lighting: fill light from the camera's side and the rim kept in shadow, so the robot always reads.
+    float lit = tumbuSunLit(n, sunDirection, toonParams, shadow);
+    colour += tumbuHeroLight(albedo, n, v, ao, lit, camRight, camUp, camForward,
+        heroFillColour, heroFillParams, heroRimParams, rimColour, toonParams, aoParams);
     // Coloured light from special attacks (energy balls, impacts).
     colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
 

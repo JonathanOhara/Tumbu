@@ -52,8 +52,8 @@ public:
 
 private:
 	struct Keyframe{
-		Ogre::Real hour, sunElevation, sunAzimuth, rimStrength, exposure, shaftStrength;
-		Ogre::ColourValue sunColour, skyColour, groundColour, shadowColour, rimColour;
+		Ogre::Real hour, sunElevation, sunAzimuth, rimStrength, exposure, shaftStrength, heroFillStrength;
+		Ogre::ColourValue sunColour, skyColour, groundColour, shadowColour, rimColour, heroFillColour;
 	};
 
 	Keyframe loadKeyframe( const Ogre::String &name );
@@ -103,7 +103,12 @@ private:
 		dustSunlight,
 		dustShadow,
 		ssaoRadius,
-		ssaoStrength;
+		ssaoStrength,
+		heroFillSunlit,
+		heroRimShadow;
+	/// Direction of the robots' fill light in camera axes: weights of the camera's right, up and backwards
+	/// (towards the viewer) vectors, from heroFillYaw / heroFillPitch.
+	Ogre::Vector3 heroFillAxes;
 
 	static Lighting* instance;
 };

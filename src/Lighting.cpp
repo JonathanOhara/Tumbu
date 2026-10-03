@@ -34,6 +34,14 @@ static Ogre::Vector4 toVector4( const Ogre::ColourValue &c, Ogre::Real w ){
 	return Ogre::Vector4( c.r, c.g, c.b, w );
 }
 //-------------------------------------------------------------------------------------
+// Robots' fill light direction in camera axes (right, up, backwards towards the viewer): yaw degrees to the
+// camera's right and pitch degrees above it.
+static Ogre::Vector3 heroFillDirection( Ogre::Real yaw, Ogre::Real pitch ){
+	Ogre::Radian y = Ogre::Degree( yaw );
+	Ogre::Radian p = Ogre::Degree( pitch );
+	return Ogre::Vector3( Ogre::Math::Sin( y ) * Ogre::Math::Cos( p ), Ogre::Math::Sin( p ), Ogre::Math::Cos( y ) * Ogre::Math::Cos( p ) );
+}
+//-------------------------------------------------------------------------------------
 Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	mSceneMgr = sceneMgr;
 	sun = NULL;
@@ -78,6 +86,9 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	dustShadow			= requireChild( cfg, name, "dustShadow" )->getValueF();
 	ssaoRadius			= requireChild( cfg, name, "ssaoRadius" )->getValueF();
 	ssaoStrength		= requireChild( cfg, name, "ssaoStrength" )->getValueF();
+	heroFillSunlit		= requireChild( cfg, name, "heroFillSunlit" )->getValueF();
+	heroRimShadow		= requireChild( cfg, name, "heroRimShadow" )->getValueF();
+	heroFillAxes		= heroFillDirection( requireChild( cfg, name, "heroFillYaw" )->getValueF(), requireChild( cfg, name, "heroFillPitch" )->getValueF() );
 
 	std::vector<Ogre::String> &names = requireChild( cfg, name, "keyframes" )->getValues();
 	for( size_t i = 0; i < names.size(); i++ ){
@@ -113,7 +124,9 @@ void Lighting::declareSharedParameters(void){
 	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams", "contactShadowA", "contactShadowB", "fogParams", "dustParams",
 		// Special-attack effects (EffectsManager): energy lights and the screen flash.
 		"energyLightPos0", "energyLightPos1", "energyLightPos2", "energyLightPos3",
-		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash" };
+		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash",
+		// Robot "hero lighting": the fill light that follows the camera, and the rim in shadow.
+		"heroFillColour", "heroFillParams", "heroRimParams" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -140,6 +153,10 @@ void Lighting::declareSharedParameters(void){
 		params->setNamedConstant( "energyLightColour" + Ogre::StringConverter::toString( i ), Ogre::Vector4( 0, 0, 0, 0 ) );
 	}
 	params->setNamedConstant( "screenFlash", Ogre::Vector4( 1, 1, 1, 0 ) );
+	Ogre::Vector3 fill = heroFillDirection( 40, 35 );
+	params->setNamedConstant( "heroFillColour", Ogre::Vector4( 0.2f, 0.2f, 0.22f, 1 ) );
+	params->setNamedConstant( "heroFillParams", Ogre::Vector4( fill.x, fill.y, fill.z, 0.25f ) );
+	params->setNamedConstant( "heroRimParams", Ogre::Vector4( 0.35f, 0, 0, 0 ) );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
@@ -152,6 +169,8 @@ Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
 	k.exposure		= requireChild( node, name, "exposure" )->getValueF();
 	ConfigNode* shafts = node->findChild( "shaftStrength" );	// optional: 1 when missing
 	k.shaftStrength	= shafts != NULL ? shafts->getValueF() : 1.0f;
+	k.heroFillStrength	= requireChild( node, name, "heroFillStrength" )->getValueF();
+	k.heroFillColour	= readColour( node, name, "heroFillColour" );
 	k.sunColour		= readColour( node, name, "sunColour" );
 	k.skyColour		= readColour( node, name, "skyColour" );
 	k.groundColour	= readColour( node, name, "groundColour" );
@@ -170,6 +189,8 @@ Lighting::Keyframe Lighting::blend( const Keyframe &a, const Keyframe &b, Ogre::
 	k.rimStrength	= Ogre::Math::lerp( a.rimStrength, b.rimStrength, t );
 	k.exposure		= Ogre::Math::lerp( a.exposure, b.exposure, t );
 	k.shaftStrength	= Ogre::Math::lerp( a.shaftStrength, b.shaftStrength, t );
+	k.heroFillStrength	= Ogre::Math::lerp( a.heroFillStrength, b.heroFillStrength, t );
+	k.heroFillColour	= Ogre::Math::lerp( a.heroFillColour, b.heroFillColour, t );
 	k.sunColour		= Ogre::Math::lerp( a.sunColour, b.sunColour, t );
 	k.skyColour		= Ogre::Math::lerp( a.skyColour, b.skyColour, t );
 	k.groundColour	= Ogre::Math::lerp( a.groundColour, b.groundColour, t );
@@ -251,6 +272,10 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "bloomParams", Ogre::Vector4( bloomThreshold, bloomSoftKnee, bloomStrength, 0 ) );
 	params->setNamedConstant( "aoParams", Ogre::Vector4( aoAmbient, aoDirect, aoTint, contactShadow ) );
 	params->setNamedConstant( "fogParams", Ogre::Vector4( fogStart, fogDensity, fogMax, fogBrightness ) );
+	// Robots only: the fill light that follows the camera, and how much rim stays on the side the sun misses.
+	params->setNamedConstant( "heroFillColour", toVector4( k.heroFillColour * k.heroFillStrength, 1 ) );
+	params->setNamedConstant( "heroFillParams", Ogre::Vector4( heroFillAxes.x, heroFillAxes.y, heroFillAxes.z, heroFillSunlit ) );
+	params->setNamedConstant( "heroRimParams", Ogre::Vector4( heroRimShadow, 0, 0, 0 ) );
 	// The dust follows the god rays' strength through the day (stronger at dawn and sunset, faint at night).
 	params->setNamedConstant( "dustParams", Ogre::Vector4( dustSunlight * k.shaftStrength, dustShadow, 0, 0 ) );
 

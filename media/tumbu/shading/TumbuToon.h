@@ -107,6 +107,20 @@ vec3 tumbuEnergyLights(vec3 p, vec3 n, vec4 pos0, vec4 col0, vec4 pos1, vec4 col
         + tumbuEnergyLight(p, n, pos2, col2) + tumbuEnergyLight(p, n, pos3, col3);
 }
 
+// Rim light on the side the sun misses, relative to the lit side (tumbuToon; robots raise it, see tumbuHeroLight).
+#define TUMBU_RIM_SHADOW 0.35
+
+// Robot "hero lighting" (characters lit apart from the scene, as in Genshin or Guilty Gear): robot shaders also put
+// TUMBU_HERO_UNIFORMS in OGRE_UNIFORMS. The arena does not use them.
+// heroFillColour: rgb = fill colour x strength (per keyframe)
+// heroFillParams: xyz = fill direction as weights of the camera's right, up and backwards (towards the viewer)
+//                 vectors; w = how much of the fill is left where the sun lights the surface
+// heroRimParams: x = rim on the side the sun misses, relative to the lit side (replaces TUMBU_RIM_SHADOW)
+#define TUMBU_HERO_UNIFORMS \
+    uniform vec4 heroFillColour; \
+    uniform vec4 heroFillParams; \
+    uniform vec4 heroRimParams;
+
 // Shorthand for shaders that declare TUMBU_LIGHTING_UNIFORMS.
 #define TUMBU_ENERGY_LIGHTS(p, n) tumbuEnergyLights(p, n, energyLightPos0, energyLightColour0, \
     energyLightPos1, energyLightColour1, energyLightPos2, energyLightColour2, energyLightPos3, energyLightColour3)
@@ -139,8 +153,37 @@ vec3 tumbuToon(vec3 albedo, vec3 n, vec3 v, float ao, vec3 specMask, float shini
     colour += spec * specMask * sunColour.rgb;
 
     // Rim light: brighter on the sun side, tinted by the surface so it does not look like a white halo.
-    float rim = pow(1.0 - saturate(dot(n, v)), toonParams.z) * rimColour.w * (0.35 + 0.65 * lit);
+    float rim = pow(1.0 - saturate(dot(n, v)), toonParams.z) * rimColour.w
+        * (TUMBU_RIM_SHADOW + (1.0 - TUMBU_RIM_SHADOW) * lit);
     colour += rim * rimColour.rgb * (albedo * 0.5 + 0.5) * aoAmbient;
 
     return colour;
+}
+
+// How much the sun lights a surface after the toon ramp and the cast shadow (the "lit" term of tumbuToon):
+// 1 = lit, 0 = the side away from the sun or in a shadow.
+float tumbuSunLit(vec3 n, vec4 sunDirection, vec4 toonParams, float shadow)
+{
+    float halfLambert = dot(n, sunDirection.xyz) * 0.5 + 0.5;
+    return smoothstep(toonParams.x - toonParams.y, toonParams.x + toonParams.y, halfLambert) * shadow;
+}
+
+// Robot hero lighting, added to tumbuToon: a soft fill light that follows the camera (above and to one side, so
+// the robot keeps a lit side and a shadow side wherever it stands) through the same toon ramp as the sun, strong
+// where the sun does not reach and faint where it does; and the rim kept on the shadow side. Not shadowed: it is a
+// character light, not a light in the scene. camRight / camUp / camForward: the camera's world axes; lit: tumbuSunLit.
+vec3 tumbuHeroLight(vec3 albedo, vec3 n, vec3 v, float ao, float lit, vec3 camRight, vec3 camUp, vec3 camForward,
+                    vec4 heroFillColour, vec4 heroFillParams, vec4 heroRimParams, vec4 rimColour, vec4 toonParams,
+                    vec4 aoParams)
+{
+    vec3 l = normalize(camRight * heroFillParams.x + camUp * heroFillParams.y - camForward * heroFillParams.z);
+    float halfLambert = dot(n, l) * 0.5 + 0.5;
+    float band = smoothstep(toonParams.x - toonParams.y, toonParams.x + toonParams.y, halfLambert);
+    float aoAmbient = mix(1.0, ao, aoParams.x);
+    vec3 fill = heroFillColour.rgb * band * mix(1.0, heroFillParams.w, lit) * aoAmbient;
+
+    // tumbuToon gives the shadow side TUMBU_RIM_SHADOW of the rim; this adds the rest up to heroRimParams.x.
+    float rim = pow(1.0 - saturate(dot(n, v)), toonParams.z) * rimColour.w;
+    float rimLift = max(heroRimParams.x - TUMBU_RIM_SHADOW, 0.0) * (1.0 - lit);
+    return albedo * fill + rim * rimLift * rimColour.rgb * (albedo * 0.5 + 0.5) * aoAmbient;
 }

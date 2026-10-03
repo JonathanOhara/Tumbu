@@ -80,11 +80,24 @@ lighting configuration{
 	// world units and strength (0 = off).
 	ssaoRadius 0.6
 	ssaoStrength 1.2
+
+	// Robot "hero lighting" (robots only; the arena is not affected): a soft fill light that follows the camera, so a
+	// robot keeps a lit side and a shadow side in the coliseum's shadow, at dusk and at night. Its direction is
+	// heroFillYaw degrees to the camera's right and heroFillPitch degrees above it (not straight from the camera,
+	// which would look flat). It goes through the same toon ramp as the sun and is not shadowed. Colour and
+	// strength are per keyframe (heroFillColour, heroFillStrength). heroFillSunlit: how much of it is left where
+	// the sun already lights the surface (low = it barely changes a robot in sunlight). heroRimShadow: rim light on
+	// the side the sun misses, relative to the lit side (the arena keeps 0.35).
+	heroFillYaw 40
+	heroFillPitch 35
+	heroFillSunlit 0.25
+	heroRimShadow 0.8
 }
 
 // Each keyframe: the hour it applies to; sun elevation and azimuth in degrees (azimuth 0 = +Z, 90 = +X); the
 // sun (or moon) colour; sky and ground ambient; the shadow colour (multiplies the sun on the side away from
-// it); rim colour and strength; exposure of the final image.
+// it); rim colour and strength; exposure of the final image; the colour and strength of the robots' fill light
+// (heroFillColour, heroFillStrength: see heroFillYaw).
 
 lighting night{
 	hour 1
@@ -97,6 +110,8 @@ lighting night{
 	rimColour 0.45 0.55 1.00
 	rimStrength 0.45
 	exposure 1.27
+	heroFillColour 0.55 0.65 1.00
+	heroFillStrength 0.55
 	shaftStrength 0.15
 }
 
@@ -111,6 +126,8 @@ lighting dawn{
 	rimColour 1.00 0.75 0.60
 	rimStrength 0.45
 	exposure 0.97
+	heroFillColour 0.85 0.78 0.90
+	heroFillStrength 0.35
 	shaftStrength 1.2
 }
 
@@ -125,6 +142,8 @@ lighting morning{
 	rimColour 0.80 0.90 1.00
 	rimStrength 0.35
 	exposure 0.92
+	heroFillColour 0.85 0.90 1.00
+	heroFillStrength 0.3
 }
 
 lighting afternoon{
@@ -138,6 +157,8 @@ lighting afternoon{
 	rimColour 0.85 0.90 1.00
 	rimStrength 0.35
 	exposure 0.92
+	heroFillColour 0.85 0.90 1.00
+	heroFillStrength 0.3
 }
 
 lighting sunset{
@@ -151,6 +172,8 @@ lighting sunset{
 	rimColour 1.00 0.60 0.40
 	rimStrength 0.5
 	exposure 0.97
+	heroFillColour 1.00 0.80 0.75
+	heroFillStrength 0.45
 	shaftStrength 2.0
 }
 
@@ -165,6 +188,8 @@ lighting twilight{
 	rimColour 0.90 0.55 0.50
 	rimStrength 0.5
 	exposure 1.05
+	heroFillColour 0.85 0.72 0.92
+	heroFillStrength 0.6
 	shaftStrength 1.2
 }
 
@@ -179,5 +204,7 @@ lighting dusk{
 	rimColour 0.60 0.55 1.00
 	rimStrength 0.45
 	exposure 1.17
+	heroFillColour 0.65 0.65 1.00
+	heroFillStrength 0.55
 	shaftStrength 0.25
 }
