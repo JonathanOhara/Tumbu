@@ -41,6 +41,7 @@ Ogre::Real DevTest::jynHit = 0;
 bool DevTest::enemyThrows = false;
 bool DevTest::fixedCamera = false;
 bool DevTest::flyTest = false;
+bool DevTest::swapTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
 Ogre::Vector3 DevTest::cameraTarget = Ogre::Vector3::ZERO;
 //-------------------------------------------------------------------------------------
@@ -66,6 +67,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			noFx = true;
 		}else if( arg == "-flytest" ){
 			flyTest = true;
+		}else if( arg == "-swaptest" ){
+			swapTest = true;
 		}else if( arg == "-jynhit" || Ogre::StringUtil::startsWith( arg, "-jynhit=" ) ){
 			// The enemy stands still in front of the hero, in Jyn's range, and the hero throws a Genki Dama at it.
 			enemyThrows = arg == "-jynhit=enemy";
@@ -135,6 +138,7 @@ DevTest::DevTest(void){
 	fxEffect = NULL;
 	fxSpot = Ogre::Vector3::ZERO;
 	flyStep = 0;
+	swapStep = 0;
 	tourStep	= 0;
 	tourTimer	= 0;
 	cycle		= 0;
@@ -247,6 +251,9 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 		}
 		if( flyTest ){
 			runFlyTest();
+		}
+		if( swapTest ){
+			runSwapTest();
 		}
 		if( fixedCamera && quitAfter > 0 && playTime >= quitAfter - 0.5f ){
 			placeCamera( cameraEye, cameraTarget );
@@ -656,6 +663,41 @@ void DevTest::runFlyTest(void){
 		lastLogged = flyStep;
 		Ogre::Vector3 p = tumbu->mCamera->getDerivedPosition();
 		log( "flytest: state=" + Ogre::StringConverter::toString( (int) tumbu->getGameState() ) + " (PLAYING=" + Ogre::StringConverter::toString( (int) TumbuEnums::PLAYING ) + ", FLYING=" + Ogre::StringConverter::toString( (int) TumbuEnums::FLYING ) + ") camera=" + Ogre::StringConverter::toString( p ) + " pauseMenu=" + Ogre::StringConverter::toString( isVisible( "PauseMenu" ) ) );
+	}
+}
+//-------------------------------------------------------------------------------------
+void DevTest::runSwapTest(void){
+	// -swaptest: charge Jyn until the aura shows, pause, re-select the head in the inventory (GUI::changePart unbuilds
+	// and rebuilds every part, the aura shells included), resume, then charge Jyn again on the rebuilt parts.
+	TUMBU* tumbu = TUMBU::getInstance();
+	Demo* demo = tumbu->getDemo();
+	if( demo == NULL || demo->mainChar == NULL ){
+		return;
+	}
+	const char* stepNames[] = { "Jyn cast", "Jyn concentrate", "Esc (pause)", "Inventory", "re-select the head",
+		"Esc (resume)", "Jyn cast again", "Jyn concentrate again" };
+	const Ogre::Real stepTimes[] = { 1.0f, 1.3f, 3.5f, 3.9f, 4.4f, 5.0f, 5.6f, 5.9f };
+	while( swapStep < 8 && playTime >= stepTimes[swapStep] ){
+		switch( swapStep ){
+		case 0: case 1: case 6: case 7: pressKey( 'i' ); releaseKey( 'i' ); break;
+		case 2: case 5: pressKey( TumbuInput::KEY_ESCAPE ); break;
+		case 3: click( "InventoryTab" ); break;
+		case 4:{
+			// The combo's own accept event, as when the player picks an entry.
+			MyGUI::ComboBox* combo = MyGUI::Gui::getInstance().findWidget<MyGUI::ComboBox>( "HeadCombo", false );
+			if( combo == NULL || combo->getItemCount() == 0 ){
+				log( "swaptest: no head to pick" );
+				break;
+			}
+			combo->setIndexSelected( 0 );
+			combo->eventComboAccept( combo, 0 );
+			break;
+		}
+		}
+		log( Ogre::String( "swaptest: " ) + stepNames[swapStep] + " state=" + Ogre::StringConverter::toString( (int) tumbu->getGameState() )
+			+ " aura=" + Ogre::StringConverter::toString( demo->mainChar->getAuraLevel() )
+			+ " shell=" + Ogre::StringConverter::toString( demo->mainChar->head->auraEntity != NULL && demo->mainChar->head->auraEntity->getVisible() ) );
+		swapStep++;
 	}
 }
 //-------------------------------------------------------------------------------------

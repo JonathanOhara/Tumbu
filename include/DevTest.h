@@ -30,6 +30,8 @@
  *                    -jynhit=enemy: the other way round, the enemy throws its Genki Dama at the hero
  *   -camera=x,y,z,tx,ty,tz  with -quitafter: the screenshot looks from (x,y,z) at (tx,ty,tz)
  *   -hero=robotNNN   the hero wears all five parts of that set (instead of the demo.object loadout)
+ *   -swaptest        charge Jyn, Esc, Inventory, re-select the head (every part and its aura shell is rebuilt),
+ *                    resume, charge Jyn again; logs the aura level after each step (use with -quitafter=9)
  *   -flytest         fly camera check: F, fly, Esc (no pause menu), F again; screenshot while flying
  *   -cycles=N        memory check: play N matches (3 enemy kills each, then Quit to the menu) through the
  *                    real UI, logging memory and Ogre object counts after each one, then Exit
@@ -84,6 +86,9 @@ private:
 	void pressKey( int key );
 	void releaseKey( int key );
 	void runFlyTest(void);
+	/// -swaptest: swap a part in the inventory while Jyn charges (the ki aura shells are rebuilt), then charge again.
+	void runSwapTest(void);
+	int swapStep;
 	int flyStep;
 	void click( const Ogre::String &buttonName );
 	bool isVisible( const Ogre::String &widgetName );
@@ -122,6 +127,7 @@ private:
 	static bool enemyThrows;
 	static bool fixedCamera;
 	static bool flyTest;
+	static bool swapTest;
 	static Ogre::Vector3 cameraEye, cameraTarget;
 };
 

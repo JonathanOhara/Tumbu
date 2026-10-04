@@ -84,7 +84,8 @@ Particle Swarm Optimization is kept as an option (`gather pso` in `skill jyn`).
 ## Performance
 
 Measured on the dev PC (Direct3D 11, 1024x768): about 650 fps while a Genki Dama charges with every layer on, the
-same as with `-nofx` within noise. Budget per attack: under ~200 particles, at most four lights, no extra
+same as with `-nofx` within noise. With the ki aura (2026-10-03, three runs each, a full charge): about 540 fps against 560 with `-nofx`
+(which also turns the aura off), within run-to-run noise (single runs ranged 360-810 fps). Budget per attack: under ~200 particles, at most four lights, no extra
 full-screen passes (the flash is part of the final pass).
 
 ## Known issue: NVIDIA driver memory grows per match on Direct3D 11

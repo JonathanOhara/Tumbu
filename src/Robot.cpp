@@ -3,6 +3,7 @@
 #include "TUMBU.h"
 #include "Effect.h"
 #include "EffectsManager.h"
+#include "DevTest.h"
 //-------------------------------------------------------------------------------------
 unsigned int Robot::instances = 0;
 //-------------------------------------------------------------------
@@ -179,7 +180,9 @@ void Robot::updateAura( const Ogre::Real time ){
 	// The aura shows from the concentration (the second press: the Genki Dama starts to form) until the throw.
 	SpecialJyn* special = jyn != NULL && jyn->isAttacking() ? dynamic_cast<SpecialJyn*>( jyn->special ) : NULL;
 	SpecialInterface::SpecialStatus status = special != NULL ? special->getSpecialStatus() : SpecialInterface::FINISHED;
-	bool charging = status == SpecialInterface::CONCENTRATING || status == SpecialInterface::CONCENTRATED;
+	// DevTest -nofx: no special-attack effects, the aura included (to compare frame rate or memory).
+	bool charging = ( status == SpecialInterface::CONCENTRATING || status == SpecialInterface::CONCENTRATED )
+		&& !DevTest::isFxDisabled();
 
 	if( charging ){
 		if( !auraCharging ){
