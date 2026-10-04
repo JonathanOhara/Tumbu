@@ -195,8 +195,9 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   streak stretched along the part (world-vertical axis), which replaces the round highlight (robots pass no spec mask
   to `tumbuToon`; the 2011 `SM…` maps are greyscale copies of the colour texture and most parts had
   `$specularCol 0 0 0`). Per part: `$metal` in `robotNNN.material` = amount, amount on dark pixels (low keeps engraved
-  lines crisp, high makes black armour shine), paint tint, sun streak strength. Kept soft (2026-10-04, after three softening
-  rounds): 001 "0.25 0.2 0.3 0.6", 002 "0.35 0.3 0.5 0.6", 003 and 004 "0.28 0.2 0.5 0.35", 005 "0.35 0.5 0.9 0.4". Global
+  lines crisp, high makes black armour shine), paint tint, sun streak strength. Kept soft (2026-10-04, after four softening
+  rounds): 001 "0.25 0.2 0.3 0.6", 002 "0.35 0.3 0.5 0.6", 003 "0.28 0.2 0.5 0.35", 004 "0.2 0.15 0.5 0.22",
+  005 "0.25 0.35 0.9 0.25". Global
   look: `metalBands`, `metalBandHeights`, `metalStreak`, `metalGlint`, `metalFresnel`, `metalDiffuse` in
   `lighting.object` (shared `metalEnv` / `metalShape` / `metalExtra`).
 - **Contact shadows**
