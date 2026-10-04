@@ -197,8 +197,9 @@ vec3 tumbuHeroLight(vec3 albedo, vec3 n, vec3 v, float ao, float lit, vec3 camRi
 // tinted by the paint; plus one sharp sun streak stretched along the part (vertical axis), cut into a hard toon edge.
 // colour: the lit colour so far; metalParams (per part, $metal in robotNNN.material): x = reflection amount,
 // y = amount on dark pixels (engraved lines stay crisp when low; black armour shines when high), z = how much the
-// reflection takes the paint colour. lit: tumbuSunLit; shadow: cast shadow (1 = lit).
-vec3 tumbuMetal(vec3 colour, vec3 albedo, vec3 n, vec3 v, float ao, float lit, float shininess, vec4 metalParams,
+// reflection takes the paint colour. lit: tumbuSunLit. n: the normal-mapped normal (reflection); ng: the smooth
+// surface normal, for the streak (a hard toon edge on fine normal-map grooves sparkles).
+vec3 tumbuMetal(vec3 colour, vec3 albedo, vec3 n, vec3 ng, vec3 v, float ao, float lit, float shininess, vec4 metalParams,
                 vec4 sunDirection, vec4 sunColour, vec4 skyColour, vec4 groundColour, vec4 metalEnv,
                 vec4 metalShape, vec4 metalExtra, vec4 aoParams)
 {
@@ -226,11 +227,11 @@ vec3 tumbuMetal(vec3 colour, vec3 albedo, vec3 n, vec3 v, float ao, float lit, f
 
     // Sun streak: the normal and half vector without their vertical part, so the highlight runs along the part.
     vec3 h = normalize(sunDirection.xyz + v);
-    vec3 na = vec3(n.x, 0.0, n.z);
+    vec3 na = vec3(ng.x, 0.0, ng.z);
     vec3 ha = vec3(h.x, 0.0, h.z);
     float lengthN = length(na);
     float s = pow(max(dot(na / max(lengthN, 0.0001), ha / max(length(ha), 0.0001)), 0.0), shininess * 0.6);
-    s = smoothstep(0.55, 0.62, s) * smoothstep(0.1, 0.3, lengthN) * smoothstep(0.0, 0.25, dot(n, sunDirection.xyz));
+    s = smoothstep(0.55, 0.62, s) * smoothstep(0.1, 0.3, lengthN) * smoothstep(0.0, 0.25, dot(ng, sunDirection.xyz));
     float streak = s * lit * metalShape.w * (0.35 + 0.65 * max(metalParams.x, 0.4)) * mix(1.0, ao, aoParams.y);
     colour += streak * mix(sunColour.rgb, vec3_splat(1.0), 0.4) * mix(vec3_splat(1.0), albedo, 0.25);
     return colour;

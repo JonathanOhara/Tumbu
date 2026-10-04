@@ -24,9 +24,9 @@ Each idea notes which reference game does it.
      painted metal and black armour finally shows its shape. Mock-up of the options:
      https://claude.ai/artifact/Peu3ZK7cPLMfa1MrhDPcZW (option C chosen).
    - One `$metal` value per part (the spec maps carry no metal information); more metal at higher tiers.
+   - The streak uses the smooth surface normal (not the normal map), so it stays a clean stripe on grooved parts.
    - Possible follow-ups: painted metal masks in Blender if specific spots shine wrongly (engraved lines, emblems); the
-     streak sparkles a little on finely grooved normal maps (Buzzy's shins); the streak axis is world-vertical, so a
-     raised arm gets it across rather than along.
+     streak axis is world-vertical, so a raised arm gets it across rather than along.
 
 4. **Night arena lights** *(Astral Chain, Genshin)*
    - Torches or stadium lamps on the coliseum: flickering warm light, emissive glow and bloom.
@@ -83,6 +83,18 @@ Each idea notes which reference game does it.
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first
   rule in CLAUDE.md.
+- **Toon-friendly normals for the robots** *(Guilty Gear Xrd, Genshin)*: the modern anime-game answer to "better
+  normal mapping" is not more surface detail but **cleaner shading**. Edit the robots' vertex normals in Blender (Data
+  Transfer from a smooth proxy shape, Normal Edit / Weighted Normal modifiers), so the toon bands fall in clean,
+  deliberate shapes instead of following every polygon; then bake the 2011 normal maps again from a high-poly version
+  (bevels, panel lines) for the rounder, later style. Every lighting feature gains from it (sun bands, hero fill, metal
+  reflection, streak). An art pass per robot; needs the 14 animations kept (DEV_SETUP Part B).
+- **Not recommended for the robots: parallax mapping and tessellation.** Parallax occlusion mapping fakes depth from
+  a height map; tessellation adds real geometry from a displacement map (Ogre 14 supports it on Direct3D 11 / OpenGL 4).
+  Both suit detailed realistic surfaces (stone, bricks, terrain), but the robots are flat-shaded toon armour with no
+  height maps, and on a slim, moving silhouette the effect would barely show. Today, extra detail simply goes into the
+  mesh (GPUs draw millions of triangles; UE5's Nanite is the extreme of that). One place where **parallax occlusion
+  could pay off: the coliseum stone and the arena floor, once they get real textures** (see above); consider it then.
 
 ## Beyond the visuals
 

@@ -57,7 +57,7 @@ MAIN_DECLARATION
     colour += tumbuHeroLight(albedo, n, v, ao, lit, camRight, camUp, camForward,
         heroFillColour, heroFillParams, heroRimParams, rimColour, toonParams, aoParams);
     // Painted metal: the toon sky reflection and the sun streak, per part ($metal).
-    colour = tumbuMetal(colour, albedo, n, v, ao, lit, matShininess, metalParams, sunDirection, sunColour, skyColour,
+    colour = tumbuMetal(colour, albedo, n, normalize(oNormal), v, ao, lit, matShininess, metalParams, sunDirection, sunColour, skyColour,
         groundColour, metalEnv, metalShape, metalExtra, aoParams);
     // Coloured light from special attacks (energy balls, impacts).
     colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
