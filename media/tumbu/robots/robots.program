@@ -23,7 +23,7 @@ fragment_program robot_toon_ps glsl glsles hlsl
     {
         shared_params_ref TumbuLighting
         param_named_auto matDif surface_diffuse_colour
-        param_named metalParams float4 0.3 0.3 0.5 0
+        param_named metalParams float4 0.3 0.3 0.5 0.6
         param_named_auto matShininess surface_shininess
         param_named_auto camPos camera_position
         param_named_auto camRight view_side_vector

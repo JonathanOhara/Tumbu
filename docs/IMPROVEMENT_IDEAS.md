@@ -89,7 +89,8 @@ Each idea notes which reference game does it.
   - Steps:
     1. **Art direction first** (with mock-ups to choose from): stone type and colours (sandstone blocks, worn ancient
        arena or a cleaner tournament look), how the ring fits in (keep the wrestling ring and ropes? a darker, less white
-       canvas mat or a stone fighting platform).
+       canvas mat or a stone fighting platform). Jonathan wants a **complete remake** of the arena ground (today's
+       texture is low resolution) and to decide ring vs stone platform from **side-by-side mock-ups** at that point.
     2. **Blender, shapes:** model the big forms the texture cannot fake (block edges, step lips, arches, bevels) in
        `art/arena/Arena.blend`; keep the AO bake script working (`clean_mesh`, the AO UV set).
     3. **Blender, textures:** one or two tileable stone sets baked from modelled or sculpted stones, so the maps agree:
