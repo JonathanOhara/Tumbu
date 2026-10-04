@@ -76,6 +76,36 @@ Each idea notes which reference game does it.
      front) fair? Does the enemy's crimson Genki Dama (`enemyKiColour`) read well? Is the ~2 s gathering too slow?
    - Scripted tests (`devtest.ps1 -JynHit`, `-FxTest`) only check that it works, not how it feels.
 
+## Rendering modernization (review of 2026-10-04)
+
+Techniques in use that have a clear modern replacement, most valuable first:
+
+1. **Anti-aliasing: none during a match.** The window asks for FSAA, but the scene renders into the post-processing
+   compositor's HDR texture, which has no MSAA, so robot edges and outlines are jagged (visible in every screenshot).
+   Add **SMAA** (or FXAA as a first step) in the final pass. SMAA suits toon outlines; TAA would blur them and needs
+   motion vectors.
+2. **Bloom: one bright pass + two H/V blurs at quarter size** (pre-2014 style). Replace with the **downsample/upsample
+   mip-chain bloom** (Jimenez, Call of Duty: Advanced Warfare, SIGGRAPH 2014; used by Unreal and Unity): wider, more
+   natural falloff, stable without flicker on small bright pixels (eyes, sparks, the Genki Dama).
+3. **Sky: Caelum** (a 2008-era library): Direct3D 11 only (OpenGL falls back to a static skydome), Cg/HLSL shaders, and
+   two source patches in `deps.ps1`. Replace with **our own stylised sky shader** (gradient bands, sun and moon discs,
+   toon clouds) driven by `lighting.object`: one sky on both renderers, art-directable like Genshin's skies, and a
+   dependency less.
+4. **Lighting in gamma space** (`lighting.object` colours are display space; no sRGB conversion). The modern standard is
+   a **linear workflow** (sRGB textures decoded, light added in linear, encoded at the end): energy lights, bloom and
+   fog blend correctly. Big retune of every value, so only together with a larger look pass; many toon games accept
+   gamma-space lighting.
+5. **Tone mapping: a per-channel soft shoulder.** Bright saturated colours shift hue as their channels roll off at
+   different rates (an orange highlight turns yellow). **Khronos PBR Neutral** (2024) keeps base colours 1:1 up to a
+   point and compresses only highlights, hue-preserving: the same goal ("the art keeps its colours"), done better.
+6. **SSAO: 12 spiral samples.** **GTAO** (ground-truth AO) gives more accurate contact darkening for a similar cost.
+   Low priority: the arena and robots also have baked AO.
+7. **Uncompressed TGA/PNG textures.** **BC7** (colour) and **BC5** (normal maps) DDS with mipmaps: about 4x less video
+   memory and faster loading, no visible change. Do it with the arena remake's new textures.
+
+Still modern, keep: inverted-hull outlines (Genshin, Guilty Gear), the shadow-map raymarched god rays, integrated
+depth shadows with normal offset (a single map is right for an arena this small), the fixed-step physics.
+
 ## Art side (not lighting, but the biggest visual gaps)
 
 - **Coliseum retexture with parallax occlusion and self-shadows** *(planned together, 2026-10)*
