@@ -4,6 +4,29 @@ Backlog collected after the lighting overhaul (phases 0–5: toon shading, shado
 lens flare, contact shadows, fog, dust, SSAO) and the special-attack rework of 2026-10 (docs/SPECIAL_EFFECTS.md).
 Each idea notes which reference game does it.
 
+## Priority order of the open items (2026-10-04)
+
+Visual track, most important first (impact on what the player sees, against the effort):
+
+1. **SMAA anti-aliasing** (Rendering modernization 1): every frame has jagged edges today; small, contained change.
+2. **Arena remake** (Art side: coliseum retexture with parallax occlusion and self-shadows, a new ground, BC7/BC5
+   textures): the biggest visual gap, in every shot. Large; mock-ups first.
+3. **Night arena lights** (idea 4): night fights look unplanned; builds on the energy lights.
+4. **Own stylised sky** (Rendering modernization 3): the background of every shot, the same sky on OpenGL, Caelum and
+   its patches gone. Best right after or with the arena remake (one look pass).
+5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook.
+6. **Tune Jyn in real fights** (idea 9): no code, only play time.
+7. **Robot art pass:** richer textures and toon-friendly normals (Art side).
+8. **Khronos PBR Neutral tone mapping** (Rendering modernization 5): small; fold into the bloom work.
+9. **Cloud shadows** (idea 5).
+10. **Colour-grading tables per time of day** (idea 6).
+11. **Linear workflow** (Rendering modernization 4): only with a full retune of the look.
+12. **GTAO** (Rendering modernization 6) and the **smaller extras** (idea 7).
+
+Separate tracks: **gameplay beyond the battle demo** (part shop or loadout screen) is the most important item for the game
+itself (customization is its core), but it is design and code, not visuals; the **Windows installer** when it is time to
+share a build.
+
 ## Ideas, in order of impact
 
 1. **Special attacks light the scene** *(Genshin, Astral Chain)* — **done (2026-10)**
@@ -83,7 +106,9 @@ Techniques in use that have a clear modern replacement, most valuable first:
 1. **Anti-aliasing: none during a match.** The window asks for FSAA, but the scene renders into the post-processing
    compositor's HDR texture, which has no MSAA, so robot edges and outlines are jagged (visible in every screenshot).
    Add **SMAA** (or FXAA as a first step) in the final pass. SMAA suits toon outlines; TAA would blur them and needs
-   motion vectors.
+   motion vectors. Tested: FSAA=4 in the start-up dialog (`ogre.cfg`) is accepted by the window but leaves the match's
+   edges exactly as jagged; it only affects what is drawn straight to the window (the start screen, the GUI). SMAA does
+   not collide with it: it would be our own option in Options, and the dialog's FSAA can stay at 1 (or be hidden).
 2. **Bloom: one bright pass + two H/V blurs at quarter size** (pre-2014 style). Replace with the **downsample/upsample
    mip-chain bloom** (Jimenez, Call of Duty: Advanced Warfare, SIGGRAPH 2014; used by Unreal and Unity): wider, more
    natural falloff, stable without flicker on small bright pixels (eyes, sparks, the Genki Dama).
