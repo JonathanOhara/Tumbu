@@ -78,8 +78,32 @@ Each idea notes which reference game does it.
 
 ## Art side (not lighting, but the biggest visual gaps)
 
-- **The coliseum has no texture** (flat colour), and the arena floor texture is near-white and dominates
-  every shot.
+- **Coliseum retexture with parallax occlusion and self-shadows** *(planned together, 2026-10)*
+  - Today: the coliseum (walls, seating, the ground around the ring) is a flat colour with baked AO
+    (`coliseum.material`); the ring mat (`gym_arena.png`) is near-white and dominates every shot. The arena shader
+    (`env_toon.frag`) has no normal map. Texture UVs are already the first UV set and the AO bake has its own second
+    set (`scripts/blender/arena_ao.py`), so new tiling textures fit without breaking the AO.
+  - Goal: stone that reads as carved masonry from the chase camera's low angle, in the toon look: sunken joints, stones
+    hiding each other, hard toon shadows in the joints (explainer and live demo:
+    https://claude.ai/artifact/3Dr1UwKxTmSTafxekL48Py, option 4).
+  - Steps:
+    1. **Art direction first** (with mock-ups to choose from): stone type and colours (sandstone blocks, worn ancient
+       arena or a cleaner tournament look), how the ring fits in (keep the wrestling ring and ropes? a darker, less white
+       canvas mat or a stone fighting platform).
+    2. **Blender, shapes:** model the big forms the texture cannot fake (block edges, step lips, arches, bevels) in
+       `art/arena/Arena.blend`; keep the AO bake script working (`clean_mesh`, the AO UV set).
+    3. **Blender, textures:** one or two tileable stone sets baked from modelled or sculpted stones, so the maps agree:
+       colour, normal, **height** (the parallax needs it) and AO detail. Plus the new ring mat. Toon-friendly: flat
+       colour areas, clear shapes, little photo noise.
+    4. **Export:** tangents for `coliseum.mesh` / `arena.mesh` (blender2ogre option, through `bake-arena-ao.ps1`).
+    5. **Shader (`env_toon.frag`):** normal map, then parallax occlusion (8–32 steps, depth per material) with
+       toon-banded self-shadows towards the sun, faded to the plain normal map in the distance; switched per material
+       (`Tumbu/EnvironmentToon` variables) and off on Low shadow/quality options. Values in the material and
+       `lighting.object`.
+    6. **Checks:** fixed low cameras (`-Camera`), all hours, D3D11 and OpenGL, frame rate with the stone filling the
+       screen, `-cycles` memory.
+  - Note: the parallax suits the stone, not the canvas ring mat (no depth to show there). The sun's shadow map and the
+    contact shadows still land on the flat surface; only the stones' own shadows follow the depth.
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first
   rule in CLAUDE.md.
@@ -93,10 +117,8 @@ Each idea notes which reference game does it.
   a height map; tessellation adds real geometry from a displacement map (Ogre 14 supports it on Direct3D 11 / OpenGL 4).
   Both suit detailed realistic surfaces (stone, bricks, terrain), but the robots are flat-shaded toon armour with no
   height maps, and on a slim, moving silhouette the effect would barely show. Today, extra detail simply goes into the
-  mesh (GPUs draw millions of triangles; UE5's Nanite is the extreme of that). One place where **parallax occlusion
-  could pay off: the coliseum stone and the arena floor, once they get real textures** (see above); consider it then.
-  Live explainer and plan: https://claude.ai/artifact/3Dr1UwKxTmSTafxekL48Py (needs a height map authored with the new
-  textures, tangents exported for `arena.mesh` / `coliseum.mesh`, and a parallax path in `env_toon.frag`).
+  mesh (GPUs draw millions of triangles; UE5's Nanite is the extreme of that). Parallax occlusion belongs to the
+  coliseum stone instead: see "Coliseum retexture" above.
 
 ## Beyond the visuals
 
