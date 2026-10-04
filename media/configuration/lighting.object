@@ -97,7 +97,8 @@ lighting configuration{
 // Each keyframe: the hour it applies to; sun elevation and azimuth in degrees (azimuth 0 = +Z, 90 = +X); the
 // sun (or moon) colour; sky and ground ambient; the shadow colour (multiplies the sun on the side away from
 // it); rim colour and strength; exposure of the final image; the colour and strength of the robots' fill light
-// (heroFillColour, heroFillStrength: see heroFillYaw).
+// (heroFillColour, heroFillStrength: see heroFillYaw); optionally outlineTint, which multiplies the colour of the robots'
+// outlines (white when missing), so the ink lines follow the light: cool and darker at night, warm at sunset.
 
 lighting night{
 	hour 1
@@ -112,6 +113,7 @@ lighting night{
 	exposure 1.27
 	heroFillColour 0.55 0.65 1.00
 	heroFillStrength 0.55
+	outlineTint 0.50 0.58 0.90
 	shaftStrength 0.15
 }
 
@@ -128,6 +130,7 @@ lighting dawn{
 	exposure 0.97
 	heroFillColour 0.85 0.78 0.90
 	heroFillStrength 0.35
+	outlineTint 0.95 0.78 0.70
 	shaftStrength 1.2
 }
 
@@ -174,6 +177,7 @@ lighting sunset{
 	exposure 0.97
 	heroFillColour 1.00 0.80 0.75
 	heroFillStrength 0.45
+	outlineTint 1.00 0.72 0.55
 	shaftStrength 2.0
 }
 
@@ -190,6 +194,7 @@ lighting twilight{
 	exposure 1.05
 	heroFillColour 0.85 0.72 0.92
 	heroFillStrength 0.6
+	outlineTint 0.80 0.62 0.75
 	shaftStrength 1.2
 }
 
@@ -206,5 +211,6 @@ lighting dusk{
 	exposure 1.17
 	heroFillColour 0.65 0.65 1.00
 	heroFillStrength 0.55
+	outlineTint 0.55 0.58 0.90
 	shaftStrength 0.25
 }

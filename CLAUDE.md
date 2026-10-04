@@ -185,7 +185,9 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   it shows in the coliseum's shadow, at dusk and at night and barely by day. Plus the rim kept on the shadow side
   (`heroRimShadow`; `tumbuToon` gives `TUMBU_RIM_SHADOW` = 0.35, which the arena keeps). Colour and strength per
   keyframe (`heroFillColour`, `heroFillStrength`). Shared `heroFillColour` / `heroFillParams` / `heroRimParams`.
-  Black parts stay black (the fill multiplies the albedo); only their rim lifts.
+  Black parts stay black (the fill multiplies the albedo); only their rim lifts. The robot outlines follow the light too:
+  the optional keyframe `outlineTint` (shared `outlineTint`, white when missing) multiplies `$outlineColour` in
+  `robot_outline.frag`, so the ink lines are darker and cool at night and warm at sunset.
 - **Contact shadows**
  (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by

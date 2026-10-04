@@ -55,6 +55,7 @@ fragment_program robot_outline_ps glsl glsles hlsl
     target ps_4_0
     default_params
     {
+        shared_params_ref TumbuLighting
         param_named_auto matDif surface_diffuse_colour
         param_named outlineColour float4 0.3 0.25 0.35 1
     }

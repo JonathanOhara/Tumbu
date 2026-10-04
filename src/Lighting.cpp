@@ -126,7 +126,7 @@ void Lighting::declareSharedParameters(void){
 		"energyLightPos0", "energyLightPos1", "energyLightPos2", "energyLightPos3",
 		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash",
 		// Robot "hero lighting": the fill light that follows the camera, and the rim in shadow.
-		"heroFillColour", "heroFillParams", "heroRimParams" };
+		"heroFillColour", "heroFillParams", "heroRimParams", "outlineTint" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -157,6 +157,7 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "heroFillColour", Ogre::Vector4( 0.2f, 0.2f, 0.22f, 1 ) );
 	params->setNamedConstant( "heroFillParams", Ogre::Vector4( fill.x, fill.y, fill.z, 0.25f ) );
 	params->setNamedConstant( "heroRimParams", Ogre::Vector4( 0.35f, 0, 0, 0 ) );
+	params->setNamedConstant( "outlineTint", Ogre::Vector4( 1, 1, 1, 1 ) );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
@@ -171,6 +172,8 @@ Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
 	k.shaftStrength	= shafts != NULL ? shafts->getValueF() : 1.0f;
 	k.heroFillStrength	= requireChild( node, name, "heroFillStrength" )->getValueF();
 	k.heroFillColour	= readColour( node, name, "heroFillColour" );
+	ConfigNode* tint = node->findChild( "outlineTint" );	// optional: white (no tint) when missing
+	k.outlineTint	= tint != NULL ? readColour( node, name, "outlineTint" ) : Ogre::ColourValue::White;
 	k.sunColour		= readColour( node, name, "sunColour" );
 	k.skyColour		= readColour( node, name, "skyColour" );
 	k.groundColour	= readColour( node, name, "groundColour" );
@@ -191,6 +194,7 @@ Lighting::Keyframe Lighting::blend( const Keyframe &a, const Keyframe &b, Ogre::
 	k.shaftStrength	= Ogre::Math::lerp( a.shaftStrength, b.shaftStrength, t );
 	k.heroFillStrength	= Ogre::Math::lerp( a.heroFillStrength, b.heroFillStrength, t );
 	k.heroFillColour	= Ogre::Math::lerp( a.heroFillColour, b.heroFillColour, t );
+	k.outlineTint	= Ogre::Math::lerp( a.outlineTint, b.outlineTint, t );
 	k.sunColour		= Ogre::Math::lerp( a.sunColour, b.sunColour, t );
 	k.skyColour		= Ogre::Math::lerp( a.skyColour, b.skyColour, t );
 	k.groundColour	= Ogre::Math::lerp( a.groundColour, b.groundColour, t );
@@ -276,6 +280,7 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "heroFillColour", toVector4( k.heroFillColour * k.heroFillStrength, 1 ) );
 	params->setNamedConstant( "heroFillParams", Ogre::Vector4( heroFillAxes.x, heroFillAxes.y, heroFillAxes.z, heroFillSunlit ) );
 	params->setNamedConstant( "heroRimParams", Ogre::Vector4( heroRimShadow, 0, 0, 0 ) );
+	params->setNamedConstant( "outlineTint", toVector4( k.outlineTint, 1 ) );
 	// The dust follows the god rays' strength through the day (stronger at dawn and sunset, faint at night).
 	params->setNamedConstant( "dustParams", Ogre::Vector4( dustSunlight * k.shaftStrength, dustShadow, 0, 0 ) );
 
