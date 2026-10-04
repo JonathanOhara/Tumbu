@@ -92,6 +92,21 @@ lighting configuration{
 	heroFillPitch 35
 	heroFillSunlit 0.25
 	heroRimShadow 0.8
+
+	// Robot metal (robots only; how much each part reflects is $metal in robotNNN.material). The armour reflects a
+	// toon "environment" in flat bands, coloured by the current keyframe: sky above, a bright band, a dark horizon line,
+	// ground below. metalBands: brightness of the sky, the bright band, the horizon line and the ground (x their
+	// keyframe colours). metalBandHeights: where the bright band starts, where the horizon line starts and ends (the
+	// height of the reflected direction, -1..1). metalStreak: strength of the sharp sun streak stretched along the
+	// parts (replaces the round highlight). metalGlint: strength and size (cosine) of the sun's glint in the reflection.
+	// metalFresnel: reflection facing the camera, relative to grazing angles. metalDiffuse: how much the reflection
+	// replaces the painted colour (0 = only adds).
+	metalBands 1.2 1.7 0.35 1.2
+	metalBandHeights 0.24 0.04 -0.08
+	metalStreak 0.75
+	metalGlint 1.6 0.965
+	metalFresnel 0.55
+	metalDiffuse 0.45
 }
 
 // Each keyframe: the hour it applies to; sun elevation and azimuth in degrees (azimuth 0 = +Z, 90 = +X); the

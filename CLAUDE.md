@@ -189,6 +189,15 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   Black parts stay black (the fill multiplies the albedo); only their rim lifts. The robot outlines follow the light too:
   the optional keyframe `outlineTint` (shared `outlineTint`, white when missing) multiplies `$outlineColour` in
   `robot_outline.frag`, so the ink lines are darker and cool at night and warm at sunset.
+- **Robot metal** (`tumbuMetal` in `TumbuToon.h`, robots only): anime painted metal. The armour reflects a toon
+  "environment" in flat bands (sky, a bright band, a dark horizon line, ground; keyframe colours, so it follows the time
+  of day and shows in shadow), tinted by the paint and darker for dark metal, with the sun's glint; plus one sharp sun
+  streak stretched along the part (world-vertical axis), which replaces the round highlight (robots pass no spec mask
+  to `tumbuToon`; the 2011 `SM…` maps are greyscale copies of the colour texture and most parts had
+  `$specularCol 0 0 0`). Per part: `$metal` in `robotNNN.material` = amount, amount on dark pixels (low keeps engraved
+  lines crisp, high makes black armour shine), paint tint. Higher tiers are more metallic (001 0.25 … 005 0.65). Global
+  look: `metalBands`, `metalBandHeights`, `metalStreak`, `metalGlint`, `metalFresnel`, `metalDiffuse` in
+  `lighting.object` (shared `metalEnv` / `metalShape` / `metalExtra`).
 - **Contact shadows**
  (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by

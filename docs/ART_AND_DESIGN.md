@@ -108,7 +108,7 @@ mesh names as `<part>_<last 3 chars of set name>.mesh`. A set contains:
 | `NM<part>UV_NNN.tga` | Normal map |
 | `SM<part>UV_NNN.tga` | Specular map |
 | `GM…` / `AO…` `.tga` | Glow and ambient-occlusion maps (AO is commented out in the materials) |
-| `robotNNN.material` | Imports `robots.material` and inherits `base_material` (Cg shaders), setting texture aliases. Material names follow the 2.49 exporter's pattern: `<part>UV_NNN/TEXFACE/<part>UV_NNN.tga`. |
+| `robotNNN.material` | Imports `robots.material` and inherits `base_material` (Cg shaders), setting texture aliases. Material names follow the 2.49 exporter's pattern: `<part>UV_NNN/TEXFACE/<part>UV_NNN.tga`. Each part also sets `$metal` (reflection amount, amount on dark pixels, paint tint; see CLAUDE.md "Robot metal"): more metal at higher tiers. |
 | `robotNNN.object` | `robotNNN set { name <DisplayName> }`, plus one block per part with `hp ap attack defense velocity` and `position x y z` (the attach offset on the robot) |
 | `robotNNN.blend` | The source file. **Never overwrite the Blender 2.49 originals.** Save as a new file. |
 | `robotNNN.jpg` | A reference render (dark blue backdrop, grey floor, 3/4 view) |

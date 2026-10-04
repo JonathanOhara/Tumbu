@@ -19,9 +19,14 @@ Each idea notes which reference game does it.
    - Possible follow-ups: black parts stay black (the fill multiplies the albedo), so they read only through the rim
      and outline; a Genshin-style screen-space depth rim, or softer cast shadows on robots, would go further.
 
-3. **Metallic highlights for the robots** *(Genshin)*
-   - A stylised matcap / sky-colour reflection on metal parts, so robots read as painted metal, not plastic.
-   - Driven by the specular maps, or a new per-part metal mask.
+3. **Metallic highlights for the robots** *(Genshin)* — **done (2026-10)**
+   - A toon sky reflection in flat bands plus one sharp sun streak along the parts (`tumbuMetal`), so robots read as
+     painted metal and black armour finally shows its shape. Mock-up of the options:
+     https://claude.ai/artifact/Peu3ZK7cPLMfa1MrhDPcZW (option C chosen).
+   - One `$metal` value per part (the spec maps carry no metal information); more metal at higher tiers.
+   - Possible follow-ups: painted metal masks in Blender if specific spots shine wrongly (engraved lines, emblems); the
+     streak sparkles a little on finely grooved normal maps (Buzzy's shins); the streak axis is world-vertical, so a
+     raised arm gets it across rather than along.
 
 4. **Night arena lights** *(Astral Chain, Genshin)*
    - Torches or stadium lamps on the coliseum: flickering warm light, emissive glow and bloom.

@@ -89,6 +89,12 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	heroFillSunlit		= requireChild( cfg, name, "heroFillSunlit" )->getValueF();
 	heroRimShadow		= requireChild( cfg, name, "heroRimShadow" )->getValueF();
 	heroFillAxes		= heroFillDirection( requireChild( cfg, name, "heroFillYaw" )->getValueF(), requireChild( cfg, name, "heroFillPitch" )->getValueF() );
+	ConfigNode* bands	= requireChild( cfg, name, "metalBands" );
+	ConfigNode* heights	= requireChild( cfg, name, "metalBandHeights" );
+	ConfigNode* glint	= requireChild( cfg, name, "metalGlint" );
+	metalEnv	= Ogre::Vector4( bands->getValueF( 0 ), bands->getValueF( 1 ), bands->getValueF( 2 ), bands->getValueF( 3 ) );
+	metalShape	= Ogre::Vector4( heights->getValueF( 0 ), heights->getValueF( 1 ), heights->getValueF( 2 ), requireChild( cfg, name, "metalStreak" )->getValueF() );
+	metalExtra	= Ogre::Vector4( glint->getValueF( 0 ), glint->getValueF( 1 ), requireChild( cfg, name, "metalFresnel" )->getValueF(), requireChild( cfg, name, "metalDiffuse" )->getValueF() );
 
 	std::vector<Ogre::String> &names = requireChild( cfg, name, "keyframes" )->getValues();
 	for( size_t i = 0; i < names.size(); i++ ){
@@ -126,7 +132,9 @@ void Lighting::declareSharedParameters(void){
 		"energyLightPos0", "energyLightPos1", "energyLightPos2", "energyLightPos3",
 		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash",
 		// Robot "hero lighting": the fill light that follows the camera, and the rim in shadow.
-		"heroFillColour", "heroFillParams", "heroRimParams", "outlineTint" };
+		"heroFillColour", "heroFillParams", "heroRimParams", "outlineTint",
+		// Robot metal: the toon sky reflection and the streak.
+		"metalEnv", "metalShape", "metalExtra" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -158,6 +166,9 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "heroFillParams", Ogre::Vector4( fill.x, fill.y, fill.z, 0.25f ) );
 	params->setNamedConstant( "heroRimParams", Ogre::Vector4( 0.35f, 0, 0, 0 ) );
 	params->setNamedConstant( "outlineTint", Ogre::Vector4( 1, 1, 1, 1 ) );
+	params->setNamedConstant( "metalEnv", Ogre::Vector4( 1.7f, 2.5f, 0.35f, 1.5f ) );
+	params->setNamedConstant( "metalShape", Ogre::Vector4( 0.38f, 0.06f, -0.1f, 0.75f ) );
+	params->setNamedConstant( "metalExtra", Ogre::Vector4( 1.6f, 0.965f, 0.55f, 0.55f ) );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
@@ -281,6 +292,9 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "heroFillParams", Ogre::Vector4( heroFillAxes.x, heroFillAxes.y, heroFillAxes.z, heroFillSunlit ) );
 	params->setNamedConstant( "heroRimParams", Ogre::Vector4( heroRimShadow, 0, 0, 0 ) );
 	params->setNamedConstant( "outlineTint", toVector4( k.outlineTint, 1 ) );
+	params->setNamedConstant( "metalEnv", metalEnv );
+	params->setNamedConstant( "metalShape", metalShape );
+	params->setNamedConstant( "metalExtra", metalExtra );
 	// The dust follows the god rays' strength through the day (stronger at dawn and sunset, faint at night).
 	params->setNamedConstant( "dustParams", Ogre::Vector4( dustSunlight * k.shaftStrength, dustShadow, 0, 0 ) );
 

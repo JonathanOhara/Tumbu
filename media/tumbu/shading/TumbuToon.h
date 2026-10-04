@@ -116,10 +116,14 @@ vec3 tumbuEnergyLights(vec3 p, vec3 n, vec4 pos0, vec4 col0, vec4 pos1, vec4 col
 // heroFillParams: xyz = fill direction as weights of the camera's right, up and backwards (towards the viewer)
 //                 vectors; w = how much of the fill is left where the sun lights the surface
 // heroRimParams: x = rim on the side the sun misses, relative to the lit side (replaces TUMBU_RIM_SHADOW)
+// metalEnv / metalShape / metalExtra: robot metal, see tumbuMetal and lighting.object
 #define TUMBU_HERO_UNIFORMS \
     uniform vec4 heroFillColour; \
     uniform vec4 heroFillParams; \
-    uniform vec4 heroRimParams;
+    uniform vec4 heroRimParams; \
+    uniform vec4 metalEnv; \
+    uniform vec4 metalShape; \
+    uniform vec4 metalExtra;
 
 // Shorthand for shaders that declare TUMBU_LIGHTING_UNIFORMS.
 #define TUMBU_ENERGY_LIGHTS(p, n) tumbuEnergyLights(p, n, energyLightPos0, energyLightColour0, \
@@ -186,4 +190,48 @@ vec3 tumbuHeroLight(vec3 albedo, vec3 n, vec3 v, float ao, float lit, vec3 camRi
     float rim = pow(1.0 - saturate(dot(n, v)), toonParams.z) * rimColour.w;
     float rimLift = max(heroRimParams.x - TUMBU_RIM_SHADOW, 0.0) * (1.0 - lit);
     return albedo * fill + rim * rimLift * rimColour.rgb * (albedo * 0.5 + 0.5) * aoAmbient;
+}
+
+// Robot metal (anime painted metal): the armour reflects a toon environment in flat bands (sky, a bright band, a dark
+// horizon line, ground; colours of the current keyframe, so it follows the time of day and also shows in shadow),
+// tinted by the paint; plus one sharp sun streak stretched along the part (vertical axis), cut into a hard toon edge.
+// colour: the lit colour so far; metalParams (per part, $metal in robotNNN.material): x = reflection amount,
+// y = amount on dark pixels (engraved lines stay crisp when low; black armour shines when high), z = how much the
+// reflection takes the paint colour. lit: tumbuSunLit; shadow: cast shadow (1 = lit).
+vec3 tumbuMetal(vec3 colour, vec3 albedo, vec3 n, vec3 v, float ao, float lit, float shininess, vec4 metalParams,
+                vec4 sunDirection, vec4 sunColour, vec4 skyColour, vec4 groundColour, vec4 metalEnv,
+                vec4 metalShape, vec4 metalExtra, vec4 aoParams)
+{
+    float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
+    float amount = mix(metalParams.y, metalParams.x, smoothstep(0.08, 0.3, luma));
+
+    // The reflected direction's height picks the band (edges a little soft, so they do not shimmer).
+    vec3 r = reflect(-v, n);
+    vec3 env = groundColour.rgb * metalEnv.w;
+    env = mix(env, groundColour.rgb * metalEnv.z, smoothstep(metalShape.z - 0.02, metalShape.z + 0.02, r.y));
+    env = mix(env, skyColour.rgb * metalEnv.y + vec3_splat(0.1), smoothstep(metalShape.y - 0.02, metalShape.y + 0.02, r.y));
+    env = mix(env, skyColour.rgb * metalEnv.x, smoothstep(metalShape.x - 0.03, metalShape.x + 0.03, r.y));
+    // The sun's glint, where the sun reaches.
+    float glint = smoothstep(metalExtra.y - 0.004, metalExtra.y + 0.004, dot(r, sunDirection.xyz));
+    env += sunColour.rgb * glint * metalExtra.x * lit;
+
+    float brightest = max(albedo.r, max(albedo.g, albedo.b));
+    vec3 tint = mix(vec3_splat(1.0), albedo / max(brightest, 0.05), metalParams.z);
+    // True metal reflects in its own colour and brightness: dark metal gives a darker reflection.
+    tint *= mix(1.0, 0.35 + 0.65 * brightest, metalParams.z);
+    float nv = saturate(dot(n, v));
+    float fresnel = mix(metalExtra.z, 1.0, (1.0 - nv) * (1.0 - nv));
+    float k = amount * fresnel * mix(1.0, ao, aoParams.x);
+    colour = colour * (1.0 - metalExtra.w * k) + env * tint * k;
+
+    // Sun streak: the normal and half vector without their vertical part, so the highlight runs along the part.
+    vec3 h = normalize(sunDirection.xyz + v);
+    vec3 na = vec3(n.x, 0.0, n.z);
+    vec3 ha = vec3(h.x, 0.0, h.z);
+    float lengthN = length(na);
+    float s = pow(max(dot(na / max(lengthN, 0.0001), ha / max(length(ha), 0.0001)), 0.0), shininess * 0.6);
+    s = smoothstep(0.55, 0.62, s) * smoothstep(0.1, 0.3, lengthN) * smoothstep(0.0, 0.25, dot(n, sunDirection.xyz));
+    float streak = s * lit * metalShape.w * (0.35 + 0.65 * max(metalParams.x, 0.4)) * mix(1.0, ao, aoParams.y);
+    colour += streak * mix(sunColour.rgb, vec3_splat(1.0), 0.4) * mix(vec3_splat(1.0), albedo, 0.25);
+    return colour;
 }

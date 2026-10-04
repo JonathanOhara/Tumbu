@@ -15,7 +15,8 @@ OGRE_UNIFORMS(
     TUMBU_LIGHTING_UNIFORMS
     TUMBU_HERO_UNIFORMS
     uniform vec4 matDif;
-    uniform vec4 matSpec;
+    // x = reflection amount, y = amount on dark pixels, z = paint tint of the reflection ($metal, robots.material)
+    uniform vec4 metalParams;
     uniform float matShininess;
     uniform vec3 camPos;
     // the camera's world axes (the hero fill light follows the camera)
@@ -45,16 +46,19 @@ MAIN_DECLARATION
 
     vec4 diffuseTex = texture2D(diffuseMap, oUv);
     vec3 albedo = diffuseTex.rgb * matDif.rgb;
-    vec3 specMask = texture2D(specMap, oUv).rgb * matSpec.rgb;
     float ao = texture2D(aoMap, oUv).r;
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(normalize(oNormal), sunDirection.xyz), shadowParams);
 
-    vec3 colour = tumbuToon(albedo, n, v, ao, specMask, matShininess, shadow,
+    // No round highlight: robots get the metal streak instead (tumbuMetal).
+    vec3 colour = tumbuToon(albedo, n, v, ao, vec3_splat(0.0), matShininess, shadow,
         sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams, aoParams);
     // Hero lighting: fill light from the camera's side and the rim kept in shadow, so the robot always reads.
     float lit = tumbuSunLit(n, sunDirection, toonParams, shadow);
     colour += tumbuHeroLight(albedo, n, v, ao, lit, camRight, camUp, camForward,
         heroFillColour, heroFillParams, heroRimParams, rimColour, toonParams, aoParams);
+    // Painted metal: the toon sky reflection and the sun streak, per part ($metal).
+    colour = tumbuMetal(colour, albedo, n, v, ao, lit, matShininess, metalParams, sunDirection, sunColour, skyColour,
+        groundColour, metalEnv, metalShape, metalExtra, aoParams);
     // Coloured light from special attacks (energy balls, impacts).
     colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
 

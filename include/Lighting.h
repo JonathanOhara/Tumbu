@@ -109,6 +109,9 @@ private:
 	/// Direction of the robots' fill light in camera axes: weights of the camera's right, up and backwards
 	/// (towards the viewer) vectors, from heroFillYaw / heroFillPitch.
 	Ogre::Vector3 heroFillAxes;
+	/// Robot metal (see lighting.object): reflection band brightness (sky, bright band, horizon line, ground), band
+	/// heights + streak strength, and glint strength, glint size, fresnel minimum, how much metal dims the diffuse.
+	Ogre::Vector4 metalEnv, metalShape, metalExtra;
 
 	static Lighting* instance;
 };

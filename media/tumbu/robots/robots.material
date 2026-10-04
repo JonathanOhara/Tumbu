@@ -11,6 +11,9 @@ material base_material{
     // Emissive glow (eyes): the part texture shines where the glow map is white. $glowColour = tint + strength.
     set $glowMap "black.png"
     set $glowColour "1 1 1 0"
+    // Painted metal (tumbuMetal): reflection amount, amount on dark pixels (engraved lines; black armour), how much
+    // the reflection takes the paint colour, unused. Higher tiers are more metallic.
+    set $metal "0.3 0.3 0.5 0"
     // Outline width in pixels, and the colour it multiplies the part's texture by.
     set $outlineWidth "1.5"
     set $outlineColour "0.3 0.25 0.35 1"
@@ -27,6 +30,7 @@ material base_material{
 
             fragment_program_ref robot_toon_ps{
                 param_named glowColour float4 $glowColour
+                param_named metalParams float4 $metal
             }
 
             texture_unit diffuseMap{
