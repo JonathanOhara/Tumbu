@@ -20,46 +20,55 @@
 		</Widget>
 	</Widget>
 
-	<Widget type="Window" skin="WindowC" position_real="0.30 0.28 0.40 0.36" layer="Overlapped" name="OptionsWindow">
+	<Widget type="Window" skin="WindowC" position_real="0.30 0.24 0.40 0.44" layer="Overlapped" name="OptionsWindow">
 		<Property key="Caption" value="Options"/>
 		<Property key="Visible" value="false"/>
 		<Property key="FontName" value="Tumbu.Button"/>
-		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.08 0.35 0.14" name="SkyLabel">
+		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.065 0.35 0.115" name="SkyLabel">
 			<Property key="Caption" value="Sky"/>
 			<Property key="FontName" value="Tumbu.Text"/>
 			<Property key="TextAlign" value="Right VCenter"/>
 		</Widget>
-		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.08 0.48 0.14" name="SkyCombo">
+		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.065 0.48 0.115" name="SkyCombo">
 			<Property key="ModeDrop" value="true"/>
 			<Property key="FontName" value="Tumbu.Text"/>
 		</Widget>
-		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.28 0.35 0.14" name="ShadowsLabel">
+		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.229 0.35 0.115" name="ShadowsLabel">
 			<Property key="Caption" value="Shadows"/>
 			<Property key="FontName" value="Tumbu.Text"/>
 			<Property key="TextAlign" value="Right VCenter"/>
 		</Widget>
-		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.28 0.48 0.14" name="ShadowsCombo">
+		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.229 0.48 0.115" name="ShadowsCombo">
 			<Property key="ModeDrop" value="true"/>
 			<Property key="FontName" value="Tumbu.Text"/>
 		</Widget>
-		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.48 0.35 0.14" name="FrameLimitLabel">
+		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.393 0.35 0.115" name="FrameLimitLabel">
 			<Property key="Caption" value="Frame limit"/>
 			<Property key="FontName" value="Tumbu.Text"/>
 			<Property key="TextAlign" value="Right VCenter"/>
 		</Widget>
-		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.48 0.48 0.14" name="FrameLimitCombo">
+		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.393 0.48 0.115" name="FrameLimitCombo">
 			<Property key="ModeDrop" value="true"/>
 			<Property key="FontName" value="Tumbu.Text"/>
 		</Widget>
-		<Widget type="Button" skin="Button" position_real="0.04 0.76 0.29 0.18" name="OptionsOkButton">
+		<Widget type="TextBox" skin="TextBox" position_real="0.05 0.557 0.35 0.115" name="AntiAliasingLabel">
+			<Property key="Caption" value="Anti-aliasing"/>
+			<Property key="FontName" value="Tumbu.Text"/>
+			<Property key="TextAlign" value="Right VCenter"/>
+		</Widget>
+		<Widget type="ComboBox" skin="ComboBox" position_real="0.45 0.557 0.48 0.115" name="AntiAliasingCombo">
+			<Property key="ModeDrop" value="true"/>
+			<Property key="FontName" value="Tumbu.Text"/>
+		</Widget>
+		<Widget type="Button" skin="Button" position_real="0.04 0.80 0.29 0.147" name="OptionsOkButton">
 			<Property key="Caption" value="Ok"/>
 			<Property key="FontName" value="Tumbu.Button"/>
 		</Widget>
-		<Widget type="Button" skin="Button" position_real="0.355 0.76 0.29 0.18" name="OptionsDefaultButton">
+		<Widget type="Button" skin="Button" position_real="0.355 0.80 0.29 0.147" name="OptionsDefaultButton">
 			<Property key="Caption" value="Default"/>
 			<Property key="FontName" value="Tumbu.Button"/>
 		</Widget>
-		<Widget type="Button" skin="Button" position_real="0.67 0.76 0.29 0.18" name="OptionsCancelButton">
+		<Widget type="Button" skin="Button" position_real="0.67 0.80 0.29 0.147" name="OptionsCancelButton">
 			<Property key="Caption" value="Cancel"/>
 			<Property key="FontName" value="Tumbu.Button"/>
 		</Widget>

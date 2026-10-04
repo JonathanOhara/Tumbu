@@ -151,3 +151,71 @@ fragment_program dust_ps glsl glsles hlsl
         shared_params_ref TumbuLighting
     }
 }
+
+// SMAA 1x anti-aliasing (smaa.vert / smaa.frag, Tumbu/SMAA in postprocess.compositor): one source, the pass picked by
+// SMAA_PASS. smaaMetrics = width, height, 1/width, 1/height of the target being drawn (all three are full size).
+vertex_program smaa_edges_vs glsl glsles hlsl
+{
+    source smaa.vert
+    target vs_4_0
+    preprocessor_defines SMAA_PASS=1
+    default_params
+    {
+        param_named_auto wvpMat worldviewproj_matrix
+        param_named_auto smaaMetrics viewport_size
+    }
+}
+
+fragment_program smaa_edges_ps glsl glsles hlsl
+{
+    source smaa.frag
+    target ps_4_0
+    preprocessor_defines SMAA_PASS=1
+    // (luma edge detection reads only the neighbour coordinates of the vertex shader, so no smaaMetrics here)
+}
+
+vertex_program smaa_weights_vs glsl glsles hlsl
+{
+    source smaa.vert
+    target vs_4_0
+    preprocessor_defines SMAA_PASS=2
+    default_params
+    {
+        param_named_auto wvpMat worldviewproj_matrix
+        param_named_auto smaaMetrics viewport_size
+    }
+}
+
+fragment_program smaa_weights_ps glsl glsles hlsl
+{
+    source smaa.frag
+    target ps_4_0
+    preprocessor_defines SMAA_PASS=2
+    default_params
+    {
+        param_named_auto smaaMetrics viewport_size
+    }
+}
+
+vertex_program smaa_blend_vs glsl glsles hlsl
+{
+    source smaa.vert
+    target vs_4_0
+    preprocessor_defines SMAA_PASS=3
+    default_params
+    {
+        param_named_auto wvpMat worldviewproj_matrix
+        param_named_auto smaaMetrics viewport_size
+    }
+}
+
+fragment_program smaa_blend_ps glsl glsles hlsl
+{
+    source smaa.frag
+    target ps_4_0
+    preprocessor_defines SMAA_PASS=3
+    default_params
+    {
+        param_named_auto smaaMetrics viewport_size
+    }
+}

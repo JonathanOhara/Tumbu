@@ -199,7 +199,7 @@ private:
 	MyGUI::TextBox *logLines[4];
 	MyGUI::ProgressBar *heroHpBar, *heroApBar, *enemyHpBar, *enemyApBar;
 	MyGUI::TextBox *heroHpValue, *heroApValue;
-	MyGUI::ComboBox *skyCombo, *shadowsCombo, *frameLimitCombo;
+	MyGUI::ComboBox *skyCombo, *shadowsCombo, *frameLimitCombo, *antiAliasingCombo;
 	MyGUI::ComboBox *partCombos[5];
 
 	static GUI* instance;

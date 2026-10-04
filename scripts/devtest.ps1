@@ -1,7 +1,9 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1]
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # The game runs muted (-mute) unless -Sound is given.
+# It ends with the frame rate of the run ("fps: avg=... min=... max=..."; VSync is off under DevTest), also saved as
+# devtest-<Name>.fps, which compare.ps1 prints under each image.
 param(
     [ValidateSet('Release', 'RelWithDebInfo')] [string]$Configuration = 'Release',
     [int]$FpsCap = 0,
@@ -18,6 +20,7 @@ param(
     [double]$JynHit = 0,
     [string]$Camera = '',
     [string]$Hero = "",
+    [int]$AA = -1,
     [string]$Name = 'run',
     [int]$TimeoutSeconds = 180
 )
@@ -41,6 +44,7 @@ if ($FxTest -or $JynHit -gt 0) { $gameArgs += "-fxtime=" + $FxTime.ToString([cul
 if ($FxDistance -gt 0) { $gameArgs += "-fxdistance=" + $FxDistance.ToString([cultureinfo]::InvariantCulture) }
 if ($Camera)      { $gameArgs += "-camera=$Camera" }
 if ($Hero)        { $gameArgs += "-hero=$Hero" }
+if ($AA -ge 0)     { $gameArgs += "-aa=$AA" }
 
 Remove-Item "$work\devtest.png" -ErrorAction SilentlyContinue
 $proc = Start-Process $exe -ArgumentList $gameArgs -WorkingDirectory $binDir -PassThru
@@ -54,3 +58,17 @@ if (Test-Path "$work\devtest.png") { Copy-Item "$work\devtest.png" "$work\devtes
 Write-Host "exit=$($proc.ExitCode)  log=$work\devtest-$Name.log  screenshot=$(Test-Path "$work\devtest-$Name.png")"
 Select-String "$work\devtest-$Name.log" -Pattern '\[DEVTEST\]|EXCEPTION|Error|Fatal' |
     Where-Object { $_.Line -notmatch 'white\.png|city_6_|sample\.fontdef' } | ForEach-Object { $_.Line }
+
+# Frame rate of the run: the [DEVTEST] fps= samples (every 0.5 s) after a 2 s warm-up. Saved next to the screenshot
+# (devtest-<Name>.fps), where compare.ps1 picks it up for its labels.
+$fps = Select-String "$work\devtest-$Name.log" -Pattern '\[DEVTEST\] t=([\d.]+) fps=([\d.]+)' |
+    Where-Object { [double]::Parse($_.Matches[0].Groups[1].Value, [cultureinfo]::InvariantCulture) -ge 2 } |
+    ForEach-Object { [double]::Parse($_.Matches[0].Groups[2].Value, [cultureinfo]::InvariantCulture) }
+Remove-Item "$work\devtest-$Name.fps" -ErrorAction SilentlyContinue
+if ($fps) {
+    $m = $fps | Measure-Object -Average -Minimum -Maximum
+    $cap = if ($FpsCap -gt 0) { " capped=$FpsCap" } else { '' }
+    $summary = "avg={0:0} min={1:0} max={2:0} samples={3}{4}" -f $m.Average, $m.Minimum, $m.Maximum, $m.Count, $cap
+    Set-Content "$work\devtest-$Name.fps" $summary
+    Write-Host "fps: $summary"
+}

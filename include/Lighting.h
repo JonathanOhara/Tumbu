@@ -21,6 +21,8 @@ public:
 
 	/// Creates the "TumbuLighting" shared parameters. Must run before the shader scripts are parsed.
 	static void declareSharedParameters(void);
+	/// SMAA's area and search lookup textures (Tumbu/SMAA/AreaTex, SearchTex). Must run before the resource groups load.
+	static void createSMAATextures(void);
 
 	void setClock( Clock* _clock );
 	/// The directional light that plays the sun (and the moon at night); it also casts the shadows.
@@ -59,6 +61,8 @@ private:
 	Keyframe loadKeyframe( const Ogre::String &name );
 	Keyframe blend( const Keyframe &a, const Keyframe &b, Ogre::Real t );
 	void apply( const Keyframe &k );
+	/// SMAA anti-aliasing after the post-processing (the Options setting, read at match start).
+	void enableAntiAliasing( bool enable );
 
 	Ogre::SceneManager* mSceneMgr;
 	Ogre::Light* sun;

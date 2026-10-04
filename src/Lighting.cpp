@@ -5,9 +5,12 @@
 #include "TUMBU.h"
 #include "Demo.h"
 #include "Physics.h"
+#include "smaa/AreaTex.h"
+#include "smaa/SearchTex.h"
 Lighting* Lighting::instance = NULL;
 static const char* SHARED_PARAMS = "TumbuLighting";
 static const char* POST_PROCESS = "Tumbu/PostProcess";
+static const char* SMAA = "Tumbu/SMAA";
 //-------------------------------------------------------------------------------------
 static ConfigNode* requireChild( ConfigNode* node, const Ogre::String &script, const Ogre::String &key ){
 	ConfigNode* child = node->findChild( key );
@@ -114,6 +117,7 @@ Lighting::~Lighting(void){
 		postProcess->removeListener( this );
 		// Disabled, not removed: the next match enables it again with the same render targets (no rebuild).
 		Ogre::CompositorManager::getSingleton().setCompositorEnabled( postProcessViewport, POST_PROCESS, false );
+		enableAntiAliasing( false );
 	}
 	instance = NULL;
 }
@@ -336,6 +340,52 @@ void Lighting::enablePostProcessing( Ogre::Viewport* viewport ){
 	Ogre::CompositorManager::getSingleton().setCompositorEnabled( viewport, POST_PROCESS, true );
 	postProcessViewport = viewport;
 	Ogre::LogManager::getSingleton().logMessage( "Lighting: post-processing enabled" );
+	enableAntiAliasing( TUMBU::getInstance()->isAntiAliasingEnabled() );
+}
+//-------------------------------------------------------------------------------------
+void Lighting::createSMAATextures(void){
+	// SMAA's precomputed lookup textures (third_party/smaa), made from the reference bytes: no image codec, no gamma,
+	// no mipmaps. Created once at start-up (BaseApplication::loadResources) and kept for the whole run.
+	Ogre::TextureManager &manager = Ogre::TextureManager::getSingleton();
+	if( manager.resourceExists( "Tumbu/SMAA/AreaTex", "Game" ) ){
+		return;
+	}
+	// The area texture is two-channel (RG8), which Ogre's Direct3D 11 renderer does not map: it converted it to RGBA
+	// itself and the weights came out wrong (dashed outlines). So it is expanded to RGBA here, the same on every renderer.
+	std::vector<unsigned char> rgba( AREATEX_WIDTH * AREATEX_HEIGHT * 4 );
+	for( size_t i = 0; i < AREATEX_WIDTH * AREATEX_HEIGHT; i++ ){
+		rgba[i * 4] = areaTexBytes[i * 2];
+		rgba[i * 4 + 1] = areaTexBytes[i * 2 + 1];
+		rgba[i * 4 + 2] = 0;
+		rgba[i * 4 + 3] = 255;
+	}
+	Ogre::TexturePtr area = manager.createManual( "Tumbu/SMAA/AreaTex", "Game", Ogre::TEX_TYPE_2D,
+		AREATEX_WIDTH, AREATEX_HEIGHT, 0, Ogre::PF_BYTE_RGBA );
+	area->getBuffer()->blitFromMemory( Ogre::PixelBox( AREATEX_WIDTH, AREATEX_HEIGHT, 1, Ogre::PF_BYTE_RGBA, &rgba[0] ) );
+	Ogre::TexturePtr search = manager.createManual( "Tumbu/SMAA/SearchTex", "Game", Ogre::TEX_TYPE_2D,
+		SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, 0, Ogre::PF_R8 );
+	search->getBuffer()->blitFromMemory( Ogre::PixelBox( SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, 1, Ogre::PF_R8, (void*) searchTexBytes ) );
+}
+//-------------------------------------------------------------------------------------
+void Lighting::enableAntiAliasing( bool enable ){
+	// SMAA 1x (postprocess.compositor, Tumbu/SMAA): chained after Tumbu/PostProcess, whose final pass then renders
+	// into SMAA's colour texture instead of the window. Off, the chain is exactly Tumbu/PostProcess.
+	Ogre::CompositorManager &manager = Ogre::CompositorManager::getSingleton();
+	Ogre::CompositorInstance* smaa = manager.getCompositorChain( postProcessViewport )->getCompositor( SMAA );
+	if( enable && smaa == NULL ){
+		Ogre::Pass* weights = Ogre::MaterialManager::getSingleton().getByName( "Tumbu/SMAA/Weights", "Game" )->getTechnique( 0 )->getPass( 0 );
+		weights->getTextureUnitState( "area" )->setTextureName( "Tumbu/SMAA/AreaTex" );
+		weights->getTextureUnitState( "search" )->setTextureName( "Tumbu/SMAA/SearchTex" );
+		smaa = manager.addCompositor( postProcessViewport, SMAA );
+		if( smaa == NULL ){
+			Ogre::LogManager::getSingleton().logError( "Lighting: the SMAA compositor is not supported, the match renders without anti-aliasing" );
+			return;
+		}
+	}
+	if( smaa != NULL ){
+		manager.setCompositorEnabled( postProcessViewport, SMAA, enable );
+	}
+	Ogre::LogManager::getSingleton().logMessage( Ogre::String( "Lighting: anti-aliasing " ) + ( enable ? "SMAA" : "off" ) );
 }
 //-------------------------------------------------------------------------------------
 bool Lighting::frameRenderingQueued( const Ogre::FrameEvent &evt ){

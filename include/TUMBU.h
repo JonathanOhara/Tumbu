@@ -79,6 +79,11 @@ public:
 	void setFrameLimit( int fps );
 	int getFrameLimit(void);
 
+	/** Anti-aliasing of a match: 0 = off, 1 = SMAA (default). The -aa=0|1 DevTest switch overrides it for a run. */
+	void setAntiAliasing( int mode );
+	int getAntiAliasing(void);
+	bool isAntiAliasingEnabled(void);
+
 	/** Options are kept in <workPath>/options.cfg. */
 	void saveOptions(void);
 	void loadOptions(void);
@@ -119,6 +124,7 @@ private:
 	bool castShadows;
 
 	int frameLimit;
+	int antiAliasing;
 	Ogre::Timer frameLimitTimer;
 
 	int barrelIndex, 

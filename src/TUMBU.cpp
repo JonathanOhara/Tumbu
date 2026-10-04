@@ -23,6 +23,7 @@ TUMBU::TUMBU(void){
 	
 	skyQuality = 0;
 	frameLimit = -1;	// monitor refresh (VSync)
+	antiAliasing = 1;	// SMAA
 	timeMultiplier = 0.1f;
 
 	gameState = TumbuEnums::NONE;
@@ -482,13 +483,28 @@ int TUMBU::getShadowPreset(void){
 void TUMBU::setFrameLimit( int fps ){
 	frameLimit = fps;
 	if( mWindow != NULL ){
-		mWindow->setVSyncEnabled( frameLimit == -1 );
+		// DevTest runs never wait for the monitor, so their fps= lines measure the real frame rate.
+		mWindow->setVSyncEnabled( frameLimit == -1 && !DevTest::isEnabled() );
 	}
 	frameLimitTimer.reset();
 }
 //-------------------------------------------------------------------------------------
 int TUMBU::getFrameLimit(void){
 	return frameLimit;
+}
+//-------------------------------------------------------------------------------------
+void TUMBU::setAntiAliasing( int mode ){
+	antiAliasing = mode;
+}
+//-------------------------------------------------------------------------------------
+int TUMBU::getAntiAliasing(void){
+	return antiAliasing;
+}
+//-------------------------------------------------------------------------------------
+bool TUMBU::isAntiAliasingEnabled(void){
+	// Applied when a match starts (Lighting::enablePostProcessing).
+	int override = DevTest::getAntiAliasing();
+	return ( override >= 0 ? override : antiAliasing ) != 0;
 }
 //-------------------------------------------------------------------------------------
 void TUMBU::saveOptions(void){
@@ -498,6 +514,7 @@ void TUMBU::saveOptions(void){
 		file << "SkyQuality=" << skyQuality << "\n";
 		file << "Shadows=" << getShadowPreset() << "\n";
 		file << "FrameLimit=" << frameLimit << "\n";
+		file << "AntiAliasing=" << antiAliasing << "\n";
 	}
 }
 //-------------------------------------------------------------------------------------
@@ -509,6 +526,7 @@ void TUMBU::loadOptions(void){
 		setSkyQuality( Ogre::StringConverter::parseInt( cfg.getSetting( "SkyQuality", Ogre::BLANKSTRING, "0" ) ) );
 		setShadowPreset( Ogre::StringConverter::parseInt( cfg.getSetting( "Shadows", Ogre::BLANKSTRING, "0" ) ) );
 		setFrameLimit( Ogre::StringConverter::parseInt( cfg.getSetting( "FrameLimit", Ogre::BLANKSTRING, "-1" ) ) );
+		setAntiAliasing( Ogre::StringConverter::parseInt( cfg.getSetting( "AntiAliasing", Ogre::BLANKSTRING, "1" ) ) );
 	}else{
 		setShadowPreset( 1 );	// no options saved yet: shadows on
 		setFrameLimit( frameLimit );

@@ -50,6 +50,8 @@ public:
 	static bool isMuted(void){ return mute; }
 	/// -nofx: special-attack effects are not started (to compare performance or memory with and without them).
 	static bool isFxDisabled(void){ return noFx; }
+	/// -aa=0|1: anti-aliasing of this run regardless of options.cfg (-1 = not given).
+	static int getAntiAliasing(void){ return antiAliasing; }
 	/// -hero=robotNNN: the set every hero part comes from, or empty for the demo.object loadout.
 	static const Ogre::String &getHeroSet(void){ return heroSet; }
 
@@ -119,6 +121,7 @@ private:
 	static int faceShot;
 	static bool jynWalk;
 	static bool noFx;
+	static int antiAliasing;
 	static Ogre::String fxTest;
 	static Ogre::String heroSet;
 	static Ogre::Real fxTime;

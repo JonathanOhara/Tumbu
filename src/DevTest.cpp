@@ -33,6 +33,7 @@ bool DevTest::mute = false;
 int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
 bool DevTest::noFx = false;
+int DevTest::antiAliasing = -1;
 Ogre::String DevTest::fxTest = "";
 Ogre::String DevTest::heroSet = "";
 Ogre::Real DevTest::fxTime = 0.3f;
@@ -65,6 +66,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			mute = true;
 		}else if( arg == "-nofx" ){
 			noFx = true;
+		}else if( Ogre::StringUtil::startsWith( arg, "-aa=" ) ){
+			antiAliasing = Ogre::StringConverter::parseInt( arg.substr( 4 ) );
 		}else if( arg == "-flytest" ){
 			flyTest = true;
 		}else if( arg == "-swaptest" ){

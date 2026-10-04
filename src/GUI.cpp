@@ -101,6 +101,7 @@ void GUI::loadLayouts(void){
 	skyCombo			= widget<MyGUI::ComboBox>( "SkyCombo" );
 	shadowsCombo		= widget<MyGUI::ComboBox>( "ShadowsCombo" );
 	frameLimitCombo		= widget<MyGUI::ComboBox>( "FrameLimitCombo" );
+	antiAliasingCombo	= widget<MyGUI::ComboBox>( "AntiAliasingCombo" );
 
 	battleHud			= widget<MyGUI::Widget>( "BattleHud" );
 	heroHpBar			= widget<MyGUI::ProgressBar>( "HeroHpBar" );
@@ -162,6 +163,8 @@ void GUI::loadLayouts(void){
 	frameLimitCombo->addItem( "72 FPS", 72 );
 	frameLimitCombo->addItem( "60 FPS", 60 );
 	frameLimitCombo->addItem( "Unlimited", 0 );
+	antiAliasingCombo->addItem( "Off" );
+	antiAliasingCombo->addItem( "SMAA" );
 
 	hideDialogWidgets();
 	pauseMenu->setVisible( false );
@@ -536,6 +539,8 @@ void GUI::loadOptionsIntoWidgets(void){
 			frameLimitCombo->setIndexSelected( i );
 		}
 	}
+
+	antiAliasingCombo->setIndexSelected( tumbu->getAntiAliasing() == 0 ? 0 : 1 );
 }
 //-------------------------------------------------------------------------------------
 void GUI::applyOptionsFromWidgets(void){
@@ -543,6 +548,7 @@ void GUI::applyOptionsFromWidgets(void){
 	tumbu->setSkyQuality( skyCombo->getIndexSelected() == 1 ? 1 : 0 );
 	tumbu->setShadowPreset( (int) shadowsCombo->getIndexSelected() );
 	tumbu->setFrameLimit( *frameLimitCombo->getItemDataAt<int>( frameLimitCombo->getIndexSelected() ) );
+	tumbu->setAntiAliasing( (int) antiAliasingCombo->getIndexSelected() );
 	tumbu->saveOptions();
 }
 //------------------------------------------------------------------------------------- pause menu
@@ -804,6 +810,7 @@ void GUI::onOptionsDefault( MyGUI::Widget *sender ){
 	skyCombo->setIndexSelected( 0 );
 	shadowsCombo->setIndexSelected( 1 );
 	frameLimitCombo->setIndexSelected( 0 );
+	antiAliasingCombo->setIndexSelected( 1 );
 }
 void GUI::onOptionsCancel( MyGUI::Widget *sender ){
 	showStartMenu();

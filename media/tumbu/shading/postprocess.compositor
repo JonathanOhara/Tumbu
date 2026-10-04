@@ -147,3 +147,60 @@ compositor Tumbu/PostProcess
         }
     }
 }
+
+// SMAA 1x anti-aliasing (Jimenez et al., smaa/SMAA.hlsl), chained after Tumbu/PostProcess when the option is on
+// (Lighting::enablePostProcessing). Tumbu/PostProcess's final pass then renders the tone-mapped image into "colour"
+// instead of the window (input previous), so SMAA works on display-space colours as it expects. Three passes: luma
+// edges, blending weights (with the area and search lookup textures), neighbourhood blending onto the window. The
+// GUI is drawn after the chain, so it is not affected.
+compositor Tumbu/SMAA
+{
+    technique
+    {
+        texture colour target_width target_height PF_BYTE_RGBA
+        texture edges target_width target_height PF_BYTE_RGBA
+        texture weights target_width target_height PF_BYTE_RGBA
+
+        target colour
+        {
+            input previous
+        }
+
+        target edges
+        {
+            input none
+            // The edge pass discards the pixels without an edge.
+            pass clear
+            {
+                buffers colour
+                colour_value 0 0 0 0
+            }
+            pass render_quad
+            {
+                material Tumbu/SMAA/Edges
+                input 0 colour
+            }
+        }
+
+        target weights
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/SMAA/Weights
+                input 0 edges
+            }
+        }
+
+        target_output
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/SMAA/Blend
+                input 0 colour
+                input 1 weights
+            }
+        }
+    }
+}

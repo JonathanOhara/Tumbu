@@ -44,6 +44,7 @@ add_executable(TUMBU WIN32 ${TUMBU_SOURCES} ${TUMBU_HEADERS} src/MiniaudioImpl.c
 
 target_include_directories(TUMBU PRIVATE
 	"${CMAKE_SOURCE_DIR}/include"
+	"${CMAKE_SOURCE_DIR}/third_party"
 	"${TUMBU_DEPS_INSTALL}/include/bullet"
 	"${TUMBU_DEPS_INSTALL}/include/miniaudio")
 

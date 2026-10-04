@@ -127,6 +127,8 @@ void BaseApplication::locateResources(void){
 }
 //-------------------------------------------------------------------------------------
 void BaseApplication::loadResources(void){
+	// SMAA's lookup textures, made once for the whole run (Lighting binds them when anti-aliasing is first enabled).
+	Lighting::createSMAATextures();
 	OgreBites::ApplicationContext::loadResources();
 }
 //-------------------------------------------------------------------------------------

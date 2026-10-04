@@ -8,7 +8,7 @@ Each idea notes which reference game does it.
 
 Visual track, most important first (impact on what the player sees, against the effort):
 
-1. **SMAA anti-aliasing** (Rendering modernization 1): every frame has jagged edges today; small, contained change.
+1. **SMAA anti-aliasing** (Rendering modernization 1) — **done (2026-10)**.
 2. **Arena remake** (Art side: coliseum retexture with parallax occlusion and self-shadows, a new ground, BC7/BC5
    textures): the biggest visual gap, in every shot. Large; mock-ups first.
 3. **Night arena lights** (idea 4): night fights look unplanned; builds on the energy lights.
@@ -102,7 +102,9 @@ itself (customization is its core), but it is design and code, not visuals; the 
 
 Techniques in use that have a clear modern replacement, most valuable first:
 
-1. **Anti-aliasing: none during a match.** The window asks for FSAA, but the scene renders into the post-processing
+1. **Anti-aliasing: none during a match.** — **done (2026-10): SMAA 1x** (High preset, luma edges) chained after the
+   post-processing (`Tumbu/SMAA`, Options → Anti-aliasing, default on); robot outlines and the ring ropes are smooth, effects
+   and bloom unchanged, cost inside the frame-rate noise. Before/after: `%USERPROFILE%Tumbusmaa`. Original notes: The window asks for FSAA, but the scene renders into the post-processing
    compositor's HDR texture, which has no MSAA, so robot edges and outlines are jagged (visible in every screenshot).
    Add **SMAA** (or FXAA as a first step) in the final pass. SMAA suits toon outlines; TAA would blur them and needs
    motion vectors. Tested: FSAA=4 in the start-up dialog (`ogre.cfg`) is accepted by the window but leaves the match's

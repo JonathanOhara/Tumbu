@@ -235,3 +235,84 @@ material Tumbu/PostProcess/SSAO{
         }
     }
 }
+
+// SMAA 1x anti-aliasing (Tumbu/SMAA in postprocess.compositor). Lighting.cpp makes the lookup textures and binds them
+// to the "area" and "search" units (a script cannot name their RG8 / R8 formats). Filtering: SMAA reads colour, edges
+// and area bilinearly (it relies on it to fetch two pixels at once), and the search texture with point sampling.
+material Tumbu/SMAA/Edges{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref smaa_edges_vs{
+            }
+
+            fragment_program_ref smaa_edges_ps{
+            }
+
+            texture_unit source{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+material Tumbu/SMAA/Weights{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref smaa_weights_vs{
+            }
+
+            fragment_program_ref smaa_weights_ps{
+            }
+
+            texture_unit edges{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+
+            texture_unit area{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+
+            texture_unit search{
+                tex_address_mode clamp
+                filtering none
+            }
+        }
+    }
+}
+
+material Tumbu/SMAA/Blend{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref smaa_blend_vs{
+            }
+
+            fragment_program_ref smaa_blend_ps{
+            }
+
+            texture_unit source{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+
+            texture_unit weights{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}

@@ -59,7 +59,8 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
   `-fpscap=N`, `-quitafter=S`, `-hour=H`, `-mute` (all sounds at volume 0; also works for a normal game), `-nofx` (no
-  special-attack effects or ki aura, to compare frame rate or memory) and
+  special-attack effects or ki aura, to compare frame rate or memory), `-aa=0|1` (anti-aliasing off / SMAA for this run,
+  whatever `options.cfg` says: `devtest.ps1 -AA 0`) and
   `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
   `devtest.ps1 -FaceShot [-Jyn]`), `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point:
   `devtest.ps1 -Camera "…"`, handy for close-ups of the arena), `-hero=robotNNN` (the hero wears all five parts of that set: `devtest.ps1 -Hero robot005`, to check a
@@ -110,6 +111,14 @@ materials, textures, GUI) gets a before/after set:
    zoomed crops (`-Zoom 2` to `4`) when the change is small (outlines, edges, anti-aliasing).
 4. Read the images before reporting, and tell Jonathan the folder. Each tuning round gets a new folder
    (`<feature>-2`, …) whose "before" is the previous round's "after".
+5. **Track the frame rate too.** Every `devtest.ps1` run ends with `fps: avg=… min=… max=…` (the `[DEVTEST] fps=` samples
+   after a 2 s warm-up; DevTest turns VSync off, so the number is not capped by the monitor) and saves it as
+   `devtest-<Name>.fps`; `compare.ps1` prints it under each image, with the change in percent on the AFTER side. A
+   single run is only a hint: it varies by ±15–30 % between identical runs (the enemy moves, Direct3D 11 more than
+   OpenGL). For the real number, run the same fixed view several times, alternating before/after (a DevTest switch
+   such as `-AA 0|1` or `-nofx` when the feature can be turned off in one build), with `-QuitAfter 20`, on Direct3D 11
+   and OpenGL, and report the averages as fps and ms per frame next to the image folder. Say so when the difference is
+   inside the noise.
 
 ## Tech stack
 
@@ -122,7 +131,7 @@ materials, textures, GUI) gets a before/after set:
 | GUI | **MyGUI 3.5.1** (Ogre platform, BlackBlue theme). Layouts are in `media/gui/*.layout` | `GUI.cpp/.h` |
 | Audio | **miniaudio 0.11.25** + stb_vorbis. Files are loaded through Ogre resources; 3D sounds follow scene nodes | `Sound`, `SoundManager` |
 | Sky | Low: skydome material. High: **Caelum** day/night, **Direct3D 11 only** (Caelum ships only cg/hlsl shaders), driven by `Clock` | `Sky` |
-| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, a camera-relative "hero" fill on the robots, integrated depth shadow map, HDR compositor with god rays, bloom and tone mapping; Caelum sun follows it | `Lighting`, `media/tumbu/shading/` |
+| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, a camera-relative "hero" fill on the robots, integrated depth shadow map, HDR compositor with god rays, bloom and tone mapping, then SMAA anti-aliasing; Caelum sun follows it | `Lighting`, `media/tumbu/shading/` |
 | Shaders | Robot and arena shaders in unified GLSL/HLSL (`OgreUnifiedShader.h`), sharing `TumbuToon.h`; materials set textures through `set $var` | `media/tumbu/robots/`, `media/tumbu/shading/` |
 | Scene format | `.scene` from Ogitor 0.4.4 + terrain page `.ogt`, parsed by our `DotSceneLoader` (rapidxml) | `media/scenes/arena` |
 | Installer | NSIS `Tumbu.nsi` (still the 2011 x86 layout; needs updating) | root |
@@ -175,6 +184,19 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   grading and vignette) to the window viewport for a match and removes it afterwards. MyGUI and the
   trays draw after it and are not affected. Bloom: a bright pass to quarter size, two H+V blurs, added
   before tone mapping (`bloomThreshold` / `bloomSoftKnee` / `bloomStrength` in `lighting.object`).
+- **Anti-aliasing: SMAA 1x** (Jimenez et al., MIT; `SMAA_PRESET_HIGH`, luma edges). The match renders into the
+  compositor's HDR texture, which has no MSAA, so the FSAA of the start-up dialog / `ogre.cfg` does nothing in a match
+  (keep it at 1). Instead `Lighting::enableAntiAliasing` chains the `Tumbu/SMAA` compositor after `Tumbu/PostProcess`
+  (Options → Anti-aliasing, `AntiAliasing` in `options.cfg`, read at match start; added once, then only enabled or
+  disabled). Through `input previous` the post-processing final pass then renders the tone-mapped image into SMAA's
+  `colour` texture instead of the window; three passes follow (edges, blending weights, neighbourhood blending onto the
+  window). Off, the chain is exactly `Tumbu/PostProcess`. Shaders: the reference `smaa/SMAA.hlsl` **unmodified**, wrapped
+  by `smaa_common.h` (`SMAA_CUSTOM_SL` macros on `OgreUnifiedShader.h`); `smaa.vert` / `smaa.frag` serve all three
+  passes (`SMAA_PASS` in `shading.program`). The lookup textures come from `third_party/smaa/AreaTex.h` / `SearchTex.h`,
+  made once in `Lighting::createSMAATextures` (from `BaseApplication::loadResources`) and
+  bound to the `Tumbu/SMAA/Weights` units from code. Pitfalls met: **Ogre's Direct3D 11 renderer has no RG8 format** and
+  silently converted the area texture, which gave dashed outlines on D3D11 only, so it is uploaded as RGBA; a material
+  script cannot name `PF_RG8`. Cost: within the run-to-run noise at 1024×768 on an RTX 3070 (at most ~0.1 ms).
 - **Emissive glow:** robot materials set `$glowMap` (the `GMheadUV_00N.tga` masks) and `$glowColour`
   (tint, strength). The glow is the part's own texture colour where the mask is white, so each robot glows in
   its eye colour. `Robot::updateEyeGlow` passes a 0..1 flare (custom parameter 0) while Jyn builds up.
@@ -272,6 +294,7 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   - `ogre.cfg`: render system
   - `options.cfg`: `SkyQuality`, `Shadows` (0 off, 1 normal = default, 2 high), `FrameLimit`. For
     `FrameLimit`, `-1` means VSync, the default; the other values are 144/72/60/0 = unlimited.
+    `AntiAliasing`: 0 off, 1 SMAA (default).
   - `ogre.log` and `MyGUI.log`
 - **Controls:**
   - WASD to move, Left Shift to run.
@@ -297,7 +320,7 @@ through a listener registry in `BaseApplication`.
   - It keeps the listener registry and `setMouseCaptured`.
 - `TUMBU` (singleton, extends BaseApplication) is the game root.
   - It holds the game state (`TumbuEnums::GameState`: NONE, START_SCREEN, IN_DIALOG, PAUSED, LOADING,
-    PLAYING, FLYING) and the options (shadows, sky quality, frame limit), with save/load in `options.cfg`.
+    PLAYING, FLYING) and the options (shadows, sky quality, frame limit, anti-aliasing), with save/load in `options.cfg`.
   - It owns the StartScreen, AIManager, SoundManager, Clock and GUI.
   - `initializeDemo()` / `finishDemo()` switch between the menu and a match.
 - `StartScreen` / `CutScene` is the title-screen background, drawn in `RENDER_QUEUE_BACKGROUND`.
