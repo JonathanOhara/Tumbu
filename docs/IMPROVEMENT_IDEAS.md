@@ -46,7 +46,9 @@ Each idea notes which reference game does it.
 
 ## Special-attack ideas (to test)
 
-8. **Ki aura around the robot while Jyn charges** *(Dragon Ball Z, Saint Seiya cosmos)*
+8. **Ki aura around the robot while Jyn charges** *(Dragon Ball Z, Saint Seiya cosmos)* — **done (2026-10)**: the
+   "Soft" body aura (inflated back-face shell with rising tongues, motes and a light, attack colour, thinner at the
+   head); see `docs/SPECIAL_EFFECTS.md`. The notes below were the options considered.
    - A burning energy aura around the charging robot, in the attack's colour, that grows with the Genki Dama and
      flares at the throw. Built as an effect layer in `effects.object` (`jyn_charge`), so setups can be swapped and
      compared with `devtest.ps1 -FxTest special:jyn` without code changes.

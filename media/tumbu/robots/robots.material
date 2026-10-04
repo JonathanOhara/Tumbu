@@ -91,3 +91,26 @@ material base_material{
         }
     }
 }
+
+// Ki aura shell: each robot part drawn again, inflated, only its back faces (the robot hides the rest), alpha
+// blended after the scene. Robot::updateAura shows it while Jyn charges; values in effects.object (effect jyn_aura).
+material Tumbu/KiAura
+{
+    technique
+    {
+        pass
+        {
+            scene_blend alpha_blend
+            depth_write off
+            lighting off
+            cull_hardware anticlockwise
+
+            vertex_program_ref robot_aura_vs
+            {
+            }
+            fragment_program_ref robot_aura_ps
+            {
+            }
+        }
+    }
+}

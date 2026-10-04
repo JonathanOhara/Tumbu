@@ -87,7 +87,7 @@ Ogre::ColourValue Effect::readColour( ConfigNode* node, const Ogre::String &key 
 }
 //-------------------------------------------------------------------------------------
 Ogre::Real Effect::readReal( ConfigNode* node, const Ogre::String &key, Ogre::Real defaultValue ){
-	ConfigNode* child = node->findChild( key );
+	ConfigNode* child = node != NULL ? node->findChild( key ) : NULL;
 	if( child == NULL || child->getValues().empty() ){
 		return defaultValue;
 	}

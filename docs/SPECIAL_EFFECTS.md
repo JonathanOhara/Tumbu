@@ -21,8 +21,8 @@ Anime ki attacks (Dragon Ball Z, Naruto, Saint Seiya), drawn in the same toon st
 
 | Phase | Punch (ki blast) | Kick (crescent wave) | Jyn (Genki Dama) |
 |---|---|---|---|
-| Build-up | — | — | `jyn_charge`: first press (cast): the swarm balls appear around the robot and the eyes flare, nothing else; second press: the swarm balls fly in one after another and the ball, above the raised hand (its lower edge 0.25 above the knuckles), grows from nothing a step with each arrival (ready to throw once full); energy streaks from the air, motes rising from the floor, dust dragged to the feet, lightning over the ball (only once the ball has started to form); the swarm streams in (`jyn_mote` trails); `jyn_ball` light grows with the ball; eyes flare |
-| Release | `punch_muzzle`: star flash at the fist | `kick_muzzle`: flash and sparks at the foot | `jyn_throw`: thick wake and big sparks; aimed at the nearest enemy within ~60 degrees in front, at `throwSpeed` (25 units/s, `skills.object`; 2011: ~33.5); the gathering winds down around the thrown ball (motes on their way chase it) |
+| Build-up | — | — | `jyn_charge`: first press (cast): the swarm balls appear around the robot and the eyes flare, nothing else; second press: the swarm balls fly in one after another and the ball, above the raised hand (its lower edge 0.25 above the knuckles), grows from nothing a step with each arrival (ready to throw once full); energy streaks from the air, motes rising from the floor, dust dragged to the feet, lightning over the ball (only once the ball has started to form); the swarm streams in (`jyn_mote` trails); `jyn_ball` light grows with the ball; eyes flare; from the second press a soft **ki aura** surrounds the robot (`jyn_aura`: glow shell, rising motes, a light), growing with the ball |
+| Release | `punch_muzzle`: star flash at the fist | `kick_muzzle`: flash and sparks at the foot | `jyn_throw`: thick wake and big sparks; aimed at the nearest enemy within ~60 degrees in front, at `throwSpeed` (25 units/s, `skills.object`; 2011: ~33.5); the gathering winds down around the thrown ball (motes on their way chase it); the ki aura flares for ~0.15 s and fades over 0.5 s |
 | Flight | orb + `punch_ball` (light, trail, sparks) | crescent (`Tumbu/EnergyCrescent`) + `kick_ball` | big orb + wake + light |
 | Hit box | small box (the ball) | the crescent: 1.2 wide, 0.5 high | the ball (grows with it) |
 | Impact | `blast_hit` on a robot (star flash, shockwave ring, sparks, light, small shake); `blast_wall` on the arena | same | `jyn_impact`: white frame, 70 ms hit-stop, toon explosion ball, ground shockwave, sparks, debris, smoke, light, shake; the special ends at the impact, so the robot lowers its arm right away |
@@ -50,6 +50,18 @@ Particle Swarm Optimization is kept as an option (`gather pso` in `skill jyn`).
   `energy_trail` (trails and lightning), `energy_spark`, `energy_crescent`, `energy_burst` (FLASH, RING, DOME, SMOKE,
   DUST, DEBRIS). The particle colour carries the ki colour; its alpha is a random seed (orbs) or the life left
   (impact pieces, driven by a ColourFader), so the shaders animate without per-particle uniforms.
+- **Ki aura** (Saint Seiya cosmos with a soft DBZ touch; mock-up: https://claude.ai/artifact/QmnM2nMpBSPzDwqPMEZn6F,
+  variant "Soft"): every `Part` builds a hidden twin entity (`Part::auraEntity`, the same mesh with
+  `Tumbu/KiAura`) that shares the part's skeleton, so it follows every animation. `Robot::updateAura` (like the eye
+  flare) shows it from the concentration to the throw: the level follows `SpecialJyn::getChargeGrowth`, flares at the
+  throw and fades out, and is passed to the shaders as custom parameters (0: opacity, growth, width; 1: ki colour,
+  rise speed). `robot_aura.vert/.frag` (`media/tumbu/robots/`) draw the inflated **back faces** only, like the
+  outline, so the robot hides the shell except around its silhouette; fresnel makes it strongest next to the body,
+  rising noise breaks it into tongues (in the shape and the bands), toon bands go near-white / ki / darker fringe, alpha
+  blended so it reads over the white floor. Thinner and fainter around the head (the eye flare stays the focus).
+  Colour: the Jyn ki colour (hero light blue, enemy crimson). The `aura` block of `effect jyn_aura` holds the shell's
+  values (read by `Robot`, not an effect layer); the rest of that effect (rising motes `Tumbu/Fx/AuraMotes`, a light)
+  is a normal held effect at the robot, released at the throw.
 - **Scene lights:** up to four energy lights reach the robot and arena shaders as shared parameters
   (`energyLightPos0..3`, `energyLightColour0..3`; `tumbuEnergyLights` in `TumbuToon.h`, a toon band with a
   quadratic falloff). The strongest four requests of each frame win. The terrain and particles do not receive them.

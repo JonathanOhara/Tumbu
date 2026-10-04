@@ -1,12 +1,31 @@
 #include "Robot.h"
 #include "ConfigScript.h"
 #include "TUMBU.h"
+#include "Effect.h"
+#include "EffectsManager.h"
 //-------------------------------------------------------------------------------------
 unsigned int Robot::instances = 0;
 //-------------------------------------------------------------------
 Robot::Robot(void){
 	Robot::instances++;
 	eyeGlowBoost = 0;
+
+	auraLevel = 0;
+	auraFlare = 0;
+	auraCharging = false;
+	auraEffect = NULL;
+	auraColour = Ogre::ColourValue::White;
+	// The aura shell's look: the "aura" block of effect jyn_aura (effects.object).
+	ConfigNode* effectCfg = ConfigScriptLoader::getSingleton().getConfigScript( "effect", "jyn_aura" );
+	ConfigNode* auraCfg = effectCfg != NULL ? effectCfg->findChild( "aura" ) : NULL;
+	auraWidth		= Effect::readReal( auraCfg, "width", 0.05f );
+	auraOpacity		= Effect::readReal( auraCfg, "opacity", 1 );
+	auraRise		= Effect::readReal( auraCfg, "rise", 1 );
+	auraHeadWidth	= Effect::readReal( auraCfg, "headWidth", 0.6f );
+	auraFlareBoost	= Effect::readReal( auraCfg, "flare", 1.6f );
+	auraFlareTime	= Effect::readReal( auraCfg, "flareTime", 0.15f );
+	auraGrowRate	= Effect::readReal( auraCfg, "growRate", 4 );
+	auraFadeTime	= Effect::readReal( auraCfg, "fadeTime", 0.5f );
 
 	ConfigNode* cfg;
 	cfg = ConfigScriptLoader::getSingleton().getConfigScript( "game", "robot" );
@@ -61,6 +80,7 @@ Robot::Robot(void){
 }
 //-------------------------------------------------------------------
 Robot::~Robot(void){
+	releaseAura();
 	for(unsigned int i = 0; i < headList.size(); i++){
 		if( headList[i] != NULL ){
 			delete headList[i];
@@ -153,6 +173,74 @@ void Robot::updateEyeGlow( const Ogre::Real time ){
 			head->entity->getSubEntity( i )->setCustomParameter( 0, Ogre::Vector4( eyeGlowBoost, 0, 0, 0 ) );
 		}
 	}
+}
+//-------------------------------------------------------------------------------------
+void Robot::updateAura( const Ogre::Real time ){
+	// The aura shows from the concentration (the second press: the Genki Dama starts to form) until the throw.
+	SpecialJyn* special = jyn != NULL && jyn->isAttacking() ? dynamic_cast<SpecialJyn*>( jyn->special ) : NULL;
+	SpecialInterface::SpecialStatus status = special != NULL ? special->getSpecialStatus() : SpecialInterface::FINISHED;
+	bool charging = status == SpecialInterface::CONCENTRATING || status == SpecialInterface::CONCENTRATED;
+
+	if( charging ){
+		if( !auraCharging ){
+			auraColour = special->getKiColour( "jyn" );	// light blue; crimson for an enemy
+		}
+		// Grows with the ball, from a faint shimmer before the first swarm ball arrives.
+		Ogre::Real target = 0.2f + 0.8f * special->getChargeGrowth();
+		auraLevel += ( target - auraLevel ) * std::min( 1.0f, auraGrowRate * time );
+	}else{
+		if( auraCharging && status == SpecialInterface::ATTACKING ){
+			auraFlare = 1;	// the throw
+		}
+		auraLevel = std::max( 0.0f, auraLevel - time / auraFadeTime );
+	}
+	auraFlare = std::max( 0.0f, auraFlare - time / auraFlareTime );
+	auraCharging = charging;
+
+	// Rising motes and a light at the robot, while it charges (released at the throw: they fade out on their own).
+	EffectsManager* effects = EffectsManager::getInstance();
+	if( charging && auraEffect == NULL && effects != NULL ){
+		auraEffect = effects->spawn( "jyn_aura", robotNode->_getDerivedPosition(), auraColour, true );
+	}
+	if( auraEffect != NULL ){
+		auraEffect->setPosition( robotNode->_getDerivedPosition() );
+		auraEffect->setIntensity( auraLevel );
+		if( !charging ){
+			releaseAura();
+		}
+	}
+
+	// The shell: each part's aura entity, with its strength in custom parameters (robot_aura.vert/.frag).
+	Part* parts[] = { head, body, rightArm, leftArm, legs };
+	bool visible = auraLevel > 0.001f;
+	Ogre::Real boost = 1 + auraFlareBoost * auraFlare;
+	for( int p = 0; p < CHAR_PARTS; p++ ){
+		if( parts[p] == NULL || parts[p]->auraEntity == NULL ){
+			continue;
+		}
+		Ogre::Entity* shell = parts[p]->auraEntity;
+		shell->setVisible( visible );
+		if( !visible ){
+			continue;
+		}
+		// Thinner and fainter around the head, so the eye flare stays the focus.
+		bool isHead = parts[p]->partType == HEAD;
+		Ogre::Vector4 params( auraOpacity * auraLevel * boost * ( isHead ? 0.72f : 1.0f ),
+			0.35f + 0.65f * auraLevel + 0.5f * auraFlare,
+			auraWidth * ( isHead ? auraHeadWidth : 1.0f ) * ( 1 + 0.3f * auraFlare ), 0 );
+		Ogre::Vector4 colour( auraColour.r, auraColour.g, auraColour.b, auraRise );
+		for( unsigned int i = 0; i < shell->getNumSubEntities(); i++ ){
+			shell->getSubEntity( i )->setCustomParameter( 0, params );
+			shell->getSubEntity( i )->setCustomParameter( 1, colour );
+		}
+	}
+}
+//-------------------------------------------------------------------------------------
+void Robot::releaseAura(void){
+	if( auraEffect != NULL && EffectsManager::getInstance() != NULL ){
+		auraEffect->release();
+	}
+	auraEffect = NULL;
 }
 //-------------------------------------------------------------------
 void Robot::setHorizontalVelocity( const Ogre::Vector3 &direction, Ogre::Real speed ){

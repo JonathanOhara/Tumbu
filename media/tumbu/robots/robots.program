@@ -60,3 +60,31 @@ fragment_program robot_outline_ps glsl glsles hlsl
         param_named outlineColour float4 0.3 0.25 0.35 1
     }
 }
+
+// Ki aura shell (Robot::updateAura, material Tumbu/KiAura): strength and colour per robot part in custom parameters.
+vertex_program robot_aura_vs glsl glsles hlsl
+{
+    source robot_aura.vert
+    target vs_4_0
+    default_params
+    {
+        param_named_auto wMat world_matrix
+        param_named_auto vpMat viewproj_matrix
+        param_named_auto auraColour custom 1
+        param_named_auto time time_0_x 600
+        param_named_auto auraParams custom 0
+    }
+}
+
+fragment_program robot_aura_ps glsl glsles hlsl
+{
+    source robot_aura.frag
+    target ps_4_0
+    default_params
+    {
+        param_named_auto camPos camera_position
+        param_named_auto time time_0_x 600
+        param_named_auto auraParams custom 0
+        param_named_auto auraColour custom 1
+    }
+}

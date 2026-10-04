@@ -35,6 +35,7 @@ SpecialJyn::SpecialJyn( Ogre::SceneManager* _sceneMgr, Ogre::SceneNode* _particl
 	specialRigidNode = NULL;
 	throwEffect = NULL;
 	chargeEffect = NULL;
+	chargeGrowth = 0;
 	particleSystem = sceneMgr->createParticleSystem();
 
 	particleSystemNode->attachObject( particleSystem );
@@ -139,6 +140,7 @@ void SpecialJyn::update(const Ogre::Real time){
 		}
 		// Charging: the light and the lightning grow with the ball (0 until the first swarm ball arrives); thrown: full.
 		Ogre::Real grown = Ogre::Math::saturate( tamanhoVisivel / ( ( NUMBER_OF_PARTICLES - 1 ) * ( PARTICLE_WIDTH + PARTICLE_HEIGHT ) / 20 ) );
+		chargeGrowth = grown;
 		Ogre::Real intensity = charging ? 0.3f + 0.7f * grown : 1.0f;
 		// The light follows the ball; the gathering (chargeEffect) stays at the raised hand, where the ball settles.
 		Ogre::Vector3 ballPosition = particleList[melhorParticula]->particle->mPosition;

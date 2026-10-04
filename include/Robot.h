@@ -24,6 +24,8 @@
 #define ANIM_LEFT_UP_DEFLECT 12
 #define ANIM_RIGHT_UP_DEFLECT 13
 
+class Effect;
+
 class Robot: public Ogre::FrameListener{
 public:
 	Robot(void);
@@ -32,6 +34,8 @@ public:
 	virtual bool frameRenderingQueued(const Ogre::FrameEvent &evt) = 0;
 	/// Eye flare, 0..1 (see updateEyeGlow).
 	Ogre::Real getEyeGlowBoost(void) const { return eyeGlowBoost; }
+	/// Ki aura strength, 0..1 (see updateAura).
+	Ogre::Real getAuraLevel(void) const { return auraLevel; }
 	/// Colour of this robot's ki (punch and kick energy): "kiColour" of its head's set (robotNNN.object).
 	Ogre::ColourValue getKiColour(void);
 
@@ -186,6 +190,18 @@ protected:
 	 *  (custom parameter 0, robot_toon.frag glowBoost), so the eyes flare. Call once per frame. */
 	void updateEyeGlow( const Ogre::Real time );
 	Ogre::Real eyeGlowBoost;
+	/** Ki aura while Jyn charges: a soft glow shell around the robot (each part's auraEntity, material
+	 *  Tumbu/KiAura) that grows with the Genki Dama, flares at the throw and fades out, plus the held effect
+	 *  "jyn_aura" (rising motes, a light) at the robot. Values: the "aura" block of effect jyn_aura in
+	 *  effects.object. Call once per frame. */
+	void updateAura( const Ogre::Real time );
+	/// Lets the aura effect go (the charge ended, or the robot is destroyed).
+	void releaseAura(void);
+	Ogre::Real auraLevel, auraFlare;
+	bool auraCharging;
+	Effect* auraEffect;
+	Ogre::ColourValue auraColour;
+	Ogre::Real auraWidth, auraOpacity, auraRise, auraHeadWidth, auraFlareBoost, auraGrowRate, auraFadeTime, auraFlareTime;
 
 	Ogre::Vector3 mGoalDirection;
 

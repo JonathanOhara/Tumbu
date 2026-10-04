@@ -295,3 +295,34 @@ particle_system Tumbu/Fx/MuzzleFlash
         rate 3
     }
 }
+
+// Ki aura motes (effect jyn_aura): short streaks drifting up around a charging robot, about 12 at a time.
+particle_system Tumbu/Fx/AuraMotes
+{
+    material Tumbu/EnergySpark
+    particle_width 0.025
+    particle_height 0.13
+    quota 30
+    billboard_type oriented_self
+    cull_each false
+
+    emitter Box
+    {
+        width 0.9
+        height 1.7
+        depth 0.9
+        direction 0 1 0
+        angle 8
+        emission_rate 10
+        velocity_min 0.5
+        velocity_max 0.9
+        time_to_live_min 0.9
+        time_to_live_max 1.4
+        colour 1 1 1 1
+    }
+
+    affector ColourFader
+    {
+        alpha -0.8
+    }
+}

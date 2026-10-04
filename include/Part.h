@@ -41,7 +41,8 @@ public:
 		*node;
 
 	Ogre::Entity
-		*entity;
+		*entity,
+		*auraEntity;	// ki aura shell: the same mesh with Tumbu/KiAura, sharing the skeleton (Robot::updateAura)
 	
 	Ogre::String 
 		partName,

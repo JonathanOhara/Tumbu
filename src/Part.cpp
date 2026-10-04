@@ -12,6 +12,8 @@ Part::Part(int _partType, Ogre::String _setName, Ogre::SceneNode* _parentNode, O
 
 	id = Part::instances++;
 	active = false;	
+	entity = NULL;
+	auraEntity = NULL;
 
 	ConfigNode* cfg;
 	cfg = ConfigScriptLoader::getSingleton().getConfigScript( setName, "set" );
@@ -46,6 +48,8 @@ Part::Part(int _partType, Ogre::String _setName){
 
 	id = Part::instances++;
 	active = false;	
+	entity = NULL;
+	auraEntity = NULL;
 
 	ConfigNode* cfg;
 	cfg = ConfigScriptLoader::getSingleton().getConfigScript( setName, "set" );
@@ -85,7 +89,14 @@ void Part::setNodeAndSceneManager( Ogre::SceneNode* _parentNode, Ogre::SceneMana
 //-------------------------------------------------------------------------------------
 void Part::unbuild(){
 	active = false;
+	// The aura shares the part's skeleton, so it goes first.
+	if( auraEntity != NULL ){
+		auraEntity->stopSharingSkeletonInstance();
+		sceneManager->destroyEntity( auraEntity );
+		auraEntity = NULL;
+	}
 	sceneManager->destroyEntity( entity );
+	entity = NULL;
 	delete collisionShape;
 }
 //-------------------------------------------------------------------------------------
@@ -102,6 +113,15 @@ void Part::build(){
 
 	entity->setCastShadows( castShadows );
 	entity->getSkeleton()->setBlendMode(Ogre::ANIMBLEND_CUMULATIVE);
+
+	// Ki aura shell (Robot::updateAura): the same mesh drawn again with the aura material, sharing the part's
+	// skeleton so it follows every animation. Hidden until a special charges.
+	auraEntity = sceneManager->createEntity( entity->getName() + "/aura", meshName );
+	auraEntity->shareSkeletonInstanceWith( entity );
+	auraEntity->setMaterialName( "Tumbu/KiAura" );
+	auraEntity->setCastShadows( false );
+	auraEntity->setVisible( false );
+	node->attachObject( auraEntity );
 
 	Ogre::String animNames[] = ANIMATION_ARRAY;
 	for( int i = 0; i < NUM_ANIMS; i++){

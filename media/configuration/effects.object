@@ -413,3 +413,41 @@ effect kick_muzzle
 		time 0.15
 	}
 }
+
+// ---- Ki aura: around a robot while its Genki Dama charges (Robot::updateAura) ----
+// Held at the robot from the concentration until the throw; intensity = the aura level (grows with the ball).
+// "aura" is the glow shell drawn on the robot itself (Tumbu/KiAura, robot_aura.frag), read by Robot:
+//     width       shell width in world units (a robot is about 2 tall); headWidth: x this around the head (the eyes stay
+//                 the focus); opacity: overall strength (1 = soft)
+//     rise        how fast the flame tongues climb; growRate: how fast it follows the ball (per second)
+//     flare       extra strength at the throw (x flareTime seconds); fadeTime: seconds to fade out after the throw
+effect jyn_aura
+{
+	aura
+	{
+		width 0.09
+		headWidth 0.6
+		opacity 1
+		rise 1
+		growRate 4
+		flare 1.0
+		flareTime 0.15
+		fadeTime 0.5
+	}
+	particles
+	{
+		template Tumbu/Fx/AuraMotes
+		colour ki
+		offset 0 0.9 0
+	}
+	light
+	{
+		colour ki
+		intensity 0.7
+		radius 2.2
+		rise 0.2
+		time 0
+		fade 0.5
+		offset 0 0.4 0
+	}
+}

@@ -14,6 +14,8 @@ public:
 	virtual ~SpecialJyn(void);
 	
 	void update(const Ogre::Real time);
+	/// How far the Genki Dama has grown while charging, 0..1 (the ki aura follows it: Robot::updateAura).
+	Ogre::Real getChargeGrowth(void) const{ return chargeGrowth; }
 
 	Physics::RigidBody *getOgreBulletRigidBody( const std::string& instanceName );
 	void collision( CollisionDetectionListener *other );
@@ -73,6 +75,7 @@ private:
 	Effect* throwEffect;
 	/// The gathering (motes, dust, lightning) from the cast until the throw (held), or NULL.
 	Effect* chargeEffect;
+	Ogre::Real chargeGrowth;
 	void releaseChargeEffect(void);
 
 	Ogre::Vector3 

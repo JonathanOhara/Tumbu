@@ -257,7 +257,7 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 			tumbu->mWindow->writeContentsToFile( shot );
 			log( "screenshot saved to " + shot );
 			if( faceShot > 0 && tumbu->getDemo() != NULL ){
-				log( "faceshot: hero eye flare " + Ogre::StringConverter::toString( tumbu->getDemo()->mainChar->getEyeGlowBoost() ) );
+				log( "faceshot: hero eye flare " + Ogre::StringConverter::toString( tumbu->getDemo()->mainChar->getEyeGlowBoost() ) + " aura " + Ogre::StringConverter::toString( tumbu->getDemo()->mainChar->getAuraLevel() ) );
 			}
 			log( "quitting after " + Ogre::StringConverter::toString( playTime ) + "s" );
 			stage = FINISHED;

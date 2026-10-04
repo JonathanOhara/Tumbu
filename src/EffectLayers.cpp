@@ -17,6 +17,8 @@ EffectLayer* createEffectLayer( Effect* effect, ConfigNode* node ){
 		return new EffectConvergeLayer( effect, node );
 	}else if( type == "lightning" ){
 		return new EffectLightningLayer( effect, node );
+	}else if( type == "aura" ){
+		return NULL;	// the robot's glow shell: read and drawn by Robot::updateAura, not a layer of the effect
 	}
 	Ogre::LogManager::getSingleton().logWarning( "Effect: unknown layer '" + type + "' ignored" );
 	return NULL;

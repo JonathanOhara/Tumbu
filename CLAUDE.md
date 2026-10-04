@@ -284,6 +284,9 @@ through a listener registry in `BaseApplication`.
     skeleton, and adds hp/ap/attack/defense/velocity. There are 14 animations (`ANIMATION_ARRAY` in `Part.h`).
   - Movement is frame-rate independent. `walkSpeed`/`runSpeed` in `game.object` are units per second,
     applied through `Robot::setHorizontalVelocity`.
+  - While Jyn charges, `Robot::updateAura` shows the ki aura: each `Part` has a hidden twin entity
+    (`auraEntity`, material `Tumbu/KiAura`) sharing its skeleton, destroyed with it in `Part::unbuild`
+    (docs/SPECIAL_EFFECTS.md).
 - `Skill` (punch, kick, jyn): damage, AP cost, energy balls and XP/levels from `skills.object`.
   - `SpecialManager` spawns `SpecialPunch` / `SpecialKick` / `SpecialJyn`, which are physics projectiles
     built from `EnergyParticle`s.
@@ -335,8 +338,8 @@ through a listener registry in `BaseApplication`.
   - textures in TGA
   - `robot00N.material`, `robot00N.object` (stats and attach points, `kiColour`: the robot's energy colour) and the source `robot00N.blend`
     (Blender 2.49)
-- `media/tumbu/robots/` holds the robot shaders (`robot_toon.*`, `robot_outline.*`, `robots.program`) and the
-  base `robots.material`: `$outlineWidth`/`$outlineColour` per robot.
+- `media/tumbu/robots/` holds the robot shaders (`robot_toon.*`, `robot_outline.*`, `robot_aura.*` for the ki aura,
+  `robots.program`) and the base `robots.material`: `$outlineWidth`/`$outlineColour` per robot, and `Tumbu/KiAura`.
 - `media/tumbu/effects/` holds the special-attack effect shaders and materials (`effects.program`,
   `effects.material`): `Tumbu/EnergyOrb` and `Tumbu/EnergyOrb/Jyn` are the procedural toon energy balls (particle colour
   = ki colour, alpha = random seed; `ORB_SCALE` in `SpecialInterface.h`), `Tumbu/EnergyTrail*` the ribbon trails
