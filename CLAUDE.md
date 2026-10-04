@@ -93,6 +93,24 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 - The arena is about ±9 units, so any robot position outside that range is a bug.
 - Under DevTest the mouse is never captured.
 
+### Before/after comparisons (for every visible change)
+
+Jonathan reviews visual work from side-by-side images, so **any change he can see** (lighting, shaders, effects,
+materials, textures, GUI) gets a before/after set:
+
+1. **Before** changing anything, take the shots with the current build: `devtest.ps1 -Name <feature>-before-<case>`
+   with a fixed view (`-NoWalk -Camera "…"`, `-FaceShot`, `-Hero robotNNN`, `-Hour H`). Cover the cases the change
+   affects: a light and a dark robot (`robot001`, `robot005`), day / coliseum shadow / dusk / night (13, 17, 19, 22),
+   and an arena-only view when the arena must stay the same (diff it, and compare against two identical runs: dust and
+   the enemy move between runs).
+2. After the change, take the same shots as `<feature>-after-<case>`.
+3. Build the pairs with `.\scripts\compare.ps1 -Before … -After … -Out "%USERPROFILE%\Tumbu\<feature>\<case>.png"`, one
+   **folder per feature** (for example `hero-lighting`, `ki-aura`, `metal-softer-3`). Crop to the subject
+   (`-Crop "330,0,380,720"` frames the robot of the standard `-Camera "1.4,1.5,5.7,0,1.05,8.0" -NoWalk` view) and add
+   zoomed crops (`-Zoom 2` to `4`) when the change is small (outlines, edges, anti-aliasing).
+4. Read the images before reporting, and tell Jonathan the folder. Each tuning round gets a new folder
+   (`<feature>-2`, …) whose "before" is the previous round's "after".
+
 ## Tech stack
 
 | Area | Library | Where in code |

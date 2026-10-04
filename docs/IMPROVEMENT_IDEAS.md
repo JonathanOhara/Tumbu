@@ -24,8 +24,7 @@ Visual track, most important first (impact on what the player sees, against the 
 12. **GTAO** (Rendering modernization 6) and the **smaller extras** (idea 7).
 
 Separate tracks: **gameplay beyond the battle demo** (part shop or loadout screen) is the most important item for the game
-itself (customization is its core), but it is design and code, not visuals; the **Windows installer** when it is time to
-share a build.
+itself (customization is its core), but it is design and code, not visuals; the **Windows installer** comes last, once the improvements are done (Jonathan, 2026-10-04).
 
 ## Ideas, in order of impact
 
