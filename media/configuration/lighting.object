@@ -101,12 +101,12 @@ lighting configuration{
 	// parts (replaces the round highlight). metalGlint: strength and size (cosine) of the sun's glint in the reflection.
 	// metalFresnel: reflection facing the camera, relative to grazing angles. metalDiffuse: how much the reflection
 	// replaces the painted colour (0 = only adds).
-	metalBands 1.2 1.7 0.35 1.2
+	metalBands 0.95 1.3 0.4 1.0
 	metalBandHeights 0.24 0.04 -0.08
 	metalStreak 0.75
-	metalGlint 1.6 0.965
+	metalGlint 1.2 0.965
 	metalFresnel 0.55
-	metalDiffuse 0.45
+	metalDiffuse 0.3
 }
 
 // Each keyframe: the hour it applies to; sun elevation and azimuth in degrees (azimuth 0 = +Z, 90 = +X); the
