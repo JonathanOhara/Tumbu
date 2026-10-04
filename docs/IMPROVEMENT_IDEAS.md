@@ -95,6 +95,8 @@ Each idea notes which reference game does it.
   height maps, and on a slim, moving silhouette the effect would barely show. Today, extra detail simply goes into the
   mesh (GPUs draw millions of triangles; UE5's Nanite is the extreme of that). One place where **parallax occlusion
   could pay off: the coliseum stone and the arena floor, once they get real textures** (see above); consider it then.
+  Live explainer and plan: https://claude.ai/artifact/3Dr1UwKxTmSTafxekL48Py (needs a height map authored with the new
+  textures, tangents exported for `arena.mesh` / `coliseum.mesh`, and a parallax path in `env_toon.frag`).
 
 ## Beyond the visuals
 
