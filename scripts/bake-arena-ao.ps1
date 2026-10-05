@@ -14,8 +14,11 @@ if (-not (Test-Path $Blender)) { throw "Blender not found: $Blender (pass -Blend
 $scriptArgs = @('--background', '--python', (Join-Path $PSScriptRoot 'blender\arena_ao.py'), '--', $root)
 if ($Rebuild) { $scriptArgs += '--rebuild' }
 
+# Blender prints to stderr; Windows PowerShell 5.1 would turn that into errors under 'Stop' (the exit code decides).
+$ErrorActionPreference = 'Continue'
 & $Blender @scriptArgs 2>&1 | ForEach-Object {
     $line = "$_"
     if ($line -match '^\[AO\]|Error|Traceback|^\s+File ') { Write-Host $line }
 }
+$ErrorActionPreference = 'Stop'
 if ($LASTEXITCODE -ne 0) { throw "Blender failed (exit $LASTEXITCODE)" }

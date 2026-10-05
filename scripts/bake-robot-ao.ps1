@@ -14,7 +14,10 @@ if (-not (Test-Path $Blender)) { throw "Blender not found: $Blender (pass -Blend
 foreach ($n in $Robot) {
     $blend = Join-Path $root "art\robots\robot00$n.blend"
     if (-not (Test-Path $blend)) { throw "$blend not found: run .\scripts\convert-legacy-blend.ps1 -Robots first." }
+    # Blender prints to stderr; Windows PowerShell 5.1 would turn that into errors under 'Stop' (the exit code decides).
+    $ErrorActionPreference = 'Continue'
     & $Blender --background $blend --python (Join-Path $PSScriptRoot 'blender\robot_ao.py') -- $root 2>&1 |
         ForEach-Object { $line = "$_"; if ($line -match '^\[ROBOT-AO\]|Error|Traceback|^\s+File ') { Write-Host $line } }
+    $ErrorActionPreference = 'Stop'
     if ($LASTEXITCODE -ne 0) { throw "Blender failed on robot00$n (exit $LASTEXITCODE)" }
 }

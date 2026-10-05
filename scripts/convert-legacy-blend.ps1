@@ -26,7 +26,10 @@ if ($Robots) {
 }
 foreach ($job in $jobs) {
     if (Test-Path $job[1]) { throw "$($job[1]) already exists: it may have manual edits. Delete it first to convert again." }
+    # Blender prints to stderr; Windows PowerShell 5.1 would turn that into errors under 'Stop'.
+    $ErrorActionPreference = 'Continue'
     & $Blender --background --factory-startup $job[0] --python (Join-Path $PSScriptRoot 'blender\convert_legacy.py') -- $job[1] 2>&1 |
         ForEach-Object { $line = "$_"; if ($line -match '^\[CONVERT\]|Error|Traceback') { Write-Host $line } }
+    $ErrorActionPreference = 'Stop'
     if (-not (Test-Path $job[1])) { throw "Conversion failed: $($job[0])" }
 }

@@ -22,7 +22,21 @@ Paths below are the ones on Jonathan's machine in Sep 2026. Adjust them if thing
    winget install --id Microsoft.VisualStudio.2022.Community --override "--wait --passive --norestart --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended"
    ```
 2. **Git.** `curl.exe` and `tar.exe` come with Windows 10/11, and the dependency script uses them.
-3. Nothing else. The Ogre 1.7 SDK, the OpenAL SDK, the env variables and the VC++ 2010 compiler from the
+3. **PowerShell 7** (`pwsh`) to run the scripts: the maintained version, and the one they are tested with.
+   Windows PowerShell 5.1 (the `powershell` Windows opens by default) also works: the scripts that pipe Blender's
+   or Ogre's output relax `$ErrorActionPreference` around those calls, because 5.1 turns anything a native tool
+   prints to stderr into an error. Keep that pattern in new scripts.
+   ```powershell
+   winget install --id Microsoft.PowerShell --source winget
+   ```
+4. **Python 3.14** (installed 2026-10-05, per-user, `%LOCALAPPDATA%\Programs\Python\Python314`, with the `py`
+   launcher) for helper scripts and one-off checks outside Blender. The Blender scripts in `scripts/blender/` use
+   Blender's own Python; without a Python install, `blender --background --python script.py` also runs a plain
+   script.
+   ```powershell
+   winget install --id Python.Python.3.14 --exact --source winget --scope user
+   ```
+5. Nothing else. The Ogre 1.7 SDK, the OpenAL SDK, the env variables and the VC++ 2010 compiler from the
    legacy parts are **not** needed.
 
 ### A.2 Build the dependencies (once, about 20–40 minutes)
@@ -194,6 +208,11 @@ project.
   action API that Blender 5 removed (`Action.groups`). The same commit is installed for the portable 4.5 in
   `%APPDATA%\Blender Foundation\Blender\4.5\scripts\addons\io_ogre` (copied from the 5.2 folder); the robot export
   sets the converter path itself. See "Robot export" below.
+  **Before upgrading Blender** (or blender2ogre), check that blender2ogre's animation export works with the new
+  version: run `.\scripts\export-robots.ps1 -Blender <new blender.exe>` (no `-Save`/`-Install`, so nothing changes);
+  every robot must report "all parts match Blender" and compare at zero with the installed files. Only then switch.
+  The blocker is small (`ogre/skeleton.py` reads `action.groups` / `action.fcurves`, removed in Blender 5); a fix could
+  go upstream to OGRECave/blender2ogre.
   - Scripted (headless) use: `blender.exe --background file.blend --python script.py`, then in the script
     `from io_ogre import api; api.dot_mesh(obj, out_dir, overwrite=True)`.
 - **Mesh formats:** the modern build uses Ogre 14 meshes. All 53 meshes and skeletons were upgraded with

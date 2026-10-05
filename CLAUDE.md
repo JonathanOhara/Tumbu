@@ -505,7 +505,13 @@ through a listener registry in `BaseApplication`.
   Keep the robot `.blend` files in Blender 4.5: a file saved by Blender 5 is not guaranteed to open losslessly in
   4.5, and `export-robots.ps1` needs 4.5. Both robot scripts default to 4.5 (`bake-robot-ao.ps1` saves the robot file
   too; checked 2026-10-05: it bakes the same AO in 4.5). Blender 5.2 stays fine for static meshes (the arena,
-  `bake-arena-ao.ps1`). Re-check when blender2ogre supports Blender 5.
+  `bake-arena-ao.ps1`).
+  **Before upgrading Blender (or blender2ogre), check that blender2ogre still exports animation with it**: install
+  blender2ogre for the new Blender, then run `.\scripts\export-robots.ps1 -Blender <new blender.exe>` without
+  `-Save`/`-Install` (it exports to `%TEMP%` only): every robot must report "all parts match Blender" and the comparison
+  with the installed files must stay at zero. Only then move the robot files and the scripts' defaults to the new
+  version. Watch github.com/OGRECave/blender2ogre for Blender 5 support; the fix is small (`ogre/skeleton.py` reads
+  `action.groups` and `action.fcurves`, gone in Blender 5's layered actions) and could also be contributed there.
 - Style: tabs, braces on the same line, `//----...` separators between methods, `getInstance()` singletons,
   raw `new`/`delete`, and `NULL`. Match it.
 - **Encoding and line endings:** `.gitattributes` normalizes line endings to LF in the repo. Some sources and
