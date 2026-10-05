@@ -17,6 +17,8 @@
 #include <psapi.h>
 #include <map>
 #include <algorithm>
+#include <fstream>
+#include <ctime>
 #else
 #include <unistd.h>
 #endif
@@ -34,6 +36,10 @@ int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
 bool DevTest::noFx = false;
 int DevTest::antiAliasing = -1;
+int DevTest::sky = -1;
+Ogre::Real DevTest::bench = 0;
+bool DevTest::benchAI = false;
+bool DevTest::benchChase = false;
 Ogre::String DevTest::fxTest = "";
 Ogre::String DevTest::heroSet = "";
 Ogre::Real DevTest::fxTime = 0.3f;
@@ -68,6 +74,14 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			noFx = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-aa=" ) ){
 			antiAliasing = Ogre::StringConverter::parseInt( arg.substr( 4 ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-sky=" ) ){
+			sky = Ogre::StringConverter::parseInt( arg.substr( 5 ) );
+		}else if( arg == "-benchai" ){
+			benchAI = true;
+		}else if( arg == "-benchchase" ){
+			benchChase = true;
+		}else if( Ogre::StringUtil::startsWith( arg, "-bench=" ) ){
+			bench = Ogre::StringConverter::parseReal( arg.substr( 7 ) );
 		}else if( arg == "-flytest" ){
 			flyTest = true;
 		}else if( arg == "-swaptest" ){
@@ -113,6 +127,15 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	if( flyTest && quitAfter <= 0 ){
 		quitAfter = 5;
 	}
+	// -bench: a 3 s warm-up, then the measured seconds; the standard robot view unless -camera is given.
+	if( bench > 0 ){
+		quitAfter = 3.0f + bench;
+		if( !fixedCamera && !benchChase ){
+			fixedCamera = true;
+			cameraEye = Ogre::Vector3( 1.4f, 1.5f, 5.7f );
+			cameraTarget = Ogre::Vector3( 0, 1.05f, 8.0f );
+		}
+	}
 	// A walk test or timed quit only makes sense inside a match.
 	if( walkTest || quitAfter > 0 ){
 		autoplay = true;
@@ -142,6 +165,11 @@ DevTest::DevTest(void){
 	fxSpot = Ogre::Vector3::ZERO;
 	flyStep = 0;
 	swapStep = 0;
+	benchStarted = benchLogged = false;
+	renderMicros = restMicros = 0;
+	phaseFrames = 0;
+	benchFrames = windowFrames = 0;
+	windowMin = windowMax = 0;
 	tourStep	= 0;
 	tourTimer	= 0;
 	cycle		= 0;
@@ -160,6 +188,10 @@ DevTest::~DevTest(void){
 }
 //-------------------------------------------------------------------------------------
 bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
+	if( benchStarted && !benchLogged ){
+		restMicros += phaseTimer.getMicroseconds();
+		phaseTimer.reset();
+	}
 	limitFrameRate();
 	frames++;
 
@@ -258,6 +290,9 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 		if( swapTest ){
 			runSwapTest();
 		}
+		if( bench > 0 ){
+			runBench();
+		}
 		if( fixedCamera && quitAfter > 0 && playTime >= quitAfter - 0.5f ){
 			placeCamera( cameraEye, cameraTarget );
 		}
@@ -279,6 +314,16 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 		break;
 	}
 
+	return true;
+}
+//-------------------------------------------------------------------------------------
+bool DevTest::frameRenderingQueued( const Ogre::FrameEvent &evt ){
+	// -bench: from frameStarted to here Ogre updated the scene (animation, skinning, culling) and sent the draw calls.
+	if( benchStarted && !benchLogged ){
+		renderMicros += phaseTimer.getMicroseconds();
+		phaseTimer.reset();
+		phaseFrames++;
+	}
 	return true;
 }
 //-------------------------------------------------------------------------------------
@@ -704,6 +749,61 @@ void DevTest::runSwapTest(void){
 	}
 }
 //-------------------------------------------------------------------------------------
+void DevTest::runBench(void){
+	// -bench=S: the same frames every run, so two runs differ only by what was changed. No AI (the enemy and the hero
+	// stand idle), the camera fixed from the first frame; after a 3 s warm-up the frames of S seconds are counted with
+	// a wall-clock timer (not Ogre's smoothed fps), plus the slowest and fastest 1 s window.
+	// -benchai keeps the AI (the enemy walks and attacks), -benchchase the game's chase camera, to find what costs.
+	if( !benchAI ){
+		AIManager::getInstance()->active = false;
+	}
+	if( !benchChase ){
+		placeCamera( cameraEye, cameraTarget );
+	}
+	if( playTime < 3.0f ){
+		return;
+	}
+	if( !benchStarted ){
+		benchStarted = true;
+		benchFrames = windowFrames = 0;
+		benchTimer.reset();
+		renderMicros = restMicros = 0;
+		phaseFrames = 0;
+		phaseTimer.reset();
+		windowTimer.reset();
+		return;
+	}
+	benchFrames++;
+	windowFrames++;
+	unsigned long windowMicros = windowTimer.getMicroseconds();
+	if( windowMicros >= 1000000UL ){
+		Ogre::Real fps = windowFrames * 1000000.0f / windowMicros;
+		windowMin = ( windowMin == 0 || fps < windowMin ) ? fps : windowMin;
+		windowMax = std::max( windowMax, fps );
+		windowFrames = 0;
+		windowTimer.reset();
+	}
+	if( !benchLogged && playTime >= quitAfter - 0.05f ){
+		benchLogged = true;
+		double seconds = benchTimer.getMicroseconds() / 1000000.0;
+		TUMBU* tumbu = TUMBU::getInstance();
+		log( "bench: fps=" + Ogre::StringConverter::toString( (Ogre::Real)( benchFrames / seconds ), 5 ) +
+			" ms=" + Ogre::StringConverter::toString( (Ogre::Real)( seconds * 1000.0 / benchFrames ), 4 ) +
+			" frames=" + Ogre::StringConverter::toString( benchFrames ) +
+			" seconds=" + Ogre::StringConverter::toString( (Ogre::Real) seconds, 4 ) +
+			" window_min=" + Ogre::StringConverter::toString( windowMin, 5 ) +
+			" window_max=" + Ogre::StringConverter::toString( windowMax, 5 ) +
+			" render_ms=" + Ogre::StringConverter::toString( (Ogre::Real)( phaseFrames > 0 ? renderMicros / phaseFrames / 1000.0 : 0 ), 4 ) +
+			" rest_ms=" + Ogre::StringConverter::toString( (Ogre::Real)( phaseFrames > 0 ? restMicros / phaseFrames / 1000.0 : 0 ), 4 ) +
+			" render=" + Ogre::StringUtil::replaceAll( tumbu->getRoot()->getRenderSystem()->getName(), " ", "_" ) +
+			" size=" + Ogre::StringConverter::toString( tumbu->mWindow->getWidth() ) + "x" + Ogre::StringConverter::toString( tumbu->mWindow->getHeight() ) +
+			" aa=" + Ogre::StringConverter::toString( tumbu->isAntiAliasingEnabled() ) +
+			" sky=" + Ogre::StringConverter::toString( sky >= 0 ? sky : tumbu->getSkyQuality() ) +
+			" shadows=" + Ogre::StringConverter::toString( tumbu->getShadowPreset() )  +
+			( benchAI ? " ai" : "" ) + ( benchChase ? " chase" : "" ) );
+	}
+}
+//-------------------------------------------------------------------------------------
 void DevTest::click( const Ogre::String &buttonName ){
 	// A real click through the game's input dispatch (every listener, then MyGUI), so a button the mouse cannot
 	// reach fails here too.
@@ -923,8 +1023,7 @@ void DevTest::logMemory( const Ogre::String &label ){
 		if( debug != NULL ) debug->Release();
 	}
 	Ogre::SceneManager *sceneMgr = TUMBU::getInstance()->mSceneMgr;
-	log( "memory " + label +
-		" private=" + memory +
+	Ogre::String objects =
 		" nodes=" + Ogre::StringConverter::toString( countNodes( sceneMgr->getRootSceneNode() ) ) +
 		" entities=" + Ogre::StringConverter::toString( sceneMgr->getMovableObjects( "Entity" ).size() ) +
 		" particles=" + Ogre::StringConverter::toString( sceneMgr->getMovableObjects( "ParticleSystem" ).size() ) +
@@ -935,7 +1034,54 @@ void DevTest::logMemory( const Ogre::String &label ){
 		" skeletons=" + Ogre::StringConverter::toString( countResources( Ogre::SkeletonManager::getSingleton() ) ) +
 		" programs=" + Ogre::StringConverter::toString( countResources( Ogre::GpuProgramManager::getSingleton() ) ) +
 		" compositors=" + Ogre::StringConverter::toString( countResources( Ogre::CompositorManager::getSingleton() ) ) +
-		" widgets=" + Ogre::StringConverter::toString( countWidgets() ) );
+		" widgets=" + Ogre::StringConverter::toString( countWidgets() );
+	log( "memory " + label + " private=" + memory + objects );
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+	heapHistory.push_back( (unsigned long)( busyBytes / 1024 ) );
+#endif
+	objectHistory.push_back( objects );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::logMemorySummary(void){
+	// -cycles: one line to compare with the expected numbers (CLAUDE.md "Automated checks"), also appended to
+	// %USERPROFILE%\Tumbu\memory-history.csv so the heap growth per match is tracked across runs, drivers and Ogre versions.
+	// Cycle 0 is the menu before any match; the heap must stay flat from cycle 2 on.
+	if( heapHistory.size() < 4 ){
+		log( "memory summary: needs -cycles=3 or more" );
+		return;
+	}
+	size_t last = heapHistory.size() - 1;
+	double growth = ( (double)heapHistory[last] - (double)heapHistory[2] ) / ( last - 2 );
+	bool flat = true;
+	for( size_t i = 2; i <= last; i++ ){
+		flat = flat && objectHistory[i] == objectHistory[1];
+	}
+	TUMBU* tumbu = TUMBU::getInstance();
+	Ogre::RenderSystem* renderSystem = Ogre::Root::getSingleton().getRenderSystem();
+	Ogre::String render = renderSystem->getName().find( "Direct3D11" ) != Ogre::String::npos ? "D3D11" : "GL";
+	Ogre::String driver = renderSystem->getDriverVersion().toString();
+	Ogre::String ogre = Ogre::StringConverter::toString( OGRE_VERSION_MAJOR ) + "." + Ogre::StringConverter::toString( OGRE_VERSION_MINOR ) + "." + Ogre::StringConverter::toString( OGRE_VERSION_PATCH );
+	Ogre::String growthText = Ogre::StringConverter::toString( (Ogre::Real) growth, 5 );
+	log( "memory summary: render=" + render + " driver=" + driver + " ogre=" + ogre +
+		" matches=" + Ogre::StringConverter::toString( last ) +
+		" heap cycle1=" + Ogre::StringConverter::toString( heapHistory[1] ) + "KB cycle2=" + Ogre::StringConverter::toString( heapHistory[2] ) +
+		"KB last=" + Ogre::StringConverter::toString( heapHistory[last] ) + "KB growth=" + growthText + "KB/match (cycles 2.." +
+		Ogre::StringConverter::toString( last ) + ") objects=" + ( flat ? "flat" : "CHANGED" ) +
+		" aa=" + Ogre::StringConverter::toString( tumbu->isAntiAliasingEnabled() ) );
+
+	Ogre::String path = tumbu->workPath + "memory-history.csv";
+	bool exists = Ogre::FileSystemLayer::fileExists( path );
+	std::ofstream file( path.c_str(), std::ios::app );
+	if( file ){
+		if( !exists ){
+			file << "date,render,driver,ogre,matches,aa,heap_cycle1_kb,heap_cycle2_kb,heap_last_kb,growth_kb_per_match,objects\n";
+		}
+		char date[32];
+		time_t now = time( NULL );
+		strftime( date, sizeof( date ), "%Y-%m-%d %H:%M", localtime( &now ) );
+		file << date << "," << render << "," << driver << "," << ogre << "," << last << "," << tumbu->isAntiAliasingEnabled() << ","
+			<< heapHistory[1] << "," << heapHistory[2] << "," << heapHistory[last] << "," << growthText << "," << ( flat ? "flat" : "CHANGED" ) << "\n";
+	}
 }
 //-------------------------------------------------------------------------------------
 void DevTest::runCycles( const Ogre::FrameEvent &evt ){
@@ -999,6 +1145,7 @@ void DevTest::runCycles( const Ogre::FrameEvent &evt ){
 				tourStep = 6;
 				logMemory( "cycle " + Ogre::StringConverter::toString( cycle ) + " menu" );
 				log( "cycles finished" );
+				logMemorySummary();
 				click( "ExitButton" );
 			}
 		}

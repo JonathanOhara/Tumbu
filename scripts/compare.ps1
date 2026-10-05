@@ -62,6 +62,25 @@ try {
     $bitmap.Save($Out, [Drawing.Imaging.ImageFormat]::Png)
     $g.Dispose(); $bitmap.Dispose(); $band.Dispose()
     Write-Host "comparison: $Out  ($BeforeLabel | $AfterLabel)"
+
+    # Pixel difference of the compared region: how many pixels differ, and by how much at most (0..255 per channel).
+    $diffs = foreach ($img in $imgBefore, $imgAfter) {
+        $bmp = New-Object Drawing.Bitmap $src.Width, $src.Height, ([Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        $gb = [Drawing.Graphics]::FromImage($bmp)
+        $gb.DrawImage($img, (New-Object Drawing.Rectangle 0, 0, $src.Width, $src.Height), $src, [Drawing.GraphicsUnit]::Pixel)
+        $gb.Dispose()
+        $data = $bmp.LockBits((New-Object Drawing.Rectangle 0, 0, $src.Width, $src.Height), 'ReadOnly', $bmp.PixelFormat)
+        $bytes = New-Object byte[] ($data.Stride * $src.Height)
+        [Runtime.InteropServices.Marshal]::Copy($data.Scan0, $bytes, 0, $bytes.Length)
+        $bmp.UnlockBits($data); $bmp.Dispose()
+        , $bytes
+    }
+    $a = $diffs[0]; $b = $diffs[1]; $count = 0; $max = 0
+    for ($i = 0; $i -lt $a.Length; $i += 4) {
+        $d = [math]::Max([math]::Max([math]::Abs($a[$i] - $b[$i]), [math]::Abs($a[$i + 1] - $b[$i + 1])), [math]::Abs($a[$i + 2] - $b[$i + 2]))
+        if ($d -gt 0) { $count++; if ($d -gt $max) { $max = $d } }
+    }
+    Write-Host ("pixels that differ: {0} of {1} ({2:0.00} %), largest difference {3}/255" -f $count, ($a.Length / 4), (100 * $count / ($a.Length / 4)), $max)
 } finally {
     $imgBefore.Dispose(); $imgAfter.Dispose()
 }

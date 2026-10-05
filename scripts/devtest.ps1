@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx]
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # The game runs muted (-mute) unless -Sound is given.
 # It ends with the frame rate of the run ("fps: avg=... min=... max=..."; VSync is off under DevTest), also saved as
@@ -21,6 +21,11 @@ param(
     [string]$Camera = '',
     [string]$Hero = "",
     [int]$AA = -1,
+    [int]$Sky = -1,
+    [double]$Bench = 0,
+    [switch]$NoFx,
+    [switch]$BenchAI,
+    [switch]$BenchChase,
     [string]$Name = 'run',
     [int]$TimeoutSeconds = 180
 )
@@ -32,7 +37,7 @@ $exe    = Join-Path $binDir 'TUMBU.exe'
 if (-not (Test-Path $exe)) { throw "$exe not found. Build first (.\scripts\build.ps1)." }
 
 $gameArgs = @("-quitafter=$QuitAfter")
-if (-not $NoWalk)  { $gameArgs += '-walktest' }
+if (-not $NoWalk -and $Bench -le 0) { $gameArgs += '-walktest' }
 if ($FpsCap -gt 0) { $gameArgs += "-fpscap=$FpsCap" }
 if ($Hour -ge 0)   { $gameArgs += "-hour=$Hour" }
 if (-not $Sound)  { $gameArgs += '-mute' }
@@ -45,6 +50,11 @@ if ($FxDistance -gt 0) { $gameArgs += "-fxdistance=" + $FxDistance.ToString([cul
 if ($Camera)      { $gameArgs += "-camera=$Camera" }
 if ($Hero)        { $gameArgs += "-hero=$Hero" }
 if ($AA -ge 0)     { $gameArgs += "-aa=$AA" }
+if ($Sky -ge 0)    { $gameArgs += "-sky=$Sky" }
+if ($NoFx)        { $gameArgs += '-nofx' }
+if ($BenchAI)     { $gameArgs += '-benchai' }
+if ($BenchChase)  { $gameArgs += '-benchchase' }
+if ($Bench -gt 0)  { $gameArgs += "-bench=" + $Bench.ToString([cultureinfo]::InvariantCulture) }
 
 Remove-Item "$work\devtest.png" -ErrorAction SilentlyContinue
 $proc = Start-Process $exe -ArgumentList $gameArgs -WorkingDirectory $binDir -PassThru
@@ -71,4 +81,11 @@ if ($fps) {
     $summary = "avg={0:0} min={1:0} max={2:0} samples={3}{4}" -f $m.Average, $m.Minimum, $m.Maximum, $m.Count, $cap
     Set-Content "$work\devtest-$Name.fps" $summary
     Write-Host "fps: $summary"
+}
+# -Bench: the steady measurement replaces the summary (fps over the measured seconds, no AI, fixed camera).
+$benchLine = Select-String "$work\devtest-$Name.log" -Pattern '\[DEVTEST\] bench: (.*)$' | Select-Object -Last 1
+if ($benchLine) {
+    $summary = $benchLine.Matches[0].Groups[1].Value -replace '^fps=', 'avg='
+    Set-Content "$work\devtest-$Name.fps" $summary
+    Write-Host "bench: $summary"
 }

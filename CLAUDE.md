@@ -55,12 +55,18 @@ them. `devtest.ps1` passes `-mute` by default; add `-mute` to every direct `TUMB
 .\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High)
 bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 kills each) via the real UI
+.\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
 ```
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
   `-fpscap=N`, `-quitafter=S`, `-hour=H`, `-mute` (all sounds at volume 0; also works for a normal game), `-nofx` (no
   special-attack effects or ki aura, to compare frame rate or memory), `-aa=0|1` (anti-aliasing off / SMAA for this run,
-  whatever `options.cfg` says: `devtest.ps1 -AA 0`) and
+  whatever `options.cfg` says: `devtest.ps1 -AA 0`), `-sky=0|1` (skydome / Caelum for this run: `-Sky 0`), `-bench=S`
+  (`devtest.ps1 -Bench S`: a steady frame-rate measurement; no AI, the camera fixed from the first frame (the standard
+  robot view unless `-camera`), a 3 s warm-up, then S seconds counted with a wall-clock timer; logs `[DEVTEST] bench:
+  fps=… ms=… window_min=… window_max=… render_ms=… rest_ms=… render=… size=… aa=… sky=…`, where `render_ms` is the time
+  from `frameStarted` to `frameRenderingQueued` (Ogre updating animation/skinning, culling, draw calls) and `rest_ms` the
+  rest (game logic, Present); `-benchai` keeps the AI, `-benchchase` the chase camera) and
   `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
   `devtest.ps1 -FaceShot [-Jyn]`), `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point:
   `devtest.ps1 -Camera "…"`, handy for close-ups of the arena), `-hero=robotNNN` (the hero wears all five parts of that set: `devtest.ps1 -Hero robot005`, to check a
@@ -77,12 +83,17 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`
-  after each match. `heap` is the bytes really in use; it must stay flat from cycle 2 on (about 21 MB,
-  +25 KB per match). Every object count must return to the same value each cycle. Exception: on Direct3D 11 the NVIDIA driver
-  grows about 1.3 MB per match, tied to the post-processing compositor, not the effects; OpenGL stays flat, and the object
-  counts are flat on both (docs/SPECIAL_EFFECTS.md, "Known issue": measured with NVIDIA driver 617.14 and Ogre 14.6.0; re-check
-  after updating either: `-cycles` logs a `REMINDER` line when they differ). `-cycles` also logs `heap growth by block size` and
-  the DLL that owns sample blocks, to find what grows.
+  after each match. `heap` is the bytes really in use; it must stay flat from cycle 2 on. Every object count must return to
+  the same value each cycle. At the end it logs `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED` and
+  appends the same numbers to **`%USERPROFILE%\Tumbu\memory-history.csv`** (date, renderer, driver, Ogre, heap, growth).
+  **After every `-cycles` run, compare the summary with the expected numbers below and with the last rows of that file**;
+  when they move, find out why and update this paragraph. Expected (RTX 3070, driver 617.14 / 32.0.16.1714, Ogre 14.6.0,
+  2026-10-04): the menu before any match about 21 MB; **OpenGL** about 17.5 MB after the first match and flat (±30 KB per
+  match); **Direct3D 11** about 30 MB after the first match, then **+1.7 to 2.3 MB per match**, the same with SMAA on or off.
+  That growth is NVIDIA driver memory (`nvwgf2umx.dll`), tied to the post-processing compositor, not the effects; the
+  object counts are flat on both renderers (docs/SPECIAL_EFFECTS.md, "Known issue"; re-check after a driver or Ogre update:
+  `-cycles` logs a `REMINDER` line when they differ). `-cycles` also logs `heap growth by block size` and the DLL that
+  owns sample blocks, to find what grows.
 - **Crash report:** any crash (access violation, uncaught exception, `abort`) writes the call stack to
   `ogre.log` and `%USERPROFILE%\Tumbu\crash.log` (`Main.cpp`). RelWithDebInfo has file:line for game code.
   Ogre frames only show exported names, because the deps are built without PDBs.
@@ -111,14 +122,19 @@ materials, textures, GUI) gets a before/after set:
    zoomed crops (`-Zoom 2` to `4`) when the change is small (outlines, edges, anti-aliasing).
 4. Read the images before reporting, and tell Jonathan the folder. Each tuning round gets a new folder
    (`<feature>-2`, …) whose "before" is the previous round's "after".
-5. **Track the frame rate too.** Every `devtest.ps1` run ends with `fps: avg=… min=… max=…` (the `[DEVTEST] fps=` samples
-   after a 2 s warm-up; DevTest turns VSync off, so the number is not capped by the monitor) and saves it as
-   `devtest-<Name>.fps`; `compare.ps1` prints it under each image, with the change in percent on the AFTER side. A
-   single run is only a hint: it varies by ±15–30 % between identical runs (the enemy moves, Direct3D 11 more than
-   OpenGL). For the real number, run the same fixed view several times, alternating before/after (a DevTest switch
-   such as `-AA 0|1` or `-nofx` when the feature can be turned off in one build), with `-QuitAfter 20`, on Direct3D 11
-   and OpenGL, and report the averages as fps and ms per frame next to the image folder. Say so when the difference is
-   inside the noise.
+5. **Track the frame rate too.** Every `devtest.ps1` run ends with `fps: avg=… min=… max=…` and saves it as
+   `devtest-<Name>.fps` (DevTest turns VSync off, so it is not capped by the monitor); `compare.ps1` prints it under each
+   image, with the change in percent on the AFTER side, and also prints how many pixels differ. That per-shot number is
+   only a hint: in a normal run the enemy fights, and identical runs vary by ±15–30 %. **The real number comes from
+   `scripts/bench.ps1`**: `-bench` runs (no AI, fixed camera: within ~2 % between runs), alternating the variants
+   (`-Variants "off=-AA 0","on=-AA 1"`, a DevTest switch when the feature can be turned off in one build; otherwise run
+   it once on the before build and once on the after build), on Direct3D 11 and OpenGL, at the same window size for both
+   (`-VideoMode`, default 1024x768; also measure 1920x1080 for anything that costs per pixel: at 1024x768 Direct3D 11 is
+   CPU-bound and hides GPU work). It writes `%USERPROFILE%\Tumbu\<feature>\fps.txt` (fps, ms per frame, spread, the
+   difference to the first variant and whether it is inside the spread) and appends to
+   `%USERPROFILE%\Tumbu\fps-history.csv`. Report fps and ms next to the image folder.
+   For the same reason, compare still frames from `-Bench 3` runs when the change should not alter the image: two runs
+   of the same build already differ in about 7 % of the pixels (dust, clock), so that is the bar.
 
 ## Tech stack
 
@@ -196,7 +212,12 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   made once in `Lighting::createSMAATextures` (from `BaseApplication::loadResources`) and
   bound to the `Tumbu/SMAA/Weights` units from code. Pitfalls met: **Ogre's Direct3D 11 renderer has no RG8 format** and
   silently converted the area texture, which gave dashed outlines on D3D11 only, so it is uploaded as RGBA; a material
-  script cannot name `PF_RG8`. Cost: within the run-to-run noise at 1024×768 on an RTX 3070 (at most ~0.1 ms).
+  script cannot name `PF_RG8`. **Stencil:** `edges` and `weights` share one depth-stencil buffer (same size, depth pool
+  1); the edge pass writes stencil 1 where it finds an edge and the blending-weight pass only runs there (the rest keeps
+  the cleared zero weight). Proven by clearing the weights to 0.5 as a test (46 % of the pixels changed on D3D11, 27 % on
+  OpenGL; normal runs differ by ~7 %). Cost (`bench.ps1`, RTX 3070, 1920x1080): Direct3D 11 +0.095 ms without the
+  stencil, **+0.060 ms with it**; OpenGL +0.015 / +0.031 ms, both inside the noise. At 1024x768 it does not show at all.
+  Keep the trailing `pass stencil { check off }` in both targets, or the stencil test leaks into the passes after.
 - **Emissive glow:** robot materials set `$glowMap` (the `GMheadUV_00N.tga` masks) and `$glowColour`
   (tint, strength). The glow is the part's own texture colour where the mask is white, so each robot glows in
   its eye colour. `Robot::updateEyeGlow` passes a 0..1 flare (custom parameter 0) while Jyn builds up.
@@ -262,6 +283,15 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   `preRenderTargetUpdate` (after Caelum's frame update, before it places the sky) it sets Caelum's sun, sky
   dome and clouds to `Lighting`'s direction, or its moon between `moonFrom` and `moonUntil`. The `twilight`
   keyframe brings the sun to the horizon before the moon takes over.
+- **Robots are skinned on the CPU, and that is slow on Direct3D 11.** The robot shaders have no hardware skinning, so
+  Ogre skins every animating part on the CPU and re-uploads it each frame. On Direct3D 11 that path goes through
+  "shadow buffers" that are D3D11 STAGING resources (on OpenGL they are plain system memory). Measured with `-bench`
+  (2026-10-04): a still scene renders faster on Direct3D 11 than on OpenGL (1400 against 1100 fps at 1024x768), but one
+  walking, fighting enemy (`-benchai`) adds **+0.63 ms per frame on D3D11** (`render_ms` 0.49 → 1.12) and +0.02 ms on
+  OpenGL. Caelum is not involved (+0.015 ms), nor the effects (`-nofx` changes nothing). Fix: hardware skinning in the
+  robot vertex programs (docs/IMPROVEMENT_IDEAS.md).
+- **`ogre.cfg` keeps a window size per renderer.** The OpenGL section said 640x480 while Direct3D 11 had 1024x768, so
+  quick D3D11/OpenGL comparisons were not at the same size; `bench.ps1 -VideoMode` sets both.
 
 ### Object lifetime rules (each one was a real leak or crash)
 

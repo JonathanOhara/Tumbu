@@ -52,6 +52,8 @@ public:
 	static bool isFxDisabled(void){ return noFx; }
 	/// -aa=0|1: anti-aliasing of this run regardless of options.cfg (-1 = not given).
 	static int getAntiAliasing(void){ return antiAliasing; }
+	/// -sky=0|1: sky quality of this run (0 skydome, 1 Caelum) regardless of options.cfg (-1 = not given).
+	static int getSky(void){ return sky; }
 	/// -hero=robotNNN: the set every hero part comes from, or empty for the demo.object loadout.
 	static const Ogre::String &getHeroSet(void){ return heroSet; }
 
@@ -59,6 +61,8 @@ public:
 	virtual ~DevTest(void);
 
 	bool frameStarted( const Ogre::FrameEvent &evt );
+	/// -bench: times the phases of the frame (see runBench).
+	bool frameRenderingQueued( const Ogre::FrameEvent &evt );
 
 private:
 	enum Stage { WAITING_START_SCREEN, WAITING_MATCH, PLAYING, FINISHED };
@@ -83,6 +87,10 @@ private:
 	void runGuiTour( const Ogre::FrameEvent &evt );
 	void runCycles( const Ogre::FrameEvent &evt );
 	void logMemory( const Ogre::String &label );
+	/// -cycles: heap growth per match and object counts, logged and appended to memory-history.csv.
+	void logMemorySummary(void);
+	std::vector<unsigned long> heapHistory;	// heap KB at each logMemory
+	std::vector<Ogre::String> objectHistory;
 	void measureWalkCycles(void);
 	void screenshot( const Ogre::String &name );
 	void pressKey( int key );
@@ -92,6 +100,15 @@ private:
 	void runSwapTest(void);
 	int swapStep;
 	int flyStep;
+	/// -bench=S: a steady frame-rate measurement (no AI, fixed camera, S seconds after a warm-up).
+	void runBench(void);
+	bool benchStarted, benchLogged;
+	unsigned long benchFrames, windowFrames;
+	Ogre::Real windowMin, windowMax;
+	Ogre::Timer benchTimer, windowTimer;
+	Ogre::Timer phaseTimer;
+	double renderMicros, restMicros;	// frameStarted -> frameRenderingQueued, and from there to the next frame
+	unsigned long phaseFrames;
 	void click( const Ogre::String &buttonName );
 	bool isVisible( const Ogre::String &widgetName );
 
@@ -122,6 +139,9 @@ private:
 	static bool jynWalk;
 	static bool noFx;
 	static int antiAliasing;
+	static int sky;
+	static Ogre::Real bench;
+	static bool benchAI, benchChase;
 	static Ogre::String fxTest;
 	static Ogre::String heroSet;
 	static Ogre::Real fxTime;

@@ -166,29 +166,60 @@ compositor Tumbu/SMAA
             input previous
         }
 
+        // edges and weights share one depth-stencil buffer (same size, depth_pool 1): the edge pass marks its pixels in the
+        // stencil, and the blending-weight pass (the expensive one) only runs on those (SMAA's own recommendation).
         target edges
         {
             input none
-            // The edge pass discards the pixels without an edge.
+            // The edge pass discards the pixels without an edge, so only edge pixels get stencil 1.
             pass clear
             {
-                buffers colour
+                buffers colour stencil
                 colour_value 0 0 0 0
+                stencil_value 0
+            }
+            pass stencil
+            {
+                check on
+                comp_func always_pass
+                ref_value 1
+                pass_op replace
             }
             pass render_quad
             {
                 material Tumbu/SMAA/Edges
                 input 0 colour
             }
+            pass stencil
+            {
+                check off
+            }
         }
 
         target weights
         {
             input none
+            // Pixels outside the stencil keep this zero weight (no blending there).
+            pass clear
+            {
+                buffers colour
+                colour_value 0 0 0 0
+            }
+            pass stencil
+            {
+                check on
+                comp_func equal
+                ref_value 1
+                pass_op keep
+            }
             pass render_quad
             {
                 material Tumbu/SMAA/Weights
                 input 0 edges
+            }
+            pass stencil
+            {
+                check off
             }
         }
 

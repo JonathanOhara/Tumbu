@@ -9,6 +9,8 @@ Each idea notes which reference game does it.
 Visual track, most important first (impact on what the player sees, against the effort):
 
 1. **SMAA anti-aliasing** (Rendering modernization 1) — **done (2026-10)**.
+   Open SMAA follow-ups, small: a quality choice (Low / High) in Options; colour edge detection if edges that differ only
+   in hue (a red part against a green one) stay jagged.
 2. **Arena remake** (Art side: coliseum retexture with parallax occlusion and self-shadows, a new ground, BC7/BC5
    textures): the biggest visual gap, in every shot. Large; mock-ups first.
 3. **Night arena lights** (idea 4): night fights look unplanned; builds on the energy lights.
@@ -104,7 +106,8 @@ Techniques in use that have a clear modern replacement, most valuable first:
 
 1. **Anti-aliasing: none during a match.** — **done (2026-10): SMAA 1x** (High preset, luma edges) chained after the
    post-processing (`Tumbu/SMAA`, Options → Anti-aliasing, default on); robot outlines and the ring ropes are smooth, effects
-   and bloom unchanged, cost inside the frame-rate noise. Before/after: `%USERPROFILE%Tumbusmaa`. Original notes: The window asks for FSAA, but the scene renders into the post-processing
+   and bloom unchanged, stencil-limited weights pass, about 0.06 ms per frame at 1920x1080 on Direct3D 11. Before/after:
+   `%USERPROFILE%\Tumbu\smaa\` and `smaa-stencil\`. Original notes: The window asks for FSAA, but the scene renders into the post-processing
    compositor's HDR texture, which has no MSAA, so robot edges and outlines are jagged (visible in every screenshot).
    Add **SMAA** (or FXAA as a first step) in the final pass. SMAA suits toon outlines; TAA would blur them and needs
    motion vectors. Tested: FSAA=4 in the start-up dialog (`ogre.cfg`) is accepted by the window but leaves the match's
@@ -128,6 +131,13 @@ Techniques in use that have a clear modern replacement, most valuable first:
    Low priority: the arena and robots also have baked AO.
 7. **Uncompressed TGA/PNG textures.** **BC7** (colour) and **BC5** (normal maps) DDS with mipmaps: about 4x less video
    memory and faster loading, no visible change. Do it with the arena remake's new textures.
+8. **Robots skinned on the CPU** (found 2026-10-04 with `-bench`): the robot shaders have no hardware skinning, so every
+   animating part is skinned on the CPU and re-uploaded each frame. On Direct3D 11 that costs **+0.63 ms per frame for one
+   fighting enemy** (+0.02 ms on OpenGL), because Ogre's D3D11 shadow buffers are STAGING resources: a still scene runs at
+   1400 fps, a fight at 700. **Hardware skinning** (`includes_skeletal_animation`, the bone matrices and blend indices /
+   weights in `robot_toon`, `robot_outline`, `robot_aura` and a skinned shadow caster for the robots) removes the CPU work
+   and the uploads on both renderers, and leaves room for more robots on screen. Medium effort; check with
+   `bench.ps1 -Variants "fight=-BenchAI"` before/after and the robot before/after shots (poses must not change).
 
 Still modern, keep: inverted-hull outlines (Genshin, Guilty Gear), the shadow-map raymarched god rays, integrated
 depth shadows with normal offset (a single map is right for an arena this small), the fixed-step physics.
