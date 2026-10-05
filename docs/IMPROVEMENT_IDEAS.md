@@ -132,8 +132,9 @@ Techniques in use that have a clear modern replacement, most valuable first:
 7. **Uncompressed TGA/PNG textures.** **BC7** (colour) and **BC5** (normal maps) DDS with mipmaps: about 4x less video
    memory and faster loading, no visible change. Do it with the arena remake's new textures.
 8. **Robots skinned on the CPU** — **done (2026-10): skinned on the GPU** (`RobotSkinning.h`): Direct3D 11 fights went from
-   596 to 1371 fps, and the D3D11 driver memory growth per match halved (1.7-2.3 MB to 0.7-0.8 MB). Follow-up, small:
-   on OpenGL it costs +0.06 ms (the bone array is uploaded per draw); a uniform buffer for the bones would fix that.
+   596 to 1371 fps, and the D3D11 driver memory growth per match halved (1.7-2.3 MB to 0.7-0.8 MB). The OpenGL
+   cost of the first version (the whole 192-row bone array uploaded per draw) is fixed by a 32-bone array (2026-10-05):
+   OpenGL fights 859 → 937 fps, as fast as CPU skinning was.
    Before/after: `%USERPROFILE%\Tumbu\gpu-skinning\`. Original notes (found 2026-10-04 with `-bench`): the robot shaders
    had no hardware skinning, so every
    animating part is skinned on the CPU and re-uploaded each frame. On Direct3D 11 that costs **+0.63 ms per frame for one

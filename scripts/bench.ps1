@@ -3,6 +3,9 @@
 # Usage: .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1" [-Runs 3] [-Seconds 15] [-Renderers D3D11,GL]
 #        [-Common "-Hero robot001 -Hour 13"] [-VideoMode 1920x1080]
 #   -Variants  label=devtest.ps1 arguments; the first one is the reference
+#              "@<folder>" among the arguments runs another checkout of the game (its own devtest.ps1, exe and media),
+#              to compare two builds run after run: git worktree add ..\Tumbu-before <commit>, build it there, then
+#              -Variants "before=@..\Tumbu-before","after="
 #   -Common    devtest.ps1 arguments given to every run (the default is the standard robot view at 13:00)
 #   -VideoMode the window size, set for both renderers (their ogre.cfg sections differ otherwise; the OpenGL one was
 #              640x480 while Direct3D 11 had 1024x768)
@@ -56,12 +59,24 @@ try {
         for ($run = 1; $run -le $Runs; $run++) {
             foreach ($v in $parsed) {
                 $runName = "bench-$Name-$renderer-$($v.Label)-$run"
-                $splat = ConvertTo-Splat "$Common $($v.Args)"
+                $vArgs = "$($v.Args)"
+                $devtest = Join-Path $PSScriptRoot 'devtest.ps1'
+                if ($vArgs -match '@(\S+)') {
+                    $devtest = Join-Path (Resolve-Path (Join-Path (Split-Path $PSScriptRoot -Parent) $Matches[1])) 'scripts\devtest.ps1'
+                    $vArgs = $vArgs -replace '@\S+', ''
+                }
+                $splat = ConvertTo-Splat "$Common $vArgs"
                 $splat.Bench = $Seconds
                 $splat.Name = $runName
-                & (Join-Path $PSScriptRoot 'devtest.ps1') @splat | Out-Null
                 $fpsFile = Join-Path $work "devtest-$runName.fps"
-                $line = if (Test-Path $fpsFile) { Get-Content $fpsFile -Raw } else { '' }
+                # A run whose window was hidden or minimised did not render (DevTest marks it invalid): run it again.
+                for ($attempt = 1; $attempt -le 3; $attempt++) {
+                    & $devtest @splat | Out-Null
+                    $line = if (Test-Path $fpsFile) { Get-Content $fpsFile -Raw } else { '' }
+                    if ($line -notmatch 'invalid=') { break }
+                    Write-Warning "$runName : $($Matches[0]) the window did not render (hidden or minimised?), attempt $attempt of 3"
+                }
+                if ($line -match 'invalid=') { continue }
                 $m = [regex]::Match($line, 'avg=([\d.]+) ms=([\d.]+)')
                 if (-not $m.Success -or -not $line.Contains("render=$($systems[$renderer] -replace ' ', '_')")) {
                     Write-Warning "$runName : no bench result on $renderer ($line)"

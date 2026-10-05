@@ -817,7 +817,9 @@ void DevTest::runBench(void){
 			" size=" + Ogre::StringConverter::toString( tumbu->mWindow->getWidth() ) + "x" + Ogre::StringConverter::toString( tumbu->mWindow->getHeight() ) +
 			" aa=" + Ogre::StringConverter::toString( tumbu->isAntiAliasingEnabled() ) +
 			" sky=" + Ogre::StringConverter::toString( sky >= 0 ? sky : tumbu->getSkyQuality() ) +
-			" shadows=" + Ogre::StringConverter::toString( tumbu->getShadowPreset() )  +
+			" shadows=" + Ogre::StringConverter::toString( tumbu->getShadowPreset() ) +
+			// A hidden or minimised window is not rendered: the loop only spins (thousands of fps, no render time).
+			( phaseFrames > 0 && renderMicros / phaseFrames < 20.0 ? " invalid=window-not-rendered" : "" ) +
 			( benchAI ? " ai" : "" ) + ( benchChase ? " chase" : "" ) );
 	}
 }

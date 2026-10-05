@@ -128,12 +128,16 @@ materials, textures, GUI) gets a before/after set:
    image, with the change in percent on the AFTER side, and also prints how many pixels differ. That per-shot number is
    only a hint: in a normal run the enemy fights, and identical runs vary by ±15–30 %. **The real number comes from
    `scripts/bench.ps1`**: `-bench` runs (no AI, fixed camera: within ~2 % between runs), alternating the variants
-   (`-Variants "off=-AA 0","on=-AA 1"`, a DevTest switch when the feature can be turned off in one build; otherwise run
-   it once on the before build and once on the after build), on Direct3D 11 and OpenGL, at the same window size for both
+   (`-Variants "off=-AA 0","on=-AA 1"`, a DevTest switch when the feature can be turned off in one build; otherwise
+   **compare builds run after run**: `git worktree add ..\Tumbu-before <commit>`, run `scripts\build.ps1` there, then
+   `-Variants "before=@..\Tumbu-before","after="`; each tree uses its own exe and media; remove the worktree afterwards.
+   Never compare numbers from different sessions: they drift by 5–10 %), on Direct3D 11 and OpenGL, at the same window size for both
    (`-VideoMode`, default 1024x768; also measure 1920x1080 for anything that costs per pixel: at 1024x768 Direct3D 11 is
    CPU-bound and hides GPU work). It writes `%USERPROFILE%\Tumbu\<feature>\fps.txt` (fps, ms per frame, spread, the
    difference to the first variant and whether it is inside the spread) and appends to
-   `%USERPROFILE%\Tumbu\fps-history.csv`. Report fps and ms next to the image folder.
+   `%USERPROFILE%\Tumbu\fps-history.csv`. Report fps and ms next to the image folder. A run whose window was hidden or
+   minimised does not render (thousands of fps, `render_ms` near 0): DevTest marks it `invalid=window-not-rendered` and
+   `bench.ps1` runs it again, so do not cover or minimise the game window while a benchmark runs.
    For the same reason, compare still frames from `-Bench 3` runs when the change should not alter the image: two runs
    of the same build already differ in about 7 % of the pixels (dust, clock), so that is the bar.
 
@@ -300,9 +304,15 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
     `robots.material`); with Ogre's default caster their shadows would keep the rest pose. A new robot pass or material
     needs a skinned vertex program too.
   - DevTest logs `skinning: N entities on the GPU, M on the CPU` when a match starts: M must be 0.
+  - **The bone array is small on purpose (32 bones, `boneMatrices[96]`):** Ogre uploads the whole declared array for
+    every draw (on OpenGL each pass of each part also hashes it for its uniform cache), and a robot mesh uses at most
+    22 of its skeleton's 50 bones. `Part::build` logs an error for a mesh that uses more than `ROBOT_MAX_BONES`
+    (`Part.cpp`, keep it equal to the array in `RobotSkinning.h`).
 
   Measured (`bench.ps1`, 1024x768, 2026-10-04): Direct3D 11 fight 596 → 1371 fps (1.68 → 0.73 ms), the same as a still
-  scene now; OpenGL fight 954 → 901 fps (+0.06 ms: the bone array is uploaded per draw; a uniform buffer could fix it).
+  scene now. OpenGL with the first 192-row bone array was 0.08 ms slower than CPU skinning (859 against 920 fps); with
+  the 96-row array it is as fast or faster (937 fps) and steadier (builds compared run after run, 2026-10-05,
+  `%USERPROFILE%\Tumbu\bone-array-ab\fps.txt`).
   Before/after images: `%USERPROFILE%\Tumbu\gpu-skinning\` (identical poses, outlines, aura, shadows, inventory preview).
 - **`ogre.cfg` keeps a window size per renderer.** The OpenGL section said 640x480 while Direct3D 11 had 1024x768, so
   quick D3D11/OpenGL comparisons were not at the same size; `bench.ps1 -VideoMode` sets both.

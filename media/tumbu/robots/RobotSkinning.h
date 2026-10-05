@@ -9,8 +9,10 @@
 
 // Ogre 14 sends the bones in object space (MeshManager::getBonesUseObjectSpace, on by default): boneMatrices holds one
 // matrix per bone the mesh uses (blend index i = matrix i), and the entity's world matrix comes apart in robotWorld
-// (world_matrix). Room for 64 bones x 3 rows; the robot skeletons have 50.
-uniform vec4 boneMatrices[192];
+// (world_matrix). Room for 32 bones x 3 rows: a robot mesh uses at most 22 of its skeleton's 50 bones, and the whole
+// array is uploaded for every draw (on OpenGL, each pass of each part), so it is kept small. Part::build logs an error
+// for a mesh that uses more (ROBOT_MAX_BONES in Part.cpp, keep both equal).
+uniform vec4 boneMatrices[96];
 uniform mat4 robotWorld;
 
 // Ogre stores the bone indices as four unsigned bytes: Direct3D 11 reads them as integers (R8G8B8A8_UINT), OpenGL
