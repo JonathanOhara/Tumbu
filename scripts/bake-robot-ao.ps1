@@ -1,10 +1,12 @@
 # Bakes the robots' ambient occlusion (scripts/blender/robot_ao.py) from art/robots/robot00N.blend into
 # media/tumbu/robot00N/AO<part>UV_00N.png. The .mesh files are not touched (the AO uses the texture UVs).
 # The art/robots files come from scripts/convert-legacy-blend.ps1 -Robots (once).
+# Blender 4.5 by default: the bake saves the robot .blend, and the robot files stay in 4.5, which the robot export
+# needs (blender2ogre's animation export does not work on Blender 5; CLAUDE.md, Conventions).
 # Usage: .\scripts\bake-robot-ao.ps1 [-Robot 1] [-Blender <path to blender.exe>]
 param(
     [int[]]$Robot = @(1, 2, 3, 4, 5),
-    [string]$Blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+    [string]$Blender = 'D:\TumbuDeps\tools\blender-4.5.14-windows-x64\blender.exe'
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent

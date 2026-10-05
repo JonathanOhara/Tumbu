@@ -503,9 +503,9 @@ through a listener registry in `BaseApplication`.
   changed how actions store their animation (layered/slotted actions; `Action.groups` and `Action.fcurves` are
   gone), and blender2ogre (commit `0d094a4`) still reads the old API, so its animation export fails on 5.2.
   Keep the robot `.blend` files in Blender 4.5: a file saved by Blender 5 is not guaranteed to open losslessly in
-  4.5, and `export-robots.ps1` needs 4.5. `bake-robot-ao.ps1` saves the robot file and defaults to 5.2, so run it with
-  `-Blender D:\TumbuDeps\tools\blender-4.5.14-windows-x64\blender.exe`. Blender 5.2 stays fine for static meshes
-  (the arena, `bake-arena-ao.ps1`). Re-check when blender2ogre supports Blender 5.
+  4.5, and `export-robots.ps1` needs 4.5. Both robot scripts default to 4.5 (`bake-robot-ao.ps1` saves the robot file
+  too; checked 2026-10-05: it bakes the same AO in 4.5). Blender 5.2 stays fine for static meshes (the arena,
+  `bake-arena-ao.ps1`). Re-check when blender2ogre supports Blender 5.
 - Style: tabs, braces on the same line, `//----...` separators between methods, `getInstance()` singletons,
   raw `new`/`delete`, and `NULL`. Match it.
 - **Encoding and line endings:** `.gitattributes` normalizes line endings to LF in the repo. Some sources and

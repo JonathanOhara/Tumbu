@@ -293,9 +293,12 @@ an animator sees in Blender is what the game plays.
 - `.\scripts\bake-robot-ao.ps1 [-Robot 1,3]` runs `scripts/blender/robot_ao.py` in headless Blender 5.2 and
   writes `media/tumbu/robot00N/AO<part>UV_00N.png` (for example `AOlegsUV_001.png`), the size of the part's
   diffuse texture. `robot00N.material` uses them through `$aoMap`.
-- **Run it with Blender 4.5** (`-Blender D:\TumbuDeps\tools\blender-4.5.14-windows-x64\blender.exe`): the bake saves
-  the robot `.blend`, and those files must stay in Blender 4.5, which the robot export needs (blender2ogre's animation
-  export does not work on Blender 5; see "Robot export"). The script's default is still 5.2.
+- **It runs in Blender 4.5** (the default `-Blender`, `D:\TumbuDeps\tools\blender-4.5.14-windows-x64\blender.exe`): the
+  bake saves the robot `.blend`, and those files must stay in Blender 4.5, which the robot export needs (blender2ogre's
+  animation export does not work on Blender 5; see "Robot export"). Checked 2026-10-05 on robot001: 4.5 bakes the same
+  AO as 5.2 did, apart from bake noise and the eye slot of the head, which now follows the custom normals the parts
+  carry since the robot export (a hint darker at its edges; not visible in the game).
+- The bake uses the parts' **shading normals**, so after changing a robot's normals bake it again.
 - The bake goes through each part's **texture UVs** (their overlap is 0–7%), so the `.mesh` files are not
   re-exported. Each part occludes **only itself**, in the **rest pose**: parts are swapped between robots and
   animated, so occlusion from neighbouring parts would be wrong most of the time.
