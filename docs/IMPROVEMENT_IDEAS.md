@@ -199,3 +199,23 @@ depth shadows with normal offset (a single map is right for an arena this small)
 - **Gameplay beyond the battle demo**: customization is the core of the game (ART_AND_DESIGN), but today parts are only
   won from defeated enemies. A part shop or loadout screen to build the robot between fights (buy parts, equip and
   compare them), then more arenas or a mode beyond the 16 fixed fights.
+- **One shared robot skeleton (a rig file as the source)**: found while building the robot export (2026-10-05).
+  - Today: each `art/robots/robot00N.blend` has its own armature. All five share the same 50-bone hierarchy, bone
+    names and 14 actions, but the proportions differ by up to 8 cm and a few action tracks differ. The game gets 25
+    skeleton files, one per part, each a copy of its robot's armature moved to the part's origin.
+  - Idea: `art/robots/rig.blend` holds only the armature and the 14 actions, and is the source for the skeleton and
+    the animations. Robot files either **link** it (Blender library linking with a library override, so a robot can
+    adjust its proportions while the actions stay shared) or **append** it once as the starting point for a new robot
+    (a template to clone).
+  - In Ogre:
+    - **One skeleton per robot** instead of one per part. The parts share one skeleton instance
+      (`Entity::shareSkeletonInstanceWith`, already used for the ki aura shell), so each robot updates its animation
+      once instead of five times.
+    - **Optionally one animation set for every robot:** `Skeleton::addLinkedSkeletonAnimationSource` plays the
+      animations of a master skeleton on any skeleton with the same bone names (bone offsets scaled). The animations
+      are then authored once.
+  - What it touches:
+    - Parts are swapped between robots, so robots with different proportions need attach points that still line up.
+    - The per-part re-centring and `robot00N.object` would change, along with `Part` / `Robot`.
+    - The export (`scripts/export-robots.ps1`) would write one skeleton per robot.
+  - Gain: animate once; new robots start from the rig; mixed robots move consistently; fewer files.

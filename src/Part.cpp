@@ -137,6 +137,15 @@ void Part::build(){
 
 	Ogre::String animNames[] = ANIMATION_ARRAY;
 	for( int i = 0; i < NUM_ANIMS; i++){
+		// "no_pose" is the rest pose: it moves no bone, so the exporter (scripts/export-robots.ps1) writes no animation
+		// for it and nothing plays it. Any other missing animation is an export problem.
+		if( !entity->hasAnimationState( animNames[i] ) ){
+			animationArray[i] = NULL;
+			if( animNames[i] != "no_pose" ){
+				Ogre::LogManager::getSingleton().logError( "Part: " + meshName + " has no animation " + animNames[i] );
+			}
+			continue;
+		}
 		animationArray[i] = entity->getAnimationState( animNames[i] );
 
 		animationConfig = ConfigScriptLoader::getSingleton().getConfigScript( "animation", animNames[i] );

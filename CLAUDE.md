@@ -69,7 +69,8 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   rest (game logic, Present); `-benchai` keeps the AI, `-benchchase` the chase camera) and
   `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
   `devtest.ps1 -FaceShot [-Jyn]`), `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point:
-  `devtest.ps1 -Camera "…"`, handy for close-ups of the arena), `-hero=robotNNN` (the hero wears all five parts of that set: `devtest.ps1 -Hero robot005`, to check a
+  `devtest.ps1 -Camera "…"`, handy for close-ups of the arena), `-posedump` (every bone of every robot part, animation and frame as Ogre poses it, into `%USERPROFILE%\Tumbu\posedump.txt`;
+  compare a dump before and after a robot export), `-hero=robotNNN` (the hero wears all five parts of that set: `devtest.ps1 -Hero robot005`, to check a
   given robot's look), `-swaptest` (charges Jyn, pauses, re-selects the head in the inventory so every part and its ki aura
   shell is rebuilt, resumes and charges again; logs the aura level after each step; use with `-quitafter=9`) and `-flytest` (fly camera: F, fly, Esc
   without opening the pause menu, F again; logs the game state and camera after each step) and `-jynwalk`
@@ -474,7 +475,17 @@ through a listener registry in `BaseApplication`.
   `art/robots/robot00N.blend` are the robots, converted once from 2.49 with Blender 4.5 LTS
   (`scripts/convert-legacy-blend.ps1`, which keeps the animations). They are the source for any robot change.
   `.\scripts\bake-robot-ao.ps1` bakes `media/tumbu/robot00N/AO<part>UV_00N.png` through the texture UVs (each
-  part occludes only itself, rest pose); the robot `.mesh` files stay as they are.
+  part occludes only itself, rest pose).
+  **The robot `.mesh` / `.skeleton` files are exported from them** with `.\scripts\export-robots.ps1 [-Robot N] [-Save]
+  [-Install]` (headless **Blender 4.5**: blender2ogre's animation export does not work on Blender 5). Before installing,
+  it checks that every weight, normal and bone at every frame of every action matches Blender, and it compares the
+  skinned vertices with the installed files. Since 2026-10-05 the game's robots come from this export: Ogre poses every
+  bone within 0.0005 units of the 2011 files, and the parts carry the 2011 normals as custom normals. Rules (export
+  details and the reasons in DEV_SETUP Part B, "Robot export"):
+  - at most 4 bone weights per vertex, and no vertex group that is not a bone;
+  - 30 fps; an action's frame range is what plays (robot003/005 `right_punch` is 1-21);
+  - `no_pose` (the rest pose) is not exported, and `Part.cpp` treats it as optional;
+  - never move the bones in edit mode in a script: it flips 2011 bone rolls.
 - The `.mesh` files in `media/` are **generated** from Blender: see "Geometry" under Conventions.
 
 ## Conventions when editing
@@ -482,7 +493,8 @@ through a listener registry in `BaseApplication`.
 - **Geometry: Blender is the source of truth.** Never edit a `.mesh` (or `.skeleton`) file directly, by hand,
   through XML, or with a script that patches vertices. Every geometry change (shape, normals, UVs,
   clean-up, materials assigned to faces) is made in the Blender file, then the `.mesh` is generated again
-  with the blender2ogre exporter (for the arena: `.\scripts\bake-arena-ao.ps1`). Scripted fixes belong in
+  with the blender2ogre exporter (for the arena: `.\scripts\bake-arena-ao.ps1`; for the robots:
+  `.\scripts\export-robots.ps1`). Scripted fixes belong in
   the Blender build scripts (for example `clean_mesh` in `scripts/blender/arena_ao.py`), so a rebuild
   reproduces them. The working `.blend` files live in `art/`; a model that has none yet gets one there
   first (from its 2011 `.blend`, never by overwriting it). Details in DEV_SETUP Part B.

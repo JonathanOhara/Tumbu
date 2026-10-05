@@ -31,6 +31,7 @@ Ogre::Real DevTest::quitAfter = 0;
 int DevTest::startHour = -1;
 int DevTest::cycles = 0;
 bool DevTest::measureAnims = false;
+bool DevTest::poseDump = false;
 bool DevTest::mute = false;
 int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
@@ -68,6 +69,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			fpsCap = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( arg == "-measureanims" ){
 			measureAnims = true;
+		}else if( arg == "-posedump" ){
+			poseDump = true;
 		}else if( arg == "-mute" ){
 			mute = true;
 		}else if( arg == "-nofx" ){
@@ -143,7 +146,7 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 }
 //-------------------------------------------------------------------------------------
 bool DevTest::isEnabled(void){
-	return autoplay || guiTour || cycles > 0 || measureAnims || fpsCap > 0;
+	return autoplay || guiTour || cycles > 0 || measureAnims || poseDump || fpsCap > 0;
 }
 //-------------------------------------------------------------------------------------
 DevTest::DevTest(void){
@@ -195,10 +198,14 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 	limitFrameRate();
 	frames++;
 
-	if( measureAnims ){
+	if( measureAnims || poseDump ){
 		if( TUMBU::getInstance()->getGameState() == TumbuEnums::START_SCREEN && frames > 5 && frames < 1000000 ){
 			frames = 1000000;
-			measureWalkCycles();
+			if( poseDump ){
+				dumpPoses();
+			}else{
+				measureWalkCycles();
+			}
 			TUMBU::getInstance()->shutdown();
 		}
 		return true;
@@ -1171,6 +1178,40 @@ void DevTest::runCycles( const Ogre::FrameEvent &evt ){
 		}
 		break;
 	}
+}
+//-------------------------------------------------------------------------------------
+void DevTest::dumpPoses(void){
+	// -posedump: every bone of every robot part, in the part's model space, at every frame (30 fps) of every
+	// animation, as Ogre poses it, into posedump.txt (scripts/blender/robot_compare.py checks its own model of Ogre's
+	// skeletal animation against it). One animation at a time, weight 1, from the binding pose.
+	Ogre::SceneManager *sm = Ogre::Root::getSingleton().createSceneManager( Ogre::SMT_DEFAULT, "PoseDump" );
+	const char *parts[] = { "head", "body", "leftArm", "rightArm", "legs" };
+	std::ofstream file( ( TUMBU::getInstance()->workPath + "posedump.txt" ).c_str() );
+	for( int set = 1; set <= 5; set++ ){
+		for( const char *part : parts ){
+			Ogre::String name = Ogre::String( part ) + "_00" + Ogre::StringConverter::toString( set );
+			Ogre::Entity *entity = sm->createEntity( name + ".mesh" );
+			sm->getRootSceneNode()->createChildSceneNode()->attachObject( entity );
+			Ogre::AnimationStateSet *all = entity->getAllAnimationStates();
+			for( auto &a : all->getAnimationStates() ){
+				int last = (int)( a.second->getLength() * 30.0f + 0.5f );
+				for( int frame = 0; frame <= last; frame++ ){
+					for( auto &s : all->getAnimationStates() ) s.second->setEnabled( false );
+					a.second->setEnabled( true );
+					a.second->setWeight( 1 );
+					a.second->setLoop( false );	// the last frame is the last pose (looping wraps it to the first)
+					a.second->setTimePosition( frame / 30.0f );
+					entity->getSkeleton()->setAnimationState( *all );
+					for( unsigned short b = 0; b < entity->getSkeleton()->getNumBones(); b++ ){
+						Ogre::Bone *bone = entity->getSkeleton()->getBone( b );
+						Ogre::Vector3 p = bone->_getDerivedPosition();
+						file << name << " " << a.first << " " << frame << " " << bone->getName() << " " << p.x << " " << p.y << " " << p.z << "\n";
+					}
+				}
+			}
+		}
+	}
+	log( "posedump written" );
 }
 //-------------------------------------------------------------------------------------
 void DevTest::measureWalkCycles(void){

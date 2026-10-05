@@ -92,6 +92,8 @@ private:
 	std::vector<unsigned long> heapHistory;	// heap KB at each logMemory
 	std::vector<Ogre::String> objectHistory;
 	void measureWalkCycles(void);
+	/// -posedump: bone positions of every robot part and animation, frame by frame, into posedump.txt.
+	void dumpPoses(void);
 	void screenshot( const Ogre::String &name );
 	void pressKey( int key );
 	void releaseKey( int key );
@@ -134,6 +136,7 @@ private:
 	static int startHour;
 	static int cycles;
 	static bool measureAnims;
+	static bool poseDump;
 	static bool mute;
 	static int faceShot;
 	static bool jynWalk;
