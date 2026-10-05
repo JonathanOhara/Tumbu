@@ -293,6 +293,9 @@ an animator sees in Blender is what the game plays.
 - `.\scripts\bake-robot-ao.ps1 [-Robot 1,3]` runs `scripts/blender/robot_ao.py` in headless Blender 5.2 and
   writes `media/tumbu/robot00N/AO<part>UV_00N.png` (for example `AOlegsUV_001.png`), the size of the part's
   diffuse texture. `robot00N.material` uses them through `$aoMap`.
+- **Run it with Blender 4.5** (`-Blender D:\TumbuDeps\tools\blender-4.5.14-windows-x64\blender.exe`): the bake saves
+  the robot `.blend`, and those files must stay in Blender 4.5, which the robot export needs (blender2ogre's animation
+  export does not work on Blender 5; see "Robot export"). The script's default is still 5.2.
 - The bake goes through each part's **texture UVs** (their overlap is 0–7%), so the `.mesh` files are not
   re-exported. Each part occludes **only itself**, in the **rest pose**: parts are swapped between robots and
   animated, so occlusion from neighbouring parts would be wrong most of the time.
