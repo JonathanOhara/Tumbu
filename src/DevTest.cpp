@@ -235,6 +235,24 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 			GUI::getInstance()->showNextDialog( true );
 		}else if( tumbu->getGameState() == TumbuEnums::PLAYING ){
 			log( "match playing" );
+			{	// Robot parts skinned on the GPU (robots.program, RobotSkinning.h) or, as a fallback, on the CPU.
+				int gpu = 0, cpu = 0;
+				Ogre::String cpuNames;
+				const Ogre::SceneManager::MovableObjectMap &entities = tumbu->mSceneMgr->getMovableObjects( "Entity" );
+				for( Ogre::SceneManager::MovableObjectMap::const_iterator e = entities.begin(); e != entities.end(); e++ ){
+					Ogre::Entity* entity = static_cast<Ogre::Entity*>( e->second );
+					if( !entity->hasSkeleton() ){
+						continue;
+					}
+					if( entity->isHardwareAnimationEnabled() ){
+						gpu++;
+					}else{
+						cpu++;
+						cpuNames += " " + entity->getName();
+					}
+				}
+				log( "skinning: " + Ogre::StringConverter::toString( gpu ) + " entities on the GPU, " + Ogre::StringConverter::toString( cpu ) + " on the CPU" + cpuNames );
+			}
 			stage = PLAYING;
 		}
 		break;

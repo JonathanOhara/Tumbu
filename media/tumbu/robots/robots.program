@@ -1,15 +1,19 @@
 // Robot programs. Each shader source is written once with OgreUnifiedShader.h and compiled as HLSL on
 // Direct3D 11 (shader model 4, see target; the default level-9 profile is too small) and as GLSL on OpenGL.
 // The lighting values are the "TumbuLighting" shared parameters (Lighting.cpp, lighting.object).
+// Every robot vertex program skins the part on the GPU (RobotSkinning.h): includes_skeletal_animation, the bone
+// matrices in boneMatrices (world_matrix_array_3x4, object space), the world matrix in robotWorld and viewproj_matrix.
 
 vertex_program robot_toon_vs glsl glsles hlsl
 {
     source robot_toon.vert
     target vs_4_0
+    includes_skeletal_animation true
     default_params
     {
-        param_named_auto wMat world_matrix
-        param_named_auto wvpMat worldviewproj_matrix
+        param_named_auto boneMatrices world_matrix_array_3x4
+        param_named_auto robotWorld world_matrix
+        param_named_auto vpMat viewproj_matrix
         param_named_auto texViewProj texture_viewproj_matrix 0
         shared_params_ref TumbuLighting
     }
@@ -39,10 +43,11 @@ vertex_program robot_outline_vs glsl glsles hlsl
 {
     source robot_outline.vert
     target vs_4_0
+    includes_skeletal_animation true
     default_params
     {
-        param_named_auto wMat world_matrix
-        param_named_auto wvpMat worldviewproj_matrix
+        param_named_auto boneMatrices world_matrix_array_3x4
+        param_named_auto robotWorld world_matrix
         param_named_auto vpMat viewproj_matrix
         param_named_auto viewportSize viewport_size
         param_named outlineWidth float 1.5
@@ -66,9 +71,11 @@ vertex_program robot_aura_vs glsl glsles hlsl
 {
     source robot_aura.vert
     target vs_4_0
+    includes_skeletal_animation true
     default_params
     {
-        param_named_auto wMat world_matrix
+        param_named_auto boneMatrices world_matrix_array_3x4
+        param_named_auto robotWorld world_matrix
         param_named_auto vpMat viewproj_matrix
         param_named_auto auraColour custom 1
         param_named_auto time time_0_x 600
@@ -86,5 +93,20 @@ fragment_program robot_aura_ps glsl glsles hlsl
         param_named_auto time time_0_x 600
         param_named_auto auraParams custom 0
         param_named_auto auraColour custom 1
+    }
+}
+
+// Shadow caster of the robots (Tumbu/RobotShadowCaster in robots.material), skinned like the parts; the colour comes
+// from shadow_caster_ps (shading.program).
+vertex_program robot_shadow_caster_vs glsl glsles hlsl
+{
+    source robot_shadow_caster.vert
+    target vs_4_0
+    includes_skeletal_animation true
+    default_params
+    {
+        param_named_auto boneMatrices world_matrix_array_3x4
+        param_named_auto robotWorld world_matrix
+        param_named_auto vpMat viewproj_matrix
     }
 }

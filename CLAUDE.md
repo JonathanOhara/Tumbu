@@ -89,7 +89,8 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   **After every `-cycles` run, compare the summary with the expected numbers below and with the last rows of that file**;
   when they move, find out why and update this paragraph. Expected (RTX 3070, driver 617.14 / 32.0.16.1714, Ogre 14.6.0,
   2026-10-04): the menu before any match about 21 MB; **OpenGL** about 17.5 MB after the first match and flat (±30 KB per
-  match); **Direct3D 11** about 30 MB after the first match, then **+1.7 to 2.3 MB per match**, the same with SMAA on or off.
+  match); **Direct3D 11** about 29 MB after the first match, then **+0.7 to 0.8 MB per match** (it was +1.7 to 2.3 MB
+  before the robots were skinned on the GPU, 2026-10-04), the same with SMAA on or off.
   That growth is NVIDIA driver memory (`nvwgf2umx.dll`), tied to the post-processing compositor, not the effects; the
   object counts are flat on both renderers (docs/SPECIAL_EFFECTS.md, "Known issue"; re-check after a driver or Ogre update:
   `-cycles` logs a `REMINDER` line when they differ). `-cycles` also logs `heap growth by block size` and the DLL that
@@ -283,13 +284,26 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   `preRenderTargetUpdate` (after Caelum's frame update, before it places the sky) it sets Caelum's sun, sky
   dome and clouds to `Lighting`'s direction, or its moon between `moonFrom` and `moonUntil`. The `twilight`
   keyframe brings the sun to the horizon before the moon takes over.
-- **Robots are skinned on the CPU, and that is slow on Direct3D 11.** The robot shaders have no hardware skinning, so
-  Ogre skins every animating part on the CPU and re-uploads it each frame. On Direct3D 11 that path goes through
-  "shadow buffers" that are D3D11 STAGING resources (on OpenGL they are plain system memory). Measured with `-bench`
-  (2026-10-04): a still scene renders faster on Direct3D 11 than on OpenGL (1400 against 1100 fps at 1024x768), but one
-  walking, fighting enemy (`-benchai`) adds **+0.63 ms per frame on D3D11** (`render_ms` 0.49 → 1.12) and +0.02 ms on
-  OpenGL. Caelum is not involved (+0.015 ms), nor the effects (`-nofx` changes nothing). Fix: hardware skinning in the
-  robot vertex programs (docs/IMPROVEMENT_IDEAS.md).
+- **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
+  `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
+  Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame
+  (on Direct3D 11 that path went through STAGING "shadow buffers": one fighting enemy cost +0.9 ms per frame, a fight ran
+  at 600 fps against 1300 standing still). Rules learned the hard way:
+  - **Ogre 14 sends the bones in object space** (`MeshManager::getBonesUseObjectSpace()`, on by default):
+    `world_matrix_array_3x4` holds only the bones (blend index i = matrix i), and the entity's world matrix must come
+    from `world_matrix` (`robotWorld`). Treating the array as world-space bones puts the robot at the world origin.
+  - **Bone indices are `uint4` on Direct3D 11** (`R8G8B8A8_UINT`) and floats on OpenGL (`ROBOT_SKIN_INPUTS`).
+  - **Weights:** Ogre keeps the 4 largest per vertex (the arms have up to 9; it logs a warning) and stores 1 to 4 floats
+    per mesh; a missing last component reads as 1, so a sum above 1.5 means the fourth is not real.
+  - **Every pass must skin**: Ogre checks only pass 0 of the best technique to choose GPU skinning, but the shadow caster
+    is not checked, so the robots have their own skinned `Tumbu/RobotShadowCaster` (`shadow_caster_material` in
+    `robots.material`); with Ogre's default caster their shadows would keep the rest pose. A new robot pass or material
+    needs a skinned vertex program too.
+  - DevTest logs `skinning: N entities on the GPU, M on the CPU` when a match starts: M must be 0.
+
+  Measured (`bench.ps1`, 1024x768, 2026-10-04): Direct3D 11 fight 596 → 1371 fps (1.68 → 0.73 ms), the same as a still
+  scene now; OpenGL fight 954 → 901 fps (+0.06 ms: the bone array is uploaded per draw; a uniform buffer could fix it).
+  Before/after images: `%USERPROFILE%\Tumbu\gpu-skinning\` (identical poses, outlines, aura, shadows, inventory preview).
 - **`ogre.cfg` keeps a window size per renderer.** The OpenGL section said 640x480 while Direct3D 11 had 1024x768, so
   quick D3D11/OpenGL comparisons were not at the same size; `bench.ps1 -VideoMode` sets both.
 
@@ -422,6 +436,7 @@ through a listener registry in `BaseApplication`.
   - `robot00N.material`, `robot00N.object` (stats and attach points, `kiColour`: the robot's energy colour) and the source `robot00N.blend`
     (Blender 2.49)
 - `media/tumbu/robots/` holds the robot shaders (`robot_toon.*`, `robot_outline.*`, `robot_aura.*` for the ki aura,
+  `robot_shadow_caster.vert`, all skinned on the GPU through `RobotSkinning.h`;
   `robots.program`) and the base `robots.material`: `$outlineWidth`/`$outlineColour` per robot, and `Tumbu/KiAura`.
 - `media/tumbu/effects/` holds the special-attack effect shaders and materials (`effects.program`,
   `effects.material`): `Tumbu/EnergyOrb` and `Tumbu/EnergyOrb/Jyn` are the procedural toon energy balls (particle colour

@@ -1,3 +1,17 @@
+// Shadow caster of the robot parts: skinned on the GPU like the parts (robot_shadow_caster.vert); Ogre's default
+// caster does not skin, so their shadows would keep the rest pose.
+material Tumbu/RobotShadowCaster{
+    technique{
+        pass{
+            vertex_program_ref robot_shadow_caster_vs{
+            }
+
+            fragment_program_ref shadow_caster_ps{
+            }
+        }
+    }
+}
+
 // Base material of every robot part. Each robot00N.material inherits it and sets the texture variables
 // ($diffuseMap, $specMap, $normalMap, optionally $aoMap) plus colours and the outline.
 material base_material{
@@ -21,6 +35,8 @@ material base_material{
     // Toon shading in one pass (the sun and ambient come from the shared lighting, Lighting.cpp), then the
     // outline.
     technique toon{
+        shadow_caster_material Tumbu/RobotShadowCaster
+
         pass{
             diffuse $diffuseCol
             specular $specularCol $shininess

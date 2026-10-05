@@ -91,7 +91,8 @@ full-screen passes (the flash is part of the final pass).
 ## Known issue: NVIDIA driver memory grows per match on Direct3D 11
 
 On Direct3D 11 the `-cycles` heap grows about 1.3 MB per match (1.7 to 2.3 MB when re-measured on 2026-10-04, with SMAA
-on or off; `memory-history.csv` keeps every measurement); on OpenGL it is flat, and every Ogre object count
+on or off; 0.7 to 0.8 MB since the robots are skinned on the GPU, so part of it was the CPU-skinning upload path;
+`memory-history.csv` keeps every measurement); on OpenGL it is flat, and every Ogre object count
 returns to the same value each match, so the game frees everything it creates. Investigated in 2026-10 with the heap
 histogram of `-cycles` (`heap growth by block size`, plus the DLL that owns the pointers in a sample block):
 

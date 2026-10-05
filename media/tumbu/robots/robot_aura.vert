@@ -1,10 +1,10 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
-// Ki aura shell, vertex stage: the robot part pushed out along its normals by a width in world units. The material
-// draws only the back faces (like the outline), so the robot hides the shell everywhere except around its silhouette.
+// Ki aura shell, vertex stage: the skinned robot part (RobotSkinning.h) pushed out along its normals by a width in world
+// units. The material draws only the back faces (like the outline), so the robot hides the shell everywhere except
+// around its silhouette.
 #include <OgreUnifiedShader.h>
 
 OGRE_UNIFORMS(
-    uniform mat4 wMat;
     uniform mat4 vpMat;
     // custom 0 (Robot::updateAura): x = opacity, y = growth, z = shell width in world units
     uniform vec4 auraParams;
@@ -12,6 +12,8 @@ OGRE_UNIFORMS(
     uniform vec4 auraColour;
     uniform float time;
 )
+
+#include "RobotSkinning.h"
 
 // Value noise, 0..1 (same as robot_aura.frag).
 float auraHash(vec3 p)
@@ -36,13 +38,15 @@ float auraNoise(vec3 x)
 MAIN_PARAMETERS
 IN(vec4 vertex, POSITION)
 IN(vec3 normal, NORMAL)
+ROBOT_SKIN_INPUTS
 OUT(vec3 oWorldPos, TEXCOORD0)
 OUT(vec3 oNormal, TEXCOORD1)
 MAIN_DECLARATION
 {
-    // Robot parts are scaled uniformly, so the world matrix also transforms directions.
-    vec3 n = normalize(mul(wMat, vec4(normal, 0.0)).xyz);
-    vec3 p = mul(wMat, vertex).xyz;
+    vec4 row0, row1, row2;
+    robotSkinMatrix(vec4(blendIndices), blendWeights, row0, row1, row2);
+    vec3 n = normalize(robotSkinDirection(row0, row1, row2, normal));
+    vec3 p = robotSkinPoint(row0, row1, row2, vertex);
     // Flame tongues in the shape: the inflation swells and shrinks with slow noise climbing up the robot.
     float swell = auraNoise(p * vec3(3.0, 1.6, 3.0) - vec3(0.0, time * auraColour.w * 1.6, 0.0));
     p += n * auraParams.z * (0.5 + swell);
