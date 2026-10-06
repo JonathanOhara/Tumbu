@@ -1,7 +1,7 @@
 # Builds the modern (Ogre 14) dependencies of TUMBU with Visual Studio 2022, x64.
 #
 #   .\scripts\deps.ps1                      # everything
-#   .\scripts\deps.ps1 -Only ogre           # one package: ogre | mygui | caelum | miniaudio
+#   .\scripts\deps.ps1 -Only ogre           # one package: ogre | mygui | caelum | miniaudio | texconv
 #
 # Everything is built in Release. Ogre builds its own dependencies (SDL2, Bullet, FreeType, pugixml) as
 # static Release libraries, so the game links Release libraries in every configuration (Release and
@@ -12,7 +12,7 @@
 # $DepsDir\src and $DepsDir\build, so they never touch the repo.
 param(
     [string]$DepsDir = $(if ($env:TUMBU_DEPS_DIR) { $env:TUMBU_DEPS_DIR } else { 'D:\TumbuDeps\modern' }),
-    [ValidateSet('all', 'ogre', 'mygui', 'caelum', 'miniaudio')] [string]$Only = 'all',
+    [ValidateSet('all', 'ogre', 'mygui', 'caelum', 'miniaudio', 'texconv')] [string]$Only = 'all',
     [string[]]$Configs = @('Release')
 )
 $ErrorActionPreference = 'Stop'
@@ -171,6 +171,19 @@ if ($Only -in 'all', 'miniaudio') {
     # stb_vorbis (bundled with miniaudio) decodes the game's .ogg files.
     Copy-Item (Join-Path $dir 'miniaudio.h'), (Join-Path $dir 'miniaudio.c'), (Join-Path $dir 'extras\stb_vorbis.c') $target -Force
     Write-Host "miniaudio $MiniaudioVersion -> $target" -ForegroundColor Cyan
+}
+
+if ($Only -in 'all', 'texconv') {
+    # Microsoft's texture converter (DirectXTex, MIT): compresses the arena textures to BC4/BC5/BC7 DDS
+    # (scripts/compress-arena-textures.ps1, run by build.ps1). A signed single exe, next to the deps (tools\texconv).
+    $tools = Join-Path (Split-Path $DepsDir -Parent) 'tools\texconv'
+    $exe = Join-Path $tools 'texconv.exe'
+    if (-not (Test-Path $exe)) {
+        New-Item -ItemType Directory -Force $tools | Out-Null
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest 'https://github.com/microsoft/DirectXTex/releases/latest/download/texconv.exe' -OutFile $exe
+    }
+    Write-Host "texconv -> $exe" -ForegroundColor Cyan
 }
 
 Write-Host "Dependencies ready in $install" -ForegroundColor Green

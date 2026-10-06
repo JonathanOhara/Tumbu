@@ -130,7 +130,7 @@ Techniques in use that have a clear modern replacement, most valuable first:
    point and compresses only highlights, hue-preserving: the same goal ("the art keeps its colours"), done better.
 6. **SSAO: 12 spiral samples.** **GTAO** (ground-truth AO) gives more accurate contact darkening for a similar cost.
    Low priority: the arena and robots also have baked AO.
-7. **Uncompressed TGA/PNG textures.** **BC7** (colour) and **BC5** (normal maps) DDS with mipmaps: about 4x less video
+7. **Uncompressed TGA/PNG textures.** **Arena done (2026-10-06):** BC7 / BC5 / BC4 DDS made from the PNGs by `scripts/compress-arena-textures.ps1` (the arena's textures in video memory: about 241 MB to 49 MB; slightly faster (bench, low wall view, 1920x1080: D3D11 +1.9 %, OpenGL +1.7 %)); the robots still use TGA. Original notes: **BC7** (colour) and **BC5** (normal maps) DDS with mipmaps: about 4x less video
    memory and faster loading, no visible change. Do it with the arena remake's new textures.
 8. **Robots skinned on the CPU** — **done (2026-10): skinned on the GPU** (`RobotSkinning.h`): Direct3D 11 fights went from
    596 to 1371 fps, and the D3D11 driver memory growth per match halved (1.7-2.3 MB to 0.7-0.8 MB). The OpenGL
@@ -218,6 +218,11 @@ depth shadows with normal offset (a single map is right for an arena this small)
     7. **Red neon (2026-10-06, done):** the ring ropes and the tube inside the T glow red at dusk and night (keyframe
        `neon` in `lighting.object`, `neonStrength`; CLAUDE.md "Arena neon"); the bloom makes the halo. Before/after:
        `%USERPROFILE%\Tumbu\arena-neon\` (19:00 and 22:00, plus 13:00 unchanged and D3D11 against OpenGL). Cost: none measurable (bench at 22:00, wide view: D3D11 and OpenGL, 1024x768 and 1920x1080, all inside the run-to-run spread).
+    8. **BC7/BC5 textures and the low setting (2026-10-06, done):** the arena's textures are compressed DDS (BC7 colour and
+       masks, BC5 normal and height + moss, BC4 AO; about 241 MB to 49 MB of video memory), made from the PNG sources by
+       `scripts/compress-arena-textures.ps1` (texconv; `build.ps1` runs it, the DDS files are not in git). With Shadows
+       off (the low setting) the stone drops its parallax and self-shadows and keeps the normal map (shared
+       `detailParams`). Before/after: `%USERPROFILE%\Tumbu\arena-bc\`. Cost: slightly faster (bench, low wall view, 1920x1080: D3D11 +1.9 %, OpenGL +1.7 %).
        Possible follow-up: let the neon light the floor and the robots near the ropes (a strip light in the arena
        shader; the energy lights are limited to four), or a slow pulse.
   - Note: the parallax suits the stone, not the canvas ring mat (no depth to show there). The sun's shadow map and the

@@ -25,6 +25,13 @@ try {
     & $cmake @buildArgs
     if ($LASTEXITCODE -ne 0) { throw "Build failed (exit $LASTEXITCODE)." }
     Write-Host "Built: $root\bin\$Configuration\TUMBU.exe" -ForegroundColor Green
+    # The arena's compressed textures (DDS, not in git) from their PNG sources, when missing or older.
+    $arena = Join-Path $root 'media\tumbu\arena'
+    $stale = Get-ChildItem $arena -Filter *.png | Where-Object {
+        $dds = [IO.Path]::ChangeExtension($_.FullName, '.dds')
+        -not (Test-Path $dds) -or (Get-Item $dds).LastWriteTime -lt $_.LastWriteTime
+    }
+    if ($stale) { & (Join-Path $PSScriptRoot 'compress-arena-textures.ps1') }
 } finally {
     Pop-Location
 }

@@ -141,6 +141,8 @@ void Lighting::declareSharedParameters(void){
 		"heroFillColour", "heroFillParams", "heroRimParams", "outlineTint",
 		// Arena neon (ring ropes, the T's tube): x = how much it glows (keyframe neon), y = brightness of the core.
 		"neonParams",
+		// Arena detail: x = 1 for the stone's parallax and self-shadows, 0 for the normal map only (shadows off).
+		"detailParams",
 		// Robot metal: the toon sky reflection and the streak.
 		"metalEnv", "metalShape", "metalExtra" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
@@ -175,6 +177,7 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "heroRimParams", Ogre::Vector4( 0.35f, 0, 0, 0 ) );
 	params->setNamedConstant( "outlineTint", Ogre::Vector4( 1, 1, 1, 1 ) );
 	params->setNamedConstant( "neonParams", Ogre::Vector4( 0, 4, 0, 0 ) );
+	params->setNamedConstant( "detailParams", Ogre::Vector4( 1, 0, 0, 0 ) );
 	params->setNamedConstant( "metalEnv", Ogre::Vector4( 1.7f, 2.5f, 0.35f, 1.5f ) );
 	params->setNamedConstant( "metalShape", Ogre::Vector4( 0.38f, 0.06f, -0.1f, 0.75f ) );
 	params->setNamedConstant( "metalExtra", Ogre::Vector4( 1.6f, 0.965f, 0.55f, 0.55f ) );
@@ -316,6 +319,8 @@ void Lighting::apply( const Keyframe &k ){
 	Ogre::Real texelSize = shadows ? 1.0f / mSceneMgr->getShadowTextureConfigList()[0].width : 0.0f;
 	params->setNamedConstant( "shadowParams", Ogre::Vector4( shadows ? 1.0f : 0.0f, shadowBias, texelSize, shadowSoftness ) );
 	params->setNamedConstant( "shadowOffset", Ogre::Vector4( shadowNormalOffset, 0, 0, 0 ) );
+	// The low setting (shadows off) also drops the stone's parallax and self-shadows; the normal map stays.
+	params->setNamedConstant( "detailParams", Ogre::Vector4( shadows ? 1.0f : 0.0f, 0, 0, 0 ) );
 	params->setNamedConstant( "shaftParams", Ogre::Vector4( shaftStrength * k.shaftStrength, shaftDistance, shaftAnisotropy, shaftSteps ) );
 
 	// Materials lit by the shader generator (terrain, particles) use the scene's ambient light and the sun.

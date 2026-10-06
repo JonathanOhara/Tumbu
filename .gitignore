@@ -44,3 +44,6 @@ ipch/
 
 # CMake build trees
 build/
+
+# The arena's compressed textures: generated from the PNGs by scripts/compress-arena-textures.ps1 (build.ps1 runs it)
+media/tumbu/arena/*.dds

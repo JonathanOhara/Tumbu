@@ -26,7 +26,8 @@ from each one you defeat.
 
 ```powershell
 .\scripts\deps.ps1                                # once: builds Ogre 14.6, MyGUI, Caelum, miniaudio into D:\TumbuDeps\modern
-.\scripts\build.ps1                               # → bin\Release\TUMBU.exe  (-Configuration RelWithDebInfo, -Clean)
+.\scripts\build.ps1                               # → bin\Release\TUMBU.exe  (-Configuration RelWithDebInfo, -Clean);
+                                                  #   also compresses the arena's textures to DDS when needed
 .\scripts\run.ps1                                 # launches from bin\Release
 ```
 
@@ -275,7 +276,13 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   `shading.material`):
   - Textures from `scripts/arena-textures.ps1`: `sandstone_*` (4.8 m tile) on the coliseum, `ringtiles_*` (12.8 m) on the
     ring floor, `ring_emblem.png` (the T, its tube, the border course) mapped from above over the 20 x 20 ring floor.
-    `*_hgt.png`: R height, G moss field.
+    `*_hgt.png`: R height, G moss field. **The game loads compressed DDS copies** (BC7 colour and masks, BC5 normal and
+    height, BC4 AO; about 241 MB to 49 MB of video memory): `scripts/compress-arena-textures.ps1` (Microsoft texconv,
+    installed by `deps.ps1 -Only texconv` in `D:\TumbuDeps\tools\texconv`) makes them from the PNGs; `build.ps1`, the
+    texture generator and the AO bake run it, and the DDS files are not in git. texconv must get `--ignore-srgb`: the
+    PNGs carry an sRGB tag and it converted them to linear (everything darker, the moss gone). BC5 normal maps keep x
+    and y; the shader rebuilds z.
+  - **The low setting** (Shadows off) also drops the stone's parallax and self-shadows (shared `detailParams`, Lighting).
   - **No mesh tangents:** the tangent frame is built per pixel from screen-space derivatives (`tumbuTangentFrame`). The
     texture UVs are at world scale (`arena_shapes.py`), so a tile has the same size everywhere.
   - Moss is decided in the shader from the moss field, the height above the ground, how much a surface faces up and

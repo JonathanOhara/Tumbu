@@ -4,10 +4,10 @@ import * from "shading.material"
 // scripts/arena-textures.ps1 (4.8 m tile, 12 cm deep), world-scale UVs from scripts/blender/arena_shapes.py, AO baked by
 // scripts/bake-arena-ao.ps1.
 material coliseumMaterial : Tumbu/EnvironmentStone{
-    set $diffuseMap "sandstone_col.png"
-    set $normalMap "sandstone_nrm.png"
-    set $heightMap "sandstone_hgt.png"
-    set $aoMap "coliseum_ao.png"
+    set $diffuseMap "sandstone_col.dds"
+    set $normalMap "sandstone_nrm.dds"
+    set $heightMap "sandstone_hgt.dds"
+    set $aoMap "coliseum_ao.dds"
     set $diffuseCol "0.97 0.95 0.92 1"
     // depth 0.12 m / 4.8 m tile
     set $stoneParams "0.025 12 30 1"

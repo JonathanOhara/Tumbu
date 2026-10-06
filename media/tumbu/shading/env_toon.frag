@@ -32,6 +32,7 @@ OGRE_UNIFORMS_BEGIN
     // x: depth of the height field in UV units (metres / tile size), y: parallax steps (0 = normal map only),
     // z: distance where the parallax has faded out, w: self-shadow strength (0..1)
     uniform vec4 stoneParams;
+    uniform vec4 detailParams;      // shared: x 0 = no parallax (the low setting: shadows off), 1 = parallax
     // moss: x threshold on the patch field, y height of the "foot" band (world units), z extra at the foot,
     // w extra on surfaces facing up
     uniform vec4 mossParams;
@@ -73,11 +74,14 @@ MAIN_DECLARATION
     // parallax fades out with distance (the far walls only get the normal map)
     float pomFade = 1.0 - saturate(length(camPos - oWorldPos) / max(stoneParams.z, 0.001));
     // more layers at grazing angles (where layering would show), fewer when looking at the surface head-on
-    float steps = floor(stoneParams.y * pomFade * mix(2.0, 0.5, saturate(viewTs.z)) + 0.5);
+    float steps = floor(stoneParams.y * detailParams.x * pomFade * mix(2.0, 0.5, saturate(viewTs.z)) + 0.5);
     float hitHeight;
     uv = tumbuParallax(heightMap, oUv, viewTs, stoneParams.x * pomFade, steps, dx, dy, hitHeight);
     vec4 hm = tumbuSampleGrad(heightMap, uv, dx, dy);
-    vec3 nTs = tumbuSampleGrad(normalMap, uv, dx, dy).xyz * 2.0 - 1.0;
+    // BC5 normal maps keep x and y only: z is rebuilt (the surface's own side of the hemisphere)
+    vec3 nTs;
+    nTs.xy = tumbuSampleGrad(normalMap, uv, dx, dy).xy * 2.0 - 1.0;
+    nTs.z = sqrt(saturate(1.0 - dot(nTs.xy, nTs.xy)));
 
     // moss: the patch field plus more at the foot of the walls, on surfaces facing up and in the joints
     // the moss field is sampled at the tile scale and at a larger, unrelated scale, so the patches do not repeat

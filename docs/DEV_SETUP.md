@@ -269,6 +269,11 @@ project.
   set comes from one height field, so colour, normal and height agree; all tile seamlessly (`-Preview <folder>`
   writes 2 x 2 tiled copies to check). The look values are constants at the top of the script. Normal maps: x along
   +u, y along +v (down the image), as the shader reads them.
+- **Compressed textures:** the game reads `media/tumbu/arena/*.dds`, made from the PNGs by
+  `.\scripts\compress-arena-textures.ps1` (BC7 for colour and masks, BC5 for `*_nrm` / `*_hgt`, BC4 for `*_ao`; full
+  mip chains, DX10 header, `--ignore-srgb`). It needs texconv (`.\scripts\deps.ps1 -Only texconv`). `build.ps1`
+  regenerates any DDS older than its PNG, and `arena-textures.ps1` / `bake-arena-ao.ps1` run it at the end. The DDS
+  files are ignored by git: after a fresh clone, `build.ps1` makes them (building only in Visual Studio does not).
 - **Custom normals survive the export:** `arena_ao.py` hands blender2ogre triangles through a temporary Triangulate
   modifier with `keep_custom_normals` (blender2ogre's own triangulation loses them), as the robot export does.
 - **Axis conversion is set explicitly:** blender2ogre keeps its settings between runs (`io_ogre.json`), and the robot

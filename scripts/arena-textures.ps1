@@ -20,3 +20,6 @@ $ErrorActionPreference = 'Continue'
 }
 $ErrorActionPreference = 'Stop'
 if ($LASTEXITCODE -ne 0) { throw "Blender failed (exit $LASTEXITCODE)" }
+
+# The game uses compressed copies (DDS) of these PNGs.
+& (Join-Path $PSScriptRoot 'compress-arena-textures.ps1')
