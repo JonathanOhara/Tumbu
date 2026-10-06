@@ -12,10 +12,11 @@ Visual track, most important first (impact on what the player sees, against the 
    Open SMAA follow-ups, small: a quality choice (Low / High) in Options; colour edge detection if edges that differ only
    in hue (a red part against a green one) stay jagged.
 2. **Arena remake** (Art side: coliseum retexture with parallax occlusion and self-shadows, a new ground, BC7/BC5
-   textures): the biggest visual gap, in every shot. Large; mock-ups first.
+   textures): the biggest visual gap, in every shot. Large. **Art direction decided (2026-10-06)**, see "Coliseum
+   retexture" under Art side; in progress.
 3. **Night arena lights** (idea 4): night fights look unplanned; builds on the energy lights.
 4. **Own stylised sky** (Rendering modernization 3): the background of every shot, the same sky on OpenGL, Caelum and
-   its patches gone. Best right after or with the arena remake (one look pass).
+   its patches gone. **Folded into the arena remake as its last step** (2026-10-06): the "painted bands" style.
 5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook.
 6. **Tune Jyn in real fights** (idea 9): no code, only play time.
 7. **Robot art pass:** richer textures and toon-friendly normals (Art side).
@@ -154,6 +155,25 @@ depth shadows with normal offset (a single map is right for an arena this small)
     (`coliseum.material`); the ring mat (`gym_arena.png`) is near-white and dominates every shot. The arena shader
     (`env_toon.frag`) has no normal map. Texture UVs are already the first UV set and the AO bake has its own second
     set (`scripts/blender/arena_ao.py`), so new tiling textures fit without breaking the AO.
+  - **Decided (2026-10-06)** after seven rounds of Blender mock-ups rendered from the game's cameras and lighting
+    (page with every round and the final look: https://claude.ai/artifact/LC8UBRa14SbNG46ANuTAu7):
+    - **Coliseum: sandstone with moss.** Big warm ashlar blocks (about 2.2 x 0.85 m, running bond, two ochre tones,
+      flat lighter patches), darker recessed and bevelled joints; sparse flat two-tone toon moss low on the walls, on the
+      ledges and in the joints. The moss is its own layer with a mask, so its amount can be tuned without baking the stone
+      again. Rejected: grey castle stone (with grey tiles the ring and the walls read as one material), worn ancient,
+      tournament (painted band), dark basalt.
+    - **Ring: today's hexagon, posts and ropes kept** (no gameplay or physics change). The floor becomes grey tournament
+      stone tiles (1.6 units, each tile one of four flat greys, +-12 %, a lighter border course, stone sides). Rejected:
+      a navy canvas mat (blue robot004 disappears on it), a stone platform or a hybrid with an inlaid mat (no ropes means
+      invisible walls or a ring-out rule), white tiles.
+    - **Centre: a charcoal painted T** (the robots' chest emblem, about 5 units wide; the tile joints show through it)
+      with a **red neon tube** just inside its edge.
+    - **Ropes: red neon**, a deep saturated red (a white-hot core made it read pink). The ropes and the T tube glow only
+      at dusk and night, faded in by a `lighting.object` keyframe value.
+    - **Field** between the ring and the walls: the grass stays (Ogre terrain).
+    - **Sky: our own "painted bands" sky** (hard colour bands, flat two-tone cumulus, a yellow sun disc with a smooth soft
+      glow, crescent moon and stars), built as the last step of this pass; it replaces Caelum (Rendering modernization 3).
+    - Contrast checked on white robot001, blue robot004 and black robot005 at 09:00, 13:00, 17:00, 19:00 and 22:00.
   - Goal: stone that reads as carved masonry from the chase camera's low angle, in the toon look: sunken joints, stones
     hiding each other, hard toon shadows in the joints (explainer and live demo:
     https://claude.ai/artifact/3Dr1UwKxTmSTafxekL48Py, option 4).

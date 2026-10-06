@@ -65,6 +65,20 @@ Enemy loadouts in `media/configuration/demo.object` climb through the tiers by m
 (002 → 003 → 004 → 005), so **mixed-set robots must still look coherent**. Keep proportions and attach
 points compatible across sets.
 
+## The arena
+
+The battle arena is a coliseum with a wrestling-style ring in the middle (`art/arena/Arena.blend`). Its remake look was
+decided on 2026-10-06 (details and the rejected options: `docs/IMPROVEMENT_IDEAS.md`, "Coliseum retexture"):
+
+- **Walls:** warm sandstone ashlar with sparse toon moss. Warm walls against a cool grey ring: the contrast is in hue,
+  not only in brightness.
+- **Ring:** grey stone tournament tiles in a few flat shades, the posts and ropes kept; a charcoal T emblem in the
+  centre with a red neon tube; red neon ropes that glow at dusk and night.
+- **Sky:** painted colour bands, flat two-tone clouds, a yellow sun with a soft glow.
+- **Rules for arena art:** flat colour areas and clear shapes, little photo noise; every robot colour must read on the
+  floor (check white robot001, blue robot004 and black robot005); the arena's only saturated colours are the moss and
+  the red neon, so the energy attacks own the screen.
+
 ## Combat design
 
 - Skills (`media/configuration/skills.object`):
