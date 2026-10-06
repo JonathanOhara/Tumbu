@@ -1,7 +1,7 @@
 # Copies everything TUMBU.exe needs at runtime into its folder (run as a post-build step).
 #   -DDEPS_INSTALL=<deps>/install  -DSOURCE_DIR=<repo>  -DBIN_DIR=<repo>/bin/<Config>
 
-# Runtime DLLs of Ogre, SDL2, MyGUI, Caelum...
+# Runtime DLLs of Ogre, SDL2, MyGUI...
 file(GLOB _dlls "${DEPS_INSTALL}/bin/*.dll")
 foreach(_dll IN LISTS _dlls)
 	get_filename_component(_name "${_dll}" NAME)
@@ -17,11 +17,6 @@ file(COPY "${DEPS_INSTALL}/Media/packs/SdkTrays.zip" DESTINATION "${BIN_DIR}/Ogr
 # MyGUI's base media (skins, fonts, pointers), when MyGUI is installed.
 if(EXISTS "${DEPS_INSTALL}/share/MYGUI/Media/MyGUI_Media")
 	file(COPY "${DEPS_INSTALL}/share/MYGUI/Media/MyGUI_Media" DESTINATION "${BIN_DIR}")
-endif()
-
-# Caelum's media (day/night sky), when Caelum is installed.
-if(EXISTS "${DEPS_INSTALL}/share/Caelum/Media")
-	file(COPY "${DEPS_INSTALL}/share/Caelum/Media/" DESTINATION "${BIN_DIR}/CaelumMedia")
 endif()
 
 # Config files owned by the repo.

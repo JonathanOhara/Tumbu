@@ -89,6 +89,7 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	dustShadow			= requireChild( cfg, name, "dustShadow" )->getValueF();
 	ConfigNode* neonNode	= cfg->findChild( "neonStrength" );	// optional: the arena's neon (ring ropes, the T's tube)
 	neonStrength		= neonNode != NULL ? neonNode->getValueF() : 4.0f;
+	sunDiscBrightness	= requireChild( cfg, name, "sunDiscBrightness" )->getValueF();
 	ssaoRadius			= requireChild( cfg, name, "ssaoRadius" )->getValueF();
 	ssaoStrength		= requireChild( cfg, name, "ssaoStrength" )->getValueF();
 	heroFillSunlit		= requireChild( cfg, name, "heroFillSunlit" )->getValueF();
@@ -143,6 +144,8 @@ void Lighting::declareSharedParameters(void){
 		"neonParams",
 		// Arena detail: x = 1 for the stone's parallax and self-shadows, 0 for the normal map only (shadows off).
 		"detailParams",
+		// The painted toon sky (sky.frag): band colours, cloud colours (w = cover), x moon y stars z quality w sun brightness.
+		"skyZenith", "skyMid", "skyHorizon", "cloudLit", "cloudShade", "skyParams",
 		// Robot metal: the toon sky reflection and the streak.
 		"metalEnv", "metalShape", "metalExtra" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
@@ -178,6 +181,12 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "outlineTint", Ogre::Vector4( 1, 1, 1, 1 ) );
 	params->setNamedConstant( "neonParams", Ogre::Vector4( 0, 4, 0, 0 ) );
 	params->setNamedConstant( "detailParams", Ogre::Vector4( 1, 0, 0, 0 ) );
+	params->setNamedConstant( "skyZenith", Ogre::Vector4( 0.3f, 0.5f, 0.85f, 1 ) );
+	params->setNamedConstant( "skyMid", Ogre::Vector4( 0.45f, 0.68f, 0.95f, 1 ) );
+	params->setNamedConstant( "skyHorizon", Ogre::Vector4( 0.8f, 0.9f, 0.98f, 1 ) );
+	params->setNamedConstant( "cloudLit", Ogre::Vector4( 1, 1, 1, 0 ) );
+	params->setNamedConstant( "cloudShade", Ogre::Vector4( 0.7f, 0.78f, 0.92f, 1 ) );
+	params->setNamedConstant( "skyParams", Ogre::Vector4( 0, 0, 0, 2.5f ) );
 	params->setNamedConstant( "metalEnv", Ogre::Vector4( 1.7f, 2.5f, 0.35f, 1.5f ) );
 	params->setNamedConstant( "metalShape", Ogre::Vector4( 0.38f, 0.06f, -0.1f, 0.75f ) );
 	params->setNamedConstant( "metalExtra", Ogre::Vector4( 1.6f, 0.965f, 0.55f, 0.55f ) );
@@ -196,6 +205,14 @@ Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
 	k.heroFillStrength	= requireChild( node, name, "heroFillStrength" )->getValueF();
 	ConfigNode* neon = node->findChild( "neon" );	// optional: 0 (the neon is off) when missing
 	k.neon			= neon != NULL ? neon->getValueF() : 0.0f;
+	ConfigNode* stars = node->findChild( "stars" );	// optional: 0 (no stars) when missing
+	k.stars			= stars != NULL ? stars->getValueF() : 0.0f;
+	k.cloudCover	= requireChild( node, name, "cloudCover" )->getValueF();
+	k.skyZenith		= readColour( node, name, "skyZenith" );
+	k.skyMid		= readColour( node, name, "skyMid" );
+	k.skyHorizon	= readColour( node, name, "skyHorizon" );
+	k.cloudLit		= readColour( node, name, "cloudLit" );
+	k.cloudShade	= readColour( node, name, "cloudShade" );
 	k.heroFillColour	= readColour( node, name, "heroFillColour" );
 	ConfigNode* tint = node->findChild( "outlineTint" );	// optional: white (no tint) when missing
 	k.outlineTint	= tint != NULL ? readColour( node, name, "outlineTint" ) : Ogre::ColourValue::White;
@@ -219,6 +236,13 @@ Lighting::Keyframe Lighting::blend( const Keyframe &a, const Keyframe &b, Ogre::
 	k.shaftStrength	= Ogre::Math::lerp( a.shaftStrength, b.shaftStrength, t );
 	k.heroFillStrength	= Ogre::Math::lerp( a.heroFillStrength, b.heroFillStrength, t );
 	k.neon			= Ogre::Math::lerp( a.neon, b.neon, t );
+	k.stars			= Ogre::Math::lerp( a.stars, b.stars, t );
+	k.cloudCover	= Ogre::Math::lerp( a.cloudCover, b.cloudCover, t );
+	k.skyZenith		= Ogre::Math::lerp( a.skyZenith, b.skyZenith, t );
+	k.skyMid		= Ogre::Math::lerp( a.skyMid, b.skyMid, t );
+	k.skyHorizon	= Ogre::Math::lerp( a.skyHorizon, b.skyHorizon, t );
+	k.cloudLit		= Ogre::Math::lerp( a.cloudLit, b.cloudLit, t );
+	k.cloudShade	= Ogre::Math::lerp( a.cloudShade, b.cloudShade, t );
 	k.heroFillColour	= Ogre::Math::lerp( a.heroFillColour, b.heroFillColour, t );
 	k.outlineTint	= Ogre::Math::lerp( a.outlineTint, b.outlineTint, t );
 	k.sunColour		= Ogre::Math::lerp( a.sunColour, b.sunColour, t );
@@ -331,11 +355,14 @@ void Lighting::apply( const Keyframe &k ){
 		sun->setDiffuseColour( k.sunColour );
 		sun->setSpecularColour( k.sunColour * 0.5f );
 	}
-	if( sky != NULL ){
-		// Between moonFrom and moonUntil (across midnight) the light plays the moon.
-		bool moon = k.hour >= moonFrom || k.hour < moonUntil;
-		sky->setLightDirection( -towardsSun, moon );
-	}
+	// The painted sky: between moonFrom and moonUntil (across midnight) the light plays the moon.
+	bool moon = k.hour >= moonFrom || k.hour < moonUntil;
+	params->setNamedConstant( "skyZenith", toVector4( k.skyZenith, 1 ) );
+	params->setNamedConstant( "skyMid", toVector4( k.skyMid, 1 ) );
+	params->setNamedConstant( "skyHorizon", toVector4( k.skyHorizon, 1 ) );
+	params->setNamedConstant( "cloudLit", toVector4( k.cloudLit, k.cloudCover ) );
+	params->setNamedConstant( "cloudShade", toVector4( k.cloudShade, 1 ) );
+	params->setNamedConstant( "skyParams", Ogre::Vector4( moon ? 1.0f : 0.0f, k.stars, sky != NULL ? (Ogre::Real) sky->getQuality() : 1.0f, sunDiscBrightness ) );
 }
 //-------------------------------------------------------------------------------------
 void Lighting::enablePostProcessing( Ogre::Viewport* viewport ){

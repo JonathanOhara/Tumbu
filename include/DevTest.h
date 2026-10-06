@@ -52,7 +52,7 @@ public:
 	static bool isFxDisabled(void){ return noFx; }
 	/// -aa=0|1: anti-aliasing of this run regardless of options.cfg (-1 = not given).
 	static int getAntiAliasing(void){ return antiAliasing; }
-	/// -sky=0|1: sky quality of this run (0 skydome, 1 Caelum) regardless of options.cfg (-1 = not given).
+	/// -sky=0|1: sky quality of this run (0 Low: no clouds, 1 High: clouds) regardless of options.cfg (-1 = not given).
 	static int getSky(void){ return sky; }
 	/// -hero=robotNNN: the set every hero part comes from, or empty for the demo.object loadout.
 	static const Ogre::String &getHeroSet(void){ return heroSet; }

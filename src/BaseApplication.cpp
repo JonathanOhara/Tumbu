@@ -11,7 +11,7 @@
 /**
  * The viewport renders with the shader generator scheme, and the shader generator builds its technique from
  * the first technique with a fixed-function pass, i.e. a material's fallback. Materials that bring their own
- * shaders (robots, Caelum) must keep them, so for those this listener answers first with their shader
+ * shaders (robots, the sky) must keep them, so for those this listener answers first with their shader
  * technique. Materials without shaders are left to the shader generator.
  */
 class ProgrammableTechniqueResolver: public Ogre::MaterialManager::Listener{

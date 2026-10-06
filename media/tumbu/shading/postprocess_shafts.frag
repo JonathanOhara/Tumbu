@@ -48,9 +48,10 @@ MAIN_DECLARATION
     }
 
     float rayLength = min(length(ray), shaftParams.y);
-    // Sky (nothing behind it): a shorter march, so the open sky does not turn milky.
+    // Sky (nothing behind it): a much shorter march, so the painted sky keeps its colours (0.35 washed the bands out);
+    // beams that cross the wall tops still show against it.
     if (length(ray) > shaftParams.y * 4.0)
-        rayLength = shaftParams.y * 0.35;
+        rayLength = shaftParams.y * 0.1;
     vec3 dir = normalize(ray);
 
     // A different start offset per pixel turns banding into fine noise, which the blur removes.

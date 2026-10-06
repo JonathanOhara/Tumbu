@@ -25,7 +25,7 @@ from each one you defeat.
 ## Build and run
 
 ```powershell
-.\scripts\deps.ps1                                # once: builds Ogre 14.6, MyGUI, Caelum, miniaudio into D:\TumbuDeps\modern
+.\scripts\deps.ps1                                # once: builds Ogre 14.6, MyGUI, miniaudio (+ texconv) into D:\TumbuDeps\modern
 .\scripts\build.ps1                               # → bin\Release\TUMBU.exe  (-Configuration RelWithDebInfo, -Clean);
                                                   #   also compresses the arena's textures to DDS when needed
 .\scripts\run.ps1                                 # launches from bin\Release
@@ -35,9 +35,8 @@ from each one you defeat.
   The configurations are Release and RelWithDebInfo; RelWithDebInfo defines `TUMBU_DEBUG` (debug keys,
   physics debug draw). There is **no Debug config**, because all dependencies are Release-only builds that
   share one CRT. Visual Leak Detector (`vld.h`) is used only if it is on the include path.
-- The post-build step `cmake/StageRuntime.cmake` copies the DLLs, `OgreMedia/`, `MyGUI_Media/`,
-  `CaelumMedia/`, `plugins.cfg` and `resources.cfg` into `bin\<Config>`. `media/` is read in place from
-  `../../media`.
+- The post-build step `cmake/StageRuntime.cmake` copies the DLLs, `OgreMedia/`, `MyGUI_Media/`, `plugins.cfg` and
+  `resources.cfg` into `bin\<Config>`. `media/` is read in place from `../../media`.
 - `CMakeLists.txt` globs `src/*.cpp` and `include/*.h` (`CONFIGURE_DEPENDS`). `src/MiniaudioImpl.c`
   compiles miniaudio and stb_vorbis.
 - **Norton 360 on this PC** can block a freshly built `TUMBU.exe` ("Acesso negado" / Access denied, or a
@@ -62,7 +61,7 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
   `-fpscap=N`, `-quitafter=S`, `-hour=H`, `-mute` (all sounds at volume 0; also works for a normal game), `-nofx` (no
   special-attack effects or ki aura, to compare frame rate or memory), `-aa=0|1` (anti-aliasing off / SMAA for this run,
-  whatever `options.cfg` says: `devtest.ps1 -AA 0`), `-sky=0|1` (skydome / Caelum for this run: `-Sky 0`), `-bench=S`
+  whatever `options.cfg` says: `devtest.ps1 -AA 0`), `-sky=0|1` (the painted sky without / with its clouds for this run: `-Sky 0`), `-bench=S`
   (`devtest.ps1 -Bench S`: a steady frame-rate measurement; no AI, the camera fixed from the first frame (the standard
   robot view unless `-camera`), a 3 s warm-up, then S seconds counted with a wall-clock timer; logs `[DEVTEST] bench:
   fps=… ms=… window_min=… window_max=… render_ms=… rest_ms=… render=… size=… aa=… sky=…`, where `render_ms` is the time
@@ -156,36 +155,29 @@ materials, textures, GUI) gets a before/after set:
 | Physics | **Bullet 3.25** + Ogre's `Bullet` component, behind a small layer that mirrors the old OgreBullet API | `Physics.h/.cpp`, `SimpleRigidBody`, `Robot`, `Special*`, `Demo` |
 | GUI | **MyGUI 3.5.1** (Ogre platform, BlackBlue theme). Layouts are in `media/gui/*.layout` | `GUI.cpp/.h` |
 | Audio | **miniaudio 0.11.25** + stb_vorbis. Files are loaded through Ogre resources; 3D sounds follow scene nodes | `Sound`, `SoundManager` |
-| Sky | Low: skydome material. High: **Caelum** day/night, **Direct3D 11 only** (Caelum ships only cg/hlsl shaders), driven by `Clock` | `Sky` |
-| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, a camera-relative "hero" fill on the robots, integrated depth shadow map, HDR compositor with god rays, bloom and tone mapping, then SMAA anti-aliasing; Caelum sun follows it | `Lighting`, `media/tumbu/shading/` |
+| Sky | Our own **painted toon sky** (`sky.frag`, `Tumbu/ToonSky`): colour bands, sun, moon, stars; High adds clouds. Colours and the sun from `lighting.object`, the same on Direct3D 11 and OpenGL | `Sky`, `Lighting` |
+| Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, a camera-relative "hero" fill on the robots, integrated depth shadow map, HDR compositor with god rays, bloom and tone mapping, then SMAA anti-aliasing; the sky's sun follows it | `Lighting`, `media/tumbu/shading/` |
 | Shaders | Robot and arena shaders in unified GLSL/HLSL (`OgreUnifiedShader.h`), sharing `TumbuToon.h`; materials set textures through `set $var` | `media/tumbu/robots/`, `media/tumbu/shading/` |
 | Scene format | `.scene` from Ogitor 0.4.4 + terrain page `.ogt`, parsed by our `DotSceneLoader` (rapidxml) | `media/scenes/arena` |
 | Installer | NSIS `Tumbu.nsi` (still the 2011 x86 layout; needs updating) | root |
 
-PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in the port.
+PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in the port, and Caelum in 2026-10 (the
+painted toon sky replaced it).
 
 ### Rendering pitfalls (all handled; keep them in mind)
 
 - **Shader generator versus custom shaders.** The viewport uses the RTSS scheme, and the RTSS builds its
   technique from a material's first *fixed-function* technique, which is its fallback. So
   `ProgrammableTechniqueResolver` in `BaseApplication.cpp` (a `MaterialManager::Listener` on
-  `MSN_SHADERGEN`) returns a material's own fully programmable technique first. Robots and Caelum depend on
+  `MSN_SHADERGEN`) returns a material's own fully programmable technique first. Robots and the sky depend on
   this.
 - **Strict resource groups.** Only global-pool groups search other groups, and the robot shaders
   `#include <OgreUnifiedShader.h>` from `OgreInternal`. So `BaseApplication::locateResources` creates `Game`
   in the global pool.
 - **Direct3D 11 HLSL profile.** A plain `hlsl` program compiles at level 9_1 (64 instructions). The robot
   programs set `target vs_4_0` / `ps_4_0`.
-- **Caelum on Direct3D 11.**
-  - `deps.ps1` (`Repair-CaelumShaders`) adds a leading `POSITION` input to Caelum's fragment programs,
-    because Direct3D 11 matches stage inputs by register.
-  - `Sky` must `addListener` Caelum on the render window, so the dome follows the camera.
-  - Caelum's sun and moon lights are disabled; the arena keeps its own lights.
-  - The `DepthComposer.material` "groundFog… does not exist" log errors are harmless.
 - **Patched Ogre bug:** `deps.ps1` (`Repair-OgreSource`) patches `OgreTerrain.cpp`. For version-1 terrain
   files (our 2011 Ogitor page), `Terrain::prepare` allocated the delta buffer twice, leaking 1 MB per match.
-- **Patched Caelum bug:** `Repair-CaelumSource` makes its dome mesh lookup use the Caelum group. Otherwise
-  the second match with the High sky threw "CaelumSphericDome already exists".
 - **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
   `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
   particles render white.
@@ -321,10 +313,20 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   from depth, 12 spiral samples; the final pass multiplies the scene by it. `ssaoRadius`, `ssaoStrength`
   (0 = off). Note: the final pass cannot sample the depth texture (it reads zeros on Direct3D 11), so every
   depth-based effect is computed in an earlier pass.
-- **Visible sun = lighting sun.** `Sky` is a `RenderTargetListener` added after Caelum: in
-  `preRenderTargetUpdate` (after Caelum's frame update, before it places the sky) it sets Caelum's sun, sky
-  dome and clouds to `Lighting`'s direction, or its moon between `moonFrom` and `moonUntil`. The `twilight`
-  keyframe brings the sun to the horizon before the moon takes over.
+- **The sky** (arena remake step 9, 2026-10-06; replaced Caelum, which was Direct3D 11 only and needed two source
+  patches): `sky.vert` / `sky.frag` on `Tumbu/ToonSky`, a 1000-unit box around the arena made by `Sky` (a ManualObject in
+  `RENDER_QUEUE_SKIES_EARLY`, `depth_write off`, so the post-processing still sees sky pixels as far: no fog and no
+  shadow-map haze on them). **Not Ogre's `setSkyBox`:** it accepts only materials whose first unit is a cube map and
+  silently swapped ours for its default ("skybox material ... is not supported, defaulting"). The shader works from the
+  direction to the camera: five hard colour bands up to 50 degrees (`skyZenith` / `skyMid` / `skyHorizon`), a yellow sun
+  disc with a smooth glow (`sunDiscBrightness`, in HDR so it blooms), or between `moonFrom` and `moonUntil` a crescent moon;
+  stars (`stars`, centres projected onto the sky sphere, at least 1.5 pixels wide); with Sky quality High, flat two-tone
+  cumulus (clusters of round lumps with a flat bottom placed by azimuth and elevation, one per 30-degree sector at most,
+  `cloudLit` / `cloudShade` / `cloudCover`; above 1 in HDR, or the tone mapping turns them grey). All keyframe values in
+  `lighting.object`, shared values from `Lighting`. The distance fog blends into `skyHorizon` x `fogBrightness`. The
+  god-ray march over sky pixels is short (0.1 of `shaftDistance`): the 2011 value washed the bands out. Same cost as
+  Caelum (bench, 1920x1080, the sky filling the view: D3D11 +0.006 ms, OpenGL -0.011 ms). The `twilight` keyframe still
+  brings the sun to the horizon before the moon takes over.
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame
@@ -379,8 +381,8 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
 - The working directory must be `bin\<Config>`, because the paths in `resources.cfg` are relative. The
   groups:
   - `OgreInternal`, `Essential`
-  - `General`: the game's shared media. Ogre 14 looks up skydome materials and fonts in the default group.
-  - `Game`, `Plants`, `TerrainTextures`, `Caelum`, `MyGUI`
+  - `General`: the game's shared media. Ogre 14 looks up fonts in the default group.
+  - `Game`, `Plants`, `TerrainTextures`, `MyGUI`
 - **Per-user folder `%USERPROFILE%\Tumbu\`** holds:
   - `ogre.cfg`: render system
   - `options.cfg`: `SkyQuality`, `Shadows` (0 off, 1 normal = default, 2 high), `FrameLimit`. For
@@ -446,8 +448,8 @@ through a listener registry in `BaseApplication`.
   - the dialog queue (Alert, Confirm, Conversation, ShowPart), the log and skill hits
 
   `Tutorial` is a guided tutorial state machine.
-- `SoundManager` / `Sound` use miniaudio. `Sky` uses the skydome or Caelum. `Clock` keeps the in-game time
-  (`getHours()` drives Caelum).
+- `SoundManager` / `Sound` use miniaudio. `Sky` draws the painted toon sky. `Clock` keeps the in-game time
+  (`getHours()` drives `Lighting`, which drives the sky).
 - `Lighting` (owned by `Demo`) sets the sun, ambient light and the `TumbuLighting` shader values from
   `lighting.object`, blending its keyframes by the clock every frame, and owns the post-processing compositor.
 - `EffectsManager` (owned by `Demo`, `getInstance()` is NULL outside a match) runs the special-attack effects

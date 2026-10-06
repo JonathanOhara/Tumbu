@@ -36,7 +36,8 @@ Phase A runs on the legacy toolchain (`scripts/build.ps1`). Phase B uses the new
 - [x] **B5** Audio on miniaudio
 - [x] **B6** GUI on MyGUI (start menu, HUD, dialogs, ESC menu and inventory)
 - [x] **B7** Mesh upgrade (scripts/upgrade-meshes.ps1) and modern render systems: Direct3D 11 (default) and OpenGL 3+
-- [x] **C2** Sky on Caelum ("High" sky quality, Direct3D 11; OpenGL falls back to the skydome). This step
+- [x] **C2** Sky on Caelum ("High" sky quality, Direct3D 11; OpenGL falls back to the skydome). *Replaced by our own
+  painted toon sky in the arena remake (2026-10-06).* This step
   also fixed the robot shaders, which since B7 had silently used their fallback technique. See "Rendering
   pitfalls" in CLAUDE.md.
 - [x] **Frame rate** VSync by default (the monitor's rate, e.g. 144 Hz), with options for 144/72/60/Unlimited

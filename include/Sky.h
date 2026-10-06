@@ -2,56 +2,44 @@
 #define __Sky_h_
 
 #include <Ogre.h>
-#include <GUI.h>
 
 #include "Clock.h"
 #include "TUMBU.h"
 
 
 class Clock;
-namespace Caelum{ class CaelumSystem; }
 
-class Sky: public Ogre::FrameListener, public Ogre::RenderTargetListener{
+/** The painted toon sky (Tumbu/ToonSky, media/tumbu/shading/sky.frag) on a big box around the arena. Its colours, sun and moon
+ *  come from the lighting rig (Lighting passes them as shared shader values), so the visible sun always matches the
+ *  shadows, on Direct3D 11 and OpenGL alike. It replaced Caelum and the 2011 skydome textures (2026-10). */
+class Sky: public Ogre::FrameListener{
 public:
 	Sky( Ogre::SceneManager* sceneMgr );
 	virtual ~Sky(void);
 	static Sky* getInstance(void);
 
 	void setClock( Clock* _clock );
+	/// Sky quality "Low": the bands, sun, moon and stars, no clouds and no twinkling.
 	void skyLowQuality();
-	void skyLowQualityMorning();
-	void skyLowQualityNight();
+	/// Sky quality "High": with the drifting clouds.
 	void skyHighQuality(Ogre::Camera* camera);
-	void updateCaelumTime(void);
-	
+	/// 0 Low, 1 High (Lighting passes it to the sky shader).
+	int getQuality(void);
+
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
 
-	/** The lighting sun (or moon, at night) that the visible sky follows (Lighting::apply). Caelum computes an
-	 *  astronomical sun from the date; without this its sun disc did not match the shadows. */
+	/// Kept for Lighting: the sky shader reads the light direction itself (shared sunDirection).
 	void setLightDirection( const Ogre::Vector3 &direction, bool isMoon );
-	/// Applies the lighting direction to Caelum after its own per-frame update, before the frame renders.
-	void preRenderTargetUpdate( const Ogre::RenderTargetEvent &evt );
-
-protected:
 
 private:
-	TumbuEnums::DayType dayType;
+	void showSky(void);
+
 	Ogre::Light* light;
+	Ogre::SceneNode* skyNode;
+	Ogre::ManualObject* skyObject;
 	Ogre::SceneManager* mSceneMgr;
-
 	Clock* clock;
-
-	Ogre::Real 
-		updateTime,
-		timeMultiplier;
-
 	int quality;
-
-	/// Day/night sky for the "High" quality (Direct3D 11 only: Caelum has no GLSL shaders).
-	Caelum::CaelumSystem* caelum;
-
-	bool hasLightDirection, lightIsMoon;
-	Ogre::Vector3 lightDirection;
 
 	static Sky* instance;
 };

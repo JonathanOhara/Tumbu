@@ -575,7 +575,7 @@ void Demo::createSky(){
 	lighting->setSky( sky );
 	tumbu->getRoot()->addFrameListener( sky );
 
-	// DevTest -sky=0|1 overrides the option for one run (to compare Caelum with the skydome).
+	// DevTest -sky=0|1 overrides the option for one run (the painted sky without or with its clouds).
 	switch( DevTest::getSky() >= 0 ? DevTest::getSky() : tumbu->getSkyQuality() ){
 	case 0:
 		sky->skyLowQuality();

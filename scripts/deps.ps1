@@ -1,7 +1,7 @@
 # Builds the modern (Ogre 14) dependencies of TUMBU with Visual Studio 2022, x64.
 #
 #   .\scripts\deps.ps1                      # everything
-#   .\scripts\deps.ps1 -Only ogre           # one package: ogre | mygui | caelum | miniaudio | texconv
+#   .\scripts\deps.ps1 -Only ogre           # one package: ogre | mygui | miniaudio | texconv
 #
 # Everything is built in Release. Ogre builds its own dependencies (SDL2, Bullet, FreeType, pugixml) as
 # static Release libraries, so the game links Release libraries in every configuration (Release and
@@ -12,7 +12,7 @@
 # $DepsDir\src and $DepsDir\build, so they never touch the repo.
 param(
     [string]$DepsDir = $(if ($env:TUMBU_DEPS_DIR) { $env:TUMBU_DEPS_DIR } else { 'D:\TumbuDeps\modern' }),
-    [ValidateSet('all', 'ogre', 'mygui', 'caelum', 'miniaudio', 'texconv')] [string]$Only = 'all',
+    [ValidateSet('all', 'ogre', 'mygui', 'miniaudio', 'texconv')] [string]$Only = 'all',
     [string[]]$Configs = @('Release')
 )
 $ErrorActionPreference = 'Stop'
@@ -20,7 +20,6 @@ $ErrorActionPreference = 'Stop'
 # Pinned versions.
 $OgreVersion      = '14.6.0'
 $MyGuiVersion     = '3.5.1'
-$CaelumCommit     = 'master'
 $MiniaudioVersion = '0.11.25'
 
 $src     = Join-Path $DepsDir 'src'
@@ -61,28 +60,6 @@ function Build-CMake([string]$name, [string]$sourceDir, [string[]]$options) {
         Write-Host "Building $name ($config)" -ForegroundColor Cyan
         Invoke-Checked $cmake @('--build', $buildDir, '--config', $config, '--parallel')
         Invoke-Checked $cmake @('--install', $buildDir, '--config', $config)
-    }
-}
-
-# Caelum's fragment programs skip the POSITION input that their vertex programs output first. Direct3D 9
-# matched stage inputs by semantic, but Direct3D 11 matches them by register, so every input read the wrong
-# value (the sky came out flat yellow). Give each fragment program a leading POSITION input.
-function Repair-CaelumShaders([string]$mediaDir) {
-    foreach ($file in Get-ChildItem (Join-Path $mediaDir '*.cg')) {
-        $lines = [System.Collections.Generic.List[string]](Get-Content $file)
-        $changed = $false
-        for ($i = 0; $i -lt $lines.Count; $i++) {
-            if ($lines[$i] -notmatch '^\s*void\s+\w*(FP|_fp)\s*$') { continue }
-            $open = $i + 1
-            while ($lines[$open] -notmatch '^\s*\(') { $open++ }
-            if ($lines[$open + 1] -match ':\s*POSITION') { continue }
-            $lines.Insert($open + 1, '    in float4 d3d11Position : POSITION,')
-            $changed = $true
-        }
-        if ($changed) {
-            Set-Content -Path $file -Value $lines
-            Write-Host "Caelum: D3D11 input fix in $($file.Name)" -ForegroundColor DarkGray
-        }
     }
 }
 
@@ -136,31 +113,6 @@ if ($Only -in 'all', 'mygui') {
     Copy-Item -Recurse -Force (Join-Path $dir 'Media\MyGUI_Media') $media
     # The game uses the BlackBlue theme (Media\Common\Themes); ship it inside MyGUI_Media.
     Copy-Item -Force (Join-Path $dir 'Media\Common\Themes\MyGUI_BlackBlue*') (Join-Path $media 'MyGUI_Media')
-}
-
-# Caelum on Ogre 14: generateSphericDome() looks for its dome mesh with resourceExists(name), which only
-# searches global-pool groups, never the "Caelum" group the mesh lives in. The second match with the High sky
-# then created the mesh again and Ogre threw "already exists". Look in Caelum's own group.
-function Repair-CaelumSource([string]$sourceDir) {
-    $file = Join-Path $sourceDir 'main\src\InternalUtilities.cpp'
-    $text = [IO.File]::ReadAllText($file)
-    $check = 'if (Ogre::MeshManager::getSingleton ().resourceExists (name)) {'
-    if ($text.Contains($check)) {
-        $text = $text.Replace($check, 'if (Ogre::MeshManager::getSingleton ().resourceExists (name, RESOURCE_GROUP_NAME)) {')
-        [IO.File]::WriteAllText($file, $text)
-        Write-Host "Caelum: patched the dome mesh lookup in InternalUtilities.cpp" -ForegroundColor DarkGray
-    }
-}
-
-if ($Only -in 'all', 'caelum') {
-    $dir = Get-Source "caelum-$CaelumCommit" "https://github.com/OGRECave/ogre-caelum/archive/$CaelumCommit.tar.gz" "ogre-caelum-$CaelumCommit"
-    Repair-CaelumSource $dir
-    Build-CMake 'caelum' $dir @("-DOGRE_DIR=$install\CMake")
-    # Caelum's shaders, textures and meshes are not installed; the game ships them as CaelumMedia.
-    $media = Join-Path $install 'share\Caelum\Media'
-    New-Item -ItemType Directory -Force $media | Out-Null
-    Copy-Item -Force (Join-Path $dir 'main\resources\*') $media
-    Repair-CaelumShaders $media
 }
 
 if ($Only -in 'all', 'miniaudio') {

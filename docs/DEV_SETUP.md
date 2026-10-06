@@ -42,11 +42,11 @@ Paths below are the ones on Jonathan's machine in Sep 2026. Adjust them if thing
 ### A.2 Build the dependencies (once, about 20–40 minutes)
 
 ```powershell
-.\scripts\deps.ps1                  # everything: ogre, mygui, caelum, miniaudio
-.\scripts\deps.ps1 -Only caelum     # rebuild a single package
+.\scripts\deps.ps1                  # everything: ogre, mygui, miniaudio, texconv
+.\scripts\deps.ps1 -Only mygui      # rebuild a single package
 ```
 
-- It downloads pinned sources (Ogre 14.6.0, MyGUI 3.5.1, Caelum master, miniaudio 0.11.25) and builds them
+- It downloads pinned sources (Ogre 14.6.0, MyGUI 3.5.1, miniaudio 0.11.25; texconv from Microsoft's DirectXTex releases) and builds them
   in Release, x64. Ogre also builds its own dependencies (SDL2, Bullet 3, FreeType, pugixml) as static libs.
 - Everything goes to `D:\TumbuDeps\modern` (`src`, `build`, `ogredeps`, `install`), outside the repo. To use
   another folder, set the user env variable `TUMBU_DEPS_DIR` before running `deps.ps1`, then restart
@@ -55,7 +55,6 @@ Paths below are the ones on Jonathan's machine in Sep 2026. Adjust them if thing
   folder does not exist.
 - The script patches two upstream problems in the downloaded sources:
   - an Ogre 14.6 terrain memory leak (`Repair-OgreSource`)
-  - Caelum's shaders for Direct3D 11 (`Repair-CaelumShaders`)
 
   Both patches are idempotent, so running the script again is safe.
 
@@ -70,7 +69,7 @@ Paths below are the ones on Jonathan's machine in Sep 2026. Adjust them if thing
 
 The build's post-build step (`cmake/StageRuntime.cmake`) copies everything the exe needs next to it:
 - the DLLs
-- `OgreMedia/`, `MyGUI_Media/` and `CaelumMedia/`
+- `OgreMedia/` and `MyGUI_Media/`
 - `plugins.cfg` and `resources.cfg`
 
 The repo's `media/` is used in place (`../../media`), so edits to materials, layouts and `*.object` files
@@ -103,14 +102,14 @@ step (`build.ps1 -Clean`, or reload the CMake project in VS) to pick up new file
   - `ogre.cfg`: render system and video mode. Delete it to see the Ogre config dialog again.
   - `options.cfg`: in-game options (`SkyQuality`, `Shadows`, `FrameLimit`).
   - `ogre.log` and `MyGUI.log`.
-- **Render system:** **Direct3D 11** is the default and recommended. **OpenGL 3+** also works, but the
-  Caelum sky needs Direct3D 11, so on OpenGL "High" sky quality falls back to the simple skydome.
+- **Render system:** **Direct3D 11** is the default and recommended. **OpenGL 3+** also works and looks the
+  same.
 - **Frame rate:** the default is **VSync**, which runs at the monitor's refresh rate (144 FPS on a 144 Hz
   screen). In **Options → Frame limit** you can choose VSync, 144, 72, 60 or Unlimited. Movement and physics
   are frame-rate independent, so the game plays the same at any FPS.
 - **Sky quality:**
-  - **Low** is a static skydome.
-  - **High** is the Caelum day/night sky (sun, moon, stars, clouds) driven by the game's `Clock`.
+  - **Low**: the painted toon sky (colour bands, sun, moon, stars), following the game's `Clock`.
+  - **High**: the same with drifting toon clouds.
 - **Controls:**
   - WASD to move, Left Shift to run.
   - **U/1** kick, **O/2** punch, **I/3** special (Jyn). Left Ctrl/P to guard.
@@ -154,12 +153,11 @@ quit.
 
 | Problem | Cause and fix |
 |---|---|
-| CMake: `Could not find OGRE` / `MyGUI` / `Caelum` | Dependencies are not built, or `TUMBU_DEPS_DIR` points elsewhere. Run `deps.ps1`. |
+| CMake: `Could not find OGRE` / `MyGUI` | Dependencies are not built, or `TUMBU_DEPS_DIR` points elsewhere. Run `deps.ps1`. |
 | Launching `TUMBU.exe` fails with **"Access denied"** (Acesso negado), or the process hangs at about 2 MB | The antivirus (**Norton 360** on this PC) holds freshly built, unknown exes. Add an exclusion for the repo's `bin\` folder (Norton → Settings → Antivirus → Scans and Risks → Items to Exclude from Scans / Auto-Protect), or allow the file when Norton asks. |
 | `deps.ps1` download or git fails with a TLS/SSL error | Norton intercepts HTTPS. For git, use `git -c http.sslBackend=schannel …`. The scripts avoid git clones. |
-| Pink/white or missing materials | Look in `ogre.log` for "Cannot locate resource". Media must be listed in `resources.cfg`. Game media that engine lookups need (skydome, fonts) lives in `[General]`. |
+| Pink/white or missing materials | Look in `ogre.log` for "Cannot locate resource". Media must be listed in `resources.cfg`. Game media that engine lookups need (fonts) lives in `[General]`. |
 | `Program '…' is not supported` in `ogre.log` | A shader failed to compile, and the material silently fell back to its simpler technique. Read the error below that line. Direct3D 11 compiles `hlsl` at shader model 2 level unless the program sets `target vs_4_0` / `ps_4_0`. |
-| The High sky is black, flat yellow or missing | Caelum's media must come from `deps.ps1`, which patches its shaders for Direct3D 11 (`Repair-CaelumShaders`). Rerun `.\scripts\deps.ps1 -Only caelum`, then build. |
 | A mesh fails with "unsupported mesh version" | It is an Ogre 1.7 mesh. Upgrade it with `scripts\upgrade-meshes.ps1`. |
 | Crash right at start | Delete `%USERPROFILE%\Tumbu\ogre.cfg` and pick Direct3D 11 again. Then check `ogre.log`. |
 | Any other crash | Read `%USERPROFILE%\Tumbu\crash.log` (the call stack). Reproduce it in a RelWithDebInfo build for file:line. |
@@ -377,7 +375,7 @@ NSIS 3.x, create this staging layout next to the `.nsi`, and run `makensis Tumbu
 
 ```
 Tumbu\
-  bin\Release\        TUMBU.exe + DLLs + OgreMedia\ MyGUI_Media\ CaelumMedia\ + plugins.cfg + resources.cfg
+  bin\Release\        TUMBU.exe + DLLs + OgreMedia\ MyGUI_Media\ + plugins.cfg + resources.cfg
   media\
   dependencies\vc_redist.x64.exe     (current VC++ 2015–2022 x64 redistributable)
   ShyDS Games.url

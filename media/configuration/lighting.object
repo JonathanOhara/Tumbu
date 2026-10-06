@@ -65,11 +65,11 @@ lighting configuration{
 	contactShadowRadius 0.55
 
 	// Distance fog: far geometry (mountains, terrain) fades into the sky colour. Start distance, density per unit,
-	// maximum amount (0 = no fog), and the brightness of the fog colour (sky ambient colour x this).
+	// maximum amount (0 = no fog), and the brightness of the fog colour (the sky's horizon band, skyHorizon x this).
 	fogStart 35
 	fogDensity 0.012
 	fogMax 0.65
-	fogBrightness 2.2
+	fogBrightness 0.9
 
 	// Dust motes (dust.particle): brightness in sunlight (scaled by the keyframe shaftStrength) and in shadow.
 	// dustSunlight 0 hides them.
@@ -78,6 +78,10 @@ lighting configuration{
 	// Arena neon (the ring ropes and the T's tube in the centre): brightness of the glowing core in the HDR image
 	// (above bloomThreshold, so it blooms). How much it glows is the keyframe value neon (0..1, 0 when missing).
 	neonStrength 4.0
+	// The painted toon sky (sky.frag): brightness of the sun disc in the HDR image (above bloomThreshold: it glows).
+	// The sky's colours are keyframe values (skyZenith, skyMid, skyHorizon: the bands; cloudLit, cloudShade and
+	// cloudCover 0..1: the clouds; stars 0..1, 0 when missing).
+	sunDiscBrightness 1.8
 
 	// Screen-space AO: contact darkening between moving things (robots and floor, robots and walls). Radius in
 	// world units and strength (0 = off).
@@ -135,6 +139,13 @@ lighting night{
 	outlineTint 0.50 0.58 0.90
 	shaftStrength 0.15
 	neon 1
+	skyZenith 0.02 0.04 0.12
+	skyMid 0.05 0.08 0.21
+	skyHorizon 0.12 0.15 0.32
+	cloudLit 0.28 0.31 0.50
+	cloudShade 0.12 0.13 0.28
+	cloudCover 0.30
+	stars 1.00
 }
 
 lighting dawn{
@@ -153,6 +164,13 @@ lighting dawn{
 	outlineTint 0.95 0.78 0.70
 	shaftStrength 1.2
 	neon 0.3
+	skyZenith 0.16 0.26 0.58
+	skyMid 0.52 0.42 0.62
+	skyHorizon 0.88 0.58 0.40
+	cloudLit 0.95 0.78 0.66
+	cloudShade 0.50 0.40 0.58
+	cloudCover 0.40
+	stars 0.15
 }
 
 lighting morning{
@@ -168,6 +186,12 @@ lighting morning{
 	exposure 0.92
 	heroFillColour 0.85 0.90 1.00
 	heroFillStrength 0.3
+	skyZenith 0.10 0.34 0.80
+	skyMid 0.26 0.52 0.90
+	skyHorizon 0.62 0.72 0.82
+	cloudLit 0.95 0.94 0.90
+	cloudShade 0.60 0.66 0.84
+	cloudCover 0.45
 }
 
 lighting afternoon{
@@ -183,6 +207,12 @@ lighting afternoon{
 	exposure 0.92
 	heroFillColour 0.85 0.90 1.00
 	heroFillStrength 0.3
+	skyZenith 0.08 0.32 0.80
+	skyMid 0.22 0.50 0.90
+	skyHorizon 0.56 0.74 0.92
+	cloudLit 0.95 0.96 0.98
+	cloudShade 0.58 0.66 0.86
+	cloudCover 0.45
 }
 
 lighting sunset{
@@ -201,6 +231,12 @@ lighting sunset{
 	outlineTint 1.00 0.72 0.55
 	shaftStrength 2.0
 	neon 0.35
+	skyZenith 0.12 0.26 0.66
+	skyMid 0.44 0.42 0.72
+	skyHorizon 0.90 0.60 0.38
+	cloudLit 0.96 0.80 0.62
+	cloudShade 0.52 0.44 0.68
+	cloudCover 0.45
 }
 
 lighting twilight{
@@ -219,6 +255,13 @@ lighting twilight{
 	outlineTint 0.80 0.62 0.75
 	shaftStrength 1.2
 	neon 1
+	skyZenith 0.12 0.12 0.38
+	skyMid 0.48 0.30 0.52
+	skyHorizon 0.86 0.50 0.30
+	cloudLit 0.92 0.66 0.50
+	cloudShade 0.40 0.30 0.52
+	cloudCover 0.40
+	stars 0.20
 }
 
 lighting dusk{
@@ -237,4 +280,11 @@ lighting dusk{
 	outlineTint 0.55 0.58 0.90
 	shaftStrength 0.25
 	neon 1
+	skyZenith 0.04 0.06 0.20
+	skyMid 0.12 0.12 0.32
+	skyHorizon 0.30 0.22 0.42
+	cloudLit 0.44 0.40 0.60
+	cloudShade 0.16 0.15 0.32
+	cloudCover 0.30
+	stars 0.70
 }

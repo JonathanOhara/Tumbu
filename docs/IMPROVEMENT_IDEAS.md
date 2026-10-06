@@ -15,8 +15,8 @@ Visual track, most important first (impact on what the player sees, against the 
    textures): the biggest visual gap, in every shot. Large. **Art direction decided (2026-10-06)**, see "Coliseum
    retexture" under Art side; in progress.
 3. **Night arena lights** (idea 4): night fights look unplanned; builds on the energy lights.
-4. **Own stylised sky** (Rendering modernization 3): the background of every shot, the same sky on OpenGL, Caelum and
-   its patches gone. **Folded into the arena remake as its last step** (2026-10-06): the "painted bands" style.
+4. **Own stylised sky** (Rendering modernization 3) — **done (2026-10-06)**: the painted toon sky replaced Caelum (CLAUDE.md
+   "The sky"); the same sky on OpenGL, Caelum and its patches gone. **Folded into the arena remake as its last step** (2026-10-06): the "painted bands" style.
 5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook.
 6. **Tune Jyn in real fights** (idea 9): no code, only play time.
 7. **Robot art pass:** richer textures and toon-friendly normals (Art side).
@@ -117,7 +117,7 @@ Techniques in use that have a clear modern replacement, most valuable first:
 2. **Bloom: one bright pass + two H/V blurs at quarter size** (pre-2014 style). Replace with the **downsample/upsample
    mip-chain bloom** (Jimenez, Call of Duty: Advanced Warfare, SIGGRAPH 2014; used by Unreal and Unity): wider, more
    natural falloff, stable without flicker on small bright pixels (eyes, sparks, the Genki Dama).
-3. **Sky: Caelum** (a 2008-era library): Direct3D 11 only (OpenGL falls back to a static skydome), Cg/HLSL shaders, and
+3. **Sky: Caelum** — **done (2026-10-06): our own painted toon sky** (CLAUDE.md "The sky"). Original notes (a 2008-era library): Direct3D 11 only (OpenGL falls back to a static skydome), Cg/HLSL shaders, and
    two source patches in `deps.ps1`. Replace with **our own stylised sky shader** (gradient bands, sun and moon discs,
    toon clouds) driven by `lighting.object`: one sky on both renderers, art-directable like Genshin's skies, and a
    dependency less.
@@ -223,6 +223,11 @@ depth shadows with normal offset (a single map is right for an arena this small)
        `scripts/compress-arena-textures.ps1` (texconv; `build.ps1` runs it, the DDS files are not in git). With Shadows
        off (the low setting) the stone drops its parallax and self-shadows and keeps the normal map (shared
        `detailParams`). Before/after: `%USERPROFILE%\Tumbu\arena-bc\`. Cost: slightly faster (bench, low wall view, 1920x1080: D3D11 +1.9 %, OpenGL +1.7 %).
+    9. **The painted toon sky (2026-10-06, done):** replaces Caelum (CLAUDE.md "The sky"): colour bands, the yellow sun with
+       a soft glow, crescent moon and stars, flat two-tone cumulus with Sky quality High; keyframe colours in
+       `lighting.object`. Same cost as Caelum; Caelum, its media and its `deps.ps1` patches are gone. Before/after (Caelum
+       against the painted sky at 09:00 to 22:00, three cameras, plus Direct3D 11 against OpenGL):
+       `%USERPROFILE%\Tumbu\toon-sky\`.
        Possible follow-up: let the neon light the floor and the robots near the ropes (a strip light in the arena
        shader; the energy lights are limited to four), or a slow pulse.
   - Note: the parallax suits the stone, not the canvas ring mat (no depth to show there). The sun's shadow map and the

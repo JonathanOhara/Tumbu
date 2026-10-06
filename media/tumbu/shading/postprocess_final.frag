@@ -18,7 +18,7 @@ OGRE_UNIFORMS(
     // times how much of the sun is visible (0 = hidden by a wall, behind the camera, moon, or flare off)
     uniform vec4 flareSun;
     uniform vec4 sunColour;
-    uniform vec4 skyColour;
+    uniform vec4 skyHorizon;       // the toon sky's horizon band: far terrain fades into it
     // x = start, y = density, z = maximum, w = brightness of the fog colour (sky ambient x w)
     uniform vec4 fogParams;
     uniform vec4 viewportSize;
@@ -77,7 +77,7 @@ IN(vec2 oUv, TEXCOORD0)
 MAIN_DECLARATION
 {
     vec4 shaftsAndFog = texture2D(shafts, oUv);    // rgb = god rays, a = distance fog
-    vec3 colour = mix(texture2D(scene, oUv).rgb * texture2D(ssao, oUv).r, skyColour.rgb * fogParams.w, shaftsAndFog.a);
+    vec3 colour = mix(texture2D(scene, oUv).rgb * texture2D(ssao, oUv).r, skyHorizon.rgb * fogParams.w, shaftsAndFog.a);
     colour = (colour + texture2D(bloom, oUv).rgb * bloomParams.z + shaftsAndFog.rgb + lensFlare(oUv)) * postParams.x;
     colour = softShoulder(colour);
 

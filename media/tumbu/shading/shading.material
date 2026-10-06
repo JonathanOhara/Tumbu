@@ -210,6 +210,23 @@ material Tumbu/EnvironmentNeon : Tumbu/EnvironmentToon{
     }
 }
 
+// The painted toon sky on a big box around the arena (Sky.cpp): colours and the sun from Lighting (shared TumbuLighting).
+material Tumbu/ToonSky{
+    technique{
+        pass{
+            lighting off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref sky_vs{
+            }
+
+            fragment_program_ref sky_ps{
+            }
+        }
+    }
+}
+
 material Tumbu/PostProcess/Final{
     technique{
         pass{
