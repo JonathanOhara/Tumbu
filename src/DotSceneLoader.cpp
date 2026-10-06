@@ -278,11 +278,37 @@ void DotSceneLoader::processTerrain(rapidxml::xml_node<>* XMLNode){
         }
     }
     mTerrainGroup->loadAllTerrains(true);
+    replaceMissingTerrainLayers();
 
     mTerrainGroup->freeTemporaryResources();
     //mTerrain->setPosition(mTerrainPosition);
 
 	Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] Process Terrain End" );
+}
+
+// A terrain layer whose texture is not in the game draws black ("Texture layer will be blank"): the 2011 page has a
+// round patch beside the ring painted with Ogitor's own city_6 rock, which was never shipped. Such a layer takes the
+// first layer's textures (the grass), so the patch disappears into the field. Ogre still logs the missing texture
+// once while it prepares the page, before this runs (devtest.ps1 filters that line).
+void DotSceneLoader::replaceMissingTerrainLayers(void){
+	Ogre::ResourceGroupManager &resources = Ogre::ResourceGroupManager::getSingleton();
+	Ogre::TerrainGroup::TerrainIterator it = mTerrainGroup->getTerrainIterator();
+	while( it.hasMoreElements() ){
+		Ogre::Terrain* terrain = it.getNext()->instance;
+		if( terrain == NULL || terrain->getLayerCount() == 0 ){
+			continue;
+		}
+		for( Ogre::uint8 layer = 1; layer < terrain->getLayerCount(); layer++ ){
+			const Ogre::String &diffuse = terrain->getLayerTextureName( layer, 0 );
+			if( resources.resourceExistsInAnyGroup( diffuse ) ){
+				continue;
+			}
+			Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] terrain layer " + Ogre::StringConverter::toString( (int) layer ) + ": '" + diffuse + "' is missing, using layer 0 ('" + terrain->getLayerTextureName( 0, 0 ) + "')" );
+			for( Ogre::uint8 sampler = 0; sampler < terrain->getLayerDeclaration().size(); sampler++ ){
+				terrain->setLayerTextureName( layer, sampler, terrain->getLayerTextureName( 0, sampler ) );
+			}
+		}
+	}
 }
 
 void DotSceneLoader::processTerrainPage(rapidxml::xml_node<>* XMLNode){

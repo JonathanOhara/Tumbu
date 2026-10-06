@@ -59,6 +59,7 @@ protected:
     void processEnvironment(rapidxml::xml_node<>* XMLNode);
     void processTerrain(rapidxml::xml_node<>* XMLNode);
     void processTerrainPage(rapidxml::xml_node<>* XMLNode);
+    void replaceMissingTerrainLayers(void);
     void processBlendmaps(rapidxml::xml_node<>* XMLNode);
     void processUserDataReference(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent = 0);
     void processUserDataReference(rapidxml::xml_node<>* XMLNode, Ogre::Entity *pEntity);
