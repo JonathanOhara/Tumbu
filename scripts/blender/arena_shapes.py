@@ -16,6 +16,18 @@ Models what a texture cannot fake, so the stone reads as cut blocks under the to
   5. (version 4) sloped walls (the big leaning upper wall: a cone, not a cylinder) unwrap into a curved strip, so one
      turn per piece left the courses diagonal at its ends. Sloped pieces are mapped directly instead: u = the angle
      around the arena x the piece's mean radius, v = the distance up the slope; every course is level.
+  6. (version 5) "floors" that lean (a ledge band below the big windows, 0.7 < |normal.z| < LEANING) took v from the
+     distance to the centre, which on the oval arena tilts each face's courses and steps them at every face edge; they
+     take v from height (up the slope) like the sloped walls.
+  7. (version 6) the same for wall pieces leaning only a few degrees (a ledge's front face: its long, slightly conical
+     strip still unwrapped into an arc): steps 5 and 6 again with "sloped" from |normal.z| > SLOPED_V6.
+  8. (version 7, the mapping now in use; it replaces steps 4 to 7) every face is mapped again by its kind. Faces join
+     into pieces through smooth edges between faces of the same kind less than 30 degrees apart, so a piece's mapping
+     is continuous. Floors (|normal.z| > 0.7): u = angle around the arena x the piece's mean radius, v = distance from
+     the centre (flat) or up the slope (leaning, below LEANING). Walls facing the centre: the same u, v = up the wall.
+     Walls facing sideways (block ends, jambs): a flat projection, u along the wall, v up. Steps 4 to 7 measured the
+     angle from the arena's +x axis and multiplied it by each vertex's own radius, which smeared the texture across
+     the ledge tops, and they mapped sideways walls around the arena, which collapsed them into stripes.
 The ring ("arena" object, its own steps in its tumbu_shapes):
   1. its floor and sides get the material arenaFloorMaterial (the grey tiles; world-scale UVs, RING_TILE metres per
      unit) and the ropes arenaRopesMaterial (for the red neon); the posts keep the 2011 material and atlas.
@@ -35,8 +47,10 @@ import os
 import sys
 from mathutils import Vector
 
-SHAPES_VERSION = 4
+SHAPES_VERSION = 7
+LEANING = 0.95              # floors leaning more than this (|normal.z| below it) get courses from height (v5)
 SLOPED = 0.12               # a wall piece whose mean |normal.z| is above this is "sloped" (version 4)
+SLOPED_V6 = 0.02            # version 6: any piece that is not truly vertical (a ledge front leaning a few degrees)
 RING_VERSION = 1
 STONE_TILE = 4.8            # metres per texture repeat on the coliseum (arena_textures.py STONE_TILE)
 RING_TILE = 12.8            # metres per texture repeat on the ring floor (arena_textures.py TILES_TILE)
@@ -217,7 +231,7 @@ def world_uvs(ob):
     log("world UVs: %d wall pieces, %d floor faces, %.1f m per tile" % (len(islands), len(flat), STONE_TILE))
 
 
-def sloped_uvs(ob):
+def sloped_uvs(ob, sloped=SLOPED):
     """Sloped wall pieces: u around the arena, v up the slope (step 5 of the docstring). Uses the seams of step 4."""
     me = ob.data
     bm = bmesh.new()
@@ -247,7 +261,7 @@ def sloped_uvs(ob):
         if area <= 0:
             continue
         nz = sum(abs(f.normal.z) * f.calc_area() for f in faces) / area
-        if nz <= SLOPED:
+        if nz <= sloped:
             continue
         # only pieces that lean towards or away from the centre (a cone around the arena); a piece that slopes sideways
         # (the end of the stepped block) keeps its unwrap
@@ -310,6 +324,125 @@ def sloped_uvs(ob):
     bm.to_mesh(me)
     bm.free()
     log("sloped walls: %d pieces mapped around the arena; floors mapped around the arena" % changed)
+
+
+def leaning_floor_uvs(ob):
+    """Leaning "floors" (step 6 of the docstring): v from height, so their courses stay level across faces."""
+    me = ob.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    uv = bm.loops.layers.uv[me.uv_layers[0].name]
+    changed = 0
+    for f in bm.faces:
+        nz = abs(f.normal.z)
+        if not (0.7 < nz < LEANING):
+            continue
+        along = 1.0 / math.sqrt(1.0 - nz * nz)          # metres up the slope per metre of height
+        c = f.calc_center_median()
+        mid = math.atan2(-c.y, -c.x)
+        for l in f.loops:
+            p = l.vert.co
+            r = p.xy.length
+            a = mid + ((math.atan2(-p.y, -p.x) - mid + math.pi) % (2 * math.pi) - math.pi)
+            l[uv].uv = (a * r / STONE_TILE, p.z * along / STONE_TILE)
+        changed += 1
+    bm.to_mesh(me)
+    bm.free()
+    log("leaning floors: %d faces with courses from height" % changed)
+
+
+def final_uvs(ob):
+    """Version 7: every coliseum face mapped again from its own kind, replacing steps 4 to 7 (see the docstring)."""
+    me = ob.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    uv = bm.loops.layers.uv[me.uv_layers[0].name]
+
+    def kind(f):
+        n = f.normal
+        if abs(n.z) > 0.7:
+            return "floor"
+        h = Vector((n.x, n.y, 0.0))
+        c = f.calc_center_median()
+        r = Vector((c.x, c.y, 0.0))
+        if h.length < 1e-6 or r.length < 1e-6:
+            return "side"
+        return "radial" if abs(h.normalized().dot(r.normalized())) > 0.7 else "side"
+
+    kinds = {f.index: kind(f) for f in bm.faces}
+    parent = {f.index: f.index for f in bm.faces}
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+    for e in bm.edges:
+        if len(e.link_faces) != 2 or not e.smooth:
+            continue
+        a, b = e.link_faces
+        if kinds[a.index] == kinds[b.index] and a.normal.angle(b.normal, 0.0) < math.radians(30):
+            parent[find(a.index)] = find(b.index)
+    islands = {}
+    for f in bm.faces:
+        islands.setdefault(find(f.index), []).append(f)
+
+    def unwrap(angle, mid):
+        return (angle - mid + math.pi) % (2 * math.pi) - math.pi
+
+    def around(p, f, mid):
+        """Angle of p around the arena, measured from the piece's middle `mid`, unwrapped through the face's own
+        centre, so a face never spans the cut opposite `mid` (the cut falls between faces)."""
+        c = f.calc_center_median()
+        fa = unwrap(math.atan2(c.y, c.x), mid)
+        return fa + unwrap(math.atan2(p.y, p.x), math.atan2(c.y, c.x))
+
+    counts = {"floor": 0, "radial": 0, "side": 0}
+    for faces in islands.values():
+        k = kinds[faces[0].index]
+        counts[k] += 1
+        area = sum(f.calc_area() for f in faces) or 1.0
+        cx = sum(f.calc_center_median().x * f.calc_area() for f in faces) / area
+        cy = sum(f.calc_center_median().y * f.calc_area() for f in faces) / area
+        mid = math.atan2(cy, cx)
+        radius = sum(f.calc_center_median().xy.length * f.calc_area() for f in faces) / area
+        nz = sum(abs(f.normal.z) * f.calc_area() for f in faces) / area
+        if k == "side":
+            n = sum((f.normal * f.calc_area() for f in faces), Vector())
+            h = Vector((-n.y, n.x, 0.0))
+            h = h.normalized() if h.length > 1e-6 else Vector((1.0, 0.0, 0.0))
+            along = 1.0 / max(math.sqrt(max(1.0 - nz * nz, 0.0)), 0.2)
+            for f in faces:
+                for l in f.loops:
+                    p = l.vert.co
+                    l[uv].uv = (p.dot(h) / STONE_TILE, p.z * along / STONE_TILE)
+        elif k == "radial":
+            along = 1.0 / max(math.sqrt(max(1.0 - nz * nz, 0.0)), 0.2)
+            for f in faces:
+                for l in f.loops:
+                    p = l.vert.co
+                    a = around(p, f, mid)
+                    l[uv].uv = ((mid + a) * radius / STONE_TILE, p.z * along / STONE_TILE)
+        else:
+            # "leaning" only when the piece slopes towards or away from the centre; one that slopes sideways (an
+            # underside along a jamb) keeps v outwards, or u and v would both run along its slope
+            n = sum((f.normal * f.calc_area() for f in faces), Vector())
+            hn = Vector((n.x, n.y, 0.0))
+            rc = Vector((cx, cy, 0.0))
+            radial = hn.length > 1e-6 and rc.length > 1e-6 and abs(hn.normalized().dot(rc.normalized())) > 0.7
+            leaning = nz < LEANING and radial
+            along = 1.0 / max(math.sqrt(max(1.0 - nz * nz, 0.0)), 0.05)
+            for f in faces:
+                for l in f.loops:
+                    p = l.vert.co
+                    a = around(p, f, mid)
+                    # v: up the slope for a leaning floor (courses parallel to its edges on the oval arena),
+                    # outwards for a flat one
+                    v = p.z * along if leaning else p.xy.length
+                    l[uv].uv = ((mid + a) * radius / STONE_TILE, v / STONE_TILE)
+    bm.to_mesh(me)
+    bm.free()
+    log("final UVs: %(floor)d floor, %(radial)d centre-facing and %(side)d side-facing pieces" % counts)
 
 
 def ring_materials(ob):
@@ -378,6 +511,13 @@ def main():
         world_uvs(ob)
     if done < 4:
         sloped_uvs(ob)
+    if done < 5:
+        leaning_floor_uvs(ob)
+    if done < 6:
+        sloped_uvs(ob, SLOPED_V6)
+        leaning_floor_uvs(ob)
+    if done < 7:
+        final_uvs(ob)
     ob["tumbu_shapes"] = SHAPES_VERSION
     log("coliseum: shapes version %d -> %d, %d -> %d vertices" % (done, SHAPES_VERSION, before, len(ob.data.vertices)))
 

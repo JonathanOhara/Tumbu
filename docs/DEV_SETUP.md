@@ -256,10 +256,14 @@ project.
   meet floors and once at +x behind the stepped block; each piece turned so "up" is +v and shifted so v = height / 4.8,
   so the courses run level; floors mapped from above). The ring's floor and sides get `arenaFloorMaterial` (12.8 m
   tiles, mapped from above), its ropes `arenaRopesMaterial`; the posts keep the 2011 atlas.
-  Version 4: sloped walls (the big leaning upper wall is a cone, which unwraps into a curved strip and left the courses
-  diagonal at its ends) are mapped directly, u = angle around the arena x the piece's mean radius, v = distance up the
-  slope; floors and treads the same way (u around the arena, v outwards, each face measuring angles from its own centre
-  so none spans the cut at +x); wall faces the unwrap squashed or stretched (a strip at the cut) are remapped that way.
+  **Version 7 (the mapping in use) replaced versions 3 to 6**, which fixed diagonal bricks case by case and smeared the
+  ledge tops (they took "angle x radius" with the absolute angle, so moving outwards also slid the texture sideways) and
+  collapsed walls facing sideways into stripes. Every face is now mapped by its kind, and faces of one kind joined by
+  smooth edges share one continuous mapping: floors u = angle around the arena x the piece's mean radius, v = outwards
+  (flat) or up the slope (leaning towards the centre); walls facing the centre the same u, v = up the wall; walls facing
+  sideways a flat projection along the wall. Angles unwrap around each face's own centre, so no face spans the wrap at
+  180 degrees. Checked with a per-face stretch measure (texture scale against world size): 3 faces of 2232 above 1.35,
+  all tiny slivers or one corner.
 - **Textures** (`.\scripts\arena-textures.ps1` -> `scripts/blender/arena_textures.py`, Blender's bundled numpy, about
   15 s): `sandstone_col/nrm/hgt.png`, `ringtiles_col/nrm/hgt.png`, `ring_emblem.png` in `media/tumbu/arena/`. Each
   set comes from one height field, so colour, normal and height agree; all tile seamlessly (`-Preview <folder>`
