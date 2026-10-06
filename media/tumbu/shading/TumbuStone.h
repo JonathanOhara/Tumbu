@@ -59,13 +59,37 @@ vec2 tumbuParallax(sampler2D heightMap, vec2 uv, vec3 viewTs, float depth, float
         curLayer -= layer;
         h = tumbuSampleGrad(heightMap, cur, dx, dy).r;
     }
-    // refine between the last two layers (linear intersection of the ray with the height profile)
-    float after = h - curLayer;
-    float before = prevH - prevLayer;
-    float w = after / min(after - before, -1e-4);
-    w = saturate(w);
-    hitHeight = mix(curLayer, prevLayer, w);
-    return mix(cur, prevUv, w);
+    // refine between the last two layers: a few halvings (the steep block edges showed layer stripes with a single
+    // linear guess), then the linear intersection inside the last interval
+    vec2 aboveUv = prevUv;
+    float aboveLayer = prevLayer;
+    vec2 belowUv = cur;
+    float belowLayer = curLayer;
+    float belowH = h;
+    float aboveH = prevH;
+    for (int j = 0; j < 4; j++)
+    {
+        vec2 midUv = (aboveUv + belowUv) * 0.5;
+        float midLayer = (aboveLayer + belowLayer) * 0.5;
+        float midH = tumbuSampleGrad(heightMap, midUv, dx, dy).r;
+        if (midH >= midLayer)
+        {
+            belowUv = midUv;
+            belowLayer = midLayer;
+            belowH = midH;
+        }
+        else
+        {
+            aboveUv = midUv;
+            aboveLayer = midLayer;
+            aboveH = midH;
+        }
+    }
+    float after = belowH - belowLayer;
+    float before = aboveH - aboveLayer;
+    float w = saturate(after / min(after - before, -1e-4));
+    hitHeight = mix(belowLayer, aboveLayer, w);
+    return mix(belowUv, aboveUv, w);
 }
 
 // Self-shadow: from the hit point, a short march towards the sun; 0 where a higher stone blocks the sun (a hard toon
@@ -85,7 +109,8 @@ float tumbuParallaxShadow(sampler2D heightMap, vec2 uv, float height, vec3 sunTs
             break;
         cur += delta;
         curH += rise;
-        if (tumbuSampleGrad(heightMap, cur, dx, dy).r > curH + 0.02)
+        // only a clearly higher stone casts a shadow: the faces' slight undulation must not shade itself
+        if (tumbuSampleGrad(heightMap, cur, dx, dy).r > curH + 0.1)
             return 0.0;
     }
     return 1.0;

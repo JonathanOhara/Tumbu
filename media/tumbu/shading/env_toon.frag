@@ -67,7 +67,8 @@ MAIN_DECLARATION
     vec3 viewTs = vec3(dot(v, tng), dot(v, btg), dot(v, n));
     // parallax fades out with distance (the far walls only get the normal map)
     float pomFade = 1.0 - saturate(length(camPos - oWorldPos) / max(stoneParams.z, 0.001));
-    float steps = floor(stoneParams.y * pomFade * mix(1.0, 0.5, saturate(viewTs.z)) + 0.5);
+    // more layers at grazing angles (where layering would show), fewer when looking at the surface head-on
+    float steps = floor(stoneParams.y * pomFade * mix(2.0, 0.5, saturate(viewTs.z)) + 0.5);
     float hitHeight;
     uv = tumbuParallax(heightMap, oUv, viewTs, stoneParams.x * pomFade, steps, dx, dy, hitHeight);
     vec4 hm = tumbuSampleGrad(heightMap, uv, dx, dy);
@@ -102,10 +103,14 @@ MAIN_DECLARATION
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(n, sunDirection.xyz), shadowParams);
 #ifdef TUMBU_STONE
     // the stones' own shadows towards the sun (hard, toon), where the parallax runs
+    // (only where the sun still reaches the surface: in the shadow map's shade or facing away it changes nothing)
     vec3 sunTs = vec3(dot(sunDirection.xyz, tng), dot(sunDirection.xyz, btg), dot(sunDirection.xyz, ng));
-    float selfShadow = tumbuParallaxShadow(heightMap, uv, hitHeight, normalize(sunTs), stoneParams.x * pomFade,
-                                           floor(steps * 0.5), dx, dy);
-    shadow *= mix(1.0, selfShadow, stoneParams.w * (1.0 - moss));
+    if (shadow > 0.0 && sunTs.z > 0.0 && steps >= 1.0)
+    {
+        float selfShadow = tumbuParallaxShadow(heightMap, uv, hitHeight, normalize(sunTs), stoneParams.x * pomFade,
+                                               6.0, dx, dy);
+        shadow *= mix(1.0, selfShadow, stoneParams.w * (1.0 - moss));
+    }
 #endif
     // Contact shadows under the robots (Lighting::updateContactShadows).
     float contact = max(tumbuContact(oWorldPos, n, contactShadowA), tumbuContact(oWorldPos, n, contactShadowB)) * aoParams.w;

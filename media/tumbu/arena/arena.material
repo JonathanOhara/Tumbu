@@ -23,6 +23,6 @@ material arenaFloorMaterial : Tumbu/EnvironmentStoneFloor{
     set $aoMap "arena_ao.png"
     set $emblemMap "ring_emblem.png"
     // depth 0.03 m / 12.8 m tile; no moss on the ring
-    set $stoneParams "0.0023 0 30 1"
+    set $stoneParams "0.0023 6 30 1"
     set $mossColour "0 0 0 0"
 }

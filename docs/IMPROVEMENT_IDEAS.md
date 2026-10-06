@@ -205,6 +205,14 @@ depth shadows with normal offset (a single map is right for an arena this small)
        `lighting.object`. **Normal map, moss and the ring decal done (2026-10-06):** `Tumbu/EnvironmentStone` /
        `Tumbu/EnvironmentStoneFloor` (`env_stone_ps`, `env_stone_floor_ps`); before/after:
        `%USERPROFILE%\Tumbu\arena-stone\`; no frame-rate cost (bench, tiers view: D3D11 1143 vs 1151 fps at 1024x768, 880 vs 851 at 1920x1080; OpenGL 750 vs 769 and 808 vs 732; all inside the run-to-run spread); D3D11 driver memory +1.1 MB per match (CLAUDE.md).
+       **Parallax occlusion with toon self-shadows done (2026-10-06):** `tumbuParallax` / `tumbuParallaxShadow`
+       (TumbuStone.h): layers = `$stoneParams.y` (12 on the coliseum, 6 on the ring floor), doubled at grazing angles and
+       halved head-on, then 4 halvings and a linear step (a single linear guess left layer stripes on the steep block
+       edges); faded out by 30 units; the self-shadow is a 6-step march towards the sun, hard (toon), counted only for a
+       stone at least 10 % of the depth higher (the faces' undulation shaded itself) and skipped where the shadow map
+       already shades or the surface faces away. Before/after: `%USERPROFILE%\Tumbu\arena-parallax\`. Cost (bench,
+       low wall view, against the step-5 build): 1024x768 inside the noise on both renderers; 1920x1080 D3D11 +0.05 ms
+       (noise), OpenGL +0.18 ms (it was +0.41 ms with 16/32 layers and a longer shadow march).
     6. **Checks:** fixed low cameras (`-Camera`), all hours, D3D11 and OpenGL, frame rate with the stone filling the
        screen, `-cycles` memory.
   - Note: the parallax suits the stone, not the canvas ring mat (no depth to show there). The sun's shadow map and the

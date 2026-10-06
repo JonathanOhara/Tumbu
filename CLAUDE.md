@@ -284,6 +284,12 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
     dropped the whole program (Direct3D 11 accepted it); use `OGRE_UNIFORMS_BEGIN` ... `OGRE_UNIFORMS_END`.
   - Inside loops whose length varies per pixel (parallax), sample with explicit gradients (`tumbuSampleGrad`:
     `SampleGrad` on Direct3D 11, `textureGrad` on OpenGL).
+  - **Parallax occlusion** (`tumbuParallax`): `$stoneParams` = depth in UV units (metres / tile), layers (12 on the
+    coliseum, 6 on the ring; doubled at grazing angles, halved head-on, then 4 halvings), fade-out distance (30), self-shadow
+    strength. The self-shadow (`tumbuParallaxShadow`, 6 steps, hard) only counts a stone at least 10 % of the depth higher,
+    and is skipped where the sun's shadow map already shades. Cost at 1920x1080, low wall view: D3D11 about +0.05 ms,
+    OpenGL +0.18 ms (`%USERPROFILE%\Tumbu\arena-parallax-1080\fps.txt`). Moss inside the joints is hidden at grazing
+    angles (the stones in front cover it), which is right.
 - **Contact shadows**
  (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by

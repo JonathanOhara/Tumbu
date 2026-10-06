@@ -10,5 +10,5 @@ material coliseumMaterial : Tumbu/EnvironmentStone{
     set $aoMap "coliseum_ao.png"
     set $diffuseCol "0.97 0.95 0.92 1"
     // depth 0.12 m / 4.8 m tile
-    set $stoneParams "0.025 0 30 1"
+    set $stoneParams "0.025 12 30 1"
 }
