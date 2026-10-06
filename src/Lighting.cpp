@@ -87,6 +87,8 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	fogBrightness		= requireChild( cfg, name, "fogBrightness" )->getValueF();
 	dustSunlight		= requireChild( cfg, name, "dustSunlight" )->getValueF();
 	dustShadow			= requireChild( cfg, name, "dustShadow" )->getValueF();
+	ConfigNode* neonNode	= cfg->findChild( "neonStrength" );	// optional: the arena's neon (ring ropes, the T's tube)
+	neonStrength		= neonNode != NULL ? neonNode->getValueF() : 4.0f;
 	ssaoRadius			= requireChild( cfg, name, "ssaoRadius" )->getValueF();
 	ssaoStrength		= requireChild( cfg, name, "ssaoStrength" )->getValueF();
 	heroFillSunlit		= requireChild( cfg, name, "heroFillSunlit" )->getValueF();
@@ -137,6 +139,8 @@ void Lighting::declareSharedParameters(void){
 		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash",
 		// Robot "hero lighting": the fill light that follows the camera, and the rim in shadow.
 		"heroFillColour", "heroFillParams", "heroRimParams", "outlineTint",
+		// Arena neon (ring ropes, the T's tube): x = how much it glows (keyframe neon), y = brightness of the core.
+		"neonParams",
 		// Robot metal: the toon sky reflection and the streak.
 		"metalEnv", "metalShape", "metalExtra" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
@@ -170,6 +174,7 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "heroFillParams", Ogre::Vector4( fill.x, fill.y, fill.z, 0.25f ) );
 	params->setNamedConstant( "heroRimParams", Ogre::Vector4( 0.35f, 0, 0, 0 ) );
 	params->setNamedConstant( "outlineTint", Ogre::Vector4( 1, 1, 1, 1 ) );
+	params->setNamedConstant( "neonParams", Ogre::Vector4( 0, 4, 0, 0 ) );
 	params->setNamedConstant( "metalEnv", Ogre::Vector4( 1.7f, 2.5f, 0.35f, 1.5f ) );
 	params->setNamedConstant( "metalShape", Ogre::Vector4( 0.38f, 0.06f, -0.1f, 0.75f ) );
 	params->setNamedConstant( "metalExtra", Ogre::Vector4( 1.6f, 0.965f, 0.55f, 0.55f ) );
@@ -186,6 +191,8 @@ Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
 	ConfigNode* shafts = node->findChild( "shaftStrength" );	// optional: 1 when missing
 	k.shaftStrength	= shafts != NULL ? shafts->getValueF() : 1.0f;
 	k.heroFillStrength	= requireChild( node, name, "heroFillStrength" )->getValueF();
+	ConfigNode* neon = node->findChild( "neon" );	// optional: 0 (the neon is off) when missing
+	k.neon			= neon != NULL ? neon->getValueF() : 0.0f;
 	k.heroFillColour	= readColour( node, name, "heroFillColour" );
 	ConfigNode* tint = node->findChild( "outlineTint" );	// optional: white (no tint) when missing
 	k.outlineTint	= tint != NULL ? readColour( node, name, "outlineTint" ) : Ogre::ColourValue::White;
@@ -208,6 +215,7 @@ Lighting::Keyframe Lighting::blend( const Keyframe &a, const Keyframe &b, Ogre::
 	k.exposure		= Ogre::Math::lerp( a.exposure, b.exposure, t );
 	k.shaftStrength	= Ogre::Math::lerp( a.shaftStrength, b.shaftStrength, t );
 	k.heroFillStrength	= Ogre::Math::lerp( a.heroFillStrength, b.heroFillStrength, t );
+	k.neon			= Ogre::Math::lerp( a.neon, b.neon, t );
 	k.heroFillColour	= Ogre::Math::lerp( a.heroFillColour, b.heroFillColour, t );
 	k.outlineTint	= Ogre::Math::lerp( a.outlineTint, b.outlineTint, t );
 	k.sunColour		= Ogre::Math::lerp( a.sunColour, b.sunColour, t );
@@ -296,6 +304,7 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "heroFillParams", Ogre::Vector4( heroFillAxes.x, heroFillAxes.y, heroFillAxes.z, heroFillSunlit ) );
 	params->setNamedConstant( "heroRimParams", Ogre::Vector4( heroRimShadow, 0, 0, 0 ) );
 	params->setNamedConstant( "outlineTint", toVector4( k.outlineTint, 1 ) );
+	params->setNamedConstant( "neonParams", Ogre::Vector4( k.neon, neonStrength, 0, 0 ) );
 	params->setNamedConstant( "metalEnv", metalEnv );
 	params->setNamedConstant( "metalShape", metalShape );
 	params->setNamedConstant( "metalExtra", metalExtra );

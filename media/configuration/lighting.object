@@ -75,6 +75,9 @@ lighting configuration{
 	// dustSunlight 0 hides them.
 	dustSunlight 4.0
 	dustShadow 0.02
+	// Arena neon (the ring ropes and the T's tube in the centre): brightness of the glowing core in the HDR image
+	// (above bloomThreshold, so it blooms). How much it glows is the keyframe value neon (0..1, 0 when missing).
+	neonStrength 4.0
 
 	// Screen-space AO: contact darkening between moving things (robots and floor, robots and walls). Radius in
 	// world units and strength (0 = off).
@@ -115,6 +118,7 @@ lighting configuration{
 // (heroFillColour, heroFillStrength: see heroFillYaw); optionally outlineTint, which multiplies the colour of the robots'
 // outlines (white when missing), so the ink lines follow the light: cool and darker at night, warm at sunset.
 
+// neon (optional, 0 when missing): how much the arena's neon glows (ring ropes, the T's tube): on at night.
 lighting night{
 	hour 1
 	sunElevation 50
@@ -130,6 +134,7 @@ lighting night{
 	heroFillStrength 0.55
 	outlineTint 0.50 0.58 0.90
 	shaftStrength 0.15
+	neon 1
 }
 
 lighting dawn{
@@ -147,6 +152,7 @@ lighting dawn{
 	heroFillStrength 0.35
 	outlineTint 0.95 0.78 0.70
 	shaftStrength 1.2
+	neon 0.3
 }
 
 lighting morning{
@@ -194,6 +200,7 @@ lighting sunset{
 	heroFillStrength 0.45
 	outlineTint 1.00 0.72 0.55
 	shaftStrength 2.0
+	neon 0.35
 }
 
 lighting twilight{
@@ -211,6 +218,7 @@ lighting twilight{
 	heroFillStrength 0.6
 	outlineTint 0.80 0.62 0.75
 	shaftStrength 1.2
+	neon 1
 }
 
 lighting dusk{
@@ -228,4 +236,5 @@ lighting dusk{
 	heroFillStrength 0.55
 	outlineTint 0.55 0.58 0.90
 	shaftStrength 0.25
+	neon 1
 }

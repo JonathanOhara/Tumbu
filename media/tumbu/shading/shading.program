@@ -44,6 +44,22 @@ fragment_program env_stone_ps glsl glsles hlsl
     }
 }
 
+// The ring ropes: the toon shader plus the red neon at dusk and night (neonParams).
+fragment_program env_neon_ps glsl glsles hlsl
+{
+    source env_toon.frag
+    target ps_4_0
+    preprocessor_defines TUMBU_NEON=1
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto matDif surface_diffuse_colour
+        param_named_auto matSpec surface_specular_colour
+        param_named_auto matShininess surface_shininess
+        param_named_auto camPos camera_position
+    }
+}
+
 // The ring floor: the stone shader plus the decal (the T, its tube, the border course).
 fragment_program env_stone_floor_ps glsl glsles hlsl
 {

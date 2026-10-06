@@ -7,8 +7,8 @@ material arenaMaterial/TEXFACE/gym_arena.png : Tumbu/EnvironmentToon{
     set $diffuseCol "0.6 0.62 0.66 1"
 }
 
-// Ring ropes: their own material for the red neon (arena remake). Same look as the posts' atlas for now.
-material arenaRopesMaterial : Tumbu/EnvironmentToon{
+// Ring ropes: red by day (the posts' atlas), red neon at dusk and night (Tumbu/EnvironmentNeon, keyframe neon).
+material arenaRopesMaterial : Tumbu/EnvironmentNeon{
     set $diffuseMap "gym_arena.png"
     set $aoMap "arena_ao.png"
     set $diffuseCol "0.6 0.62 0.66 1"

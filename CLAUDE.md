@@ -290,6 +290,12 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
     and is skipped where the sun's shadow map already shades. Cost at 1920x1080, low wall view: D3D11 about +0.05 ms,
     OpenGL +0.18 ms (`%USERPROFILE%\Tumbu\arena-parallax-1080\fps.txt`). Moss inside the joints is hidden at grazing
     angles (the stones in front cover it), which is right.
+- **Arena neon** (the ring ropes and the tube inside the T on the ring floor; arena remake step 7): an unlit core of
+  `$neonColour` (a deep red, `1 0.012 0.008`: more green or blue turns orange after tone mapping) x `neonStrength`
+  (`lighting.object`, 4), mixed in by the keyframe value `neon` (0..1, 0 when missing: on at twilight, dusk and night,
+  partial at sunset and dawn); the bloom gives the halo. Shared `neonParams` (`Lighting`). Ropes: `Tumbu/EnvironmentNeon`
+  (`env_neon_ps` = `env_toon.frag` with `TUMBU_NEON`); the tube: `env_stone_floor_ps` (`ring_emblem.png` G channel).
+  The neon does not light its surroundings (the energy lights are limited to four). Cost: none measurable (bench at 22:00, wide view: D3D11 and OpenGL, 1024x768 and 1920x1080, all inside the run-to-run spread).
 - **Contact shadows**
  (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by

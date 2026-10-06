@@ -170,6 +170,7 @@ material Tumbu/EnvironmentStoneFloor : Tumbu/EnvironmentStone{
     set $emblemColour "0.13 0.13 0.15 1"
     set $tubeColour "0.55 0.08 0.06 1"
     set $borderTint "0.85 0.85 0.87 1"
+    set $neonColour "1 0.012 0.008 1"
 
     technique toon{
         pass{
@@ -182,6 +183,7 @@ material Tumbu/EnvironmentStoneFloor : Tumbu/EnvironmentStone{
                 param_named emblemColour float4 $emblemColour
                 param_named tubeColour float4 $tubeColour
                 param_named borderTint float4 $borderTint
+                param_named neonColour float4 $neonColour
             }
 
             texture_unit emblemMap{
@@ -189,6 +191,20 @@ material Tumbu/EnvironmentStoneFloor : Tumbu/EnvironmentStone{
                 tex_address_mode clamp
                 filtering anisotropic
                 max_anisotropy 8
+            }
+        }
+    }
+}
+
+// Neon tubes (the ring ropes): Tumbu/EnvironmentToon whose colour turns to $neonColour x neonStrength at dusk and night
+// (keyframe neon in lighting.object); by day the texture's colour.
+material Tumbu/EnvironmentNeon : Tumbu/EnvironmentToon{
+    set $neonColour "1 0.012 0.008 1"
+
+    technique toon{
+        pass{
+            fragment_program_ref env_neon_ps{
+                param_named neonColour float4 $neonColour
             }
         }
     }

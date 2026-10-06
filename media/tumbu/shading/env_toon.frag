@@ -2,6 +2,7 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Arena and coliseum toon shading, fragment stage: same lighting as the robots (TumbuToon.h), baked AO.
 // TUMBU_STONE (env_stone_ps): the arena remake's stone, with a normal map, parallax occlusion with toon self-shadows and
 // moss (TumbuStone.h); TUMBU_EMBLEM adds the ring floor's decal (the charcoal T, its tube and the border course).
+// TUMBU_NEON (env_neon_ps, the ring ropes) and the T's tube glow red at dusk and night (neonParams, Lighting).
 #include <OgreUnifiedShader.h>
 #include "TumbuToon.h"
 #ifdef TUMBU_STONE
@@ -40,9 +41,13 @@ OGRE_UNIFORMS_BEGIN
     uniform vec4 mossDeepColour;
 #ifdef TUMBU_EMBLEM
     uniform vec4 emblemColour;      // the T
-    uniform vec4 tubeColour;        // the tube (rgb); w unused here (the neon glow: Lighting, later)
+    uniform vec4 tubeColour;        // the tube by day (rgb)
     uniform vec4 borderTint;        // multiplies the border course
 #endif
+#endif
+#if defined(TUMBU_EMBLEM) || defined(TUMBU_NEON)
+    uniform vec4 neonParams;        // shared: x how much the neon glows (keyframe neon), y brightness of the core
+    uniform vec4 neonColour;        // the neon's colour
 #endif
 OGRE_UNIFORMS_END
 
@@ -121,6 +126,14 @@ MAIN_DECLARATION
         sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams, aoParams);
     // Coloured light from special attacks (energy balls, impacts).
     colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
+
+    // The neon: an unlit core, bright enough in the HDR image for the bloom to give it a halo.
+#ifdef TUMBU_NEON
+    colour = mix(colour, neonColour.rgb * neonParams.y, neonParams.x);
+#endif
+#ifdef TUMBU_EMBLEM
+    colour = mix(colour, neonColour.rgb * neonParams.y, emblem.g * (1.0 - joint) * neonParams.x);
+#endif
 
     gl_FragColor = vec4(colour, 1.0);
 }

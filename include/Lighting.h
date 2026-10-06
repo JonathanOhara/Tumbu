@@ -54,7 +54,7 @@ public:
 
 private:
 	struct Keyframe{
-		Ogre::Real hour, sunElevation, sunAzimuth, rimStrength, exposure, shaftStrength, heroFillStrength;
+		Ogre::Real hour, sunElevation, sunAzimuth, rimStrength, exposure, shaftStrength, heroFillStrength, neon;
 		Ogre::ColourValue sunColour, skyColour, groundColour, shadowColour, rimColour, heroFillColour, outlineTint;
 	};
 
@@ -94,6 +94,7 @@ private:
 		aoDirect,
 		aoTint,
 		shaftStrength,
+		neonStrength,
 		shaftDistance,
 		shaftAnisotropy,
 		shaftSteps,

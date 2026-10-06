@@ -215,6 +215,11 @@ depth shadows with normal offset (a single map is right for an arena this small)
        (noise), OpenGL +0.18 ms (it was +0.41 ms with 16/32 layers and a longer shadow march).
     6. **Checks:** fixed low cameras (`-Camera`), all hours, D3D11 and OpenGL, frame rate with the stone filling the
        screen, `-cycles` memory.
+    7. **Red neon (2026-10-06, done):** the ring ropes and the tube inside the T glow red at dusk and night (keyframe
+       `neon` in `lighting.object`, `neonStrength`; CLAUDE.md "Arena neon"); the bloom makes the halo. Before/after:
+       `%USERPROFILE%\Tumbu\arena-neon\` (19:00 and 22:00, plus 13:00 unchanged and D3D11 against OpenGL). Cost: none measurable (bench at 22:00, wide view: D3D11 and OpenGL, 1024x768 and 1920x1080, all inside the run-to-run spread).
+       Possible follow-up: let the neon light the floor and the robots near the ropes (a strip light in the arena
+       shader; the energy lights are limited to four), or a slow pulse.
   - Note: the parallax suits the stone, not the canvas ring mat (no depth to show there). The sun's shadow map and the
     contact shadows still land on the flat surface; only the stones' own shadows follow the depth.
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
