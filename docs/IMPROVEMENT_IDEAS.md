@@ -25,6 +25,8 @@ Visual track, most important first (impact on what the player sees, against the 
 10. **Colour-grading tables per time of day** (idea 6).
 11. **Linear workflow** (Rendering modernization 4): only with a full retune of the look.
 12. **GTAO** (Rendering modernization 6) and the **smaller extras** (idea 7).
+13. **OpenGL frame rate** (Rendering modernization 9): about 30 % behind Direct3D 11; only worth it if OpenGL becomes a
+    target (a Linux build).
 
 Separate tracks: **gameplay beyond the battle demo** (part shop or loadout screen) is the most important item for the game
 itself (customization is its core), but it is design and code, not visuals; the **Windows installer** comes last, once the improvements are done (Jonathan, 2026-10-04).
@@ -144,6 +146,20 @@ Techniques in use that have a clear modern replacement, most valuable first:
    weights in `robot_toon`, `robot_outline`, `robot_aura` and a skinned shadow caster for the robots) removes the CPU work
    and the uploads on both renderers, and leaves room for more robots on screen. Medium effort; check with
    `bench.ps1 -Variants "fight=-BenchAI"` before/after and the robot before/after shots (poses must not change).
+
+9. **OpenGL about 30 % slower than Direct3D 11** (not investigated yet; noted 2026-10-06).
+   - Measured with `bench.ps1` on the same scene and window size (RTX 3070, Ogre 14.6): tiers view before the arena remake
+     1443 vs 1008 fps at 1024x768 (-30 %), 1127 vs 837 at 1920x1080 (-26 %); robot fight after GPU skinning 1371 vs 937.
+     Every arena-remake step changed both renderers by about the same amount, so the gap is older than it.
+   - Where the time goes: frames are about 1 ms, mostly the CPU submitting draw calls. The bench's `render_ms` (from
+     `frameStarted` to `frameRenderingQueued`) is about 1.18 ms on OpenGL against 0.91 ms on Direct3D 11 for the same
+     scene: Ogre's GL3+ render system costs more per draw (uniforms uploaded per pass and hashed for its cache, more state
+     changes) than its D3D11 one (constant buffers).
+   - Things to try, measured with `bench.ps1 -Renderers GL`: count the draw calls and passes per frame (Ogre's frame
+     stats, RenderDoc / Nsight); fewer draws for the static arena (one entity per material, static geometry); shared
+     parameters through uniform buffers if Ogre's GL3+ supports it for our programs; compare with Ogre's own samples to see
+     whether the gap is ours or the render system's.
+   - Priority: low. With VSync or the 144 fps cap both renderers run far above the limit, and Direct3D 11 is the default.
 
 Still modern, keep: inverted-hull outlines (Genshin, Guilty Gear), the shadow-map raymarched god rays, integrated
 depth shadows with normal offset (a single map is right for an arena this small), the fixed-step physics.
