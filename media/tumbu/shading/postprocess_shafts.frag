@@ -6,6 +6,13 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 #include <OgreUnifiedShader.h>
 #include "TumbuToon.h"
 
+// Inside the march (a loop with a per-pixel length) the lookup must not need texture derivatives: level 0 explicitly.
+#ifdef OGRE_HLSL
+#define SHAFT_SHADOW_CMP(map, coord) TUMBU_SHADOW_CMP(map, coord)
+#else
+#define SHAFT_SHADOW_CMP(map, coord) textureLod(map, coord, 0.0)
+#endif
+
 SAMPLER2D(depthMap, 0);
 SAMPLER2DSHADOW(shadowMap, 1);
 
@@ -15,7 +22,7 @@ OGRE_UNIFORMS(
     uniform vec4 shaftParams;
     uniform mat4 invViewProj;     // camera clip space -> world
     uniform mat4 shadowViewProj;  // world -> shadow map (texture space)
-    uniform vec4 camPos;          // xyz camera position, w = 1 when the depth texture is stored upside down
+    uniform vec4 camPos;          // xyz camera position
     uniform vec4 viewportSize;
 )
 
@@ -26,8 +33,6 @@ MAIN_DECLARATION
     // World position of the visible surface.
     float depth = texture2D(depthMap, oUv).r;
     vec2 ndcXY = vec2(oUv.x * 2.0 - 1.0, 1.0 - oUv.y * 2.0);
-    if (camPos.w > 0.5)
-        ndcXY.y = -ndcXY.y;
 #if !defined(OGRE_HLSL) && !defined(OGRE_REVERSED_Z)
     depth = depth * 2.0 - 1.0;
 #endif
@@ -74,7 +79,7 @@ MAIN_DECLARATION
         if (s.x < 0.0 || s.x > 1.0 || s.y < 0.0 || s.y > 1.0 || s.z > 1.0)
             lit += 0.25;    // outside the shadow map (open sky, beyond the arena): faint, or the sky turns milky
         else
-            lit += TUMBU_SHADOW_CMP(shadowMap, vec3(s.xy, saturate(s.z) - shadowParams.y));
+            lit += SHAFT_SHADOW_CMP(shadowMap, vec3(s.xy, saturate(s.z) - shadowParams.y));
     }
     float litLength = lit / steps * rayLength;
 

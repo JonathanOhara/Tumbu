@@ -460,10 +460,10 @@ void Lighting::notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &mat
 	Ogre::Camera* camera = postProcessViewport->getCamera();
 	Ogre::Matrix4 viewProj = camera->getProjectionMatrixWithRSDepth() * camera->getViewMatrix();
 	params->setNamedConstant( "invViewProj", viewProj.inverse() );
-	// OpenGL stores render textures upside down.
-	bool flipped = Ogre::Root::getSingleton().getRenderSystem()->getName().find( "OpenGL" ) != Ogre::String::npos;
+	// No "OpenGL upside down" flip when rebuilding positions from the depth texture: it mirrored every view ray on
+	// OpenGL (same length, so distances and fog looked right) and the god rays marched into the sunlit air above.
 	Ogre::Vector3 eye = camera->getDerivedPosition();
-	params->setNamedConstant( "camPos", Ogre::Vector4( eye.x, eye.y, eye.z, flipped ? 1.0f : 0.0f ) );
+	params->setNamedConstant( "camPos", Ogre::Vector4( eye.x, eye.y, eye.z, 0 ) );
 
 	if( mSceneMgr->isShadowTechniqueTextureBased() && sun != NULL && sun->getCastShadows() ){
 		Ogre::TexturePtr shadowTexture = mSceneMgr->getShadowTexture( 0 );
@@ -546,8 +546,7 @@ void Lighting::setAmbientOcclusion( Ogre::MaterialPtr &material ){
 	params->setNamedConstant( "invViewProj", ( projection * camera->getViewMatrix() ).inverse() );
 	Ogre::Vector3 eye = camera->getDerivedPosition();
 	params->setNamedConstant( "camPos", Ogre::Vector4( eye.x, eye.y, eye.z, 1 ) );
-	bool flipped = Ogre::Root::getSingleton().getRenderSystem()->getName().find( "OpenGL" ) != Ogre::String::npos;
 	// projection[1][1] = 1 / tan(fov / 2): a world size at distance 1 covers that much of the screen height
 	// (x 0.5 in texture coordinates).
-	params->setNamedConstant( "ssaoParams", Ogre::Vector4( ssaoRadius, ssaoStrength, projection[1][1] * 0.5f, flipped ? 1.0f : 0.0f ) );
+	params->setNamedConstant( "ssaoParams", Ogre::Vector4( ssaoRadius, ssaoStrength, projection[1][1] * 0.5f, 0 ) );
 }

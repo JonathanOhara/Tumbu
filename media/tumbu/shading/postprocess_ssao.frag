@@ -11,7 +11,7 @@ SAMPLER2D(depthMap, 0);
 OGRE_UNIFORMS(
     TUMBU_LIGHTING_UNIFORMS
     // x = radius in world units, y = strength (0 = off), z = projection scale (pixels per unit at distance 1,
-    // in texture coordinates), w = 1 when the depth texture is upside down
+    // in texture coordinates)
     uniform vec4 ssaoParams;
     uniform mat4 invViewProj;
     uniform vec4 camPos;
@@ -22,8 +22,6 @@ vec3 worldAt(vec2 uv)
 {
     float depth = texture2D(depthMap, uv).r;
     vec2 ndcXY = vec2(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);
-    if (ssaoParams.w > 0.5)
-        ndcXY.y = -ndcXY.y;
 #if !defined(OGRE_HLSL) && !defined(OGRE_REVERSED_Z)
     depth = depth * 2.0 - 1.0;
 #endif

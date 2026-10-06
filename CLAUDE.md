@@ -229,7 +229,11 @@ painted toon sky replaced it).
   forward scattering, capped at 10x, soft-saturated), then one blur; the final pass adds it before tone
   mapping. The pass has `identifier 10`: `Lighting::notifyMaterialRender` (a compositor listener) sets the
   camera and shadow-camera matrices and binds the shadow texture right before it renders, so there is no
-  frame of lag. No shadows → no god rays. OpenGL stores the depth texture upside down (`camPos.w`).
+  frame of lag. No shadows → no god rays. **No OpenGL y-flip when rebuilding positions from depth** (god rays and
+  SSAO): the old "OpenGL stores the depth texture upside down" flip mirrored every view ray (same length, so distances
+  and fog looked right) and on OpenGL the god rays marched into the sunlit air above the walls, washing the view towards
+  the sun white (fixed 2026-10-06; `%USERPROFILE%\Tumbu\opengl-godrays\`). Inside the march the shadow lookup is an
+  explicit level 0 (`SHAFT_SHADOW_CMP`).
   Tuning: `shaftStrength` / `shaftDistance` / `shaftAnisotropy` / `shaftSteps`, plus an optional per-keyframe
   `shaftStrength` multiplier (strong at dawn and sunset, weak at night).
 - **Lens flare** (final pass, `identifier 20`): glow, horizontal streak and ghosts through the screen centre.
