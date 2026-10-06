@@ -13,6 +13,9 @@ Models what a texture cannot fake, so the stone reads as cut blocks under the to
      and one cut at +x behind the stepped block); each piece is turned so that "up" is +v, scaled to world size and
      shifted so that v = height / tile, so the block courses run level all around the arena. Floors and treads are
      mapped from above (u = x, v = y).
+  5. (version 4) sloped walls (the big leaning upper wall: a cone, not a cylinder) unwrap into a curved strip, so one
+     turn per piece left the courses diagonal at its ends. Sloped pieces are mapped directly instead: u = the angle
+     around the arena x the piece's mean radius, v = the distance up the slope; every course is level.
 The ring ("arena" object, its own steps in its tumbu_shapes):
   1. its floor and sides get the material arenaFloorMaterial (the grey tiles; world-scale UVs, RING_TILE metres per
      unit) and the ropes arenaRopesMaterial (for the red neon); the posts keep the 2011 material and atlas.
@@ -32,7 +35,8 @@ import os
 import sys
 from mathutils import Vector
 
-SHAPES_VERSION = 3
+SHAPES_VERSION = 4
+SLOPED = 0.12               # a wall piece whose mean |normal.z| is above this is "sloped" (version 4)
 RING_VERSION = 1
 STONE_TILE = 4.8            # metres per texture repeat on the coliseum (arena_textures.py STONE_TILE)
 RING_TILE = 12.8            # metres per texture repeat on the ring floor (arena_textures.py TILES_TILE)
@@ -213,6 +217,101 @@ def world_uvs(ob):
     log("world UVs: %d wall pieces, %d floor faces, %.1f m per tile" % (len(islands), len(flat), STONE_TILE))
 
 
+def sloped_uvs(ob):
+    """Sloped wall pieces: u around the arena, v up the slope (step 5 of the docstring). Uses the seams of step 4."""
+    me = ob.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    uv = bm.loops.layers.uv[me.uv_layers[0].name]
+    flat = {f.index for f in bm.faces if abs(f.normal.z) > 0.7}
+    walls = [f for f in bm.faces if f.index not in flat]
+    parent = {f.index: f.index for f in walls}
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+    for e in bm.edges:
+        if not e.seam and len(e.link_faces) == 2:
+            a, b = e.link_faces
+            if a.index in parent and b.index in parent:
+                parent[find(a.index)] = find(b.index)
+    islands = {}
+    for f in walls:
+        islands.setdefault(find(f.index), []).append(f)
+
+    changed = 0
+    for faces in islands.values():
+        area = sum(f.calc_area() for f in faces)
+        if area <= 0:
+            continue
+        nz = sum(abs(f.normal.z) * f.calc_area() for f in faces) / area
+        if nz <= SLOPED:
+            continue
+        # only pieces that lean towards or away from the centre (a cone around the arena); a piece that slopes sideways
+        # (the end of the stepped block) keeps its unwrap
+        radial = 0.0
+        for f in faces:
+            h = Vector((f.normal.x, f.normal.y, 0.0))
+            c = f.calc_center_median()
+            r = Vector((c.x, c.y, 0.0))
+            if h.length > 1e-6 and r.length > 1e-6:
+                radial += abs(h.normalized().dot(r.normalized())) * f.calc_area()
+        if radial / area < 0.8:
+            continue
+        # the piece's mean direction and radius around the arena's centre
+        cx = sum(f.calc_center_median().x * f.calc_area() for f in faces) / area
+        cy = sum(f.calc_center_median().y * f.calc_area() for f in faces) / area
+        mid = math.atan2(cy, cx)
+        radius = sum(f.calc_center_median().xy.length * f.calc_area() for f in faces) / area
+        along_slope = 1.0 / max(math.sqrt(max(1.0 - nz * nz, 0.0)), 0.2)    # metres up the slope per metre of height
+        for f in faces:
+            for l in f.loops:
+                p = l.vert.co
+                a = math.atan2(p.y, p.x) - mid
+                a = (a + math.pi) % (2 * math.pi) - math.pi                    # around the piece's own direction
+                l[uv].uv = (a * radius / STONE_TILE, p.z * along_slope / STONE_TILE)
+        changed += 1
+    # any wall face the unwrap squashed or stretched (a strip at the +x cut) is mapped around the arena instead
+    def uv_area(f):
+        t = [l[uv].uv for l in f.loops]
+        return abs(sum(t[i].x * t[(i + 1) % len(t)].y - t[(i + 1) % len(t)].x * t[i].y for i in range(len(t)))) / 2
+    squashed = 0
+    for f in walls:
+        world = f.calc_area() / (STONE_TILE * STONE_TILE)
+        if world <= 1e-8:
+            continue
+        ratio = uv_area(f) / world
+        if 0.5 < ratio < 2.0:
+            continue
+        c = f.calc_center_median()
+        mid = math.atan2(c.y, c.x)
+        radius = c.xy.length
+        along = 1.0 / max(math.sqrt(max(1.0 - f.normal.z * f.normal.z, 0.0)), 0.2)
+        for l in f.loops:
+            p = l.vert.co
+            a = (math.atan2(p.y, p.x) - mid + math.pi) % (2 * math.pi) - math.pi
+            l[uv].uv = (a * radius / STONE_TILE, p.z * along / STONE_TILE)
+        squashed += 1
+    log("%d squashed wall faces mapped around the arena" % squashed)
+
+    # floors and treads follow the curve too: u around the arena (cut at +x, behind the stepped block), v outwards
+    for f in bm.faces:
+        if f.index in flat:
+            c = f.calc_center_median()
+            mid = math.atan2(-c.y, -c.x)
+            for l in f.loops:
+                p = l.vert.co
+                r = p.xy.length
+                # each face measures its angles from its own centre: a face lying across the cut keeps one side
+                a = mid + ((math.atan2(-p.y, -p.x) - mid + math.pi) % (2 * math.pi) - math.pi)
+                l[uv].uv = (a * r / STONE_TILE, r / STONE_TILE)
+    bm.to_mesh(me)
+    bm.free()
+    log("sloped walls: %d pieces mapped around the arena; floors mapped around the arena" % changed)
+
+
 def ring_materials(ob):
     """The ring's floor and sides get the tile material with world-scale UVs, the ropes their own material."""
     me = ob.data
@@ -277,6 +376,8 @@ def main():
         weighted_normals(ob)
     if done < 3:
         world_uvs(ob)
+    if done < 4:
+        sloped_uvs(ob)
     ob["tumbu_shapes"] = SHAPES_VERSION
     log("coliseum: shapes version %d -> %d, %d -> %d vertices" % (done, SHAPES_VERSION, before, len(ob.data.vertices)))
 

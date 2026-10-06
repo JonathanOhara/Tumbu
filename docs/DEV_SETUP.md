@@ -256,6 +256,10 @@ project.
   meet floors and once at +x behind the stepped block; each piece turned so "up" is +v and shifted so v = height / 4.8,
   so the courses run level; floors mapped from above). The ring's floor and sides get `arenaFloorMaterial` (12.8 m
   tiles, mapped from above), its ropes `arenaRopesMaterial`; the posts keep the 2011 atlas.
+  Version 4: sloped walls (the big leaning upper wall is a cone, which unwraps into a curved strip and left the courses
+  diagonal at its ends) are mapped directly, u = angle around the arena x the piece's mean radius, v = distance up the
+  slope; floors and treads the same way (u around the arena, v outwards, each face measuring angles from its own centre
+  so none spans the cut at +x); wall faces the unwrap squashed or stretched (a strip at the cut) are remapped that way.
 - **Textures** (`.\scripts\arena-textures.ps1` -> `scripts/blender/arena_textures.py`, Blender's bundled numpy, about
   15 s): `sandstone_col/nrm/hgt.png`, `ringtiles_col/nrm/hgt.png`, `ring_emblem.png` in `media/tumbu/arena/`. Each
   set comes from one height field, so colour, normal and height agree; all tile seamlessly (`-Preview <folder>`
