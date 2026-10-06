@@ -76,6 +76,124 @@ material Tumbu/EnvironmentToon{
     }
 }
 
+// Base of the arena remake's stone (env_stone_ps, TumbuStone.h): set $diffuseMap, $normalMap, $heightMap (r height,
+// g moss field) and $aoMap; the texture sets come from scripts/arena-textures.ps1, the UVs are at world scale
+// (scripts/blender/arena_shapes.py).
+//   $stoneParams  depth of the height field in UV units (metres / tile size), parallax steps (0 = normal map only),
+//                 distance where the parallax has faded out, self-shadow strength
+//   $mossParams   threshold on the moss field, height of the "foot" band, extra moss at the foot, extra facing up
+//   $mossParams2  extra moss in the joints, threshold offset of the darker tone
+//   $mossColour / $mossDeepColour  the two flat moss tones (alpha of $mossColour: 0 = no moss)
+material Tumbu/EnvironmentStone{
+    set $diffuseMap "white.png"
+    set $normalMap "white.png"
+    set $heightMap "white.png"
+    set $aoMap "white.png"
+    set $diffuseCol "1 1 1 1"
+    set $specularCol "0 0 0"
+    set $shininess "16"
+    set $stoneParams "0.025 0 30 1"
+    set $mossParams "0.77 4 0.16 0.10"
+    set $mossParams2 "0.10 0.07 0 0"
+    set $mossColour "0.33 0.43 0.19 1"
+    set $mossDeepColour "0.25 0.34 0.15 1"
+
+    receive_shadows on
+
+    technique toon{
+        shadow_caster_material Tumbu/ShadowCasterTwoSided
+
+        pass{
+            diffuse $diffuseCol
+            specular $specularCol $shininess
+
+            vertex_program_ref env_toon_vs{
+            }
+
+            fragment_program_ref env_stone_ps{
+                param_named stoneParams float4 $stoneParams
+                param_named mossParams float4 $mossParams
+                param_named mossParams2 float4 $mossParams2
+                param_named mossColour float4 $mossColour
+                param_named mossDeepColour float4 $mossDeepColour
+            }
+
+            texture_unit diffuseMap{
+                texture $diffuseMap
+                filtering anisotropic
+                max_anisotropy 8
+            }
+
+            texture_unit shadowMap{
+                content_type shadow
+                sampler_ref Tumbu/ShadowSampler
+            }
+
+            texture_unit aoMap{
+                texture $aoMap
+                tex_coord_set 1
+                tex_address_mode clamp
+            }
+
+            texture_unit normalMap{
+                texture $normalMap
+                filtering anisotropic
+                max_anisotropy 8
+            }
+
+            texture_unit heightMap{
+                texture $heightMap
+                filtering anisotropic
+                max_anisotropy 8
+            }
+        }
+    }
+
+    // Fallback without custom shaders (the shader generator lights it).
+    technique simple{
+        pass{
+            ambient 0.5 0.5 0.5 1
+            diffuse $diffuseCol
+
+            texture_unit diffuseMap{
+                texture $diffuseMap
+                colour_op modulate
+            }
+        }
+    }
+}
+
+// The ring floor: the stone base plus the decal ($emblemMap, scripts/arena-textures.ps1) with the T, its tube and the
+// border course. $emblemColour the T, $tubeColour the tube, $borderTint multiplies the border course.
+material Tumbu/EnvironmentStoneFloor : Tumbu/EnvironmentStone{
+    set $emblemMap "white.png"
+    set $emblemColour "0.13 0.13 0.15 1"
+    set $tubeColour "0.55 0.08 0.06 1"
+    set $borderTint "0.85 0.85 0.87 1"
+
+    technique toon{
+        pass{
+            fragment_program_ref env_stone_floor_ps{
+                param_named stoneParams float4 $stoneParams
+                param_named mossParams float4 $mossParams
+                param_named mossParams2 float4 $mossParams2
+                param_named mossColour float4 $mossColour
+                param_named mossDeepColour float4 $mossDeepColour
+                param_named emblemColour float4 $emblemColour
+                param_named tubeColour float4 $tubeColour
+                param_named borderTint float4 $borderTint
+            }
+
+            texture_unit emblemMap{
+                texture $emblemMap
+                tex_address_mode clamp
+                filtering anisotropic
+                max_anisotropy 8
+            }
+        }
+    }
+}
+
 material Tumbu/PostProcess/Final{
     technique{
         pass{

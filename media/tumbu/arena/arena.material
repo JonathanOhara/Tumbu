@@ -1,8 +1,28 @@
 import * from "shading.material"
 
-// Arena floor (toon shading, shading.material).
+// Ring posts (the 2011 texture atlas; toon shading, shading.material).
 material arenaMaterial/TEXFACE/gym_arena.png : Tumbu/EnvironmentToon{
-	set $diffuseMap "gym_arena.png"
-	set $aoMap "arena_ao.png"
-	set $diffuseCol "0.6 0.62 0.66 1"
+    set $diffuseMap "gym_arena.png"
+    set $aoMap "arena_ao.png"
+    set $diffuseCol "0.6 0.62 0.66 1"
+}
+
+// Ring ropes: their own material for the red neon (arena remake). Same look as the posts' atlas for now.
+material arenaRopesMaterial : Tumbu/EnvironmentToon{
+    set $diffuseMap "gym_arena.png"
+    set $aoMap "arena_ao.png"
+    set $diffuseCol "0.6 0.62 0.66 1"
+}
+
+// Ring floor and sides: grey tournament tiles in four shades (12.8 m tile, 3 cm deep joints), the charcoal T with its
+// tube and the border course (ring_emblem.png). Textures from scripts/arena-textures.ps1.
+material arenaFloorMaterial : Tumbu/EnvironmentStoneFloor{
+    set $diffuseMap "ringtiles_col.png"
+    set $normalMap "ringtiles_nrm.png"
+    set $heightMap "ringtiles_hgt.png"
+    set $aoMap "arena_ao.png"
+    set $emblemMap "ring_emblem.png"
+    // depth 0.03 m / 12.8 m tile; no moss on the ring
+    set $stoneParams "0.0023 0 30 1"
+    set $mossColour "0 0 0 0"
 }

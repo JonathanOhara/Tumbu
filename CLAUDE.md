@@ -91,7 +91,10 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   when they move, find out why and update this paragraph. Expected (RTX 3070, driver 617.14 / 32.0.16.1714, Ogre 14.6.0,
   2026-10-04): the menu before any match about 21 MB; **OpenGL** about 17.5 MB after the first match and flat (±30 KB per
   match); **Direct3D 11** about 29 MB after the first match, then **+0.7 to 0.8 MB per match** (it was +1.7 to 2.3 MB
-  before the robots were skinned on the GPU, 2026-10-04), the same with SMAA on or off.
+  before the robots were skinned on the GPU, 2026-10-04), the same with SMAA on or off. **Since the arena stone
+  (2026-10-06): about +1.1 MB per match** on Direct3D 11 (12-match runs; the build just before measured +0.31 in the
+  same session), still `nvwgf2umx.dll`, OpenGL still flat (-5 KB), every object count flat, the textures loaded once;
+  trilinear instead of anisotropic filtering on the stone gave +0.84, so part of it follows the new sampler states.
   That growth is NVIDIA driver memory (`nvwgf2umx.dll`), tied to the post-processing compositor, not the effects; the
   object counts are flat on both renderers (docs/SPECIAL_EFFECTS.md, "Known issue"; re-check after a driver or Ogre update:
   `-cycles` logs a `REMINDER` line when they differ). `-cycles` also logs `heap growth by block size` and the DLL that
@@ -267,6 +270,20 @@ PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in t
   005 "0.25 0.35 0.9 0.25". Global
   look: `metalBands`, `metalBandHeights`, `metalStreak`, `metalGlint`, `metalFresnel`, `metalDiffuse` in
   `lighting.object` (shared `metalEnv` / `metalShape` / `metalExtra`).
+- **Arena stone** (arena remake, 2026-10; `TumbuStone.h`, `env_stone_ps` / `env_stone_floor_ps` = `env_toon.frag` with
+  `TUMBU_STONE` / `TUMBU_EMBLEM`; base materials `Tumbu/EnvironmentStone` and `Tumbu/EnvironmentStoneFloor` in
+  `shading.material`):
+  - Textures from `scripts/arena-textures.ps1`: `sandstone_*` (4.8 m tile) on the coliseum, `ringtiles_*` (12.8 m) on the
+    ring floor, `ring_emblem.png` (the T, its tube, the border course) mapped from above over the 20 x 20 ring floor.
+    `*_hgt.png`: R height, G moss field.
+  - **No mesh tangents:** the tangent frame is built per pixel from screen-space derivatives (`tumbuTangentFrame`). The
+    texture UVs are at world scale (`arena_shapes.py`), so a tile has the same size everywhere.
+  - Moss is decided in the shader from the moss field, the height above the ground, how much a surface faces up and
+    the joints (`$mossParams`, `$mossParams2`, `$mossColour` alpha 0 = none).
+  - **No `#ifdef` inside `OGRE_UNIFORMS(...)`**: GLSL rejects preprocessor lines inside a macro's arguments, so OpenGL
+    dropped the whole program (Direct3D 11 accepted it); use `OGRE_UNIFORMS_BEGIN` ... `OGRE_UNIFORMS_END`.
+  - Inside loops whose length varies per pixel (parallax), sample with explicit gradients (`tumbuSampleGrad`:
+    `SampleGrad` on Direct3D 11, `textureGrad` on OpenGL).
 - **Contact shadows**
  (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by
@@ -477,6 +494,9 @@ through a listener registry in `BaseApplication`.
   baked AO maps (`*_ao.png`, second UV set): edit it, then run `.\scripts\bake-arena-ao.ps1` (headless Blender
   5.2 + blender2ogre; `-Rebuild` recreates it from the 2011 files and **discards manual edits**, so never use
   it once `Arena.blend` has been edited by hand). Details in DEV_SETUP Part B.
+  Arena remake: `scripts/blender/arena_shapes.py` adds the big shapes, the world-scale texture UVs and the ring's floor and
+  rope materials to `Arena.blend` (each step once; the object property `tumbu_shapes` records them), and
+  `.\scripts\arena-textures.ps1` generates the stone, tile and emblem textures.
   `art/robots/robot00N.blend` are the robots, converted once from 2.49 with Blender 4.5 LTS
   (`scripts/convert-legacy-blend.ps1`, which keeps the animations). They are the source for any robot change.
   `.\scripts\bake-robot-ao.ps1` bakes `media/tumbu/robot00N/AO<part>UV_00N.png` through the texture UVs (each

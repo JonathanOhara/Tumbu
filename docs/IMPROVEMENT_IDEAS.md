@@ -189,12 +189,22 @@ depth shadows with normal offset (a single map is right for an arena this small)
        noise); before/after: `%USERPROFILE%\Tumbu\arena-shapes\`.
     3. **Blender, textures:** one or two tileable stone sets baked from modelled or sculpted stones, so the maps agree:
        colour, normal, **height** (the parallax needs it) and AO detail. Plus the new ring mat. Toon-friendly: flat
-       colour areas, clear shapes, little photo noise.
+       colour areas, clear shapes, little photo noise. **Done (2026-10-06):** generated rather than baked from sculpts,
+       by `scripts/arena-textures.ps1` (`scripts/blender/arena_textures.py`, Blender's numpy): every map of a set comes
+       from one height field, so they agree by construction, and every set tiles; the moss is a field in the height
+       map's G channel that the shader thresholds, so its amount is a material value.
     4. **Export:** tangents for `coliseum.mesh` / `arena.mesh` (blender2ogre option, through `bake-arena-ao.ps1`).
+       **Done differently (2026-10-06):** no tangents in the meshes. The shader builds the tangent frame per pixel from
+       screen-space derivatives (`tumbuTangentFrame`, TumbuStone.h), the same on Direct3D 11 and OpenGL. The meshes got
+       world-scale texture UVs instead (`arena_shapes.py` version 3: walls unwrapped, each piece turned so "up" is +v and
+       shifted so v = height / 4.8 m, so the courses run level all around; floors mapped from above), and the ring got
+       its own floor and rope materials (`arenaFloorMaterial`, `arenaRopesMaterial`).
     5. **Shader (`env_toon.frag`):** normal map, then parallax occlusion (8–32 steps, depth per material) with
        toon-banded self-shadows towards the sun, faded to the plain normal map in the distance; switched per material
        (`Tumbu/EnvironmentToon` variables) and off on Low shadow/quality options. Values in the material and
-       `lighting.object`.
+       `lighting.object`. **Normal map, moss and the ring decal done (2026-10-06):** `Tumbu/EnvironmentStone` /
+       `Tumbu/EnvironmentStoneFloor` (`env_stone_ps`, `env_stone_floor_ps`); before/after:
+       `%USERPROFILE%\Tumbu\arena-stone\`; no frame-rate cost (bench, tiers view: D3D11 1143 vs 1151 fps at 1024x768, 880 vs 851 at 1920x1080; OpenGL 750 vs 769 and 808 vs 732; all inside the run-to-run spread); D3D11 driver memory +1.1 MB per match (CLAUDE.md).
     6. **Checks:** fixed low cameras (`-Camera`), all hours, D3D11 and OpenGL, frame rate with the stone filling the
        screen, `-cycles` memory.
   - Note: the parallax suits the stone, not the canvas ring mat (no depth to show there). The sun's shadow map and the

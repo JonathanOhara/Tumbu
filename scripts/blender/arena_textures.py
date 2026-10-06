@@ -12,8 +12,9 @@ Sets, written to media/tumbu/arena/:
   sandstone_hgt.png  R height (1 = block face, 0 = bottom of a joint), G moss patch field (the shader decides where
                      moss grows from it, the wall height and the joints; tunable without running this again)
   ringtiles_col/nrm/hgt.png  the grey tournament tiles of the ring floor (each tile one of four flat greys)
-  ring_emblem.png    R the charcoal T, G the neon tube inside its edge: a decal over the 20 x 20 ring floor
-                     (row 0 = Ogre z -10, the far side from the hero's spawn, so the T is upright for the hero)
+  ring_emblem.png    R the charcoal T, G the neon tube inside its edge, B the border course (the band of tiles along
+                     the ring's edge): a decal over the 20 x 20 ring floor (row 0 = Ogre z -10, the far side from
+                     the hero's spawn, so the T is upright for the hero)
 
 Usage: blender --background --factory-startup --python arena_textures.py -- <repo root> [--preview <folder>]
 """
@@ -59,6 +60,9 @@ EMBLEM_SIZE = 2048
 EMBLEM_EXTENT = 20.0        # metres: the whole ring floor
 EMBLEM_SCALE = 1.35
 EMBLEM_TUBE = (0.17, 0.29)  # the neon tube runs this far inside the T's edge (metres)
+EMBLEM_BORDER = 1.0         # width of the border course along the ring's edge (metres)
+# the ring floor's corners in plan view (Blender x, y = the post positions of arena.mesh)
+RING_CORNERS = [(-9.89, -5.03), (-0.12, -9.94), (10.0, -4.87), (9.88, 5.06), (-0.12, 9.94), (-10.0, 4.87)]
 
 
 def log(message):
@@ -237,7 +241,9 @@ def emblem():
     px = E / S
     fill = smoothstep(-px, px, d)
     tube = smoothstep(EMBLEM_TUBE[0] - px, EMBLEM_TUBE[0] + px, d) * (1 - smoothstep(EMBLEM_TUBE[1] - px, EMBLEM_TUBE[1] + px, d))
-    return np.stack([fill, tube, np.zeros_like(fill)], axis=-1)
+    # the image's "up" (row 0) is Blender +y, the ring corners are in Blender x, y
+    border = 1 - smoothstep(EMBLEM_BORDER - px, EMBLEM_BORDER + px, inside_distance(RING_CORNERS))
+    return np.stack([fill, tube, border], axis=-1)
 
 
 def save(name, rgb, folder):

@@ -1,7 +1,14 @@
 import * from "shading.material"
 
-// Coliseum walls (toon shading, shading.material). No texture yet: a flat colour. AO baked by scripts/bake-arena-ao.ps1.
-material coliseumMaterial : Tumbu/EnvironmentToon{
-	set $diffuseCol "0.74 0.6 0.44 1"
-	set $aoMap "coliseum_ao.png"
+// Coliseum walls: sandstone with moss (arena remake, docs/IMPROVEMENT_IDEAS.md "Coliseum retexture"). Textures from
+// scripts/arena-textures.ps1 (4.8 m tile, 12 cm deep), world-scale UVs from scripts/blender/arena_shapes.py, AO baked by
+// scripts/bake-arena-ao.ps1.
+material coliseumMaterial : Tumbu/EnvironmentStone{
+    set $diffuseMap "sandstone_col.png"
+    set $normalMap "sandstone_nrm.png"
+    set $heightMap "sandstone_hgt.png"
+    set $aoMap "coliseum_ao.png"
+    set $diffuseCol "0.97 0.95 0.92 1"
+    // depth 0.12 m / 4.8 m tile
+    set $stoneParams "0.025 0 30 1"
 }

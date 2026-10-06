@@ -28,6 +28,38 @@ fragment_program env_toon_ps glsl glsles hlsl
     }
 }
 
+// The arena remake's stone (TumbuStone.h): normal map, parallax with toon self-shadows, moss. Same source.
+fragment_program env_stone_ps glsl glsles hlsl
+{
+    source env_toon.frag
+    target ps_4_0
+    preprocessor_defines TUMBU_STONE=1
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto matDif surface_diffuse_colour
+        param_named_auto matSpec surface_specular_colour
+        param_named_auto matShininess surface_shininess
+        param_named_auto camPos camera_position
+    }
+}
+
+// The ring floor: the stone shader plus the decal (the T, its tube, the border course).
+fragment_program env_stone_floor_ps glsl glsles hlsl
+{
+    source env_toon.frag
+    target ps_4_0
+    preprocessor_defines TUMBU_STONE=1,TUMBU_EMBLEM=1
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto matDif surface_diffuse_colour
+        param_named_auto matSpec surface_specular_colour
+        param_named_auto matShininess surface_shininess
+        param_named_auto camPos camera_position
+    }
+}
+
 vertex_program postprocess_vs glsl glsles hlsl
 {
     source postprocess.vert

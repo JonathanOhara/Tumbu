@@ -251,6 +251,16 @@ project.
   place and records the steps it applied in the object property `tumbu_shapes`, so running it again only adds newer
   steps: `blender --background art/arena/Arena.blend --python scripts/blender/arena_shapes.py -- .`, then
   `.\scripts\bake-arena-ao.ps1`. The AO UV map is laid out again for the new faces by the bake.
+- **World-scale texture UVs and the ring's materials** (`arena_shapes.py` version 3, ring version 1): the coliseum's
+  first UV set is laid out at 1 unit = one 4.8 m sandstone tile (walls unwrapped with seams on hard edges, where walls
+  meet floors and once at +x behind the stepped block; each piece turned so "up" is +v and shifted so v = height / 4.8,
+  so the courses run level; floors mapped from above). The ring's floor and sides get `arenaFloorMaterial` (12.8 m
+  tiles, mapped from above), its ropes `arenaRopesMaterial`; the posts keep the 2011 atlas.
+- **Textures** (`.\scripts\arena-textures.ps1` -> `scripts/blender/arena_textures.py`, Blender's bundled numpy, about
+  15 s): `sandstone_col/nrm/hgt.png`, `ringtiles_col/nrm/hgt.png`, `ring_emblem.png` in `media/tumbu/arena/`. Each
+  set comes from one height field, so colour, normal and height agree; all tile seamlessly (`-Preview <folder>`
+  writes 2 x 2 tiled copies to check). The look values are constants at the top of the script. Normal maps: x along
+  +u, y along +v (down the image), as the shader reads them.
 - **Custom normals survive the export:** `arena_ao.py` hands blender2ogre triangles through a temporary Triangulate
   modifier with `keep_custom_normals` (blender2ogre's own triangulation loses them), as the robot export does.
 - **Axis conversion is set explicitly:** blender2ogre keeps its settings between runs (`io_ogre.json`), and the robot
