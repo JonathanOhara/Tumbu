@@ -183,7 +183,10 @@ depth shadows with normal offset (a single map is right for an arena this small)
        canvas mat or a stone fighting platform). Jonathan wants a **complete remake** of the arena ground (today's
        texture is low resolution) and to decide ring vs stone platform from **side-by-side mock-ups** at that point.
     2. **Blender, shapes:** model the big forms the texture cannot fake (block edges, step lips, arches, bevels) in
-       `art/arena/Arena.blend`; keep the AO bake script working (`clean_mesh`, the AO UV set).
+       `art/arena/Arena.blend`; keep the AO bake script working (`clean_mesh`, the AO UV set). **Done (2026-10-06):**
+       `scripts/blender/arena_shapes.py` (plinth course, chamfered hard edges, weighted normals; DEV_SETUP Part B); the
+       windows already had reveals. No frame-rate cost (bench, D3D11 and OpenGL, 1024x768 and 1920x1080, inside the
+       noise); before/after: `%USERPROFILE%\Tumbu\arena-shapes\`.
     3. **Blender, textures:** one or two tileable stone sets baked from modelled or sculpted stones, so the maps agree:
        colour, normal, **height** (the parallax needs it) and AO detail. Plus the new ring mat. Toon-friendly: flat
        colour areas, clear shapes, little photo noise.

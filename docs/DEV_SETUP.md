@@ -244,6 +244,18 @@ project.
 - The build also cleans the 2011 meshes (`clean_mesh`): it stitches T-junctions within 2 cm (the coliseum had six,
   hairline cracks on the upper ring), removes loose edges, and marks edges sharper than 30 degrees as hard.
   Every face used to be smooth-shaded, so the window jambs and flat walls showed diagonal gradients.
+- **Big shapes** (`scripts/blender/arena_shapes.py`, arena remake 2026-10): a plinth course at the foot of the inner
+  arena wall (0.9 high, 0.15 out), a 0.08 chamfer on every hard edge of the coliseum (each chamfer edge hard, so the
+  sun draws a flat band along it) and weighted normals (face area, hard edges kept; without them a vertex where a
+  chamfer ends bent the normal of the curved wall and the toon ramp drew a bright wedge). It edits `Arena.blend` in
+  place and records the steps it applied in the object property `tumbu_shapes`, so running it again only adds newer
+  steps: `blender --background art/arena/Arena.blend --python scripts/blender/arena_shapes.py -- .`, then
+  `.\scripts\bake-arena-ao.ps1`. The AO UV map is laid out again for the new faces by the bake.
+- **Custom normals survive the export:** `arena_ao.py` hands blender2ogre triangles through a temporary Triangulate
+  modifier with `keep_custom_normals` (blender2ogre's own triangulation loses them), as the robot export does.
+- **Axis conversion is set explicitly:** blender2ogre keeps its settings between runs (`io_ogre.json`), and the robot
+  export sets `SWAP_AXIS 'xyz'`; with it the arena exported lying on its side (Z-up). `arena_ao.py` sets `xz-y` before
+  every export. Compare the bounding boxes of new exports with the old meshes (`OgreXMLConverter` to XML).
 - **AO textures use clamp addressing** (`tex_address_mode clamp` in `Tumbu/EnvironmentToon`).
   The UV packing can place an island against the texture border; with the default wrap, bilinear filtering blended
   texels from the opposite border into it, which drew a thin dark vertical line on the upper ring along a

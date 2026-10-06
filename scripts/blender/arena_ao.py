@@ -232,12 +232,23 @@ def bake(ob, scene):
 
 
 def export(ob):
-    from io_ogre import api
+    from io_ogre import api, config
+    # blender2ogre keeps its settings between runs (io_ogre.json): the robot export sets SWAP_AXIS 'xyz' (the robot
+    # files are Y-up), which left the arena lying on its side. Arena.blend is Z-up: convert to Ogre's Y-up.
+    config.update(SWAP_AXIS='xz-y')
     # blender2ogre silently skips unselected objects (its SELECTED_ONLY setting).
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.objects.active = ob
     ob.select_set(True)
-    api.dot_mesh(ob, MEDIA, force_name=ob.name, overwrite=True)
+    # blender2ogre triangulates with bmesh, which loses custom normals (arena_shapes.py sets weighted normals): hand
+    # it triangles that already carry them, as the robot export does.
+    triangulate = ob.modifiers.new("ogre_export_triangles", 'TRIANGULATE')
+    triangulate.keep_custom_normals = True
+    triangulate.min_vertices = 4
+    try:
+        api.dot_mesh(ob, MEDIA, force_name=ob.name, overwrite=True)
+    finally:
+        ob.modifiers.remove(triangulate)
     log("exported %s.mesh" % ob.name)
     # blender2ogre leaves the converter's log next to the mesh.
     converter_log = os.path.join(MEDIA, "OgreXMLConverter.log")
