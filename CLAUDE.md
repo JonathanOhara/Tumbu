@@ -465,9 +465,11 @@ through a listener registry in `BaseApplication`.
   `ConfigScriptLoader::getSingleton().getConfigScript("<type>", "<name>")->findChild("key")->getValueI()`.
 - `DotSceneLoader` is the Ogitor dotScene loader. Lights and camera are placed by their nodes, and meshes are
   loaded with the AUTODETECT group.
-  A terrain layer whose texture is missing takes layer 0's textures (`replaceMissingTerrainLayers`): the 2011 page has a
-  round patch beside the ring painted with Ogitor's own `city_6` rock, never shipped, which drew black. Ogre still logs
-  the missing `city_6` once while preparing the page (devtest.ps1 filters it).
+  A terrain layer whose texture is missing takes layer 0's textures (`replaceMissingTerrainLayers`, a safety net): the
+  2011 page had a round patch beside the ring painted with Ogitor's own `city_6` rock, never shipped, which drew black.
+  The page itself now names the grass textures for that layer (2026-10-06): the `.ogt` is Ogre `StreamSerialiser` chunks
+  (id, version, length, a SuperFastHash checksum of those three) with length-prefixed strings, so the names were
+  replaced and the lengths and checksums of the two enclosing chunks (`TERR`, `TLIN`) fixed.
 - `DevTest` is the unattended test harness. `Util` handles barrel spawning. `Log` / `LogManager` provide the
   on-screen log.
 - The game design used Portuguese. Some identifiers are Portuguese (`sofrerDano` = take damage,
