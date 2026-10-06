@@ -467,6 +467,11 @@ through a listener registry in `BaseApplication`.
 - `media/musics/*.ogg` and `media/sounds/*.ogg` hold the audio.
 - New exports: use blender2ogre, keep the 14 animation names, and upgrade with `scripts/upgrade-meshes.ps1`
   if needed. Details are in DEV_SETUP Part B.
+- **blender2ogre remembers its settings between runs** (`%APPDATA%\Blender Foundation\Blender\<version>\config\scripts\io_ogre.json`,
+  saved whenever the add-on unloads). Every export script must set what it relies on with `io_ogre.config.update(...)`
+  before `api.dot_mesh`, never trust the defaults: the robot export sets `SWAP_AXIS 'xyz'` (Y-up files), and the arena
+  export, which relied on the default `xz-y`, then wrote the arena lying on its side (found 2026-10-06; `arena_ao.py`
+  now sets it). After any export, compare the new mesh's bounding box with the old one (`OgreXMLConverter` to XML).
 - **`art/`** holds the modern Blender working files (the 2011 `.blend` files in `media/` stay untouched).
   `art/arena/Arena.blend` (coliseum + arena floor) is the source of `coliseum.mesh`, `arena.mesh` and their
   baked AO maps (`*_ao.png`, second UV set): edit it, then run `.\scripts\bake-arena-ao.ps1` (headless Blender
