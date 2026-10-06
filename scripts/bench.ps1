@@ -31,7 +31,8 @@ function ConvertTo-Splat([string]$text) {
     $tokens = @([regex]::Matches($text, '"[^"]*"|\S+') | ForEach-Object { $_.Value.Trim('"') })
     for ($i = 0; $i -lt $tokens.Count; $i++) {
         $key = $tokens[$i].TrimStart('-')
-        if ($i + 1 -lt $tokens.Count -and -not $tokens[$i + 1].StartsWith('-')) { $splat[$key] = $tokens[$i + 1]; $i++ }
+        # a value may start with '-' when it is a number ("-Camera -18.5,1,9,..."): only "-Name" is a new switch
+        if ($i + 1 -lt $tokens.Count -and $tokens[$i + 1] -notmatch '^-[A-Za-z]') { $splat[$key] = $tokens[$i + 1]; $i++ }
         else { $splat[$key] = $true }
     }
     return $splat
