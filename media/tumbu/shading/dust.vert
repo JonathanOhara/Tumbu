@@ -48,8 +48,8 @@ MAIN_DECLARATION
     gl_Position = mul(vpMat, vec4(p, 1.0));
     oLightSpacePos = mul(texViewProj, vec4(centre, 1.0));
     oUv = uv0;
-    // Hidden right in front of the camera (big blobs) and beyond about 20 units.
-    float fade = smoothstep(1.5, 3.0, distance) * (1.0 - smoothstep(15.0, 22.0, distance)) / grow;
+    // Hidden right in front of the camera (big blobs) and beyond about 28 units.
+    float fade = smoothstep(1.5, 3.0, distance) * (1.0 - smoothstep(20.0, 28.0, distance)) / grow;
     // Twinkle: brightness pulses slowly and out of step (flat specks turning in the light), plus a fixed
     // per-mote brightness so they are not all alike.
     float twinkle = 0.35 + 0.65 * (0.5 + 0.5 * sin(t * (1.5 + seed.y * 2.5) + seed.x * 6.2831853));

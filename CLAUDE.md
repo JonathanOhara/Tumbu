@@ -311,7 +311,7 @@ painted toon sky replaced it).
   where the shadow map says sunlight reaches them. Each mote's random colour is a seed: `dust.vert` rebuilds
   the billboard around its centre with its own size, a slow swirl and a twinkle (soft gaussian glow, not a
   dot). Far motes grow and dim (always a few soft pixels, never a 1-pixel "star"); hidden within 3 units and
-  beyond 20 (about 300 motes, like typical game dust). `billboardSize` in `shading.program` must match `particle_width`. `dustSunlight` (x the
+  beyond 28 (about 1200 motes; the middle between the first 2000, too busy, and 350, too sparse; 2026-10-06). `billboardSize` in `shading.program` must match `particle_width`. `dustSunlight` (x the
   keyframe `shaftStrength`), `dustShadow`.
 - **Screen-space AO** (`postprocess_ssao.frag`, `identifier 30`, half size + blur): world position and normal
   from depth, 12 spiral samples; the final pass multiplies the scene by it. `ssaoRadius`, `ssaoStrength`
