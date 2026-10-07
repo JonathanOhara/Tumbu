@@ -19,13 +19,15 @@ Visual track, most important first (impact on what the player sees, against the 
    "The sky"); the same sky on OpenGL, Caelum and its patches gone. **Folded into the arena remake as its last step** (2026-10-06): the "painted bands" style.
 5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook.
 6. **Tune Jyn in real fights** (idea 9): no code, only play time.
-7. **Robot art pass:** richer textures and toon-friendly normals (Art side).
-8. **Khronos PBR Neutral tone mapping** (Rendering modernization 5): small; fold into the bloom work.
-9. **Cloud shadows** (idea 5).
-10. **Colour-grading tables per time of day** (idea 6).
-11. **Linear workflow** (Rendering modernization 4): only with a full retune of the look.
-12. **GTAO** (Rendering modernization 6) and the **smaller extras** (idea 7).
-13. **OpenGL frame rate** (Rendering modernization 9): about 30 % behind Direct3D 11; only worth it if OpenGL becomes a
+7. **Grass remake** (Art side): our own toon shader for the terrain, with the real shadows (it has none since the light
+   map was turned off, 2026-10-06; see "Grass remake" under Art side).
+8. **Robot art pass:** richer textures and toon-friendly normals (Art side).
+9. **Khronos PBR Neutral tone mapping** (Rendering modernization 5): small; fold into the bloom work.
+10. **Cloud shadows** (idea 5).
+11. **Colour-grading tables per time of day** (idea 6).
+12. **Linear workflow** (Rendering modernization 4): only with a full retune of the look.
+13. **GTAO** (Rendering modernization 6) and the **smaller extras** (idea 7).
+14. **OpenGL frame rate** (Rendering modernization 9): about 30 % behind Direct3D 11; only worth it if OpenGL becomes a
     target (a Linux build).
 
 Separate tracks: **gameplay beyond the battle demo** (part shop or loadout screen) is the most important item for the game
@@ -248,6 +250,17 @@ depth shadows with normal offset (a single map is right for an arena this small)
        shader; the energy lights are limited to four), or a slow pulse.
   - Note: the parallax suits the stone, not the canvas ring mat (no depth to show there). The sun's shadow map and the
     contact shadows still land on the flat surface; only the stones' own shadows follow the depth.
+- **Grass remake** (the field between the ring and the walls; still the 2011 Ogre terrain with its built-in shader):
+  - Give the terrain our own toon shader, so the grass is lit like the stone and the robots: toon bands, the sun's real
+    shadow map (the coliseum's and the robots' moving shadows), contact shadows, energy and neon lights, moss-like
+    colour variation; the shader blends the terrain's layers itself. Possibly a new grass texture set too.
+  - **Check the shadows when doing it.** Since 2026-10-06 the terrain's light map is off (`DotSceneLoader::processTerrain`):
+    Ogre baked it once at load from the terrain's own heights only (mountains, the ground under the coliseum, not the
+    coliseum mesh), so it drew still, wrong shadows on the grass. The grass now has no shadows at all. Also tested then:
+    rebuilding Ogre's terrain material after the shadow technique is set (it is built before) makes its shader generator
+    add a shadow stage, but that stage expects a different shadow setup from our integrated depth map and drew long dark
+    wedges. Our own shader must sample `shadowMap` like `env_toon.frag` (`tumbuShadow`). Before/after of the light map
+    change: `%USERPROFILE%\Tumbu	errain-no-lightmap\`.
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first
   rule in CLAUDE.md.

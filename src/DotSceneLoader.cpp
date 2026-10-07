@@ -255,6 +255,10 @@ void DotSceneLoader::processTerrain(rapidxml::xml_node<>* XMLNode){
     mTerrainGlobalOptions->setMaxPixelError((Ogre::Real)maxPixelError);
     mTerrainGlobalOptions->setCompositeMapDistance((Ogre::Real)compositeMapDistance);
     mTerrainGlobalOptions->setLightMapDirection(lighting->getLightDirection());
+    // No light map: Ogre bakes it once at load from the terrain's own heights (mountains, the ground around the
+    // coliseum), so it drew still, wrong shadows on the grass inside the arena (the coliseum mesh is not part of it).
+    // The grass gets no shadows until it has its own toon shader (docs/IMPROVEMENT_IDEAS.md, "Grass remake").
+    static_cast<Ogre::TerrainMaterialGeneratorA*>( mTerrainGlobalOptions->getDefaultMaterialGenerator().get() )->setLightmapEnabled( false );
     mTerrainGlobalOptions->setCompositeMapAmbient(lighting->getAmbientColour());
     mTerrainGlobalOptions->setCompositeMapDiffuse(lighting->getSunColour());
 
