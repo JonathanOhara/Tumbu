@@ -70,7 +70,6 @@ Demo::~Demo(void){
 	}
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Sky...");
 	if( sky != NULL ){
-		tumbu->getRoot()->removeFrameListener( sky );
 		delete sky;
 	}
 	if( flyCamera != NULL ){
@@ -424,7 +423,7 @@ void Demo::createMainCharacter(void){
 	ConfigNode* cfg;
 	cfg = ConfigScriptLoader::getSingleton().getConfigScript( "demo", mainChar->robotName );
 
-	/** CRIA UM NÓ PARA CADA PARTE DO CORPO */
+	/** CRIA UM NÃ“ PARA CADA PARTE DO CORPO */
 	mainChar->buildNodes();
 
 	// DevTest -hero=robotNNN: the hero wears all five parts of one set (to look at a given robot).
@@ -453,7 +452,7 @@ void Demo::createEnemyCharacter(void){
 	ConfigNode* cfg;
 	cfg = ConfigScriptLoader::getSingleton().getConfigScript( "demo", enemy->robotName );
 
-	/** CRIA UM NÓ PARA CADA PARTE DO CORPO */
+	/** CRIA UM NÃ“ PARA CADA PARTE DO CORPO */
 	enemy->buildNodes();
 
 	enemy->addPart( HEAD, cfg->findChild("head")->getValue(0) );
@@ -570,10 +569,8 @@ void Demo::createLightEffects(void){
 //-------------------------------------------------------------------------------------
 void Demo::createSky(){
 	sky = Sky::getInstance();
-	sky->setClock( tumbu->getClock() );
 	// The visible sun (or moon) follows the lighting rig.
 	lighting->setSky( sky );
-	tumbu->getRoot()->addFrameListener( sky );
 
 	// DevTest -sky=0|1 overrides the option for one run (the painted sky without or with its clouds).
 	switch( DevTest::getSky() >= 0 ? DevTest::getSky() : tumbu->getSkyQuality() ){

@@ -995,7 +995,7 @@ void DevTest::logMemory( const Ogre::String &label ){
 						if( GetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)pointer, &module ) && module != NULL
 							&& GetModuleFileNameA( module, name, MAX_PATH ) ){
 							Ogre::String path( name );
-							modules += " +" + Ogre::StringConverter::toString( q ) + ":" + path.substr( path.find_last_of( "\/" ) + 1 );
+							modules += " +" + Ogre::StringConverter::toString( q ) + ":" + path.substr( path.find_last_of( "\\/" ) + 1 );
 						}
 					}
 					log( "  sample modules:" + modules );

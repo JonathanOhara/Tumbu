@@ -202,7 +202,7 @@ Physics::RigidBody* CharacterEnemy::getOgreBulletRigidBody( const std::string& i
 //-------------------------------------------------------------------------------------
 void CharacterEnemy::updateMovement( const Ogre::Real time ) {
 	if (!mKeyDirection.isZeroLength()){
-		// Calcula a direção do movemento a paritr da camera
+		// Calcula a direÃ§Ã£o do movemento a paritr da camera
 		mGoalDirection += mKeyDirection.z * activeCameraNode->getOrientation().zAxis();
 		mGoalDirection += mKeyDirection.x * activeCameraNode->getOrientation().xAxis();
 		mGoalDirection.y = 0;
@@ -210,7 +210,7 @@ void CharacterEnemy::updateMovement( const Ogre::Real time ) {
 	
 		toGoal = robotNode->getOrientation().zAxis().getRotationTo(mGoalDirection);
 
-		// Calcula quanto o char esta virado para direção de destino
+		// Calcula quanto o char esta virado para direÃ§Ã£o de destino
 		yawToGoal = toGoal.getYaw().valueDegrees();
 		// Quanto pode virar nesse frame
 		yawAtSpeed = yawToGoal / Ogre::Math::Abs(yawToGoal) * time * TURN_SPEED;

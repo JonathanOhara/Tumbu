@@ -4,7 +4,6 @@ Sky* Sky::instance = NULL;
 //-------------------------------------------------------------------------------------
 Sky::Sky(Ogre::SceneManager* sceneMgr){
 	mSceneMgr = sceneMgr;
-	clock = NULL;
 	quality = 1;
 	skyNode = NULL;
 	skyObject = NULL;
@@ -30,10 +29,6 @@ Sky* Sky::getInstance(){
 	return instance;
 }
 //-------------------------------------------------------------------------------------
-void Sky::setClock( Clock* _clock ){
-	clock = _clock;
-}
-//-------------------------------------------------------------------------------------
 void Sky::skyLowQuality(){
 	quality = 0;
 	showSky();
@@ -45,8 +40,6 @@ void Sky::skyHighQuality(Ogre::Camera* camera){
 }
 //-------------------------------------------------------------------------------------
 void Sky::showSky(void){
-	// The arena scene file still asks for the 2011 skydome; the painted sky replaces it.
-	mSceneMgr->setSkyDome( false, "" );
 	if( skyObject == NULL ){
 		// A big box around the arena, drawn first (RENDER_QUEUE_SKIES_EARLY) and writing no depth, so the
 		// post-processing still sees sky pixels as "far" (no fog, no god rays on them). The shader works from the
@@ -73,11 +66,4 @@ void Sky::showSky(void){
 //-------------------------------------------------------------------------------------
 int Sky::getQuality(void){
 	return quality;
-}
-//-------------------------------------------------------------------------------------
-bool Sky::frameRenderingQueued(const Ogre::FrameEvent &evt){
-	return true;
-}
-//-------------------------------------------------------------------------------------
-void Sky::setLightDirection( const Ogre::Vector3 &direction, bool isMoon ){
 }

@@ -73,7 +73,7 @@ void SpecialJyn::update(const Ogre::Real time){
 			if(times < MAX_ITERATIONS){
 				times++;
 			
-				//Avalia o Desempenho de todas partículas
+				//Avalia o Desempenho de todas partÃ­culas
 				avaliarDesempenhoTodos();
 
 				executaComplementoPSO();
@@ -471,16 +471,16 @@ void SpecialJyn::executaPSO(Ogre::Real time){
 	double inertia = 0;
 	Ogre::Vector3 globalBest;
 
-	//Para cada partícula
+	//Para cada partÃ­cula
 	for(int i = 0; i < NUMBER_OF_PARTICLES; i++){
 		g = i;
-		//Verifica se a partícula atual está com melhor fitness do que seu histórico local
+		//Verifica se a partÃ­cula atual estÃ¡ com melhor fitness do que seu histÃ³rico local
 		if( particleList[i]->fitness < particleList[i]->bestFitness ){
 			particleList[i]->bestFitness = particleList[i]->fitness;
 			particleList[i]->bestPosition = particleList[i]->particle->mPosition;
 		}
 
-		//Verifica seus vizinhos para saber qual é o vizinho com melhor fitness
+		//Verifica seus vizinhos para saber qual Ã© o vizinho com melhor fitness
 		for(int j = 0; j < NUMBER_OF_PARTICLES; j++){
 			if( particleList[j]->fitness < particleList[g]->fitness ){
 				g = j;
@@ -488,13 +488,13 @@ void SpecialJyn::executaPSO(Ogre::Real time){
 			}
 		}
 
-		//Verifica se o fitness do melhor é o melhor de todos (Parecido com o salvacionismo)
+		//Verifica se o fitness do melhor Ã© o melhor de todos (Parecido com o salvacionismo)
 		if( particleList[g]->fitness < everBestFitness ){
 			everBestFitness = particleList[g]->fitness;
 			everBestPosition = particleList[g]->particle->mPosition;
 		}
 
-		//Calcula a inercia baseada em quantas iterações faltam
+		//Calcula a inercia baseada em quantas iteraÃ§Ãµes faltam
 		inertia = 1 - ( (double)times / MAX_ITERATIONS );
 
 		/*

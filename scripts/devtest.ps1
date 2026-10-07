@@ -2,6 +2,8 @@
 # Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx]
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # The game runs muted (-mute) unless -Sound is given.
+# -Clean moves the old per-run files (devtest-*.png/.log/.fps, also the bench runs') to the Recycle Bin first; given
+# alone (.\scripts\devtest.ps1 -Clean) it only cleans.
 # It ends with the frame rate of the run ("fps: avg=... min=... max=..."; VSync is off under DevTest), also saved as
 # devtest-<Name>.fps, which compare.ps1 prints under each image.
 param(
@@ -27,6 +29,7 @@ param(
     [switch]$BenchAI,
     [switch]$BenchChase,
     [string]$Name = 'run',
+    [switch]$Clean,
     [int]$TimeoutSeconds = 180
 )
 $ErrorActionPreference = 'Stop'
@@ -34,6 +37,16 @@ $root   = Split-Path $PSScriptRoot -Parent
 $binDir = Join-Path $root "bin\$Configuration"
 $work   = Join-Path $env:USERPROFILE 'Tumbu'
 $exe    = Join-Path $binDir 'TUMBU.exe'
+
+if ($Clean) {
+    Add-Type -AssemblyName Microsoft.VisualBasic
+    $old = @(Get-ChildItem $work -File -Filter 'devtest-*' -ErrorAction SilentlyContinue)
+    foreach ($f in $old) {
+        [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($f.FullName, 'OnlyErrorDialogs', 'SendToRecycleBin')
+    }
+    Write-Host "clean: $($old.Count) old devtest files moved to the Recycle Bin"
+    if ($PSBoundParameters.Count -eq 1) { return }
+}
 if (-not (Test-Path $exe)) { throw "$exe not found. Build first (.\scripts\build.ps1)." }
 
 $gameArgs = @("-quitafter=$QuitAfter")
@@ -67,7 +80,8 @@ Copy-Item "$work\ogre.log" "$work\devtest-$Name.log" -Force
 if (Test-Path "$work\devtest.png") { Copy-Item "$work\devtest.png" "$work\devtest-$Name.png" -Force }
 Write-Host "exit=$($proc.ExitCode)  log=$work\devtest-$Name.log  screenshot=$(Test-Path "$work\devtest-$Name.png")"
 Select-String "$work\devtest-$Name.log" -Pattern '\[DEVTEST\]|EXCEPTION|Error|Fatal' |
-    Where-Object { $_.Line -notmatch 'white\.png|city_6_|sample\.fontdef' } | ForEach-Object { $_.Line }
+    # Known and harmless: the 2011 terrain page leaves one chunk open when Ogre reads it, and old resource lookups.
+    Where-Object { $_.Line -notmatch 'white\.png|city_6_|sample\.fontdef|was not fully read|Information Queue' } | ForEach-Object { $_.Line }
 
 # Frame rate of the run: the [DEVTEST] fps= samples (every 0.5 s) after a 2 s warm-up. Saved next to the screenshot
 # (devtest-<Name>.fps), where compare.ps1 picks it up for its labels.

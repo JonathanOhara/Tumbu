@@ -56,6 +56,8 @@ them. `devtest.ps1` passes `-mute` by default; add `-mute` to every direct `TUMB
 bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 kills each) via the real UI
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
+.\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, 2 runs (~5 min); full run for shaders that loop
+.\scripts\devtest.ps1 -Clean                        # old devtest-* screenshots/logs to the Recycle Bin (also before a run)
 ```
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
@@ -129,7 +131,7 @@ materials, textures, GUI) gets a before/after set:
    (`<feature>-2`, …) whose "before" is the previous round's "after".
 5. **Track the frame rate too.** Every `devtest.ps1` run ends with `fps: avg=… min=… max=…` and saves it as
    `devtest-<Name>.fps` (DevTest turns VSync off, so it is not capped by the monitor); `compare.ps1` prints it under each
-   image, with the change in percent on the AFTER side, and also prints how many pixels differ. That per-shot number is
+   image (`~N fps (1 run)` and `indicative` for a normal run, `(bench)` for a `-Bench` run), with the change in percent on the AFTER side, and also prints how many pixels differ. That per-shot number is
    only a hint: in a normal run the enemy fights, and identical runs vary by ±15–30 %. **The real number comes from
    `scripts/bench.ps1`**: `-bench` runs (no AI, fixed camera: within ~2 % between runs), alternating the variants
    (`-Variants "off=-AA 0","on=-AA 1"`, a DevTest switch when the feature can be turned off in one build; otherwise
@@ -569,8 +571,11 @@ through a listener registry in `BaseApplication`.
   `action.groups` and `action.fcurves`, gone in Blender 5's layered actions) and could also be contributed there.
 - Style: tabs, braces on the same line, `//----...` separators between methods, `getInstance()` singletons,
   raw `new`/`delete`, and `NULL`. Match it.
-- **Encoding and line endings:** `.gitattributes` normalizes line endings to LF in the repo. Some sources and
-  media text files are **Windows-1252 / Latin-1** (Portuguese accents in comments). Keep the encoding.
+- **Encoding and line endings:** `.gitattributes` normalizes line endings to LF in the repo. Some
+  media text files are **Windows-1252 / Latin-1** (Portuguese accents in comments). Keep the encoding. The C++ sources are
+  all UTF-8 since 2026-10-06 (`Demo.cpp`, `CharacterEnemy.cpp`, `SpecialJyn.cpp` and `CollisionDetectionListener.h` were
+  converted: MSVC warned C4828 on every build, and the header is included almost everywhere); the build has no warnings,
+  so a new one is worth reading.
 - New data or tuning belongs in `*.object` scripts rather than hardcoded values.
 - Physics objects must be destroyed before the world, and GUI/MyGUI before the textures it uses. Follow the
   existing order in `TUMBU::destroyScene` and `GUI::~GUI`.

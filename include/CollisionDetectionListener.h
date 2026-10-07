@@ -23,7 +23,7 @@ public:
 
 	TumbuEnums::PhysicObjectTag objectTag;
 
-	//Esse parametro sÛ tem valor na detecÁ„o de colis„o!
+	//Esse parametro s√≥ tem valor na detec√ß√£o de colis√£o!
 	std::string rigidBodyName;
 
 	Ogre::Vector3 collisionPosition;

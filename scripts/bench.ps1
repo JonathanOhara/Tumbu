@@ -9,6 +9,8 @@
 #   -Common    devtest.ps1 arguments given to every run (the default is the standard robot view at 13:00)
 #   -VideoMode the window size, set for both renderers (their ogre.cfg sections differ otherwise; the OpenGL one was
 #              640x480 while Direct3D 11 had 1024x768)
+#   -Quick     for light changes: 1920x1080 and 2 runs per variant (about 5 minutes instead of 15 for two variants);
+#              -Runs / -VideoMode given explicitly still win. Use the full run for per-pixel work (shaders that loop).
 # The table is printed and saved as %USERPROFILE%\Tumbu\<Name>\fps.txt (next to the before/after images).
 # ogre.cfg is switched for the OpenGL runs and always restored. The game runs muted.
 param(
@@ -18,9 +20,14 @@ param(
     [double]$Seconds = 15,
     [ValidateSet('D3D11', 'GL')] [string[]]$Renderers = @('D3D11', 'GL'),
     [string]$Common = '-Hero robot001 -Hour 13',
-    [string]$VideoMode = '1024x768'
+    [string]$VideoMode = '1024x768',
+    [switch]$Quick
 )
 $ErrorActionPreference = 'Stop'
+if ($Quick) {
+    if (-not $PSBoundParameters.ContainsKey('Runs')) { $Runs = 2 }
+    if (-not $PSBoundParameters.ContainsKey('VideoMode')) { $VideoMode = '1920x1080' }
+}
 $work = Join-Path $env:USERPROFILE 'Tumbu'
 $cfg = Join-Path $work 'ogre.cfg'
 $systems = @{ D3D11 = 'Direct3D11 Rendering Subsystem'; GL = 'OpenGL 3+ Rendering Subsystem' }

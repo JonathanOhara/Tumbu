@@ -5,7 +5,8 @@
 # Typical flow (see CLAUDE.md "Before/after comparisons"): devtest.ps1 -Name feature-before ..., change, devtest.ps1
 # -Name feature-after ..., then compare into %USERPROFILE%\Tumbu\<feature>\.
 # When a screenshot has the frame rate of its run next to it (devtest-<Name>.fps, written by devtest.ps1), the label
-# shows the average fps, and the AFTER label the change in percent.
+# shows the average fps, and the AFTER label the change in percent: "(bench)" for a steady -Bench run, "~... (1 run)" and
+# "indicative" for a normal screenshot run (identical runs differ by 15-30 %; the real cost comes from bench.ps1).
 param(
     [Parameter(Mandatory)] [string]$Before,
     [Parameter(Mandatory)] [string]$After,
@@ -18,20 +19,31 @@ param(
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
-# Average fps of the run that took the screenshot, or 0 when unknown.
+# Average fps of the run that took the screenshot, or 0 when unknown; Steady = it came from a -Bench run (no AI, fixed
+# camera), which compares; a normal screenshot run varies by 15-30 % between identical runs, so it is marked "1 run".
 function Get-RunFps([string]$png) {
     $file = [IO.Path]::ChangeExtension((Resolve-Path $png).Path, '.fps')
     if ((Test-Path $file) -and ((Get-Content $file -Raw) -match 'avg=([\d.]+)')) {
-        return [double]::Parse($Matches[1], [cultureinfo]::InvariantCulture)
+        $text = Get-Content $file -Raw
+        return [pscustomobject]@{ Fps = [double]::Parse($Matches[1], [cultureinfo]::InvariantCulture); Steady = $text -match 'render_ms=' }
     }
-    return 0
+    return [pscustomobject]@{ Fps = 0; Steady = $false }
+}
+function Format-Fps($r) {
+    $value = [math]::Round($r.Fps).ToString([cultureinfo]::InvariantCulture)
+    if ($r.Steady) { return "  $value fps (bench)" }
+    return "  ~$value fps (1 run)"
 }
 $fpsBefore = Get-RunFps $Before
 $fpsAfter = Get-RunFps $After
-if ($fpsBefore -gt 0) { $BeforeLabel += "  " + $fpsBefore.ToString([cultureinfo]::InvariantCulture) + " fps" }
-if ($fpsAfter -gt 0) {
-    $AfterLabel += "  " + $fpsAfter.ToString([cultureinfo]::InvariantCulture) + " fps"
-    if ($fpsBefore -gt 0) { $AfterLabel += [string]::Format([cultureinfo]::InvariantCulture, " ({0:+0.0;-0.0}%)", 100 * ($fpsAfter / $fpsBefore - 1)) }
+if ($fpsBefore.Fps -gt 0) { $BeforeLabel += Format-Fps $fpsBefore }
+if ($fpsAfter.Fps -gt 0) {
+    $AfterLabel += Format-Fps $fpsAfter
+    if ($fpsBefore.Fps -gt 0) {
+        $change = [string]::Format([cultureinfo]::InvariantCulture, "{0:+0.0;-0.0}%", 100 * ($fpsAfter.Fps / $fpsBefore.Fps - 1))
+        # only bench numbers compare; between single runs the change is only a hint (use scripts\bench.ps1)
+        $AfterLabel += if ($fpsBefore.Steady -and $fpsAfter.Steady) { " ($change)" } else { " ($change, indicative)" }
+    }
 }
 
 $imgBefore = [Drawing.Image]::FromFile((Resolve-Path $Before))
