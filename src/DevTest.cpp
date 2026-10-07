@@ -910,7 +910,7 @@ void DevTest::logMemory( const Ogre::String &label ){
 	static bool versionsChecked = false;
 	if( !versionsChecked ){
 		versionsChecked = true;
-		const char* MEASURED_DRIVER = "32.0.16.1714";
+		const char* MEASURED_DRIVER = "32.0.16.1742";
 		const char* MEASURED_OGRE = "14.6.0";
 		Ogre::RenderSystem* renderSystem = Ogre::Root::getSingleton().getRenderSystem();
 		Ogre::String driver = renderSystem->getDriverVersion().toString();

@@ -123,10 +123,10 @@ histogram of `-cycles` (`heap growth by block size`, plus the DLL that owns the 
 | | Version |
 |---|---|
 | GPU | NVIDIA GeForce RTX 3070 |
-| NVIDIA driver | 617.14 (Windows driver version 32.0.16.1714, dated 2026-09-16) |
+| NVIDIA driver | 617.42 (Windows driver version 32.0.16.1742); first measured with 617.14 (32.0.16.1714) |
 | Ogre | 14.6.0 (Tsathoggua), Direct3D 11 render system |
 | Windows | 11 Pro, build 26300 |
-| Date | 2026-10-01 |
+| Date | 2026-10-01; re-checked 2026-10-06 after a driver update (+1.13 MB per match on Direct3D 11, OpenGL flat) |
 
 To re-check: `bin\Release\TUMBU.exe -cycles=8 -mute` on Direct3D 11, then compare the `heap=` of `memory cycle 2..8` in
 `ogre.log` (about +1 MB per cycle with this setup; fixed if it stays within ~100 KB, as on OpenGL). The `heap growth

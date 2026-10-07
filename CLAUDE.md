@@ -88,13 +88,13 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   the same value each cycle. At the end it logs `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED` and
   appends the same numbers to **`%USERPROFILE%\Tumbu\memory-history.csv`** (date, renderer, driver, Ogre, heap, growth).
   **After every `-cycles` run, compare the summary with the expected numbers below and with the last rows of that file**;
-  when they move, find out why and update this paragraph. Expected (RTX 3070, driver 617.14 / 32.0.16.1714, Ogre 14.6.0,
-  2026-10-04): the menu before any match about 21 MB; **OpenGL** about 17.5 MB after the first match and flat (±30 KB per
-  match); **Direct3D 11** about 29 MB after the first match, then **+0.7 to 0.8 MB per match** (it was +1.7 to 2.3 MB
-  before the robots were skinned on the GPU, 2026-10-04), the same with SMAA on or off. **Since the arena stone
-  (2026-10-06): about +1.1 MB per match** on Direct3D 11 (12-match runs; the build just before measured +0.31 in the
-  same session), still `nvwgf2umx.dll`, OpenGL still flat (-5 KB), every object count flat, the textures loaded once;
-  trilinear instead of anisotropic filtering on the stone gave +0.84, so part of it follows the new sampler states.
+  when they move, find out why and update this paragraph. Expected (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0,
+  re-measured 2026-10-06 right after a reboot, 12 matches): the menu before any match about 27 MB on Direct3D 11 and 16 MB on
+  OpenGL; **OpenGL** flat after the first match (±30 KB per match); **Direct3D 11** about 29 MB after the first match, then
+  **about +1.1 MB per match** (history: +1.7 to 2.3 MB before the robots were skinned on the GPU, +0.7 to 0.8 after it, +1.1
+  since the arena stone's anisotropic samplers), the same with SMAA on or off; every object count flat.
+  **Measure after a fresh start:** in a long session the Direct3D 11 number drifts for every build alike (2026-10-06: from
+  0.3 to about 5 MB per match over the day for both the old and the new build), so compare builds back to back only.
   That growth is NVIDIA driver memory (`nvwgf2umx.dll`), tied to the post-processing compositor, not the effects; the
   object counts are flat on both renderers (docs/SPECIAL_EFFECTS.md, "Known issue"; re-check after a driver or Ogre update:
   `-cycles` logs a `REMINDER` line when they differ). `-cycles` also logs `heap growth by block size` and the DLL that
