@@ -332,8 +332,7 @@ painted toon sky replaced it).
     `GpuProgramParameters` overload counts float4s): passing 20 lit only the first 5 torches.
   - The neon's light was first too faint on the tiles under the ropes (the segments run at the ropes' mid height,
     0.75 above the floor): `neonLight 2`, `neonLightReach 2` match the chosen "soft" mock-up
-    (`%USERPROFILE%\Tumbu
-ight-lights-2ope-*.png`).
+    (`%USERPROFILE%\Tumbu\night-lights-2\rope-*.png`).
   - The night mood ("balanced", chosen with the lights): the night keyframe's moon and ambient x0.75, dusk x0.85.
   - Cost and before/after: bench at 22:00 against the previous build, 1920x1080: chase view D3D11 +0.089 ms, OpenGL
     +0.076 ms; low wall view +0.076 / +0.051 ms; 1024x768 no cost (D3D11 -0.03 ms, OpenGL +0.06 ms inside the spread);
