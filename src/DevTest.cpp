@@ -28,7 +28,7 @@ bool DevTest::walkTest = false;
 bool DevTest::guiTour = false;
 int DevTest::fpsCap = 0;
 Ogre::Real DevTest::quitAfter = 0;
-int DevTest::startHour = -1;
+float DevTest::startHour = -1;
 int DevTest::cycles = 0;
 bool DevTest::measureAnims = false;
 bool DevTest::poseDump = false;
@@ -122,7 +122,7 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 		}else if( Ogre::StringUtil::startsWith( arg, "-hero=" ) ){
 			heroSet = arg.substr( 6 );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
-			startHour = Ogre::StringConverter::parseInt( arg.substr( 6 ) ) % 24;
+			startHour = std::fmod( Ogre::StringConverter::parseReal( arg.substr( 6 ) ), 24.0f );	// fractional: -hour=20.5 is 20:30
 		}else if( Ogre::StringUtil::startsWith( arg, "-quitafter=" ) ){
 			quitAfter = Ogre::StringConverter::parseReal( arg.substr( 11 ) );
 		}

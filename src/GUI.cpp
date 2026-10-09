@@ -1,6 +1,7 @@
 #include "GUI.h"
 #include "TUMBU.h"
 #include "Clock.h"
+#include "Lighting.h"
 
 #include <MyGUI.h>
 #include <MyGUI_OgrePlatform.h>
@@ -12,6 +13,39 @@ namespace{
 	// The preview scene sits far below the arena: the robot shaders take their light from the shared "TumbuLighting"
 	// values (Lighting), and at the world origin the T's neon light, the torches and the energy lights reached it.
 	const Ogre::Vector3 PREVIEW_ORIGIN( 0, -1000, 0 );
+
+	// Copies the shared values ("TumbuLighting") into the passes of every entity of a scene now. Ogre's Direct3D 11
+	// renderer uploads a pass's constants before it copies the shared values into them, so a draw gets the shared values
+	// of that pass's previous bind; the preview's parts share their materials with the robots in the arena.
+	void copySharedParams( Ogre::SceneManager *sceneMgr ){
+		for( const auto &object : sceneMgr->getMovableObjects( "Entity" ) ){
+			Ogre::Entity *entity = static_cast<Ogre::Entity*>( object.second );
+			for( size_t i = 0; i < entity->getNumSubEntities(); i++ ){
+				const Ogre::MaterialPtr &material = entity->getSubEntity( i )->getMaterial();
+				for( Ogre::Technique *technique : material->getTechniques() ){
+					for( Ogre::Pass *pass : technique->getPasses() ){
+						if( pass->hasVertexProgram() ) pass->getVertexProgramParameters()->_copySharedParams();
+						if( pass->hasFragmentProgram() ) pass->getFragmentProgramParameters()->_copySharedParams();
+					}
+				}
+			}
+		}
+	}
+
+	// The preview renders with neutral lighting (Lighting::beginNeutralLighting), not the arena's time of day.
+	class PreviewLighting: public Ogre::RenderTargetListener{
+	public:
+		Ogre::SceneManager *sceneMgr = NULL;
+		void preRenderTargetUpdate( const Ogre::RenderTargetEvent &evt ){
+			Lighting::beginNeutralLighting();
+			copySharedParams( sceneMgr );
+		}
+		void postRenderTargetUpdate( const Ogre::RenderTargetEvent &evt ){
+			Lighting::endNeutralLighting();
+			copySharedParams( sceneMgr );	// the arena's values back in the shared materials before the window renders
+		}
+	};
+	PreviewLighting previewLighting;
 	const float SKILL_HIT_DURATION = 1.2f;
 
 	std::string toString( int value ){
@@ -430,7 +464,8 @@ void GUI::addSkillHit( const Ogre::Vector3 &position, const Ogre::String &messag
 	SkillHitEntry hit;
 	hit.position = position + Ogre::Vector3( 0, 2.0f, 0 );	// above the robot's head
 	hit.age = 0;
-	hit.label = mGui->createWidget<MyGUI::TextBox>( "TextBox", MyGUI::IntCoord( 0, 0, 200, 40 ), MyGUI::Align::Default, "Info" );
+	// In the HUD's layer: over the 3D scene, under the pause menu and the dialogs ("Info" drew it on top of them).
+	hit.label = mGui->createWidget<MyGUI::TextBox>( "TextBox", MyGUI::IntCoord( 0, 0, 200, 40 ), MyGUI::Align::Default, "Back" );
 	hit.label->setFontName( "Tumbu.Hit" );
 	hit.label->setTextAlign( MyGUI::Align::Center );
 	hit.label->setTextShadow( true );
@@ -705,6 +740,8 @@ void GUI::createPreviewScene(void){
 	viewport->setClearEveryFrame( true );
 	viewport->setBackgroundColour( Ogre::ColourValue( 0.05f, 0.07f, 0.12f ) );
 	viewport->setMaterialScheme( Ogre::MSN_SHADERGEN );
+	previewLighting.sceneMgr = previewSceneMgr;
+	target->addListener( &previewLighting );
 	target->setAutoUpdated( false );
 }
 //-------------------------------------------------------------------------------------

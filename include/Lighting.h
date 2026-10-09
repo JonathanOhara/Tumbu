@@ -21,6 +21,10 @@ public:
 
 	/// Creates the "TumbuLighting" shared parameters. Must run before the shader scripts are parsed.
 	static void declareSharedParameters(void);
+	/// The robot preview (inventory, new part) renders with neutral lighting, whatever the time of day or the arena's
+	/// lights: save the shared values and set neutral ones before it renders, restore them afterwards.
+	static void beginNeutralLighting(void);
+	static void endNeutralLighting(void);
 	/// SMAA's area and search lookup textures (Tumbu/SMAA/AreaTex, SearchTex). Must run before the resource groups load.
 	static void createSMAATextures(void);
 

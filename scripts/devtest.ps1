@@ -9,7 +9,7 @@
 param(
     [ValidateSet('Release', 'RelWithDebInfo')] [string]$Configuration = 'Release',
     [int]$FpsCap = 0,
-    [int]$Hour = -1,
+    [double]$Hour = -1,
     [double]$QuitAfter = 8,
     [switch]$NoWalk,
     [switch]$Sound,
@@ -52,7 +52,7 @@ if (-not (Test-Path $exe)) { throw "$exe not found. Build first (.\scripts\build
 $gameArgs = @("-quitafter=$QuitAfter")
 if (-not $NoWalk -and $Bench -le 0) { $gameArgs += '-walktest' }
 if ($FpsCap -gt 0) { $gameArgs += "-fpscap=$FpsCap" }
-if ($Hour -ge 0)   { $gameArgs += "-hour=$Hour" }
+if ($Hour -ge 0)   { $gameArgs += "-hour=" + $Hour.ToString([cultureinfo]::InvariantCulture) }    # fractional: 20.5 = 20:30
 if (-not $Sound)  { $gameArgs += '-mute' }
 if ($FaceShot)    { $gameArgs += $(if ($Jyn) { '-faceshot=jyn' } else { '-faceshot' }) }
 if ($JynWalk)     { $gameArgs += "-jynwalk" }

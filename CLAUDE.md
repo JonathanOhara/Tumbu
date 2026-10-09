@@ -61,7 +61,7 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
 ```
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
-  `-fpscap=N`, `-quitafter=S`, `-hour=H`, `-mute` (all sounds at volume 0; also works for a normal game), `-nofx` (no
+  `-fpscap=N`, `-quitafter=S`, `-hour=H` (fractional: `20.5` = 20:30), `-mute` (all sounds at volume 0; also works for a normal game), `-nofx` (no
   special-attack effects or ki aura, to compare frame rate or memory), `-aa=0|1` (anti-aliasing off / SMAA for this run,
   whatever `options.cfg` says: `devtest.ps1 -AA 0`), `-sky=0|1` (the painted sky without / with its clouds for this run: `-Sky 0`), `-bench=S`
   (`devtest.ps1 -Bench S`: a steady frame-rate measurement; no AI, the camera fixed from the first frame (the standard
@@ -186,6 +186,10 @@ painted toon sky replaced it).
 - **Lighting values reach the shaders as shared parameters.** `Lighting::declareSharedParameters` creates
   `TumbuLighting` in `BaseApplication::locateResources`, before any script is parsed; programs reference it
   with `shared_params_ref TumbuLighting`. Every value is a `float4` (the types must match exactly).
+  **On Direct3D 11 a change reaches a pass one bind late:** Ogre's `D3D11RenderSystem::bindGpuProgramParameters`
+  uploads the pass's constants before it copies the shared values into them (OpenGL copies first). Harmless for values
+  set once per frame; to change them for one render only (the robot preview), copy them into the passes yourself
+  (`_copySharedParams`, `copySharedParams` in GUI.cpp) after setting and after restoring.
 - **Shadows are integrated.** The shadow technique is `SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED` with a
   depth (`PF_DEPTH32F`) map: Ogre only renders the map, and the robot and arena shaders sample it
   (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). The old modulative/additive receiver
@@ -336,8 +340,10 @@ painted toon sky replaced it).
   - The neon loop runs only near the ring (`lampShape.zw`: the segments' horizontal extent and top plus the reach,
     computed by `Lighting` from lamps.object), so the walls and the sky skip it.
   - **The inventory / new-part preview** (`GUI`, its own scene manager) uses the robot shaders and so the same shared
-    values: at the world origin the T's neon turned its feet pink at night. The preview scene sits at
-    `PREVIEW_ORIGIN` (0, -1000, 0), out of reach of the night lights and the energy lights.
+    values: it took the arena's time of day, and at the world origin the T's neon turned its feet pink at night. A
+    render-target listener on the preview texture (`PreviewLighting`, GUI.cpp) wraps each preview render in
+    `Lighting::beginNeutralLighting` / `endNeutralLighting` (save the shared values, set the neutral ones of
+    `declareSharedParameters`, restore), and the scene sits at `PREVIEW_ORIGIN` (0, -1000, 0), out of the lights' reach.
   - Cost (bench at 22:00 against the build before the lights, chase view, 3 runs): 1920x1080 D3D11 +0.070 ms,
     OpenGL +0.045 ms; 1024x768 inside the run-to-run spread on both. By day (lamps 0) about +0.02 / +0.03 ms.
     `-cycles`: objects flat, OpenGL flat; D3D11 drifted alike for the old and the new build in one long session (2.4

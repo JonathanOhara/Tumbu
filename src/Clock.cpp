@@ -5,7 +5,7 @@
 Clock* Clock::instance = NULL;
 //-------------------------------------------------------------------------------------
 Clock::Clock( int _minutes ){
-	hours = (_minutes / 60) % 1440;
+	hours = ( _minutes % 1440 ) / 60.0f;	// minutes of the day -> fractional hours
 	
 	timeMultiplier = TUMBU::getInstance()->getTimeMultiplier();
 
@@ -24,18 +24,18 @@ Clock::~Clock(void){
 Clock* Clock::getInstance(){
 	// The game starts at 13:00 (the 2011 SkyX sky started at 14:00).
 	if( instance == NULL){
-		int minutes = DevTest::getStartHour() >= 0 ? DevTest::getStartHour() * 60 : 780;
+		int minutes = DevTest::getStartHour() >= 0 ? (int) Ogre::Math::Floor( DevTest::getStartHour() * 60 + 0.5f ) : 780;
 		instance = new Clock( minutes );
 	}
 	return instance;
 }
 //-------------------------------------------------------------------------------------
 int Clock::getMinutes(){
-	return (int) hours * 60;
+	return (int) ( hours * 60 );
 }
 //-------------------------------------------------------------------------------------
 void Clock::setMinutes( int _minutes ){
-	hours = _minutes / 60;
+	hours = _minutes / 60.0f;	// not an integer division: it dropped the minutes
 }
 //-------------------------------------------------------------------------------------
 std::string Clock::getClockFormated(){

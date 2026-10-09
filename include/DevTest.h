@@ -44,8 +44,8 @@ class DevTest: public Ogre::FrameListener{
 public:
 	static void parseCommandLine( const Ogre::String &commandLine );
 	static bool isEnabled(void);
-	/// Start hour of the in-game clock from -hour=H, or -1 when not given.
-	static int getStartHour(void){ return startHour; }
+	/// Start hour of the in-game clock from -hour=H (fractional: 20.5 = 20:30), or -1 when not given.
+	static float getStartHour(void){ return startHour; }
 	/// -mute: every sound plays at volume 0 (for runs started by tools or while working on something else).
 	static bool isMuted(void){ return mute; }
 	/// -nofx: special-attack effects are not started (to compare performance or memory with and without them).
@@ -133,7 +133,7 @@ private:
 	static bool guiTour;
 	static int fpsCap;
 	static Ogre::Real quitAfter;
-	static int startHour;
+	static float startHour;
 	static int cycles;
 	static bool measureAnims;
 	static bool poseDump;

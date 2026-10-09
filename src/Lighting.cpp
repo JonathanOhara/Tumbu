@@ -174,32 +174,9 @@ Lighting* Lighting::getInstance(){
 	return instance;
 }
 //-------------------------------------------------------------------------------------
-void Lighting::declareSharedParameters(void){
-	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().createSharedParameters( SHARED_PARAMS );
-	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams", "contactShadowA", "contactShadowB", "fogParams", "dustParams",
-		// Special-attack effects (EffectsManager): energy lights and the screen flash.
-		"energyLightPos0", "energyLightPos1", "energyLightPos2", "energyLightPos3",
-		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash",
-		// Robot "hero lighting": the fill light that follows the camera, and the rim in shadow.
-		"heroFillColour", "heroFillParams", "heroRimParams", "outlineTint",
-		// Arena neon (ring ropes, the T's tube): x = how much it glows (keyframe neon), y = brightness of the core.
-		"neonParams",
-		// Arena detail: x = 1 for the stone's parallax and self-shadows, 0 for the normal map only (shadows off).
-		"detailParams",
-		// The painted toon sky (sky.frag): band colours, cloud colours (w = cover), x moon y stars z quality w sun brightness.
-		"skyZenith", "skyMid", "skyHorizon", "cloudLit", "cloudShade", "skyParams",
-		// Robot metal: the toon sky reflection and the streak.
-		"metalEnv", "metalShape", "metalExtra",
-		// The arena's night lights (TUMBU_LAMP_UNIFORMS): the torches' colour and reach, their bands, the neon's light;
-		// lampParams: x = keyframe lamps, y = flame brightness, z = time, w = flicker (the flames).
-		"lampColour", "lampShape", "neonLight", "lampParams" };
-	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
-		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
-	}
-	// Arrays: the torches' light (xyz, w = intensity now) and the neon segments' ends.
-	params->addConstantDefinition( "lampPos", Ogre::GCT_FLOAT4, TUMBU_MAX_LAMPS );
-	params->addConstantDefinition( "neonSegA", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
-	params->addConstantDefinition( "neonSegB", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
+// Neutral lighting: before a match applies lighting.object, and for the robot preview (beginNeutralLighting): a plain
+// daylight with no arena lights, energy lights, shadow map or contact shadows.
+static void setNeutralValues( Ogre::GpuSharedParametersPtr params ){
 	std::vector<float> zeros( TUMBU_MAX_LAMPS * 4, 0.0f );
 	params->setNamedConstant( "lampPos", &zeros[0], TUMBU_MAX_LAMPS * 4 );
 	params->setNamedConstant( "neonSegA", &zeros[0], TUMBU_NEON_SEGMENTS * 4 );
@@ -208,7 +185,6 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "lampShape", Ogre::Vector4( 4, 0.25f, 0, 0 ) );
 	params->setNamedConstant( "neonLight", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "lampParams", Ogre::Vector4( 0, 0, 0, 0 ) );
-	// Neutral values until a match applies lighting.object (the inventory preview may render robots first).
 	params->setNamedConstant( "sunDirection", Ogre::Vector4( 0.3f, 0.8f, 0.5f, 0 ) );
 	params->setNamedConstant( "sunColour", Ogre::Vector4( 1, 1, 1, 1 ) );
 	params->setNamedConstant( "skyColour", Ogre::Vector4( 0.4f, 0.4f, 0.45f, 1 ) );
@@ -247,6 +223,53 @@ void Lighting::declareSharedParameters(void){
 	params->setNamedConstant( "metalEnv", Ogre::Vector4( 1.7f, 2.5f, 0.35f, 1.5f ) );
 	params->setNamedConstant( "metalShape", Ogre::Vector4( 0.38f, 0.06f, -0.1f, 0.75f ) );
 	params->setNamedConstant( "metalExtra", Ogre::Vector4( 1.6f, 0.965f, 0.55f, 0.55f ) );
+}
+//-------------------------------------------------------------------------------------
+// The values saved by beginNeutralLighting.
+static std::vector<unsigned char> savedLighting;
+//-------------------------------------------------------------------------------------
+void Lighting::beginNeutralLighting(void){
+	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( SHARED_PARAMS );
+	savedLighting = params->getConstantList();
+	setNeutralValues( params );
+}
+//-------------------------------------------------------------------------------------
+void Lighting::endNeutralLighting(void){
+	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( SHARED_PARAMS );
+	if( !savedLighting.empty() && savedLighting.size() == params->getConstantList().size() ){
+		// getFloatPointer marks the set dirty; Ogre copies the shared values into each program when it draws.
+		memcpy( params->getFloatPointer( 0 ), &savedLighting[0], savedLighting.size() );
+	}
+	savedLighting.clear();
+}
+//-------------------------------------------------------------------------------------
+void Lighting::declareSharedParameters(void){
+	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().createSharedParameters( SHARED_PARAMS );
+	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams", "contactShadowA", "contactShadowB", "fogParams", "dustParams",
+		// Special-attack effects (EffectsManager): energy lights and the screen flash.
+		"energyLightPos0", "energyLightPos1", "energyLightPos2", "energyLightPos3",
+		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash",
+		// Robot "hero lighting": the fill light that follows the camera, and the rim in shadow.
+		"heroFillColour", "heroFillParams", "heroRimParams", "outlineTint",
+		// Arena neon (ring ropes, the T's tube): x = how much it glows (keyframe neon), y = brightness of the core.
+		"neonParams",
+		// Arena detail: x = 1 for the stone's parallax and self-shadows, 0 for the normal map only (shadows off).
+		"detailParams",
+		// The painted toon sky (sky.frag): band colours, cloud colours (w = cover), x moon y stars z quality w sun brightness.
+		"skyZenith", "skyMid", "skyHorizon", "cloudLit", "cloudShade", "skyParams",
+		// Robot metal: the toon sky reflection and the streak.
+		"metalEnv", "metalShape", "metalExtra",
+		// The arena's night lights (TUMBU_LAMP_UNIFORMS): the torches' colour and reach, their bands, the neon's light;
+		// lampParams: x = keyframe lamps, y = flame brightness, z = time, w = flicker (the flames).
+		"lampColour", "lampShape", "neonLight", "lampParams" };
+	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
+		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
+	}
+	// Arrays: the torches' light (xyz, w = intensity now) and the neon segments' ends.
+	params->addConstantDefinition( "lampPos", Ogre::GCT_FLOAT4, TUMBU_MAX_LAMPS );
+	params->addConstantDefinition( "neonSegA", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
+	params->addConstantDefinition( "neonSegB", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
+	setNeutralValues( params );
 }
 //-------------------------------------------------------------------------------------
 Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){

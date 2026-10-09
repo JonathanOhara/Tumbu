@@ -252,10 +252,11 @@ def export(ob):
     finally:
         ob.modifiers.remove(triangulate)
     log("exported %s.mesh" % ob.name)
-    # blender2ogre leaves the converter's log next to the mesh.
-    converter_log = os.path.join(MEDIA, "OgreXMLConverter.log")
-    if os.path.isfile(converter_log):
-        os.remove(converter_log)
+    # blender2ogre leaves the converter's log, and sometimes the intermediate <name>.mesh.xml, next to the mesh.
+    for leftover in ("OgreXMLConverter.log", ob.name + ".mesh.xml"):
+        path = os.path.join(MEDIA, leftover)
+        if os.path.isfile(path):
+            os.remove(path)
 
 
 def main():

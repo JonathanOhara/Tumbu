@@ -74,7 +74,8 @@ PLINTH_MAX_RADIUS = 28.5    # only the inner arena wall: it is an oval, 15 to 27
 CHAMFER = 0.08              # chamfer width on the hard edges (about 3 pixels from the chase camera)
 HARD_ANGLE = 30.0           # degrees: edges sharper than this are hard (as clean_mesh in arena_ao.py)
 # Night lights: wall torches (the "torches" object, version TORCHES_VERSION), chosen 2026-10-09 (17, every 20 degrees)
-TORCHES_VERSION = 2          # 2: the bracket's plate and bars were inside-out (a mirrored matrix), z-fighting the wall
+TORCHES_VERSION = 3          # 2: the bracket's plate and bars were inside-out (a mirrored matrix), z-fighting the wall
+                             # 3: own AO UV map (the bake script's unwrap collapsed the props; the AO came out white)
 TORCH_STEP = 20.0           # degrees between torches
 TORCH_FIRST = 30.0          # the first torch; the gate is at about 10 degrees, so 30 and 350 frame it
 TORCH_HEIGHT = 3.4          # on the tall wall (below the ledge under the windows)
@@ -615,6 +616,20 @@ def add_torches(scene, coliseum):
         lights.append(cup + Vector((0.0, 0.0, 0.3)) + out * 0.15)
     bm.to_mesh(me)
     bm.free()
+    me.uv_layers[0].name = "UVMap"
+    # The AO lightmap UVs: bake-arena-ao.ps1 keeps an existing "AO" map. Its own unwrap (arena_ao.py add_ao_uv) cuts
+    # seams only at edges marked sharp, which these flat-shaded props do not have: their closed shapes collapsed to
+    # points (1808 of 1836 faces with no area) and the bake came out white. Smart UV Project cuts by angle instead.
+    ao = me.uv_layers.new(name="AO")
+    me.uv_layers.active = ao
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active = ob
+    ob.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.uv.smart_project(angle_limit=math.radians(HARD_ANGLE), island_margin=0.004)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    me.uv_layers.active = me.uv_layers["UVMap"]
     ob["tumbu_shapes"] = TORCHES_VERSION
     log("torches: %d of %d placed" % (len(lights), len(azimuths)))
     return lights
