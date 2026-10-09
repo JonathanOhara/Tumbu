@@ -65,7 +65,7 @@ itself (customization is its core), but it is design and code, not visuals; the 
      and lanterns in the windows (lit almost nothing). Neon light "soft" (strong turned the ring pink), mood "balanced".
    - Built: the torches in `Arena.blend` (`arena_shapes.py`), toon flames that flicker with their light, the torches' and
      the neon's light in the robot and arena shaders on their own uniforms (the energy lights keep their four), keyframe
-     `lamps` (CLAUDE.md "Night lights"). Before/after: `%USERPROFILE%\Tumbu\night-lights\`.
+     `lamps` (CLAUDE.md "Night lights").
    - Possible follow-ups: the grass gets the torches' light with the grass remake (its own shader); the torches could
      light the dust; lanterns in the windows as emissive glow only (no light, no cost).
 

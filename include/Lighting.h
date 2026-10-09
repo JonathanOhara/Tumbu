@@ -125,7 +125,9 @@ private:
 		flameBrightness,
 		neonLight,
 		neonLightReach,
-		lampTime;
+		lampTime,
+		neonRadius,
+		neonTop;
 	/// The arena's night lights (lamps.object): the torches' light positions; colours from lighting.object.
 	std::vector<Ogre::Vector3> lamps;
 	Ogre::ColourValue lampColour, neonLightColour;

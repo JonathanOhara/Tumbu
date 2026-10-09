@@ -75,6 +75,8 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	postProcess = NULL;
 	sunVisibility = 0;
 	lampTime = 0;
+	neonRadius = 0;
+	neonTop = 0;
 
 	const Ogre::String name = "configuration";
 	ConfigNode* cfg = requireScript( name );
@@ -392,7 +394,9 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "neonParams", Ogre::Vector4( k.neon, neonStrength, 0, 0 ) );
 	// The night lights: the torches' colour (their intensity is set every frame, updateLamps) and the neon's light.
 	params->setNamedConstant( "lampColour", toVector4( lampColour * lampStrength, lampReach ) );
-	params->setNamedConstant( "lampShape", Ogre::Vector4( lampBands, lampBack, 0, 0 ) );
+	// zw: where the neon can reach (the segments' extent around the centre plus the reach), so the rest skips it.
+	Ogre::Real neonBound = neonRadius + neonLightReach;
+	params->setNamedConstant( "lampShape", Ogre::Vector4( lampBands, lampBack, neonBound * neonBound, neonTop + neonLightReach ) );
 	params->setNamedConstant( "neonLight", toVector4( neonLightColour * ( neonLight * k.neon ), neonLightReach ) );
 	params->setNamedConstant( "metalEnv", metalEnv );
 	params->setNamedConstant( "metalShape", metalShape );
@@ -518,6 +522,11 @@ void Lighting::loadLamps(void){
 				for( int j = 0; j < 3; j++ ){
 					segA[segments * 4 + j] = c->getValueF( j );
 					segB[segments * 4 + j] = c->getValueF( 3 + j );
+				}
+				for( int k = 0; k < 2; k++ ){
+					Ogre::Vector3 end( c->getValueF( k * 3 ), c->getValueF( k * 3 + 1 ), c->getValueF( k * 3 + 2 ) );
+					neonRadius = std::max( neonRadius, Ogre::Vector2( end.x, end.z ).length() );
+					neonTop = std::max( neonTop, end.y );
 				}
 				segments++;
 			}else{

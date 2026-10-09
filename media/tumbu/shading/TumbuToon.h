@@ -112,7 +112,9 @@ vec3 tumbuEnergyLights(vec3 p, vec3 n, vec4 pos0, vec4 col0, vec4 pos1, vec4 col
 // with them put TUMBU_LAMP_UNIFORMS in OGRE_UNIFORMS and add albedo x TUMBU_ARENA_LIGHTS(p, n).
 // lampPos[i]: xyz = a torch's light (at its flame), w = its intensity now (keyframe lamps x flicker; 0 = off)
 // lampColour: rgb = colour x strength, w = reach (world units)
-// lampShape: x = toon bands of the light pools, y = light on the side facing away (like the energy lights' 0.25)
+// lampShape: x = toon bands of the light pools, y = light on the side facing away (like the energy lights' 0.25),
+//            z = squared horizontal distance from the arena's centre and w = height beyond which the neon cannot reach
+//            (so the far walls and the sky skip the neon segments)
 // neonLight: rgb = colour x strength x keyframe neon (0 = off), w = reach
 // neonSegA[i] / neonSegB[i]: the two ends of a neon segment (xyz; the ring ropes, one per side, and the T's tube)
 // The array sizes must match TUMBU_MAX_LAMPS and TUMBU_NEON_SEGMENTS in Lighting.cpp.
@@ -158,7 +160,7 @@ vec3 tumbuArenaLights(vec3 p, vec3 n, vec4 lampColour, vec4 lampShape, vec4 neon
         torch += lampPos[i].w * tumbuLampReach(toLight, n, lampColour.w, lampShape.y);
     }
     vec3 light = lampColour.rgb * tumbuLampBands(torch, lampShape.x);
-    if (neonLight.w > 0.0 && dot(neonLight.rgb, neonLight.rgb) > 0.0)
+    if (neonLight.w > 0.0 && dot(neonLight.rgb, neonLight.rgb) > 0.0 && dot(p.xz, p.xz) < lampShape.z && p.y < lampShape.w)
     {
         float neon = 0.0;
         for (int i = 0; i < 8; i++)

@@ -331,15 +331,17 @@ painted toon sky replaced it).
   - **`GpuSharedParameters::setNamedConstant( name, const float*, count )` counts floats, not float4s** (the
     `GpuProgramParameters` overload counts float4s): passing 20 lit only the first 5 torches.
   - The neon's light was first too faint on the tiles under the ropes (the segments run at the ropes' mid height,
-    0.75 above the floor): `neonLight 2`, `neonLightReach 2` match the chosen "soft" mock-up
-    (`%USERPROFILE%\Tumbu\night-lights-2\rope-*.png`).
+    0.75 above the floor): `neonLight 2`, `neonLightReach 2` match the chosen "soft" mock-up.
   - The night mood ("balanced", chosen with the lights): the night keyframe's moon and ambient x0.75, dusk x0.85.
-  - Cost and before/after: bench at 22:00 against the previous build, 1920x1080: chase view D3D11 +0.089 ms, OpenGL
-    +0.076 ms; low wall view +0.076 / +0.051 ms; 1024x768 no cost (D3D11 -0.03 ms, OpenGL +0.06 ms inside the spread);
-    by day (lamps 0, the loop still runs) +0.02 / +0.03 ms (`%USERPROFILE%\Tumbu\night-lights*\fps.txt`). `-cycles`:
-    objects flat, OpenGL flat; D3D11 drifted alike for the old and the new build in one long session (2.4 against 1.7
-    to 2.7 MB per match). Before/after (13, 19, 21, 22 h, four views, robot001/004/005, D3D11 against OpenGL):
-    `%USERPROFILE%\Tumbu\night-lights\`.
+  - The neon loop runs only near the ring (`lampShape.zw`: the segments' horizontal extent and top plus the reach,
+    computed by `Lighting` from lamps.object), so the walls and the sky skip it.
+  - **The inventory / new-part preview** (`GUI`, its own scene manager) uses the robot shaders and so the same shared
+    values: at the world origin the T's neon turned its feet pink at night. The preview scene sits at
+    `PREVIEW_ORIGIN` (0, -1000, 0), out of reach of the night lights and the energy lights.
+  - Cost (bench at 22:00 against the build before the lights, chase view, 3 runs): 1920x1080 D3D11 +0.070 ms,
+    OpenGL +0.045 ms; 1024x768 inside the run-to-run spread on both. By day (lamps 0) about +0.02 / +0.03 ms.
+    `-cycles`: objects flat, OpenGL flat; D3D11 drifted alike for the old and the new build in one long session (2.4
+    against 1.7 to 2.7 MB per match). Checked at 06, 07 and 18 h too: the flames shrink and the pools fade with `lamps`.
 - **Contact shadows**
  (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by

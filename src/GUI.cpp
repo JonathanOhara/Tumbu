@@ -9,6 +9,9 @@ GUI* GUI::instance = NULL;
 
 namespace{
 	const char* PREVIEW_TEXTURE = "TumbuPreviewRTT";
+	// The preview scene sits far below the arena: the robot shaders take their light from the shared "TumbuLighting"
+	// values (Lighting), and at the world origin the T's neon light, the torches and the energy lights reached it.
+	const Ogre::Vector3 PREVIEW_ORIGIN( 0, -1000, 0 );
 	const float SKILL_HIT_DURATION = 1.2f;
 
 	std::string toString( int value ){
@@ -691,7 +694,7 @@ void GUI::createPreviewScene(void){
 	Ogre::SceneNode *cameraNode = previewSceneMgr->getRootSceneNode()->createChildSceneNode( "PreviewCameraNode" );
 	cameraNode->attachObject( previewCamera );
 
-	previewRoot = previewSceneMgr->getRootSceneNode()->createChildSceneNode( "PreviewRoot" );
+	previewRoot = previewSceneMgr->getRootSceneNode()->createChildSceneNode( "PreviewRoot", PREVIEW_ORIGIN );
 
 	// Rendered into a texture in the MyGUI group so image widgets can show it by name.
 	previewTexture = Ogre::TextureManager::getSingleton().createManual( PREVIEW_TEXTURE, "MyGUI",
@@ -740,8 +743,8 @@ void GUI::showPreviewRobot(void){
 		node->setPosition( part->position );
 		previewParts.push_back( part );
 	}
-	previewCamera->getParentSceneNode()->setPosition( 0, 1.0f, 3.2f );
-	previewCamera->getParentSceneNode()->lookAt( Ogre::Vector3( 0, 1.0f, 0 ), Ogre::Node::TS_WORLD );
+	previewCamera->getParentSceneNode()->setPosition( PREVIEW_ORIGIN + Ogre::Vector3( 0, 1.0f, 3.2f ) );
+	previewCamera->getParentSceneNode()->lookAt( PREVIEW_ORIGIN + Ogre::Vector3( 0, 1.0f, 0 ), Ogre::Node::TS_WORLD );
 	setPreviewActive( true );
 }
 //-------------------------------------------------------------------------------------
@@ -756,8 +759,8 @@ void GUI::showPreviewPart( Part *part ){
 	Ogre::AxisAlignedBox bounds = previewEntity->getBoundingBox();
 	node->setPosition( -bounds.getCenter() );
 	Ogre::Real radius = std::max( 0.2f, bounds.getHalfSize().length() );
-	previewCamera->getParentSceneNode()->setPosition( 0, 0, radius * 2.6f );
-	previewCamera->getParentSceneNode()->lookAt( Ogre::Vector3::ZERO, Ogre::Node::TS_WORLD );
+	previewCamera->getParentSceneNode()->setPosition( PREVIEW_ORIGIN + Ogre::Vector3( 0, 0, radius * 2.6f ) );
+	previewCamera->getParentSceneNode()->lookAt( PREVIEW_ORIGIN, Ogre::Node::TS_WORLD );
 	setPreviewActive( true );
 }
 //------------------------------------------------------------------------------------- actions
