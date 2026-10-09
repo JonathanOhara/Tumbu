@@ -74,7 +74,7 @@ PLINTH_MAX_RADIUS = 28.5    # only the inner arena wall: it is an oval, 15 to 27
 CHAMFER = 0.08              # chamfer width on the hard edges (about 3 pixels from the chase camera)
 HARD_ANGLE = 30.0           # degrees: edges sharper than this are hard (as clean_mesh in arena_ao.py)
 # Night lights: wall torches (the "torches" object, version TORCHES_VERSION), chosen 2026-10-09 (17, every 20 degrees)
-TORCHES_VERSION = 1
+TORCHES_VERSION = 2          # 2: the bracket's plate and bars were inside-out (a mirrored matrix), z-fighting the wall
 TORCH_STEP = 20.0           # degrees between torches
 TORCH_FIRST = 30.0          # the first torch; the gate is at about 10 degrees, so 30 and 350 frame it
 TORCH_HEIGHT = 3.4          # on the tall wall (below the ledge under the windows)
@@ -600,10 +600,10 @@ def add_torches(scene, coliseum):
             continue
         loc, nrm = hit
         out = Vector((nrm.x, nrm.y, 0.0)).normalized()     # away from the wall, towards the arena
-        side = Vector((-out.y, out.x, 0.0))
+        side = Vector((out.y, -out.x, 0.0))     # (side, out, up) is right-handed: a mirrored matrix turns boxes inside-out
         facing = Matrix((side, out, Vector((0.0, 0.0, 1.0)))).transposed().to_4x4()   # local x along the wall
         # back plate with two rivet bars, the arm, a ring under the cup, the cup
-        add_box(bm, loc + out * 0.03, (0.24, 0.06, 0.36), facing, 0)
+        add_box(bm, loc + out * 0.02, (0.24, 0.08, 0.36), facing, 0)    # 2 cm into the wall: no shared plane with it
         add_box(bm, loc + out * 0.065 + Vector((0, 0, 0.12)), (0.28, 0.03, 0.04), facing, 0)
         add_box(bm, loc + out * 0.065 - Vector((0, 0, 0.12)), (0.28, 0.03, 0.04), facing, 0)
         cup = loc + out * 0.42 + Vector((0.0, 0.0, 0.3))

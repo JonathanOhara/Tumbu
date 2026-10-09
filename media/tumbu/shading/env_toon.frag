@@ -132,7 +132,11 @@ MAIN_DECLARATION
     // Coloured light from special attacks (energy balls, impacts).
     colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
     // The arena's night lights: the wall torches and the red neon's light on the tiles (not on the ropes' own core).
+    // Not on the torches' own iron (TUMBU_NO_LAMPS): the light sits right above the cup, so the iron turned the colour of
+    // the lit wall and its toon bands jumped with the flicker; it stays a dark silhouette under the flame.
+#ifndef TUMBU_NO_LAMPS
     colour += albedo * TUMBU_ARENA_LIGHTS(oWorldPos, n);
+#endif
 
     // The neon: an unlit core, bright enough in the HDR image for the bloom to give it a halo.
 #ifdef TUMBU_NEON

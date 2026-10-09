@@ -322,6 +322,10 @@ painted toon sky replaced it).
     two-tone toon fire above the bloom threshold that sway, flicker and grow out of the cup with `lamps`; alpha-blended,
     so they cast no shadow and vanish by day. Values: `lampColour`, `lampStrength`, `lampReach`, `lampBands`, `lampBack`,
     `lampFlicker`, `flameBrightness`, `neonLightColour`, `neonLight`, `neonLightReach` in `lighting.object`.
+  - The iron brackets do not take the torches' light (`torchIronMaterial` uses `env_iron_ps` = `env_toon.frag` with
+    `TUMBU_NO_LAMPS`): lit by their own flame from 0.3 units away they turned the colour of the wall, so the flame seemed
+    to float, and their toon bands jumped with the flicker. In `arena_shapes.py` the bracket's local frame must stay
+    right-handed: a mirrored matrix built the plate inside-out and its back face z-fought the wall (torches version 2).
   - No shadows from the torches (their light reaches through anything within `lampReach`, 6 units: they sit on walls
     that face open space). The grass (Ogre terrain, its own shader) gets no torch or neon light until the grass remake.
   - **`GpuSharedParameters::setNamedConstant( name, const float*, count )` counts floats, not float4s** (the

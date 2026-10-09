@@ -4,10 +4,18 @@ import * from "shading.material"
 // scripts/blender/arena_shapes.py in art/arena/Arena.blend, AO baked by scripts/bake-arena-ao.ps1. Their light on the
 // arena and the robots is TUMBU_ARENA_LIGHTS (TumbuToon.h), placed by media/configuration/lamps.object.
 
-// The brackets: dark iron, toon lit like the stone.
+// The brackets: dark iron, toon lit like the stone but not by the torches (env_iron_ps): a dark silhouette under the
+// flame instead of iron lit the colour of the wall.
 material torchIronMaterial : Tumbu/EnvironmentToon{
     set $aoMap "torches_ao.dds"
     set $diffuseCol "0.17 0.15 0.14 1"
+
+    technique toon{
+        pass{
+            fragment_program_ref env_iron_ps{
+            }
+        }
+    }
 }
 
 // The flames: unlit toon fire (torch_flame.vert / .frag) that sways, flickers and grows with the keyframe value lamps

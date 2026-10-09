@@ -60,6 +60,22 @@ fragment_program env_neon_ps glsl glsles hlsl
     }
 }
 
+// The torches' iron brackets: the toon shader without the night lights (TUMBU_NO_LAMPS, env_toon.frag).
+fragment_program env_iron_ps glsl glsles hlsl
+{
+    source env_toon.frag
+    target ps_4_0
+    preprocessor_defines TUMBU_NO_LAMPS=1
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto matDif surface_diffuse_colour
+        param_named_auto matSpec surface_specular_colour
+        param_named_auto matShininess surface_shininess
+        param_named_auto camPos camera_position
+    }
+}
+
 // The ring floor: the stone shader plus the decal (the T, its tube, the border course).
 fragment_program env_stone_floor_ps glsl glsles hlsl
 {
