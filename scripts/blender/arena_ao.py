@@ -13,7 +13,7 @@ Settings live in the .blend, so they can be adjusted in Blender and the script r
   Scene custom properties: tumbu_ao_distance (world units), tumbu_ao_samples
   Object custom property:  tumbu_ao_size (texture size in pixels)
 
-Usage: blender --background --python arena_ao.py -- <repo root> [--rebuild] [--only <mesh>]
+Usage: blender --background --python arena_ao.py -- <repo root> [--rebuild] [--only <mesh>] [--export-only]
 """
 import bpy
 import os
@@ -31,6 +31,8 @@ ROOT = args[0]
 REBUILD = "--rebuild" in args
 # --only <name>: bake and export only that mesh (a new prop such as the torches, without baking the coliseum again)
 ONLY = args[args.index("--only") + 1] if "--only" in args else None
+# --export-only: export the meshes without baking their AO again (the AO maps on disk stay as they are)
+EXPORT_ONLY = "--export-only" in args
 
 MEDIA = os.path.join(ROOT, "media", "tumbu", "arena")
 ART = os.path.join(ROOT, "art", "arena")
@@ -248,7 +250,9 @@ def export(ob):
     triangulate.keep_custom_normals = True
     triangulate.min_vertices = 4
     try:
-        api.dot_mesh(ob, MEDIA, force_name=ob.name, overwrite=True)
+        # No tangents: the arena shaders build their tangent frame per pixel (tumbuTangentFrame), and blender2ogre's
+        # dot_mesh exports them by default (tangents=4), which only made the meshes bigger.
+        api.dot_mesh(ob, MEDIA, force_name=ob.name, overwrite=True, tangents=0)
     finally:
         ob.modifiers.remove(triangulate)
     log("exported %s.mesh" % ob.name)
@@ -287,7 +291,8 @@ def main():
     for ob in meshes:
         if AO_UV not in ob.data.uv_layers:
             add_ao_uv(ob)
-        bake(ob, scene)
+        if not EXPORT_ONLY:
+            bake(ob, scene)
     for ob in meshes:
         export(ob)
 

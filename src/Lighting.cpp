@@ -572,12 +572,16 @@ void Lighting::updateLamps( Ogre::Real time ){
 	// Wrapped (a jump in the flicker every ~17 minutes instead of losing float precision in the sines).
 	lampTime = std::fmod( lampTime + time, 1000.0f );
 	std::vector<float> data( TUMBU_MAX_LAMPS * 4, 0.0f );
+	// The light follows the flame's size (torch_flame.vert: full from lamps 0.3, smaller below), so a dying flame at
+	// dawn does not leave a pool of light around an almost invisible flame.
+	Ogre::Real grow = Ogre::Math::saturate( current.lamps / 0.3f );
+	grow = grow * grow * ( 3 - 2 * grow );
 	for( size_t i = 0; i < lamps.size(); i++ ){
 		Ogre::Real phase = std::fmod( i * 0.618034f, 1.0f );
 		data[i * 4] = lamps[i].x;
 		data[i * 4 + 1] = lamps[i].y;
 		data[i * 4 + 2] = lamps[i].z;
-		data[i * 4 + 3] = current.lamps * lampFlickerAt( lampTime, phase, lampFlicker );
+		data[i * 4 + 3] = current.lamps * grow * lampFlickerAt( lampTime, phase, lampFlicker );
 	}
 	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( SHARED_PARAMS );
 	// The shared parameters' array setter counts floats, not float4s.

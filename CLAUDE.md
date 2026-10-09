@@ -96,8 +96,13 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   OpenGL; **OpenGL** flat after the first match (±30 KB per match); **Direct3D 11** about 29 MB after the first match, then
   **about +1.1 MB per match** (history: +1.7 to 2.3 MB before the robots were skinned on the GPU, +0.7 to 0.8 after it, +1.1
   since the arena stone's anisotropic samplers), the same with SMAA on or off; every object count flat.
+  **2026-10-09, right after a reboot** (night lights in): the first run gave +2.45 MB per match, and eight alternating runs
+  of the current build and the build before the night lights gave 2.45 / 3.23 / 3.85 / 3.89 against 1.46 / 2.94 / 5.25 /
+  2.31 MB per match: no difference between the builds, but even a fresh start no longer reproduces the +1.1 MB. OpenGL
+  stayed flat (-12.7 KB per match).
   **Measure after a fresh start:** in a long session the Direct3D 11 number drifts for every build alike (2026-10-06: from
-  0.3 to about 5 MB per match over the day for both the old and the new build), so compare builds back to back only.
+  0.3 to about 5 MB per match over the day for both the old and the new build), so compare builds back to back only, and
+  alternate them several times: single runs scatter by 1.5 to 5 MB per match.
   That growth is NVIDIA driver memory (`nvwgf2umx.dll`), tied to the post-processing compositor, not the effects; the
   object counts are flat on both renderers (docs/SPECIAL_EFFECTS.md, "Known issue"; re-check after a driver or Ogre update:
   `-cycles` logs a `REMINDER` line when they differ). `-cycles` also logs `heap growth by block size` and the DLL that
@@ -146,7 +151,9 @@ materials, textures, GUI) gets a before/after set:
    difference to the first variant and whether it is inside the spread) and appends to
    `%USERPROFILE%\Tumbu\fps-history.csv`. Report fps and ms next to the image folder. A run whose window was hidden or
    minimised does not render (thousands of fps, `render_ms` near 0): DevTest marks it `invalid=window-not-rendered` and
-   `bench.ps1` runs it again, so do not cover or minimise the game window while a benchmark runs.
+   `bench.ps1` runs it again, so do not cover or minimise the game window while a benchmark runs. `fps.txt` ends with
+   a `note:` line when the runs were noisy (the time outside rendering varied by more than 0.2 ms, or a variant's runs
+   spread by more than 10 %): run again before trusting the difference.
    For the same reason, compare still frames from `-Bench 3` runs when the change should not alter the image: two runs
    of the same build already differ in about 7 % of the pixels (dust, clock), so that is the bar.
 
@@ -184,7 +191,8 @@ painted toon sky replaced it).
 - **Patched Ogre bugs:** `deps.ps1` (`Repair-OgreSource`) patches the Ogre source:
   - `OgreTerrain.cpp`: for version-1 terrain files (our 2011 Ogitor page), `Terrain::prepare` allocated the delta buffer
     twice, leaking 1 MB per match.
-  - `OgreD3D11RenderSystem.cpp` (2026-10-09): shared parameters one bind late on Direct3D 11 (next item).
+  - `OgreD3D11RenderSystem.cpp` (2026-10-09): shared parameters one bind late on Direct3D 11 (next item). No cost
+    (bench, fight at 1024x768, unpatched against patched DLL: -0.006 ms, inside the spread).
 - **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
   `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
   particles render white.
@@ -291,7 +299,9 @@ painted toon sky replaced it).
     and y; the shader rebuilds z.
   - **The low setting** (Shadows off) also drops the stone's parallax and self-shadows (shared `detailParams`, Lighting).
   - **No mesh tangents:** the tangent frame is built per pixel from screen-space derivatives (`tumbuTangentFrame`). The
-    texture UVs are at world scale (`arena_shapes.py`), so a tile has the same size everywhere.
+    texture UVs are at world scale (`arena_shapes.py`), so a tile has the same size everywhere. The export passes
+    `tangents=0` (`arena_ao.py`): blender2ogre's `dot_mesh` writes tangents by default, whatever its sticky
+    `GENERATE_TANGENTS` setting, and the arena meshes carried unused ones until 2026-10-09 (27 % of their size).
   - Moss is decided in the shader from the moss field, the height above the ground, how much a surface faces up and
     the joints (`$mossParams`, `$mossParams2`, `$mossColour` alpha 0 = none).
   - **No `#ifdef` inside `OGRE_UNIFORMS(...)`**: GLSL rejects preprocessor lines inside a macro's arguments, so OpenGL
@@ -335,7 +345,8 @@ painted toon sky replaced it).
     the ends of the T. **The flame's height comes from its UVs, and blender2ogre writes 1 - v**: the vertex shader takes
     `h = 1 - uv0.y` (0 at the cup). Read the other way round, the sway and the flicker moved the flame's base against
     the cup and a dying flame shrank towards its tip. The flame is full size from `lamps` 0.3 (sunset), half at dawn
-    (0.15), and opaque as soon as it burns (smaller, never see-through).
+    (0.15), and opaque as soon as it burns (smaller, never see-through). `Lighting::updateLamps` scales the light by
+    the same growth, so a dying flame leaves no pool of light around it.
   - The iron brackets do not take the torches' light (`torchIronMaterial` uses `env_iron_ps` = `env_toon.frag` with
     `TUMBU_NO_LAMPS`): lit by their own flame from 0.3 units away they turned the colour of the wall, so the flame seemed
     to float, and their toon bands jumped with the flicker. In `arena_shapes.py` the bracket's local frame must stay

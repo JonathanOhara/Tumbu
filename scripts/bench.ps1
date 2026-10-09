@@ -12,8 +12,9 @@
 #   -Quick     for light changes: 1920x1080 and 2 runs per variant (about 5 minutes instead of 15 for two variants);
 #              -Runs / -VideoMode given explicitly still win. Use the full run for per-pixel work (shaders that loop).
 # The table is printed and saved as %USERPROFILE%\Tumbu\<Name>\fps.txt (next to the before/after images).
-# A note follows a renderer's rows when the time outside rendering (rest_ms: game logic, Present) varied by more than
-# 0.2 ms between its runs: something else was using the PC, and the difference between the variants may be noise.
+# Notes follow a renderer's rows when its runs were noisy: the time outside rendering (rest_ms: game logic, Present)
+# varied by more than 0.2 ms between runs, or a variant's own runs spread by more than 10 % of its frame time. Something
+# else was probably using the PC, and the difference between the variants may be noise.
 # ogre.cfg is switched for the OpenGL runs and always restored. The game runs muted.
 param(
     [Parameter(Mandatory)] [string]$Name,
@@ -109,6 +110,7 @@ try {
 $inv = [cultureinfo]::InvariantCulture
 $lines = @("Frame-rate benchmark '$Name' ($(Get-Date -Format 'yyyy-MM-dd HH:mm')), $Runs runs x $Seconds s per variant, alternated",
     "common: $Common; variants: $($Variants -join ' | ')", '')
+$noisy = @()
 foreach ($renderer in $Renderers) {
     $reference = $null
     foreach ($v in $parsed) {
@@ -127,7 +129,13 @@ foreach ($renderer in $Renderers) {
         }
         $lines += [string]::Format($inv, '{0,-6} {1,-12} {2,7:0.0} fps {3,7:0.000} ms  (runs {4} fps; spread {5:0.000} ms){6}',
             $renderer, $v.Label, $fps, $ms, $runsText, $spread, $delta)
+        if ($set.Count -gt 1 -and $spread -gt 0.1 * $ms) {
+            $noisy += [string]::Format($inv, '{0,-6} note: the runs of {1} spread by {2:0} % of its frame time (other load on the PC?): run again',
+                $renderer, $v.Label, 100 * $spread / $ms)
+        }
     }
+    $lines += $noisy
+    $noisy = @()
     $all = @($results | Where-Object { $_.Renderer -eq $renderer })
     if ($all.Count -gt 1) {
         $restMin = ($all | Measure-Object RestMs -Minimum).Minimum
