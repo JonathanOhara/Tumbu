@@ -43,6 +43,42 @@ from each one you defeat.
   process stuck at about 2 MB). The user has to allow it or exclude `bin\`. Git over HTTPS needs
   `git -c http.sslBackend=schannel` because Norton intercepts TLS.
 
+## Temporary workarounds (remove when fixed upstream)
+
+Code that exists **only** because of a bug in a dependency. Each entry says how to tell whether upstream fixed it and
+how to remove our workaround. **Check this list whenever a dependency is upgraded** (`$OgreVersion` etc. in
+`scripts/deps.ps1`), and add an entry here for every new workaround of this kind. `deps.ps1` prints a warning when a
+patch no longer finds the code it patches: then look here.
+
+1. **Ogre: shared parameters reach a pass one bind late on Direct3D 11.**
+   - Bug: in Ogre 14.6.0 (and on Ogre `master` as of 2026-10-09; not reported, searched the OGRECave/ogre issues and the
+     forums), `D3D11RenderSystem::bindGpuProgramParameters` (`RenderSystems/Direct3D11/src/OgreD3D11RenderSystem.cpp`)
+     uploads the pass's constants (`updateDefaultUniformBuffer`) **before** it copies the shared parameters into them
+     (`params->_updateSharedParams()`). OpenGL copies first.
+   - Why it matters: our lighting values are a shared set (`TumbuLighting`). On Direct3D 11 a draw got the values of its
+     pass's previous bind, so a value changed for one render never reached it: the robot preview (`PreviewLighting` in
+     `GUI.cpp`, `Lighting::beginNeutralLighting`) kept the arena's night lighting.
+   - Our workaround: `Repair-OgreSource` in `scripts/deps.ps1` inserts the copy before the upload (marked
+     `// TUMBU patch` in the Ogre source; `.\scripts\deps.ps1 -Only ogre` applies it and rebuilds). Cost: none (bench).
+     We kept the patch instead of moving `TumbuLighting` into a constant buffer bound on its own (which the bug does not
+     hit), because that means rewriting how every shader declares the lighting values.
+   - Fixed upstream when: in the new Ogre's `bindGpuProgramParameters`, `_updateSharedParams()` runs before
+     `updateDefaultUniformBuffer` (or an Ogre issue/commit says so).
+   - To remove: delete the D3D11 block of `Repair-OgreSource`, rebuild Ogre, and check on Direct3D 11:
+     `bin\Release\TUMBU.exe -guitour -hour=22 -mute`; in `devtest-gui-pause-inventory.png` the preview robot must be white
+     (neutral light), not night blue. Then delete this entry and its line in the Rendering pitfalls.
+   - With an unpatched Ogre that still has the bug, the preview needs its own fix: copy the shared values into the
+     preview's passes right after setting and after restoring them (`_copySharedParams()`; commit 86720f7).
+2. **Ogre: terrain delta-data leak** (1 MB per match).
+   - Bug: in Ogre 14.6.0 (and on `master` as of 2026-10-09), `Terrain::prepare(StreamSerialiser&)`
+     (`Components/Terrain/src/OgreTerrain.cpp`) allocates `mDeltaData` a second time for version-1 terrain files (our
+     2011 Ogitor page) without freeing the first buffer.
+   - Our workaround: `Repair-OgreSource` removes the second allocation (marked `TUMBU patch`).
+   - Fixed upstream when: the line after `// Load delta data` in the version-1 branch no longer allocates.
+   - To remove: delete the terrain block of `Repair-OgreSource`, rebuild Ogre, and check `TUMBU.exe -cycles=12 -mute` on
+     OpenGL (set `Render System` in `%USERPROFILE%\Tumbu\ogre.cfg` for that run, then back): the heap must stay
+     flat from match 2 on. Then delete this entry.
+
 ## Automated checks (use after every change)
 
 **Always run the game muted.** The user works on other things while tests run and the game sound bothers
@@ -192,24 +228,16 @@ painted toon sky replaced it).
   in the global pool.
 - **Direct3D 11 HLSL profile.** A plain `hlsl` program compiles at level 9_1 (64 instructions). The robot
   programs set `target vs_4_0` / `ps_4_0`.
-- **Patched Ogre bugs:** `deps.ps1` (`Repair-OgreSource`) patches the Ogre source:
-  - `OgreTerrain.cpp`: for version-1 terrain files (our 2011 Ogitor page), `Terrain::prepare` allocated the delta buffer
-    twice, leaking 1 MB per match.
-  - `OgreD3D11RenderSystem.cpp` (2026-10-09): shared parameters one bind late on Direct3D 11 (next item). No cost
-    (bench, fight at 1024x768, unpatched against patched DLL: -0.006 ms, inside the spread). Not reported upstream and
-    not fixed there (searched the OGRECave/ogre issues and the forums, 2026-10-09; `master` still uploads before it
-    copies). It only hits shared sets copied into a program's own constants; a shared set bound as its own constant
-    buffer (`bufferInfoMap`, uploaded by `_updateSharedParams` before the bind) is not affected.
+- **Patched Ogre bugs:** `deps.ps1` (`Repair-OgreSource`) patches the Ogre source: the terrain delta-data leak and the
+  late shared parameters on Direct3D 11. Both are temporary: see "Temporary workarounds (remove when fixed upstream)".
 - **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
   `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
   particles render white.
 - **Lighting values reach the shaders as shared parameters.** `Lighting::declareSharedParameters` creates
   `TumbuLighting` in `BaseApplication::locateResources`, before any script is parsed; programs reference it
   with `shared_params_ref TumbuLighting`. Every value is a `float4` (the types must match exactly).
-  Ogre 14.6's `D3D11RenderSystem::bindGpuProgramParameters` uploaded a pass's constants before copying the shared
-  values into them, so on Direct3D 11 every change reached a pass one bind late (the robot preview kept the arena's
-  lighting); `deps.ps1` (`Repair-OgreSource`) patches it. Without the patch, a value changed for one render only does
-  not reach that render on Direct3D 11.
+  On Direct3D 11, Ogre 14.6 delivers shared values one bind late; our patched Ogre fixes that (see "Temporary
+  workarounds (remove when fixed upstream)"): without it, a value changed for one render only does not reach it.
 - **Shadows are integrated.** The shadow technique is `SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED` with a
   depth (`PF_DEPTH32F`) map: Ogre only renders the map, and the robot and arena shaders sample it
   (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). The old modulative/additive receiver

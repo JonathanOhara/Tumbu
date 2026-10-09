@@ -12,6 +12,8 @@ namespace{
 	const char* PREVIEW_TEXTURE = "TumbuPreviewRTT";
 	// The preview renders with neutral lighting (Lighting::beginNeutralLighting): the robot shaders take their light
 	// from the shared "TumbuLighting" values, so it showed the arena's time of day, its torches and neon.
+	// On Direct3D 11 this relies on our patched Ogre (shared values one bind late in Ogre 14.6): CLAUDE.md,
+	// "Temporary workarounds (remove when fixed upstream)".
 	class PreviewLighting: public Ogre::RenderTargetListener{
 	public:
 		void preRenderTargetUpdate( const Ogre::RenderTargetEvent &evt ){ Lighting::beginNeutralLighting(); }

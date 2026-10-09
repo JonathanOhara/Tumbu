@@ -63,7 +63,9 @@ function Build-CMake([string]$name, [string]$sourceDir, [string[]]$options) {
     }
 }
 
-# Ogre 14.6 bugs, patched in the downloaded source:
+# TEMPORARY WORKAROUNDS: Ogre 14.6 bugs, patched in the downloaded source. Each one is to be removed once Ogre fixes it;
+# how to check and how to remove: CLAUDE.md, "Temporary workarounds (remove when fixed upstream)".
+# A patch whose original code is not found (an Ogre upgrade changed it) prints a warning instead of failing silently.
 # - Terrain::prepare() allocates mDeltaData, and for version-1 terrain files (like the arena's 2011 Ogitor page)
 #   allocates it again before reading, leaking 4 * size^2 bytes (1 MB) on every terrain load.
 # - D3D11RenderSystem::bindGpuProgramParameters uploads a pass's constants before it copies the shared parameters
@@ -78,6 +80,9 @@ function Repair-OgreSource([string]$sourceDir) {
         $text = $text.Replace($leak, "            // Load delta data (TUMBU patch: the buffer was already allocated above; allocating again leaked it)`n")
         [IO.File]::WriteAllText($file, $text)
         Write-Host "Ogre: patched the terrain delta-data leak in OgreTerrain.cpp" -ForegroundColor DarkGray
+    } elseif (-not $text.Contains('TUMBU patch: the buffer was already allocated')) {
+        Write-Warning ("Ogre: the terrain delta-data leak patch did not apply (OgreTerrain.cpp changed). Has Ogre fixed it? " +
+            "See CLAUDE.md, 'Temporary workarounds (remove when fixed upstream)'.")
     }
     $file = Join-Path $sourceDir 'RenderSystems\Direct3D11\src\OgreD3D11RenderSystem.cpp'
     $text = [IO.File]::ReadAllText($file)
@@ -89,6 +94,9 @@ function Repair-OgreSource([string]$sourceDir) {
             "        if(params->getConstantList().size())`n")
         [IO.File]::WriteAllText($file, $text)
         Write-Host "Ogre: patched the late shared parameters in OgreD3D11RenderSystem.cpp" -ForegroundColor DarkGray
+    } elseif (-not $text.Contains('TUMBU patch: shared parameters')) {
+        Write-Warning ("Ogre: the D3D11 shared-parameter patch did not apply (OgreD3D11RenderSystem.cpp changed). Has Ogre fixed " +
+            "it? See CLAUDE.md, 'Temporary workarounds (remove when fixed upstream)'.")
     }
 }
 

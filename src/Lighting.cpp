@@ -230,6 +230,7 @@ static void setNeutralValues( Ogre::GpuSharedParametersPtr params ){
 // The values saved by beginNeutralLighting.
 static std::vector<unsigned char> savedLighting;
 //-------------------------------------------------------------------------------------
+// Direct3D 11: these per-render swaps reach the draws only with our patched Ogre (CLAUDE.md, "Temporary workarounds").
 void Lighting::beginNeutralLighting(void){
 	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( SHARED_PARAMS );
 	savedLighting = params->getConstantList();

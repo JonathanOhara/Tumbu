@@ -53,7 +53,8 @@ Paths below are the ones on Jonathan's machine in Sep 2026. Adjust them if thing
   Visual Studio. The game's CMake reads the same variable.
 - To rebuild Ogre's own dependencies from scratch, delete `ogredeps` first. Ogre only builds them when that
   folder does not exist.
-- The script patches upstream problems in the downloaded sources:
+- The script patches upstream problems in the downloaded sources (temporary: how to check whether Ogre fixed them and
+  how to remove each patch is in CLAUDE.md, "Temporary workarounds (remove when fixed upstream)"):
   - an Ogre 14.6 terrain memory leak (`Repair-OgreSource`)
   - Ogre 14.6's Direct3D 11 renderer uploading a pass's constants before copying the shared parameters into them (one
     bind late; `Repair-OgreSource`, 2026-10-09). After pulling this change, run `.\scripts\deps.ps1 -Only ogre` once.
