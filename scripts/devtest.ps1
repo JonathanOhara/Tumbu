@@ -1,8 +1,12 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
 # Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-Renderer D3D11|GL]
+#        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # -Renderer D3D11 or GL runs this one game with that render system (ogre.cfg is switched for the run and always
 # restored); without it the game uses whatever ogre.cfg says.
+# -Cycles N runs the memory check instead (TUMBU.exe -cycles=N: N matches through the real UI) and prints a short
+# report: the heap after each match, the summary line, and for 20 matches or more the heap growth per match in the
+# first and the second half (the Direct3D 11 driver pool fills over ~18 matches, then the second half is near 0).
 # The game runs muted (-mute) unless -Sound is given.
 # -Clean moves the old per-run files (devtest-*.png/.log/.fps, also the bench runs') to the Recycle Bin first; given
 # alone (.\scripts\devtest.ps1 -Clean) it only cleans.
@@ -32,6 +36,7 @@ param(
     [switch]$BenchChase,
     [string]$Name = 'run',
     [ValidateSet('', 'D3D11', 'GL')] [string]$Renderer = '',
+    [int]$Cycles = 0,
     [switch]$Clean,
     [int]$TimeoutSeconds = 180
 )
@@ -71,6 +76,12 @@ if ($NoFx)        { $gameArgs += '-nofx' }
 if ($BenchAI)     { $gameArgs += '-benchai' }
 if ($BenchChase)  { $gameArgs += '-benchchase' }
 if ($Bench -gt 0)  { $gameArgs += "-bench=" + $Bench.ToString([cultureinfo]::InvariantCulture) }
+if ($Cycles -gt 0) {
+    # The memory check drives the game itself (menu, match, kills, back to the menu) and quits when done.
+    $gameArgs = @("-cycles=$Cycles")
+    if (-not $Sound) { $gameArgs += '-mute' }
+    $TimeoutSeconds = [math]::Max($TimeoutSeconds, 30 * $Cycles + 120)
+}
 
 Remove-Item "$work\devtest.png" -ErrorAction SilentlyContinue
 $cfgFile = Join-Path $work 'ogre.cfg'
@@ -93,6 +104,26 @@ if (-not $finished) {
 
 Copy-Item "$work\ogre.log" "$work\devtest-$Name.log" -Force
 if (Test-Path "$work\devtest.png") { Copy-Item "$work\devtest.png" "$work\devtest-$Name.png" -Force }
+if ($Cycles -gt 0) {
+    Write-Host "exit=$($proc.ExitCode)  log=$work\devtest-$Name.log"
+    $heaps = @()
+    foreach ($l in Select-String "$work\devtest-$Name.log" -Pattern '\[DEVTEST\] memory cycle (\d+) menu private=(\d+)KB heap=(\d+)KB') {
+        $g = $l.Matches[0].Groups
+        $heaps += [int]$g[3].Value
+        Write-Host ("cycle {0,3}: heap {1,7} KB  private {2,8} KB" -f $g[1].Value, $g[3].Value, $g[2].Value)
+    }
+    Select-String "$work\devtest-$Name.log" -Pattern 'memory summary|REMINDER|EXCEPTION|Fatal' |
+        Where-Object { $_.Line -notmatch 'Information Queue' } | ForEach-Object { $_.Line }
+    # heaps[0] is the menu before any match; the growth is measured from match 2, as in the summary.
+    if ($heaps.Count -ge 21) {
+        $mid = [int][math]::Floor(($heaps.Count + 1) / 2)
+        $first = ($heaps[$mid] - $heaps[2]) / ($mid - 2)
+        $second = ($heaps[$heaps.Count - 1] - $heaps[$mid]) / ($heaps.Count - 1 - $mid)
+        Write-Host ("heap growth per match: matches 2..{0} {1:0} KB, matches {0}..{2} {3:0} KB (near 0 = it has levelled off)" -f
+            $mid, $first, ($heaps.Count - 1), $second)
+    }
+    return
+}
 Write-Host "exit=$($proc.ExitCode)  log=$work\devtest-$Name.log  screenshot=$(Test-Path "$work\devtest-$Name.png")"
 Select-String "$work\devtest-$Name.log" -Pattern '\[DEVTEST\]|EXCEPTION|Error|Fatal' |
     # Known and harmless: the 2011 terrain page leaves one chunk open when Ogre reads it, and old resource lookups.

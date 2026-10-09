@@ -75,9 +75,8 @@ patch no longer finds the code it patches: then look here.
      2011 Ogitor page) without freeing the first buffer.
    - Our workaround: `Repair-OgreSource` removes the second allocation (marked `TUMBU patch`).
    - Fixed upstream when: the line after `// Load delta data` in the version-1 branch no longer allocates.
-   - To remove: delete the terrain block of `Repair-OgreSource`, rebuild Ogre, and check `TUMBU.exe -cycles=12 -mute` on
-     OpenGL (set `Render System` in `%USERPROFILE%\Tumbu\ogre.cfg` for that run, then back): the heap must stay
-     flat from match 2 on. Then delete this entry.
+   - To remove: delete the terrain block of `Repair-OgreSource`, rebuild Ogre, and run
+     `.\scripts\devtest.ps1 -Cycles 12 -Renderer GL`: the heap must stay flat from match 2 on. Then delete this entry.
 
 ## Automated checks (use after every change)
 
@@ -91,7 +90,7 @@ them. `devtest.ps1` passes `-mute` by default; add `-mute` to every direct `TUMB
 .\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High; -Hour 20.5 = 20:30)
 .\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
 bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
-bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 kills each) via the real UI
+.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # memory check: 40 matches via the real UI (see "Memory check")
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
 .\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, 2 runs (~5 min); full run for shaders that loop
 .\scripts\devtest.ps1 -Clean                        # old devtest-* screenshots/logs to the Recycle Bin (also before a run)
@@ -122,31 +121,28 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   Dama at it: a real hit; `-jynhit=enemy`: the enemy throws at the hero; `devtest.ps1 -JynHit 6`).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
-- `-cycles` logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks nodes=… entities=… materials=…`
-  after each match. `heap` is the bytes really in use; it must stay flat from cycle 2 on. Every object count must return to
-  the same value each cycle. At the end it logs `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED` and
-  appends the same numbers to **`%USERPROFILE%\Tumbu\memory-history.csv`** (date, renderer, driver, Ogre, heap, growth).
-  **After every `-cycles` run, compare the summary with the expected numbers below and with the last rows of that file**;
-  when they move, find out why and update this paragraph. Expected (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0,
-  re-measured 2026-10-06 right after a reboot, 12 matches): the menu before any match about 27 MB on Direct3D 11 and 16 MB on
-  OpenGL; **OpenGL** flat after the first match (±30 KB per match); **Direct3D 11** about 29 MB after the first match, then
-  **about +1.1 MB per match** (history: +1.7 to 2.3 MB before the robots were skinned on the GPU, +0.7 to 0.8 after it, +1.1
-  since the arena stone's anisotropic samplers), the same with SMAA on or off; every object count flat.
-  **2026-10-09, right after a reboot** (night lights in): the first run gave +2.45 MB per match, and eight alternating runs
-  of the current build and the build before the night lights gave 2.45 / 3.23 / 3.85 / 3.89 against 1.46 / 2.94 / 5.25 /
-  2.31 MB per match: no difference between the builds, but even a fresh start no longer reproduces the +1.1 MB. OpenGL
-  stayed flat (-12.7 KB per match). **It is bounded:** `-cycles=40` (2026-10-09) showed the heap rising from 33 MB to
-  about 85 MB over the first ~18 matches and then staying between 84 and 88 MB for the other 22 (private bytes flat at
-  about 535 MB): a driver pool that fills up, not a leak. A 12-match run mostly measures the pool filling, so its
-  "per match" number is not a leak rate; use a 40-match run to check the plateau after a driver, Ogre or rendering
-  change.
-  **Measure after a fresh start:** in a long session the Direct3D 11 number drifts for every build alike (2026-10-06: from
-  0.3 to about 5 MB per match over the day for both the old and the new build), so compare builds back to back only, and
-  alternate them several times: single runs scatter by 1.5 to 5 MB per match.
-  That growth is NVIDIA driver memory (`nvwgf2umx.dll`), tied to the post-processing compositor, not the effects; the
-  object counts are flat on both renderers (docs/SPECIAL_EFFECTS.md, "Known issue"; re-check after a driver or Ogre update:
-  `-cycles` logs a `REMINDER` line when they differ). `-cycles` also logs `heap growth by block size` and the DLL that
-  owns sample blocks, to find what grows.
+- **Memory check:** `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` runs `TUMBU.exe -cycles=40` (40 matches through
+  the real UI) and prints the heap after each match, the summary, and the heap growth per match in the first and the
+  second half. `heap` is the bytes really in use. The game logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks
+  nodes=… entities=… materials=…` after each match, `heap growth by block size` and the DLL that owns sample blocks (to
+  find what grows), and at the end `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED`, also appended
+  to `%USERPROFILE%\Tumbu\memory-history.csv` (date, renderer, driver, Ogre, heap, growth).
+  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0, 2026-10-09):
+  - every object count returns to the same value each match (`objects=flat`) on both renderers;
+  - **OpenGL:** about 16 MB in the menu, flat from match 2 on (within ±30 KB per match);
+  - **Direct3D 11:** about 27 MB in the menu and 29 to 33 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB per
+    match for about 18 matches, to about 85 MB, and **stays flat** (84 to 88 MB over matches 18 to 40; private bytes about
+    535 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor; docs/SPECIAL_EFFECTS.md,
+    "Known issue") that fills up, not a leak. So the second-half growth of a 40-match run must be near 0; a 12- or
+    21-match run is still filling, and its "per match" number is not a leak rate.
+
+  **Comparing builds on Direct3D 11:** the filling rate scatters from 1.5 to 5 MB per match between identical runs and
+  drifts upwards over a session, even right after a reboot, so alternate the builds several times (or compare the
+  plateau of 40-match runs); never compare single runs. When an object count changes, or the OpenGL heap or the Direct3D
+  11 plateau moves, find out why and update this paragraph. `-cycles` logs a `REMINDER` line when the driver or Ogre
+  version differs from the one these numbers were measured with. History: +1.7 to 2.3 MB per match (12 matches) before
+  the robots were skinned on the GPU, +0.7 to 1.1 after it (2026-10-06); the night lights changed nothing (alternated
+  runs, 2026-10-09).
 - **Crash report:** any crash (access violation, uncaught exception, `abort`) writes the call stack to
   `ogre.log` and `%USERPROFILE%\Tumbu\crash.log` (`Main.cpp`). RelWithDebInfo has file:line for game code.
   Ogre frames only show exported names, because the deps are built without PDBs.

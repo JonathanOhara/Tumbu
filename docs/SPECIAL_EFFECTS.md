@@ -88,7 +88,12 @@ same as with `-nofx` within noise. With the ki aura (2026-10-03, three runs each
 (which also turns the aura off), within run-to-run noise (single runs ranged 360-810 fps). Budget per attack: under ~200 particles, at most four lights, no extra
 full-screen passes (the flash is part of the final pass).
 
-## Known issue: NVIDIA driver memory grows per match on Direct3D 11
+## Known issue: NVIDIA driver memory grows per match on Direct3D 11 (until a pool fills)
+
+**It is bounded** (2026-10-09, `.\scripts\devtest.ps1 -Cycles 40`): the heap rises for about 18 matches, to about
+85 MB, and then stays flat (84 to 88 MB over matches 18 to 40; private bytes about 535 MB). It is a driver pool that
+fills up, not a leak, and a full 16-enemy game is a single match anyway. The per-match numbers below come from
+12-match runs, which only see the pool filling; they also scatter from 1.5 to 5 MB per match between identical runs.
 
 On Direct3D 11 the `-cycles` heap grows about 1.3 MB per match (1.7 to 2.3 MB when re-measured on 2026-10-04, with SMAA
 on or off; 0.7 to 0.8 MB since the robots are skinned on the GPU, so part of it was the CPU-skinning upload path;
