@@ -1,9 +1,11 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-Renderer D3D11|GL]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
-# -Renderer D3D11 or GL runs this one game with that render system (ogre.cfg is switched for the run and always
-# restored); without it the game uses whatever ogre.cfg says.
+# Every run is windowed at -VideoMode (default 1024x768, so test shots and crops stay comparable), whatever
+# %USERPROFILE%\Tumbu\ogre.cfg says: Jonathan's own ogre.cfg is set for playing (windowed 1920x1080, VSync), so the
+# script switches the window size for the run and always restores the file. -Renderer D3D11 or GL also switches the
+# render system for the run; without it the game uses the one ogre.cfg names.
 # -Cycles N runs the memory check instead (TUMBU.exe -cycles=N: N matches through the real UI) and prints a short
 # report: the heap after each match, the summary line, and for 20 matches or more the heap growth per match in the
 # first and the second half (the Direct3D 11 driver pool fills over ~18 matches, then the second half is near 0).
@@ -36,6 +38,7 @@ param(
     [switch]$BenchChase,
     [string]$Name = 'run',
     [ValidateSet('', 'D3D11', 'GL')] [string]$Renderer = '',
+    [ValidatePattern('^\d+x\d+$')] [string]$VideoMode = '1024x768',
     [int]$Cycles = 0,
     [switch]$Clean,
     [int]$TimeoutSeconds = 180
@@ -86,10 +89,21 @@ if ($Cycles -gt 0) {
 Remove-Item "$work\devtest.png" -ErrorAction SilentlyContinue
 $cfgFile = Join-Path $work 'ogre.cfg'
 $cfgSaved = $null
-if ($Renderer) {
+if (Test-Path $cfgFile) {
+    # The run's window: windowed at -VideoMode in both renderers' sections (their formats differ), and -Renderer.
     $systems = @{ D3D11 = 'Direct3D11 Rendering Subsystem'; GL = 'OpenGL 3+ Rendering Subsystem' }
+    $w, $h = $VideoMode.Split('x')
     $cfgSaved = [IO.File]::ReadAllText($cfgFile)
-    (Get-Content $cfgFile) -replace '^Render System=.*', "Render System=$($systems[$Renderer])" | Set-Content $cfgFile
+    $section = ''
+    $lines = foreach ($l in Get-Content $cfgFile) {
+        if ($l -match '^\[(.*)\]') { $section = $Matches[1] }
+        if ($Renderer -and $l -match '^Render System=') { "Render System=$($systems[$Renderer])" }
+        elseif ($l -match '^Video Mode=' -and $section -eq $systems.D3D11) { "Video Mode=$w x $h @ 32-bit colour" }
+        elseif ($l -match '^Video Mode=' -and $section -eq $systems.GL) { "Video Mode=$w x $h" }
+        elseif ($l -match '^Full Screen=' -and $section -in $systems.Values) { 'Full Screen=No' }
+        else { $l }
+    }
+    $lines | Set-Content $cfgFile
 }
 try {
     $proc = Start-Process $exe -ArgumentList $gameArgs -WorkingDirectory $binDir -PassThru

@@ -89,6 +89,7 @@ them. `devtest.ps1` passes `-mute` by default; add `-mute` to every direct `TUMB
 .\scripts\devtest.ps1 -FpsCap 30 -Name fps30        # same, frame rate capped (compare movement across FPS)
 .\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High; -Hour 20.5 = 20:30)
 .\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
+.\scripts\devtest.ps1 -VideoMode 1920x1080 -Name big # window size of the run (default 1024x768, whatever ogre.cfg says)
 bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # memory check: 40 matches via the real UI (see "Memory check")
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
@@ -459,7 +460,8 @@ painted toon sky replaced it).
   `%USERPROFILE%\Tumbu\bone-array-ab\fps.txt`).
   Before/after images: `%USERPROFILE%\Tumbu\gpu-skinning\` (identical poses, outlines, aura, shadows, inventory preview).
 - **`ogre.cfg` keeps a window size per renderer.** The OpenGL section said 640x480 while Direct3D 11 had 1024x768, so
-  quick D3D11/OpenGL comparisons were not at the same size; `bench.ps1 -VideoMode` sets both.
+  quick D3D11/OpenGL comparisons were not at the same size; `devtest.ps1` and `bench.ps1` set both sections for each
+  run (`-VideoMode`, default 1024x768) and restore the file afterwards.
 
 ### Object lifetime rules (each one was a real leak or crash)
 
@@ -489,7 +491,11 @@ painted toon sky replaced it).
   - `General`: the game's shared media. Ogre 14 looks up fonts in the default group.
   - `Game`, `Plants`, `TerrainTextures`, `MyGUI`
 - **Per-user folder `%USERPROFILE%\Tumbu\`** holds:
-  - `ogre.cfg`: render system
+  - `ogre.cfg`: render system and window. **It holds Jonathan's settings for playing** (Direct3D 11, windowed 1920x1080,
+    VSync), used when he starts `bin\Release\TUMBU.exe` himself: never change it for good. `devtest.ps1` (all its
+    modes) and `bench.ps1` set the window for their run (`-VideoMode`, default 1024x768; `-Renderer`) and always
+    restore the file. A `TUMBU.exe` started directly (for example `-guitour`) uses his settings, so its window is
+    1920x1080.
   - `options.cfg`: `SkyQuality`, `Shadows` (0 off, 1 normal = default, 2 high), `FrameLimit`. For
     `FrameLimit`, `-1` means VSync, the default; the other values are 144/72/60/0 = unlimited.
     `AntiAliasing`: 0 off, 1 SMAA (default).

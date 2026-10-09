@@ -78,6 +78,8 @@ try {
                 }
                 $splat = ConvertTo-Splat "$Common $vArgs"
                 $splat.Bench = $Seconds
+                # devtest.ps1 sets the window size itself now (default 1024x768); older checkouts (@folder) do not know it.
+                if ((Get-Command $devtest).Parameters.ContainsKey('VideoMode')) { $splat.VideoMode = $VideoMode }
                 $splat.Name = $runName
                 $fpsFile = Join-Path $work "devtest-$runName.fps"
                 # A run whose window was hidden or minimised did not render (DevTest marks it invalid): run it again.
