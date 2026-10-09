@@ -99,7 +99,11 @@ bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 
   **2026-10-09, right after a reboot** (night lights in): the first run gave +2.45 MB per match, and eight alternating runs
   of the current build and the build before the night lights gave 2.45 / 3.23 / 3.85 / 3.89 against 1.46 / 2.94 / 5.25 /
   2.31 MB per match: no difference between the builds, but even a fresh start no longer reproduces the +1.1 MB. OpenGL
-  stayed flat (-12.7 KB per match).
+  stayed flat (-12.7 KB per match). **It is bounded:** `-cycles=40` (2026-10-09) showed the heap rising from 33 MB to
+  about 85 MB over the first ~18 matches and then staying between 84 and 88 MB for the other 22 (private bytes flat at
+  about 535 MB): a driver pool that fills up, not a leak. A 12-match run mostly measures the pool filling, so its
+  "per match" number is not a leak rate; use a 40-match run to check the plateau after a driver, Ogre or rendering
+  change.
   **Measure after a fresh start:** in a long session the Direct3D 11 number drifts for every build alike (2026-10-06: from
   0.3 to about 5 MB per match over the day for both the old and the new build), so compare builds back to back only, and
   alternate them several times: single runs scatter by 1.5 to 5 MB per match.
@@ -192,7 +196,10 @@ painted toon sky replaced it).
   - `OgreTerrain.cpp`: for version-1 terrain files (our 2011 Ogitor page), `Terrain::prepare` allocated the delta buffer
     twice, leaking 1 MB per match.
   - `OgreD3D11RenderSystem.cpp` (2026-10-09): shared parameters one bind late on Direct3D 11 (next item). No cost
-    (bench, fight at 1024x768, unpatched against patched DLL: -0.006 ms, inside the spread).
+    (bench, fight at 1024x768, unpatched against patched DLL: -0.006 ms, inside the spread). Not reported upstream and
+    not fixed there (searched the OGRECave/ogre issues and the forums, 2026-10-09; `master` still uploads before it
+    copies). It only hits shared sets copied into a program's own constants; a shared set bound as its own constant
+    buffer (`bufferInfoMap`, uploaded by `_updateSharedParams` before the bind) is not affected.
 - **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
   `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
   particles render white.

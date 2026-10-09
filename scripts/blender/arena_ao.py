@@ -288,17 +288,23 @@ def main():
         meshes = [ob for ob in meshes if ob.name == ONLY]
         if not meshes:
             raise SystemExit("no mesh named '%s' in the 'Export' collection" % ONLY)
+    changed = not EXPORT_ONLY
     for ob in meshes:
         if AO_UV not in ob.data.uv_layers:
             add_ao_uv(ob)
+            changed = True
         if not EXPORT_ONLY:
             bake(ob, scene)
     for ob in meshes:
         export(ob)
 
-    bpy.ops.file.make_paths_relative()
-    bpy.ops.wm.save_as_mainfile(filepath=BLEND)
-    log("saved " + BLEND)
+    # A pure re-export (--export-only, AO maps already laid out) changes nothing in Arena.blend: leave the file alone.
+    if changed:
+        bpy.ops.file.make_paths_relative()
+        bpy.ops.wm.save_as_mainfile(filepath=BLEND)
+        log("saved " + BLEND)
+    else:
+        log("Arena.blend unchanged, not saved")
 
 
 main()

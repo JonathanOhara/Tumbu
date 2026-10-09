@@ -269,7 +269,7 @@ project.
   the walls, puts the object in the Export collection and writes `media/configuration/lamps.object` (light positions
   and neon segments, game coordinates). Then `.\scripts\bake-arena-ao.ps1 -Only torches` bakes only the torches' AO and
   exports `torches.mesh` (`-Only <mesh>` skips the long coliseum bake; `-ExportOnly` exports every mesh without baking
-  the AO again). To change the torches, edit the `TORCH_*`
+  the AO again, and leaves `Arena.blend` unsaved unless it had to lay out a missing AO map). To change the torches, edit the `TORCH_*`
   constants and raise `TORCHES_VERSION`: the step deletes the old object and builds it again. The torches get their own
   "AO" UV map (Smart UV Project): the bake script's unwrap (`add_ao_uv`) cuts seams only at edges marked sharp, which
   generated props do not have, so their closed shapes collapsed to points and the AO baked white. Any new prop needs
