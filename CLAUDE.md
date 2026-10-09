@@ -52,7 +52,8 @@ them. `devtest.ps1` passes `-mute` by default; add `-mute` to every direct `TUMB
 ```powershell
 .\scripts\devtest.ps1 -QuitAfter 7 -Name check      # auto-starts a match, walks the hero, screenshots, quits
 .\scripts\devtest.ps1 -FpsCap 30 -Name fps30        # same, frame rate capped (compare movement across FPS)
-.\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High)
+.\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High; -Hour 20.5 = 20:30)
+.\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
 bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 bin\Release\TUMBU.exe -cycles=12 -mute              # leak check: 12 matches (3 kills each) via the real UI
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
@@ -126,7 +127,9 @@ materials, textures, GUI) gets a before/after set:
 3. Build the pairs with `.\scripts\compare.ps1 -Before … -After … -Out "%USERPROFILE%\Tumbu\<feature>\<case>.png"`, one
    **folder per feature** (for example `hero-lighting`, `ki-aura`, `metal-softer-3`). Crop to the subject
    (`-Crop "330,0,380,720"` frames the robot of the standard `-Camera "1.4,1.5,5.7,0,1.05,8.0" -NoWalk` view) and add
-   zoomed crops (`-Zoom 2` to `4`) when the change is small (outlines, edges, anti-aliasing).
+   zoomed crops (`-Zoom 2` to `4`) when the change is small (outlines, edges, anti-aliasing). compare.ps1 also keeps the
+   two full screenshots in the folder's `source\` (`<case>-before.png` / `-after.png`, with their `.fps`), because
+   `devtest.ps1 -Clean` removes the loose `devtest-*` files and a later round may need the same "before".
 4. Read the images before reporting, and tell Jonathan the folder. Each tuning round gets a new folder
    (`<feature>-2`, …) whose "before" is the previous round's "after".
 5. **Track the frame rate too.** Every `devtest.ps1` run ends with `fps: avg=… min=… max=…` and saves it as
@@ -178,18 +181,20 @@ painted toon sky replaced it).
   in the global pool.
 - **Direct3D 11 HLSL profile.** A plain `hlsl` program compiles at level 9_1 (64 instructions). The robot
   programs set `target vs_4_0` / `ps_4_0`.
-- **Patched Ogre bug:** `deps.ps1` (`Repair-OgreSource`) patches `OgreTerrain.cpp`. For version-1 terrain
-  files (our 2011 Ogitor page), `Terrain::prepare` allocated the delta buffer twice, leaking 1 MB per match.
+- **Patched Ogre bugs:** `deps.ps1` (`Repair-OgreSource`) patches the Ogre source:
+  - `OgreTerrain.cpp`: for version-1 terrain files (our 2011 Ogitor page), `Terrain::prepare` allocated the delta buffer
+    twice, leaking 1 MB per match.
+  - `OgreD3D11RenderSystem.cpp` (2026-10-09): shared parameters one bind late on Direct3D 11 (next item).
 - **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
   `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
   particles render white.
 - **Lighting values reach the shaders as shared parameters.** `Lighting::declareSharedParameters` creates
   `TumbuLighting` in `BaseApplication::locateResources`, before any script is parsed; programs reference it
   with `shared_params_ref TumbuLighting`. Every value is a `float4` (the types must match exactly).
-  **On Direct3D 11 a change reaches a pass one bind late:** Ogre's `D3D11RenderSystem::bindGpuProgramParameters`
-  uploads the pass's constants before it copies the shared values into them (OpenGL copies first). Harmless for values
-  set once per frame; to change them for one render only (the robot preview), copy them into the passes yourself
-  (`_copySharedParams`, `copySharedParams` in GUI.cpp) after setting and after restoring.
+  Ogre 14.6's `D3D11RenderSystem::bindGpuProgramParameters` uploaded a pass's constants before copying the shared
+  values into them, so on Direct3D 11 every change reached a pass one bind late (the robot preview kept the arena's
+  lighting); `deps.ps1` (`Repair-OgreSource`) patches it. Without the patch, a value changed for one render only does
+  not reach that render on Direct3D 11.
 - **Shadows are integrated.** The shadow technique is `SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED` with a
   depth (`PF_DEPTH32F`) map: Ogre only renders the map, and the robot and arena shaders sample it
   (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). The old modulative/additive receiver
@@ -325,7 +330,12 @@ painted toon sky replaced it).
     its flame in `torch_flame.vert`, so flame and pool flicker together. The flames (`torch_flame.vert/.frag`) are unlit
     two-tone toon fire above the bloom threshold that sway, flicker and grow out of the cup with `lamps`; alpha-blended,
     so they cast no shadow and vanish by day. Values: `lampColour`, `lampStrength`, `lampReach`, `lampBands`, `lampBack`,
-    `lampFlicker`, `flameBrightness`, `neonLightColour`, `neonLight`, `neonLightReach` in `lighting.object`.
+    `lampFlicker`, `flameBrightness`, `neonLightColour`, `neonLight`, `neonLightReach`, `neonLightBands` in
+    `lighting.object`. The neon has its own bands (2, shared `neonShape.x`): with the torches' 4 it drew rings around
+    the ends of the T. **The flame's height comes from its UVs, and blender2ogre writes 1 - v**: the vertex shader takes
+    `h = 1 - uv0.y` (0 at the cup). Read the other way round, the sway and the flicker moved the flame's base against
+    the cup and a dying flame shrank towards its tip. The flame is full size from `lamps` 0.3 (sunset), half at dawn
+    (0.15), and opaque as soon as it burns (smaller, never see-through).
   - The iron brackets do not take the torches' light (`torchIronMaterial` uses `env_iron_ps` = `env_toon.frag` with
     `TUMBU_NO_LAMPS`): lit by their own flame from 0.3 units away they turned the colour of the wall, so the flame seemed
     to float, and their toon bands jumped with the flicker. In `arena_shapes.py` the bracket's local frame must stay
@@ -337,13 +347,13 @@ painted toon sky replaced it).
   - The neon's light was first too faint on the tiles under the ropes (the segments run at the ropes' mid height,
     0.75 above the floor): `neonLight 2`, `neonLightReach 2` match the chosen "soft" mock-up.
   - The night mood ("balanced", chosen with the lights): the night keyframe's moon and ambient x0.75, dusk x0.85.
-  - The neon loop runs only near the ring (`lampShape.zw`: the segments' horizontal extent and top plus the reach,
+  - The neon loop runs only near the ring (`neonShape.yz`: the segments' horizontal extent and top plus the reach,
     computed by `Lighting` from lamps.object), so the walls and the sky skip it.
   - **The inventory / new-part preview** (`GUI`, its own scene manager) uses the robot shaders and so the same shared
     values: it took the arena's time of day, and at the world origin the T's neon turned its feet pink at night. A
     render-target listener on the preview texture (`PreviewLighting`, GUI.cpp) wraps each preview render in
     `Lighting::beginNeutralLighting` / `endNeutralLighting` (save the shared values, set the neutral ones of
-    `declareSharedParameters`, restore), and the scene sits at `PREVIEW_ORIGIN` (0, -1000, 0), out of the lights' reach.
+    `declareSharedParameters`, restore).
   - Cost (bench at 22:00 against the build before the lights, chase view, 3 runs): 1920x1080 D3D11 +0.070 ms,
     OpenGL +0.045 ms; 1024x768 inside the run-to-run spread on both. By day (lamps 0) about +0.02 / +0.03 ms.
     `-cycles`: objects flat, OpenGL flat; D3D11 drifted alike for the old and the new build in one long session (2.4

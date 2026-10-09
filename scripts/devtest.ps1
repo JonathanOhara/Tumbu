@@ -1,6 +1,8 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-Renderer D3D11|GL]
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
+# -Renderer D3D11 or GL runs this one game with that render system (ogre.cfg is switched for the run and always
+# restored); without it the game uses whatever ogre.cfg says.
 # The game runs muted (-mute) unless -Sound is given.
 # -Clean moves the old per-run files (devtest-*.png/.log/.fps, also the bench runs') to the Recycle Bin first; given
 # alone (.\scripts\devtest.ps1 -Clean) it only cleans.
@@ -29,6 +31,7 @@ param(
     [switch]$BenchAI,
     [switch]$BenchChase,
     [string]$Name = 'run',
+    [ValidateSet('', 'D3D11', 'GL')] [string]$Renderer = '',
     [switch]$Clean,
     [int]$TimeoutSeconds = 180
 )
@@ -70,8 +73,20 @@ if ($BenchChase)  { $gameArgs += '-benchchase' }
 if ($Bench -gt 0)  { $gameArgs += "-bench=" + $Bench.ToString([cultureinfo]::InvariantCulture) }
 
 Remove-Item "$work\devtest.png" -ErrorAction SilentlyContinue
-$proc = Start-Process $exe -ArgumentList $gameArgs -WorkingDirectory $binDir -PassThru
-if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+$cfgFile = Join-Path $work 'ogre.cfg'
+$cfgSaved = $null
+if ($Renderer) {
+    $systems = @{ D3D11 = 'Direct3D11 Rendering Subsystem'; GL = 'OpenGL 3+ Rendering Subsystem' }
+    $cfgSaved = [IO.File]::ReadAllText($cfgFile)
+    (Get-Content $cfgFile) -replace '^Render System=.*', "Render System=$($systems[$Renderer])" | Set-Content $cfgFile
+}
+try {
+    $proc = Start-Process $exe -ArgumentList $gameArgs -WorkingDirectory $binDir -PassThru
+    $finished = $proc.WaitForExit($TimeoutSeconds * 1000)
+} finally {
+    if ($null -ne $cfgSaved) { [IO.File]::WriteAllText($cfgFile, $cfgSaved) }
+}
+if (-not $finished) {
     Stop-Process $proc -Force
     Write-Warning "Timed out after $TimeoutSeconds s; process killed."
 }

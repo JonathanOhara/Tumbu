@@ -5,10 +5,12 @@ import * from "shading.material"
 // arena and the robots is TUMBU_ARENA_LIGHTS (TumbuToon.h), placed by media/configuration/lamps.object.
 
 // The brackets: dark iron, toon lit like the stone but not by the torches (env_iron_ps): a dark silhouette under the
-// flame instead of iron lit the colour of the wall.
+// flame instead of iron lit the colour of the wall; a small sun glint on the iron by day.
 material torchIronMaterial : Tumbu/EnvironmentToon{
     set $aoMap "torches_ao.dds"
-    set $diffuseCol "0.17 0.15 0.14 1"
+    set $diffuseCol "0.24 0.22 0.20 1"
+    set $specularCol "0.45 0.42 0.38"
+    set $shininess "24"
 
     technique toon{
         pass{

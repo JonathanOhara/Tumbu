@@ -136,6 +136,7 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	neonLightColour	= optionalColour( cfg, "neonLightColour", Ogre::ColourValue( 1.0f, 0.06f, 0.04f ) );
 	neonLight		= optionalValue( cfg, "neonLight", 0 );
 	neonLightReach	= optionalValue( cfg, "neonLightReach", 1.5f );
+	neonLightBands	= optionalValue( cfg, "neonLightBands", 2 );
 	loadLamps();
 
 	std::vector<Ogre::String> &names = requireChild( cfg, name, "keyframes" )->getValues();
@@ -183,6 +184,7 @@ static void setNeutralValues( Ogre::GpuSharedParametersPtr params ){
 	params->setNamedConstant( "neonSegB", &zeros[0], TUMBU_NEON_SEGMENTS * 4 );
 	params->setNamedConstant( "lampColour", Ogre::Vector4( 0, 0, 0, 1 ) );
 	params->setNamedConstant( "lampShape", Ogre::Vector4( 4, 0.25f, 0, 0 ) );
+	params->setNamedConstant( "neonShape", Ogre::Vector4( 2, 0, 0, 0 ) );
 	params->setNamedConstant( "neonLight", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "lampParams", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "sunDirection", Ogre::Vector4( 0.3f, 0.8f, 0.5f, 0 ) );
@@ -261,7 +263,7 @@ void Lighting::declareSharedParameters(void){
 		"metalEnv", "metalShape", "metalExtra",
 		// The arena's night lights (TUMBU_LAMP_UNIFORMS): the torches' colour and reach, their bands, the neon's light;
 		// lampParams: x = keyframe lamps, y = flame brightness, z = time, w = flicker (the flames).
-		"lampColour", "lampShape", "neonLight", "lampParams" };
+		"lampColour", "lampShape", "neonShape", "neonLight", "lampParams" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -417,9 +419,10 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "neonParams", Ogre::Vector4( k.neon, neonStrength, 0, 0 ) );
 	// The night lights: the torches' colour (their intensity is set every frame, updateLamps) and the neon's light.
 	params->setNamedConstant( "lampColour", toVector4( lampColour * lampStrength, lampReach ) );
-	// zw: where the neon can reach (the segments' extent around the centre plus the reach), so the rest skips it.
+	params->setNamedConstant( "lampShape", Ogre::Vector4( lampBands, lampBack, 0, 0 ) );
+	// The neon's bands, and where it can reach (the segments' extent around the centre plus the reach): the rest skips it.
 	Ogre::Real neonBound = neonRadius + neonLightReach;
-	params->setNamedConstant( "lampShape", Ogre::Vector4( lampBands, lampBack, neonBound * neonBound, neonTop + neonLightReach ) );
+	params->setNamedConstant( "neonShape", Ogre::Vector4( neonLightBands, neonBound * neonBound, neonTop + neonLightReach, 0 ) );
 	params->setNamedConstant( "neonLight", toVector4( neonLightColour * ( neonLight * k.neon ), neonLightReach ) );
 	params->setNamedConstant( "metalEnv", metalEnv );
 	params->setNamedConstant( "metalShape", metalShape );

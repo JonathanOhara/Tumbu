@@ -129,6 +129,7 @@ private:
 		flameBrightness,
 		neonLight,
 		neonLightReach,
+		neonLightBands,
 		lampTime,
 		neonRadius,
 		neonTop;

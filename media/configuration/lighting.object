@@ -90,11 +90,13 @@ lighting configuration{
 	lampBack 0.25
 	lampFlicker 0.15
 	flameBrightness 2.2
-	// The red neon's light on the ring's tiles and the robots near the ropes and the T: colour, strength (0 = off) and
-	// reach (world units). It follows the keyframe value neon.
+	// The red neon's light on the ring's tiles and the robots near the ropes and the T: colour, strength (0 = off),
+	// reach (world units) and toon bands (fewer than lampBands: no rings around the ends of the T). It follows the
+	// keyframe value neon.
 	neonLightColour 1.0 0.06 0.04
 	neonLight 2.0
 	neonLightReach 2.0
+	neonLightBands 2
 	// The painted toon sky (sky.frag): brightness of the sun disc in the HDR image (above bloomThreshold: it glows).
 	// The sky's colours are keyframe values (skyZenith, skyMid, skyHorizon: the bands; cloudLit, cloudShade and
 	// cloudCover 0..1: the clouds; stars 0..1, 0 when missing).
@@ -183,7 +185,7 @@ lighting dawn{
 	outlineTint 0.95 0.78 0.70
 	shaftStrength 1.2
 	neon 0.3
-	lamps 0.3
+	lamps 0.15
 	skyZenith 0.16 0.26 0.58
 	skyMid 0.52 0.42 0.62
 	skyHorizon 0.88 0.58 0.40

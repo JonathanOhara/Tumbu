@@ -10,40 +10,12 @@ GUI* GUI::instance = NULL;
 
 namespace{
 	const char* PREVIEW_TEXTURE = "TumbuPreviewRTT";
-	// The preview scene sits far below the arena: the robot shaders take their light from the shared "TumbuLighting"
-	// values (Lighting), and at the world origin the T's neon light, the torches and the energy lights reached it.
-	const Ogre::Vector3 PREVIEW_ORIGIN( 0, -1000, 0 );
-
-	// Copies the shared values ("TumbuLighting") into the passes of every entity of a scene now. Ogre's Direct3D 11
-	// renderer uploads a pass's constants before it copies the shared values into them, so a draw gets the shared values
-	// of that pass's previous bind; the preview's parts share their materials with the robots in the arena.
-	void copySharedParams( Ogre::SceneManager *sceneMgr ){
-		for( const auto &object : sceneMgr->getMovableObjects( "Entity" ) ){
-			Ogre::Entity *entity = static_cast<Ogre::Entity*>( object.second );
-			for( size_t i = 0; i < entity->getNumSubEntities(); i++ ){
-				const Ogre::MaterialPtr &material = entity->getSubEntity( i )->getMaterial();
-				for( Ogre::Technique *technique : material->getTechniques() ){
-					for( Ogre::Pass *pass : technique->getPasses() ){
-						if( pass->hasVertexProgram() ) pass->getVertexProgramParameters()->_copySharedParams();
-						if( pass->hasFragmentProgram() ) pass->getFragmentProgramParameters()->_copySharedParams();
-					}
-				}
-			}
-		}
-	}
-
-	// The preview renders with neutral lighting (Lighting::beginNeutralLighting), not the arena's time of day.
+	// The preview renders with neutral lighting (Lighting::beginNeutralLighting): the robot shaders take their light
+	// from the shared "TumbuLighting" values, so it showed the arena's time of day, its torches and neon.
 	class PreviewLighting: public Ogre::RenderTargetListener{
 	public:
-		Ogre::SceneManager *sceneMgr = NULL;
-		void preRenderTargetUpdate( const Ogre::RenderTargetEvent &evt ){
-			Lighting::beginNeutralLighting();
-			copySharedParams( sceneMgr );
-		}
-		void postRenderTargetUpdate( const Ogre::RenderTargetEvent &evt ){
-			Lighting::endNeutralLighting();
-			copySharedParams( sceneMgr );	// the arena's values back in the shared materials before the window renders
-		}
+		void preRenderTargetUpdate( const Ogre::RenderTargetEvent &evt ){ Lighting::beginNeutralLighting(); }
+		void postRenderTargetUpdate( const Ogre::RenderTargetEvent &evt ){ Lighting::endNeutralLighting(); }
 	};
 	PreviewLighting previewLighting;
 	const float SKILL_HIT_DURATION = 1.2f;
@@ -729,7 +701,7 @@ void GUI::createPreviewScene(void){
 	Ogre::SceneNode *cameraNode = previewSceneMgr->getRootSceneNode()->createChildSceneNode( "PreviewCameraNode" );
 	cameraNode->attachObject( previewCamera );
 
-	previewRoot = previewSceneMgr->getRootSceneNode()->createChildSceneNode( "PreviewRoot", PREVIEW_ORIGIN );
+	previewRoot = previewSceneMgr->getRootSceneNode()->createChildSceneNode( "PreviewRoot" );
 
 	// Rendered into a texture in the MyGUI group so image widgets can show it by name.
 	previewTexture = Ogre::TextureManager::getSingleton().createManual( PREVIEW_TEXTURE, "MyGUI",
@@ -740,7 +712,6 @@ void GUI::createPreviewScene(void){
 	viewport->setClearEveryFrame( true );
 	viewport->setBackgroundColour( Ogre::ColourValue( 0.05f, 0.07f, 0.12f ) );
 	viewport->setMaterialScheme( Ogre::MSN_SHADERGEN );
-	previewLighting.sceneMgr = previewSceneMgr;
 	target->addListener( &previewLighting );
 	target->setAutoUpdated( false );
 }
@@ -780,8 +751,8 @@ void GUI::showPreviewRobot(void){
 		node->setPosition( part->position );
 		previewParts.push_back( part );
 	}
-	previewCamera->getParentSceneNode()->setPosition( PREVIEW_ORIGIN + Ogre::Vector3( 0, 1.0f, 3.2f ) );
-	previewCamera->getParentSceneNode()->lookAt( PREVIEW_ORIGIN + Ogre::Vector3( 0, 1.0f, 0 ), Ogre::Node::TS_WORLD );
+	previewCamera->getParentSceneNode()->setPosition( 0, 1.0f, 3.2f );
+	previewCamera->getParentSceneNode()->lookAt( Ogre::Vector3( 0, 1.0f, 0 ), Ogre::Node::TS_WORLD );
 	setPreviewActive( true );
 }
 //-------------------------------------------------------------------------------------
@@ -796,8 +767,8 @@ void GUI::showPreviewPart( Part *part ){
 	Ogre::AxisAlignedBox bounds = previewEntity->getBoundingBox();
 	node->setPosition( -bounds.getCenter() );
 	Ogre::Real radius = std::max( 0.2f, bounds.getHalfSize().length() );
-	previewCamera->getParentSceneNode()->setPosition( PREVIEW_ORIGIN + Ogre::Vector3( 0, 0, radius * 2.6f ) );
-	previewCamera->getParentSceneNode()->lookAt( PREVIEW_ORIGIN, Ogre::Node::TS_WORLD );
+	previewCamera->getParentSceneNode()->setPosition( 0, 0, radius * 2.6f );
+	previewCamera->getParentSceneNode()->lookAt( Ogre::Vector3::ZERO, Ogre::Node::TS_WORLD );
 	setPreviewActive( true );
 }
 //------------------------------------------------------------------------------------- actions

@@ -12,6 +12,8 @@
 #   -Quick     for light changes: 1920x1080 and 2 runs per variant (about 5 minutes instead of 15 for two variants);
 #              -Runs / -VideoMode given explicitly still win. Use the full run for per-pixel work (shaders that loop).
 # The table is printed and saved as %USERPROFILE%\Tumbu\<Name>\fps.txt (next to the before/after images).
+# A note follows a renderer's rows when the time outside rendering (rest_ms: game logic, Present) varied by more than
+# 0.2 ms between its runs: something else was using the PC, and the difference between the variants may be noise.
 # ogre.cfg is switched for the OpenGL runs and always restored. The game runs muted.
 param(
     [Parameter(Mandatory)] [string]$Name,
@@ -93,8 +95,10 @@ try {
                 if (-not $line.Contains("size=$VideoMode")) { Write-Warning "$runName : the window was not $VideoMode ($line)" }
                 $fps = [double]::Parse($m.Groups[1].Value, [cultureinfo]::InvariantCulture)
                 $ms = [double]::Parse($m.Groups[2].Value, [cultureinfo]::InvariantCulture)
+                $rest = [regex]::Match($line, 'rest_ms=([\d.]+)')
+                $restMs = if ($rest.Success) { [double]::Parse($rest.Groups[1].Value, [cultureinfo]::InvariantCulture) } else { 0 }
                 Write-Host ("{0,-6} {1,-12} run {2}: {3,7:0.0} fps  {4,6:0.000} ms" -f $renderer, $v.Label, $run, $fps, $ms)
-                $results += [pscustomobject]@{ Renderer = $renderer; Variant = $v.Label; Run = $run; Fps = $fps; Ms = $ms }
+                $results += [pscustomobject]@{ Renderer = $renderer; Variant = $v.Label; Run = $run; Fps = $fps; Ms = $ms; RestMs = $restMs }
             }
         }
     }
@@ -123,6 +127,15 @@ foreach ($renderer in $Renderers) {
         }
         $lines += [string]::Format($inv, '{0,-6} {1,-12} {2,7:0.0} fps {3,7:0.000} ms  (runs {4} fps; spread {5:0.000} ms){6}',
             $renderer, $v.Label, $fps, $ms, $runsText, $spread, $delta)
+    }
+    $all = @($results | Where-Object { $_.Renderer -eq $renderer })
+    if ($all.Count -gt 1) {
+        $restMin = ($all | Measure-Object RestMs -Minimum).Minimum
+        $restMax = ($all | Measure-Object RestMs -Maximum).Maximum
+        if ($restMax - $restMin -gt 0.2) {
+            $lines += [string]::Format($inv, '{0,-6} note: the time outside rendering varied {1:0.00} to {2:0.00} ms between runs (other load on the PC?): the difference may be noise, run again',
+                $renderer, $restMin, $restMax)
+        }
     }
 }
 $dir = Join-Path $work $Name

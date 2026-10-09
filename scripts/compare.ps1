@@ -7,6 +7,8 @@
 # When a screenshot has the frame rate of its run next to it (devtest-<Name>.fps, written by devtest.ps1), the label
 # shows the average fps, and the AFTER label the change in percent: "(bench)" for a steady -Bench run, "~... (1 run)" and
 # "indicative" for a normal screenshot run (identical runs differ by 15-30 %; the real cost comes from bench.ps1).
+# The two full screenshots (and their .fps) are also kept next to the comparison, in source\<name>-before/-after.png:
+# devtest.ps1 -Clean removes the loose devtest-* files, and a later comparison may need the same "before" again.
 param(
     [Parameter(Mandatory)] [string]$Before,
     [Parameter(Mandatory)] [string]$After,
@@ -95,4 +97,17 @@ try {
     Write-Host ("pixels that differ: {0} of {1} ({2:0.00} %), largest difference {3}/255" -f $count, ($a.Length / 4), (100 * $count / ($a.Length / 4)), $max)
 } finally {
     $imgBefore.Dispose(); $imgAfter.Dispose()
+}
+
+$outDir = Split-Path $Out -Parent
+$keep = Join-Path $(if ($outDir) { (Resolve-Path -LiteralPath $outDir).Path } else { (Get-Location).Path }) 'source'
+New-Item -ItemType Directory -Force $keep | Out-Null
+$base = [IO.Path]::GetFileNameWithoutExtension($Out)
+foreach ($pair in @(@($Before, 'before'), @($After, 'after'))) {
+    $target = Join-Path $keep "$base-$($pair[1]).png"
+    if ((Resolve-Path -LiteralPath $pair[0]).Path -ne [IO.Path]::GetFullPath($target)) {
+        Copy-Item -LiteralPath $pair[0] $target -Force
+        $fps = [IO.Path]::ChangeExtension($pair[0], '.fps')
+        if (Test-Path -LiteralPath $fps) { Copy-Item -LiteralPath $fps ([IO.Path]::ChangeExtension($target, '.fps')) -Force }
+    }
 }

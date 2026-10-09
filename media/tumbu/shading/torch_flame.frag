@@ -25,5 +25,6 @@ MAIN_DECLARATION
     vec3 colour = mix(vec3(1.0, 0.42, 0.08), vec3(1.0, 0.86, 0.45), core);
     colour = mix(colour, vec3(0.95, 0.22, 0.04), tip * (1.0 - core));
     colour *= lampParams.y * oFlame.y;
-    gl_FragColor = vec4(colour, smoothstep(0.0, 0.15, lampParams.x));
+    // Opaque as soon as the torch burns at all: a dying flame shrinks (torch_flame.vert) instead of turning see-through.
+    gl_FragColor = vec4(colour, smoothstep(0.0, 0.04, lampParams.x));
 }

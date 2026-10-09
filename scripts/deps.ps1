@@ -63,8 +63,13 @@ function Build-CMake([string]$name, [string]$sourceDir, [string[]]$options) {
     }
 }
 
-# Ogre 14.6 bug: Terrain::prepare() allocates mDeltaData, and for version-1 terrain files (like the arena's
-# 2011 Ogitor page) allocates it again before reading, leaking 4 * size^2 bytes (1 MB) on every terrain load.
+# Ogre 14.6 bugs, patched in the downloaded source:
+# - Terrain::prepare() allocates mDeltaData, and for version-1 terrain files (like the arena's 2011 Ogitor page)
+#   allocates it again before reading, leaking 4 * size^2 bytes (1 MB) on every terrain load.
+# - D3D11RenderSystem::bindGpuProgramParameters uploads a pass's constants before it copies the shared parameters
+#   ("TumbuLighting") into them, so on Direct3D 11 every shared value reached a pass one bind late (OpenGL copies
+#   first). The patch copies them before the upload too; Ogre's own later call stays (it uploads shared sets backed by
+#   a GPU buffer, which only exist after the loop in between).
 function Repair-OgreSource([string]$sourceDir) {
     $file = Join-Path $sourceDir 'Components\Terrain\src\OgreTerrain.cpp'
     $text = [IO.File]::ReadAllText($file)
@@ -73,6 +78,17 @@ function Repair-OgreSource([string]$sourceDir) {
         $text = $text.Replace($leak, "            // Load delta data (TUMBU patch: the buffer was already allocated above; allocating again leaked it)`n")
         [IO.File]::WriteAllText($file, $text)
         Write-Host "Ogre: patched the terrain delta-data leak in OgreTerrain.cpp" -ForegroundColor DarkGray
+    }
+    $file = Join-Path $sourceDir 'RenderSystems\Direct3D11\src\OgreD3D11RenderSystem.cpp'
+    $text = [IO.File]::ReadAllText($file)
+    $upload = "        std::vector<ID3D11Buffer*> buffers = {NULL};`n`n        if(params->getConstantList().size())`n"
+    if ($text.Contains($upload) -and -not $text.Contains('TUMBU patch: shared parameters')) {
+        $text = $text.Replace($upload, "        std::vector<ID3D11Buffer*> buffers = {NULL};`n`n" +
+            "        // TUMBU patch: shared parameters into params before the upload below (they arrived one bind late)`n" +
+            "        if (mask & (uint16)GPV_GLOBAL)`n        {`n            params->_updateSharedParams();`n        }`n`n" +
+            "        if(params->getConstantList().size())`n")
+        [IO.File]::WriteAllText($file, $text)
+        Write-Host "Ogre: patched the late shared parameters in OgreD3D11RenderSystem.cpp" -ForegroundColor DarkGray
     }
 }
 
