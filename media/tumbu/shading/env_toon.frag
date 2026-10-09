@@ -24,6 +24,7 @@ SAMPLER2D(emblemMap, 5);    // r = T, g = tube, b = border course; over the 20 x
 // whole program, Direct3D 11 accepted it).
 OGRE_UNIFORMS_BEGIN
     TUMBU_LIGHTING_UNIFORMS
+    TUMBU_LAMP_UNIFORMS
     uniform vec4 matDif;
     uniform vec4 matSpec;
     uniform float matShininess;
@@ -130,6 +131,8 @@ MAIN_DECLARATION
         sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams, aoParams);
     // Coloured light from special attacks (energy balls, impacts).
     colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
+    // The arena's night lights: the wall torches and the red neon's light on the tiles (not on the ropes' own core).
+    colour += albedo * TUMBU_ARENA_LIGHTS(oWorldPos, n);
 
     // The neon: an unlit core, bright enough in the HDR image for the bloom to give it a halo.
 #ifdef TUMBU_NEON

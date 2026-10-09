@@ -5,6 +5,7 @@
 # Needs blender2ogre installed in that Blender (docs/DEV_SETUP.md, Part B).
 param(
     [switch]$Rebuild,
+    [string]$Only = '',
     [string]$Blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
 )
 $ErrorActionPreference = 'Stop'
@@ -13,6 +14,7 @@ if (-not (Test-Path $Blender)) { throw "Blender not found: $Blender (pass -Blend
 
 $scriptArgs = @('--background', '--python', (Join-Path $PSScriptRoot 'blender\arena_ao.py'), '--', $root)
 if ($Rebuild) { $scriptArgs += '--rebuild' }
+if ($Only) { $scriptArgs += @('--only', $Only) }
 
 # Blender prints to stderr; Windows PowerShell 5.1 would turn that into errors under 'Stop' (the exit code decides).
 $ErrorActionPreference = 'Continue'

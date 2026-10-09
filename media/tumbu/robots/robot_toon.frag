@@ -14,6 +14,7 @@ SAMPLER2D(glowMap, 5);
 OGRE_UNIFORMS(
     TUMBU_LIGHTING_UNIFORMS
     TUMBU_HERO_UNIFORMS
+    TUMBU_LAMP_UNIFORMS
     uniform vec4 matDif;
     // x = reflection amount, y = amount on dark pixels, z = paint tint of the reflection ($metal, robots.material)
     uniform vec4 metalParams;
@@ -61,6 +62,8 @@ MAIN_DECLARATION
         groundColour, metalEnv, metalShape, metalExtra, aoParams);
     // Coloured light from special attacks (energy balls, impacts).
     colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
+    // The arena's night lights: the wall torches and the red neon of the ring.
+    colour += albedo * TUMBU_ARENA_LIGHTS(oWorldPos, n);
 
     // Emissive glow (eyes, lights): the texture colour where the glow map is white. Not lit or shadowed,
     // and above 1 in the HDR buffer, so the bloom picks it up.

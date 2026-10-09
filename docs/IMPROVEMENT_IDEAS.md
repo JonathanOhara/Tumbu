@@ -14,7 +14,8 @@ Visual track, most important first (impact on what the player sees, against the 
 2. **Arena remake** (Art side: coliseum retexture with parallax occlusion and self-shadows, a new ground, BC7/BC5
    textures): the biggest visual gap, in every shot. Large. **Art direction decided (2026-10-06)**, see "Coliseum
    retexture" under Art side; in progress.
-3. **Night arena lights** (idea 4): night fights look unplanned; builds on the energy lights.
+3. **Night arena lights** (idea 4) — **done (2026-10-09)**: 17 wall torches, the neon's light on the floor and the
+   robots, a darker "balanced" night (CLAUDE.md "Night lights").
 4. **Own stylised sky** (Rendering modernization 3) — **done (2026-10-06)**: the painted toon sky replaced Caelum (CLAUDE.md
    "The sky"); the same sky on OpenGL, Caelum and its patches gone. **Folded into the arena remake as its last step** (2026-10-06): the "painted bands" style.
 5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook.
@@ -57,10 +58,16 @@ itself (customization is its core), but it is design and code, not visuals; the 
    - Possible follow-ups: painted metal masks in Blender if specific spots shine wrongly (engraved lines, emblems); the
      streak axis is world-vertical, so a raised arm gets it across rather than along.
 
-4. **Night arena lights** *(Astral Chain, Genshin)*
-   - Torches or stadium lamps on the coliseum: flickering warm light, emissive glow and bloom.
-   - Night fights would look intentional instead of just moonlit and dark.
-   - Needs the same scene-light support as idea 1.
+4. **Night arena lights** *(Astral Chain, Genshin)* — **done (2026-10-09)**
+   - Art direction from Blender mock-ups rendered with the game's cameras (https://claude.ai/artifact/4X5cxLXTGZuXMQucDSryq8):
+     wall torches in iron brackets (chosen; then 25 % fewer: 17, one every 20 degrees), against stadium lamp posts (they
+     turned the night into day and stood in the camera's way), braziers on the ledges (lit the upper wall, not the fight)
+     and lanterns in the windows (lit almost nothing). Neon light "soft" (strong turned the ring pink), mood "balanced".
+   - Built: the torches in `Arena.blend` (`arena_shapes.py`), toon flames that flicker with their light, the torches' and
+     the neon's light in the robot and arena shaders on their own uniforms (the energy lights keep their four), keyframe
+     `lamps` (CLAUDE.md "Night lights"). Before/after: `%USERPROFILE%\Tumbu\night-lights\`.
+   - Possible follow-ups: the grass gets the torches' light with the grass remake (its own shader); the torches could
+     light the dust; lanterns in the windows as emissive glow only (no light, no cost).
 
 5. **Cloud shadows** *(Breath of the Wild)*
    - A scrolling noise texture multiplied into the sun term (and the god rays), drifting with the wind.
@@ -246,13 +253,13 @@ depth shadows with normal offset (a single map is right for an arena this small)
        `lighting.object`. Same cost as Caelum; Caelum, its media and its `deps.ps1` patches are gone. Before/after (Caelum
        against the painted sky at 09:00 to 22:00, three cameras, plus Direct3D 11 against OpenGL):
        `%USERPROFILE%\Tumbu\toon-sky\`.
-       Possible follow-up: let the neon light the floor and the robots near the ropes (a strip light in the arena
-       shader; the energy lights are limited to four), or a slow pulse.
+       Follow-up done with the night lights (2026-10-09): the neon lights the floor and the robots near the ropes and the
+       T (CLAUDE.md "Night lights"). Still open: a slow pulse.
   - Note: the parallax suits the stone, not the canvas ring mat (no depth to show there). The sun's shadow map and the
     contact shadows still land on the flat surface; only the stones' own shadows follow the depth.
 - **Grass remake** (the field between the ring and the walls; still the 2011 Ogre terrain with its built-in shader):
   - Give the terrain our own toon shader, so the grass is lit like the stone and the robots: toon bands, the sun's real
-    shadow map (the coliseum's and the robots' moving shadows), contact shadows, energy and neon lights, moss-like
+    shadow map (the coliseum's and the robots' moving shadows), contact shadows, the energy lights and the night lights (torches and neon, `TUMBU_ARENA_LIGHTS`), moss-like
     colour variation; the shader blends the terrain's layers itself. Possibly a new grass texture set too.
   - **Check the shadows when doing it.** Since 2026-10-06 the terrain's light map is off (`DotSceneLoader::processTerrain`):
     Ogre baked it once at load from the terrain's own heights only (mountains, the ground under the coliseum, not the

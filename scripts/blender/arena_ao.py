@@ -13,7 +13,7 @@ Settings live in the .blend, so they can be adjusted in Blender and the script r
   Scene custom properties: tumbu_ao_distance (world units), tumbu_ao_samples
   Object custom property:  tumbu_ao_size (texture size in pixels)
 
-Usage: blender --background --python arena_ao.py -- <repo root> [--rebuild]
+Usage: blender --background --python arena_ao.py -- <repo root> [--rebuild] [--only <mesh>]
 """
 import bpy
 import os
@@ -29,6 +29,8 @@ if not args:
     raise SystemExit("usage: blender --background --python arena_ao.py -- <repo root> [--rebuild]")
 ROOT = args[0]
 REBUILD = "--rebuild" in args
+# --only <name>: bake and export only that mesh (a new prop such as the torches, without baking the coliseum again)
+ONLY = args[args.index("--only") + 1] if "--only" in args else None
 
 MEDIA = os.path.join(ROOT, "media", "tumbu", "arena")
 ART = os.path.join(ROOT, "art", "arena")
@@ -277,6 +279,10 @@ def main():
     meshes = [ob for ob in export_col.all_objects if ob.type == 'MESH'] if export_col else []
     if not meshes:
         raise SystemExit("Arena.blend has no meshes in the 'Export' collection")
+    if ONLY:
+        meshes = [ob for ob in meshes if ob.name == ONLY]
+        if not meshes:
+            raise SystemExit("no mesh named '%s' in the 'Export' collection" % ONLY)
     for ob in meshes:
         if AO_UV not in ob.data.uv_layers:
             add_ao_uv(ob)

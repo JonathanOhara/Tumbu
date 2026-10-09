@@ -11,6 +11,9 @@ Lighting* Lighting::instance = NULL;
 static const char* SHARED_PARAMS = "TumbuLighting";
 static const char* POST_PROCESS = "Tumbu/PostProcess";
 static const char* SMAA = "Tumbu/SMAA";
+// The arena's night lights: array sizes of lampPos and neonSegA/B, as declared in TUMBU_LAMP_UNIFORMS (TumbuToon.h).
+static const size_t TUMBU_MAX_LAMPS = 20;
+static const size_t TUMBU_NEON_SEGMENTS = 8;
 //-------------------------------------------------------------------------------------
 static ConfigNode* requireChild( ConfigNode* node, const Ogre::String &script, const Ogre::String &key ){
 	ConfigNode* child = node->findChild( key );
@@ -37,6 +40,24 @@ static Ogre::Vector4 toVector4( const Ogre::ColourValue &c, Ogre::Real w ){
 	return Ogre::Vector4( c.r, c.g, c.b, w );
 }
 //-------------------------------------------------------------------------------------
+// An optional value of "lighting configuration" (the night lights' keys have defaults).
+static Ogre::Real optionalValue( ConfigNode* cfg, const Ogre::String &key, Ogre::Real fallback ){
+	ConfigNode* child = cfg->findChild( key );
+	return child != NULL ? child->getValueF() : fallback;
+}
+//-------------------------------------------------------------------------------------
+static Ogre::ColourValue optionalColour( ConfigNode* cfg, const Ogre::String &key, const Ogre::ColourValue &fallback ){
+	ConfigNode* child = cfg->findChild( key );
+	return child != NULL ? Ogre::ColourValue( child->getValueF( 0 ), child->getValueF( 1 ), child->getValueF( 2 ) ) : fallback;
+}
+//-------------------------------------------------------------------------------------
+// A torch's flicker (1 = steady): the same three sines as torch_flame.vert, so a flame and its light pool flicker
+// together. phase 0..1 per torch (arena_shapes.py gives torch i the phase i x 0.618, wrapped).
+static Ogre::Real lampFlickerAt( Ogre::Real time, Ogre::Real phase, Ogre::Real amount ){
+	return 1.0f + amount * ( 0.5f * Ogre::Math::Sin( time * 8.3f + phase * 6.2832f ) + 0.3f * Ogre::Math::Sin( time * 13.7f + phase * 17.0f )
+		+ 0.2f * Ogre::Math::Sin( time * 23.1f + phase * 31.0f ) );
+}
+//-------------------------------------------------------------------------------------
 // Robots' fill light direction in camera axes (right, up, backwards towards the viewer): yaw degrees to the
 // camera's right and pitch degrees above it.
 static Ogre::Vector3 heroFillDirection( Ogre::Real yaw, Ogre::Real pitch ){
@@ -53,6 +74,7 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	postProcessViewport = NULL;
 	postProcess = NULL;
 	sunVisibility = 0;
+	lampTime = 0;
 
 	const Ogre::String name = "configuration";
 	ConfigNode* cfg = requireScript( name );
@@ -101,6 +123,18 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	metalEnv	= Ogre::Vector4( bands->getValueF( 0 ), bands->getValueF( 1 ), bands->getValueF( 2 ), bands->getValueF( 3 ) );
 	metalShape	= Ogre::Vector4( heights->getValueF( 0 ), heights->getValueF( 1 ), heights->getValueF( 2 ), requireChild( cfg, name, "metalStreak" )->getValueF() );
 	metalExtra	= Ogre::Vector4( glint->getValueF( 0 ), glint->getValueF( 1 ), requireChild( cfg, name, "metalFresnel" )->getValueF(), requireChild( cfg, name, "metalDiffuse" )->getValueF() );
+	// The arena's night lights (optional: without them the torches give no light).
+	lampColour		= optionalColour( cfg, "lampColour", Ogre::ColourValue( 1.0f, 0.58f, 0.26f ) );
+	lampStrength	= optionalValue( cfg, "lampStrength", 0 );
+	lampReach		= optionalValue( cfg, "lampReach", 6 );
+	lampBands		= optionalValue( cfg, "lampBands", 4 );
+	lampBack		= optionalValue( cfg, "lampBack", 0.25f );
+	lampFlicker		= optionalValue( cfg, "lampFlicker", 0.15f );
+	flameBrightness	= optionalValue( cfg, "flameBrightness", 3 );
+	neonLightColour	= optionalColour( cfg, "neonLightColour", Ogre::ColourValue( 1.0f, 0.06f, 0.04f ) );
+	neonLight		= optionalValue( cfg, "neonLight", 0 );
+	neonLightReach	= optionalValue( cfg, "neonLightReach", 1.5f );
+	loadLamps();
 
 	std::vector<Ogre::String> &names = requireChild( cfg, name, "keyframes" )->getValues();
 	for( size_t i = 0; i < names.size(); i++ ){
@@ -122,6 +156,12 @@ Lighting::~Lighting(void){
 		Ogre::CompositorManager::getSingleton().setCompositorEnabled( postProcessViewport, POST_PROCESS, false );
 		enableAntiAliasing( false );
 	}
+	// No torch or neon light outside a match (the inventory preview renders robots with the same shaders).
+	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( SHARED_PARAMS );
+	std::vector<float> zeros( TUMBU_MAX_LAMPS * 4, 0.0f );
+	params->setNamedConstant( "lampPos", &zeros[0], TUMBU_MAX_LAMPS * 4 );
+	params->setNamedConstant( "neonLight", Ogre::Vector4( 0, 0, 0, 0 ) );
+	params->setNamedConstant( "lampParams", Ogre::Vector4( 0, 0, 0, 0 ) );
 	instance = NULL;
 }
 //-------------------------------------------------------------------------------------
@@ -147,10 +187,25 @@ void Lighting::declareSharedParameters(void){
 		// The painted toon sky (sky.frag): band colours, cloud colours (w = cover), x moon y stars z quality w sun brightness.
 		"skyZenith", "skyMid", "skyHorizon", "cloudLit", "cloudShade", "skyParams",
 		// Robot metal: the toon sky reflection and the streak.
-		"metalEnv", "metalShape", "metalExtra" };
+		"metalEnv", "metalShape", "metalExtra",
+		// The arena's night lights (TUMBU_LAMP_UNIFORMS): the torches' colour and reach, their bands, the neon's light;
+		// lampParams: x = keyframe lamps, y = flame brightness, z = time, w = flicker (the flames).
+		"lampColour", "lampShape", "neonLight", "lampParams" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
+	// Arrays: the torches' light (xyz, w = intensity now) and the neon segments' ends.
+	params->addConstantDefinition( "lampPos", Ogre::GCT_FLOAT4, TUMBU_MAX_LAMPS );
+	params->addConstantDefinition( "neonSegA", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
+	params->addConstantDefinition( "neonSegB", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
+	std::vector<float> zeros( TUMBU_MAX_LAMPS * 4, 0.0f );
+	params->setNamedConstant( "lampPos", &zeros[0], TUMBU_MAX_LAMPS * 4 );
+	params->setNamedConstant( "neonSegA", &zeros[0], TUMBU_NEON_SEGMENTS * 4 );
+	params->setNamedConstant( "neonSegB", &zeros[0], TUMBU_NEON_SEGMENTS * 4 );
+	params->setNamedConstant( "lampColour", Ogre::Vector4( 0, 0, 0, 1 ) );
+	params->setNamedConstant( "lampShape", Ogre::Vector4( 4, 0.25f, 0, 0 ) );
+	params->setNamedConstant( "neonLight", Ogre::Vector4( 0, 0, 0, 0 ) );
+	params->setNamedConstant( "lampParams", Ogre::Vector4( 0, 0, 0, 0 ) );
 	// Neutral values until a match applies lighting.object (the inventory preview may render robots first).
 	params->setNamedConstant( "sunDirection", Ogre::Vector4( 0.3f, 0.8f, 0.5f, 0 ) );
 	params->setNamedConstant( "sunColour", Ogre::Vector4( 1, 1, 1, 1 ) );
@@ -205,6 +260,8 @@ Lighting::Keyframe Lighting::loadKeyframe( const Ogre::String &name ){
 	k.heroFillStrength	= requireChild( node, name, "heroFillStrength" )->getValueF();
 	ConfigNode* neon = node->findChild( "neon" );	// optional: 0 (the neon is off) when missing
 	k.neon			= neon != NULL ? neon->getValueF() : 0.0f;
+	ConfigNode* lampsNode = node->findChild( "lamps" );	// optional: 0 (the torches are out) when missing
+	k.lamps			= lampsNode != NULL ? lampsNode->getValueF() : 0.0f;
 	ConfigNode* stars = node->findChild( "stars" );	// optional: 0 (no stars) when missing
 	k.stars			= stars != NULL ? stars->getValueF() : 0.0f;
 	k.cloudCover	= requireChild( node, name, "cloudCover" )->getValueF();
@@ -236,6 +293,7 @@ Lighting::Keyframe Lighting::blend( const Keyframe &a, const Keyframe &b, Ogre::
 	k.shaftStrength	= Ogre::Math::lerp( a.shaftStrength, b.shaftStrength, t );
 	k.heroFillStrength	= Ogre::Math::lerp( a.heroFillStrength, b.heroFillStrength, t );
 	k.neon			= Ogre::Math::lerp( a.neon, b.neon, t );
+	k.lamps			= Ogre::Math::lerp( a.lamps, b.lamps, t );
 	k.stars			= Ogre::Math::lerp( a.stars, b.stars, t );
 	k.cloudCover	= Ogre::Math::lerp( a.cloudCover, b.cloudCover, t );
 	k.skyZenith		= Ogre::Math::lerp( a.skyZenith, b.skyZenith, t );
@@ -332,6 +390,10 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "heroRimParams", Ogre::Vector4( heroRimShadow, 0, 0, 0 ) );
 	params->setNamedConstant( "outlineTint", toVector4( k.outlineTint, 1 ) );
 	params->setNamedConstant( "neonParams", Ogre::Vector4( k.neon, neonStrength, 0, 0 ) );
+	// The night lights: the torches' colour (their intensity is set every frame, updateLamps) and the neon's light.
+	params->setNamedConstant( "lampColour", toVector4( lampColour * lampStrength, lampReach ) );
+	params->setNamedConstant( "lampShape", Ogre::Vector4( lampBands, lampBack, 0, 0 ) );
+	params->setNamedConstant( "neonLight", toVector4( neonLightColour * ( neonLight * k.neon ), neonLightReach ) );
 	params->setNamedConstant( "metalEnv", metalEnv );
 	params->setNamedConstant( "metalShape", metalShape );
 	params->setNamedConstant( "metalExtra", metalExtra );
@@ -435,7 +497,57 @@ bool Lighting::frameRenderingQueued( const Ogre::FrameEvent &evt ){
 	}
 	updateSunVisibility( evt.timeSinceLastFrame );
 	updateContactShadows();
+	updateLamps( evt.timeSinceLastFrame );
 	return true;
+}
+//-------------------------------------------------------------------------------------
+void Lighting::loadLamps(void){
+	lamps.clear();
+	std::vector<float> segA( TUMBU_NEON_SEGMENTS * 4, 0.0f ), segB( TUMBU_NEON_SEGMENTS * 4, 0.0f );
+	ConfigNode* node = ConfigScriptLoader::getSingleton().getConfigScript( "lamps", "arena" );
+	if( node == NULL ){
+		Ogre::LogManager::getSingleton().logWarning( "Lighting: lamps.object has no 'lamps arena': the arena has no night lights" );
+	}else{
+		size_t segments = 0;
+		std::vector<ConfigNode*> &children = node->getChildren();
+		for( size_t i = 0; i < children.size(); i++ ){
+			ConfigNode* c = children[i];
+			if( c->getName() == "lamp" && lamps.size() < TUMBU_MAX_LAMPS ){
+				lamps.push_back( Ogre::Vector3( c->getValueF( 0 ), c->getValueF( 1 ), c->getValueF( 2 ) ) );
+			}else if( c->getName() == "neon" && segments < TUMBU_NEON_SEGMENTS ){
+				for( int j = 0; j < 3; j++ ){
+					segA[segments * 4 + j] = c->getValueF( j );
+					segB[segments * 4 + j] = c->getValueF( 3 + j );
+				}
+				segments++;
+			}else{
+				Ogre::LogManager::getSingleton().logWarning( "Lighting: lamps.object: '" + c->getName() + "' skipped (unknown, or more than "
+					+ Ogre::StringConverter::toString( TUMBU_MAX_LAMPS ) + " lamps / " + Ogre::StringConverter::toString( TUMBU_NEON_SEGMENTS ) + " neon segments)" );
+			}
+		}
+		Ogre::LogManager::getSingleton().logMessage( "Lighting: " + Ogre::StringConverter::toString( lamps.size() ) + " torches, "
+			+ Ogre::StringConverter::toString( segments ) + " neon segments" );
+	}
+	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( SHARED_PARAMS );
+	params->setNamedConstant( "neonSegA", &segA[0], TUMBU_NEON_SEGMENTS * 4 );
+	params->setNamedConstant( "neonSegB", &segB[0], TUMBU_NEON_SEGMENTS * 4 );
+}
+//-------------------------------------------------------------------------------------
+void Lighting::updateLamps( Ogre::Real time ){
+	// Wrapped (a jump in the flicker every ~17 minutes instead of losing float precision in the sines).
+	lampTime = std::fmod( lampTime + time, 1000.0f );
+	std::vector<float> data( TUMBU_MAX_LAMPS * 4, 0.0f );
+	for( size_t i = 0; i < lamps.size(); i++ ){
+		Ogre::Real phase = std::fmod( i * 0.618034f, 1.0f );
+		data[i * 4] = lamps[i].x;
+		data[i * 4 + 1] = lamps[i].y;
+		data[i * 4 + 2] = lamps[i].z;
+		data[i * 4 + 3] = current.lamps * lampFlickerAt( lampTime, phase, lampFlicker );
+	}
+	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( SHARED_PARAMS );
+	// The shared parameters' array setter counts floats, not float4s.
+	params->setNamedConstant( "lampPos", &data[0], TUMBU_MAX_LAMPS * 4 );
+	params->setNamedConstant( "lampParams", Ogre::Vector4( current.lamps, flameBrightness, lampTime, lampFlicker ) );
 }
 //-------------------------------------------------------------------------------------
 void Lighting::notifyMaterialRender( Ogre::uint32 passId, Ogre::MaterialPtr &material ){

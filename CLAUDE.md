@@ -300,7 +300,39 @@ painted toon sky replaced it).
   (`lighting.object`, 4), mixed in by the keyframe value `neon` (0..1, 0 when missing: on at twilight, dusk and night,
   partial at sunset and dawn); the bloom gives the halo. Shared `neonParams` (`Lighting`). Ropes: `Tumbu/EnvironmentNeon`
   (`env_neon_ps` = `env_toon.frag` with `TUMBU_NEON`); the tube: `env_stone_floor_ps` (`ring_emblem.png` G channel).
-  The neon does not light its surroundings (the energy lights are limited to four). Cost: none measurable (bench at 22:00, wide view: D3D11 and OpenGL, 1024x768 and 1920x1080, all inside the run-to-run spread).
+  The neon's light on the tiles and robots is part of the night lights (next item). Cost: none measurable (bench at 22:00, wide view: D3D11 and OpenGL, 1024x768 and 1920x1080, all inside the run-to-run spread).
+- **Night lights** (idea 4, 2026-10-09; direction chosen from https://claude.ai/artifact/4X5cxLXTGZuXMQucDSryq8): 17 wall
+  torches and the red neon's light on the tiles and robots, their own path, so the four energy lights stay free.
+  - Props: `torches.mesh` (iron brackets `torchIronMaterial` + flames `torchFlameMaterial`, `media/tumbu/arena/torches.material`),
+    made by the torch step of `scripts/blender/arena_shapes.py` in `Arena.blend` (every 20 degrees, symmetric about the
+    gate, 3.4 m on the tall wall and 1.7 m on the seating podium, by rays from the centre), exported by
+    `.\scripts\bake-arena-ao.ps1 -Only torches`, placed by `torchesSceneNode` in `Arena.scene`. The same step writes
+    `media/configuration/lamps.object` (generated: the torches' light positions and 8 neon segments, the 6 ring sides at
+    the ropes' mid height and the T's bar and stem from `ring_emblem.png`).
+  - Light: `tumbuArenaLights` / `TUMBU_ARENA_LIGHTS` + `TUMBU_LAMP_UNIFORMS` (`TumbuToon.h`), added as albedo x light by
+    `env_toon.frag` (all stone variants) and `robot_toon.frag`. Shared arrays `lampPos[20]` (xyz, w = intensity now) and
+    `neonSegA/B[8]`, plus `lampColour` (colour x strength, w = reach), `lampShape` (bands, back side), `neonLight`
+    (colour x strength x keyframe `neon`, w = reach), `lampParams` (keyframe `lamps`, flame brightness, time, flicker).
+    The array sizes must match `TUMBU_MAX_LAMPS` / `TUMBU_NEON_SEGMENTS` in `Lighting.cpp`. The torches' light is summed
+    (quadratic falloff, softer facing away) and then cut into toon bands that are even steps of the square root, so a
+    pool fades out in rings instead of ending in one flat disc; the neon takes the nearest segment.
+  - Every frame `Lighting::updateLamps` sets each torch's intensity: keyframe `lamps` (0..1, 0 when missing: like `neon`,
+    on at twilight, dusk and night, partial at sunset and dawn) x a flicker of three sines, the same formula and phase as
+    its flame in `torch_flame.vert`, so flame and pool flicker together. The flames (`torch_flame.vert/.frag`) are unlit
+    two-tone toon fire above the bloom threshold that sway, flicker and grow out of the cup with `lamps`; alpha-blended,
+    so they cast no shadow and vanish by day. Values: `lampColour`, `lampStrength`, `lampReach`, `lampBands`, `lampBack`,
+    `lampFlicker`, `flameBrightness`, `neonLightColour`, `neonLight`, `neonLightReach` in `lighting.object`.
+  - No shadows from the torches (their light reaches through anything within `lampReach`, 6 units: they sit on walls
+    that face open space). The grass (Ogre terrain, its own shader) gets no torch or neon light until the grass remake.
+  - **`GpuSharedParameters::setNamedConstant( name, const float*, count )` counts floats, not float4s** (the
+    `GpuProgramParameters` overload counts float4s): passing 20 lit only the first 5 torches.
+  - The night mood ("balanced", chosen with the lights): the night keyframe's moon and ambient x0.75, dusk x0.85.
+  - Cost and before/after: bench at 22:00 against the previous build, 1920x1080: chase view D3D11 +0.089 ms, OpenGL
+    +0.076 ms; low wall view +0.076 / +0.051 ms; 1024x768 no cost (D3D11 -0.03 ms, OpenGL +0.06 ms inside the spread);
+    by day (lamps 0, the loop still runs) +0.02 / +0.03 ms (`%USERPROFILE%\Tumbu\night-lights*\fps.txt`). `-cycles`:
+    objects flat, OpenGL flat; D3D11 drifted alike for the old and the new build in one long session (2.4 against 1.7
+    to 2.7 MB per match). Before/after (13, 19, 21, 22 h, four views, robot001/004/005, D3D11 against OpenGL):
+    `%USERPROFILE%\Tumbu\night-lights\`.
 - **Contact shadows**
  (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by
@@ -490,6 +522,8 @@ through a listener registry in `BaseApplication`.
     Read at match start, so a restart is enough to see a change.
   - `effects.object`: the special-attack effects, one `effect <name>` with a block per layer (`light`, `screen`,
     ...); the keys are documented at the top of the file. Colours can be `ki`: the attack's colour.
+  - `lamps.object`: **generated** by `arena_shapes.py` (the wall torches' light positions and the neon segments); do not
+    edit by hand.
 - `media/tumbu/robot00{1..5}/` holds one robot "set" each:
   - parts: `head/body/leftArm/rightArm/legs_00N.mesh` + `.skeleton` (upgraded to the Ogre 14 format)
   - textures in TGA

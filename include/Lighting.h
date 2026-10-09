@@ -50,11 +50,13 @@ public:
 	void updateSunVisibility( Ogre::Real time );
 	/// Robots' feet positions for the contact shadows (shared parameters contactShadowA/B).
 	void updateContactShadows(void);
+	/// The torches' light this frame: each one's intensity (keyframe lamps x its flicker) and the shared time.
+	void updateLamps( Ogre::Real time );
 	Ogre::Real sunVisibility;
 
 private:
 	struct Keyframe{
-		Ogre::Real hour, sunElevation, sunAzimuth, rimStrength, exposure, shaftStrength, heroFillStrength, neon, stars, cloudCover;
+		Ogre::Real hour, sunElevation, sunAzimuth, rimStrength, exposure, shaftStrength, heroFillStrength, neon, lamps, stars, cloudCover;
 		Ogre::ColourValue sunColour, skyColour, groundColour, shadowColour, rimColour, heroFillColour, outlineTint,
 			skyZenith, skyMid, skyHorizon, cloudLit, cloudShade;
 	};
@@ -64,6 +66,8 @@ private:
 	void apply( const Keyframe &k );
 	/// SMAA anti-aliasing after the post-processing (the Options setting, read at match start).
 	void enableAntiAliasing( bool enable );
+	/// The arena's night lights from lamps.object (torch positions and neon segments) into the shared parameters.
+	void loadLamps(void);
 
 	Ogre::SceneManager* mSceneMgr;
 	Ogre::Light* sun;
@@ -112,7 +116,19 @@ private:
 		ssaoRadius,
 		ssaoStrength,
 		heroFillSunlit,
-		heroRimShadow;
+		heroRimShadow,
+		lampStrength,
+		lampReach,
+		lampBands,
+		lampBack,
+		lampFlicker,
+		flameBrightness,
+		neonLight,
+		neonLightReach,
+		lampTime;
+	/// The arena's night lights (lamps.object): the torches' light positions; colours from lighting.object.
+	std::vector<Ogre::Vector3> lamps;
+	Ogre::ColourValue lampColour, neonLightColour;
 	/// Direction of the robots' fill light in camera axes: weights of the camera's right, up and backwards
 	/// (towards the viewer) vectors, from heroFillYaw / heroFillPitch.
 	Ogre::Vector3 heroFillAxes;

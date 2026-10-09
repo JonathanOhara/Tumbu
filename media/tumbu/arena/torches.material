@@ -1,0 +1,29 @@
+import * from "shading.material"
+
+// Wall torches (the night lights, docs/IMPROVEMENT_IDEAS.md idea 4): torches.mesh, made by
+// scripts/blender/arena_shapes.py in art/arena/Arena.blend, AO baked by scripts/bake-arena-ao.ps1. Their light on the
+// arena and the robots is TUMBU_ARENA_LIGHTS (TumbuToon.h), placed by media/configuration/lamps.object.
+
+// The brackets: dark iron, toon lit like the stone.
+material torchIronMaterial : Tumbu/EnvironmentToon{
+    set $aoMap "torches_ao.dds"
+    set $diffuseCol "0.17 0.15 0.14 1"
+}
+
+// The flames: unlit toon fire (torch_flame.vert / .frag) that sways, flickers and grows with the keyframe value lamps
+// (lighting.object; gone by day). Blended, so it casts no shadow.
+material torchFlameMaterial{
+    technique{
+        pass{
+            lighting off
+            scene_blend alpha_blend
+            depth_write off
+
+            vertex_program_ref torch_flame_vs{
+            }
+
+            fragment_program_ref torch_flame_ps{
+            }
+        }
+    }
+}

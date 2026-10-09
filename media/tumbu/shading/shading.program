@@ -76,6 +76,30 @@ fragment_program env_stone_floor_ps glsl glsles hlsl
     }
 }
 
+// Torch flames (torch_flame.vert / .frag, torchFlameMaterial in arena/torches.material): unlit toon fire.
+vertex_program torch_flame_vs glsl glsles hlsl
+{
+    source torch_flame.vert
+    target vs_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto wMat world_matrix
+        param_named_auto vpMat viewproj_matrix
+    }
+}
+
+fragment_program torch_flame_ps glsl glsles hlsl
+{
+    source torch_flame.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto camPos camera_position
+    }
+}
+
 // The painted toon sky (sky.vert / sky.frag, Tumbu/ToonSky): replaces Caelum.
 vertex_program sky_vs glsl glsles hlsl
 {

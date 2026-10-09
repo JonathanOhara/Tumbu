@@ -107,6 +107,76 @@ vec3 tumbuEnergyLights(vec3 p, vec3 n, vec4 pos0, vec4 col0, vec4 pos1, vec4 col
         + tumbuEnergyLight(p, n, pos2, col2) + tumbuEnergyLight(p, n, pos3, col3);
 }
 
+// Arena night lights (Lighting, positions from media/configuration/lamps.object): the wall torches and the light of
+// the ring's red neon. Their own uniforms, so the four energy lights stay free for the attacks. Shaders that light
+// with them put TUMBU_LAMP_UNIFORMS in OGRE_UNIFORMS and add albedo x TUMBU_ARENA_LIGHTS(p, n).
+// lampPos[i]: xyz = a torch's light (at its flame), w = its intensity now (keyframe lamps x flicker; 0 = off)
+// lampColour: rgb = colour x strength, w = reach (world units)
+// lampShape: x = toon bands of the light pools, y = light on the side facing away (like the energy lights' 0.25)
+// neonLight: rgb = colour x strength x keyframe neon (0 = off), w = reach
+// neonSegA[i] / neonSegB[i]: the two ends of a neon segment (xyz; the ring ropes, one per side, and the T's tube)
+// The array sizes must match TUMBU_MAX_LAMPS and TUMBU_NEON_SEGMENTS in Lighting.cpp.
+#define TUMBU_LAMP_UNIFORMS \
+    uniform vec4 lampColour; \
+    uniform vec4 lampShape; \
+    uniform vec4 neonLight; \
+    uniform vec4 lampPos[20]; \
+    uniform vec4 neonSegA[8]; \
+    uniform vec4 neonSegB[8];
+
+// How much of a light reaches p: a quadratic falloff to 0 at `reach`, softer on the side facing away.
+float tumbuLampReach(vec3 toLight, vec3 n, float reach, float back)
+{
+    float dist = length(toLight);
+    float falloff = saturate(1.0 - dist / reach);
+    float facing = dot(n, toLight / max(dist, 0.0001)) * 0.5 + 0.5;
+    return falloff * falloff * mix(back, 1.0, smoothstep(0.45, 0.6, facing));
+}
+
+// Cut a light amount into toon bands with soft edges (each band rises over the last fifth of its step). The bands are
+// even steps of the square root, so they are closer together where the light is faint: a pool fades out in rings
+// instead of ending at one flat disc.
+float tumbuLampBands(float x, float bands)
+{
+    float s = sqrt(max(x, 0.0)) * bands;
+    float level = (floor(s) + smoothstep(0.8, 1.0, fract(s))) / bands;
+    return level * level;
+}
+
+// The torches and the neon at p (normal n), to add to a lit colour as albedo x this. The torches' light is summed
+// first and then banded, so neighbouring pools merge into one toon shape.
+vec3 tumbuArenaLights(vec3 p, vec3 n, vec4 lampColour, vec4 lampShape, vec4 neonLight, vec4 lampPos[20],
+                      vec4 neonSegA[8], vec4 neonSegB[8])
+{
+    float reach2 = lampColour.w * lampColour.w;
+    float torch = 0.0;
+    for (int i = 0; i < 20; i++)
+    {
+        vec3 toLight = lampPos[i].xyz - p;
+        if (lampPos[i].w <= 0.0 || dot(toLight, toLight) >= reach2)
+            continue;
+        torch += lampPos[i].w * tumbuLampReach(toLight, n, lampColour.w, lampShape.y);
+    }
+    vec3 light = lampColour.rgb * tumbuLampBands(torch, lampShape.x);
+    if (neonLight.w > 0.0 && dot(neonLight.rgb, neonLight.rgb) > 0.0)
+    {
+        float neon = 0.0;
+        for (int i = 0; i < 8; i++)
+        {
+            vec3 ab = neonSegB[i].xyz - neonSegA[i].xyz;
+            float t = saturate(dot(p - neonSegA[i].xyz, ab) / max(dot(ab, ab), 0.0001));
+            vec3 toLight = neonSegA[i].xyz + ab * t - p;
+            if (dot(toLight, toLight) < neonLight.w * neonLight.w)
+                neon = max(neon, tumbuLampReach(toLight, n, neonLight.w, lampShape.y));
+        }
+        light += neonLight.rgb * tumbuLampBands(neon, lampShape.x);
+    }
+    return light;
+}
+
+// Shorthand for shaders that declare TUMBU_LAMP_UNIFORMS.
+#define TUMBU_ARENA_LIGHTS(p, n) tumbuArenaLights(p, n, lampColour, lampShape, neonLight, lampPos, neonSegA, neonSegB)
+
 // Rim light on the side the sun misses, relative to the lit side (tumbuToon; robots raise it, see tumbuHeroLight).
 #define TUMBU_RIM_SHADOW 0.35
 

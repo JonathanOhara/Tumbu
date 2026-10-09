@@ -31,8 +31,16 @@ Models what a texture cannot fake, so the stone reads as cut blocks under the to
 The ring ("arena" object, its own steps in its tumbu_shapes):
   1. its floor and sides get the material arenaFloorMaterial (the grey tiles; world-scale UVs, RING_TILE metres per
      unit) and the ropes arenaRopesMaterial (for the red neon); the posts keep the 2011 material and atlas.
-Then the AO UV map is removed (the bake script lays it out again for the new faces) and the hard edges are marked
-again. The changes are saved into Arena.blend, which stays the source of truth; run scripts/bake-arena-ao.ps1
+The wall torches (the night lights; "torches" object, its own version in its tumbu_shapes):
+  1. 17 torches in iron brackets, one every TORCH_STEP degrees around the arena (symmetric about the gate), placed by
+     rays from the centre onto the tall wall and the front of the seating podium: a back plate, an arm, a cup (iron,
+     torchIronMaterial) and a toon flame (torchFlameMaterial; its UVs carry the torch's flicker phase and the height
+     in the flame for torch_flame.vert). The object goes into the Export collection, so bake-arena-ao.ps1
+     (-Only torches) bakes its AO and exports torches.mesh. The torches' light positions and the neon's light segments
+     (the ring sides at the ropes' mid height, the T's tube from ring_emblem.png) are written to
+     media/configuration/lamps.object (Lighting::loadLamps).
+After the coliseum's step 1 its AO UV map is removed (the bake script lays it out again for the new faces) and the
+hard edges are marked again. The changes are saved into Arena.blend, which stays the source of truth; run scripts/bake-arena-ao.ps1
 afterwards to bake the AO and export the meshes.
 
 The object records the steps already applied in its custom property tumbu_shapes, and only the newer steps run (a
@@ -45,7 +53,11 @@ import bmesh
 import math
 import os
 import sys
-from mathutils import Vector
+from mathutils import Matrix, Vector
+
+ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+ROOT = os.path.abspath(ARGS[0] if ARGS else os.path.join(os.path.dirname(bpy.data.filepath), "..", ".."))
+LAMPS = os.path.join(ROOT, "media", "configuration", "lamps.object")
 
 SHAPES_VERSION = 7
 LEANING = 0.95              # floors leaning more than this (|normal.z| below it) get courses from height (v5)
@@ -61,6 +73,18 @@ PLINTH_DEPTH = 0.15         # how far the plinth stands out from the wall
 PLINTH_MAX_RADIUS = 28.5    # only the inner arena wall: it is an oval, 15 to 27 units from the centre
 CHAMFER = 0.08              # chamfer width on the hard edges (about 3 pixels from the chase camera)
 HARD_ANGLE = 30.0           # degrees: edges sharper than this are hard (as clean_mesh in arena_ao.py)
+# Night lights: wall torches (the "torches" object, version TORCHES_VERSION), chosen 2026-10-09 (17, every 20 degrees)
+TORCHES_VERSION = 1
+TORCH_STEP = 20.0           # degrees between torches
+TORCH_FIRST = 30.0          # the first torch; the gate is at about 10 degrees, so 30 and 350 frame it
+TORCH_HEIGHT = 3.4          # on the tall wall (below the ledge under the windows)
+TORCH_PODIUM_HEIGHT = 1.7   # on the front of the seating podium (a lower wall)
+TORCH_PODIUM = (38.0, 148.0)    # azimuths of the seating podium
+TORCH_RAY_START = 11.0      # rays start outside the ring
+TORCH_IRON = "torchIronMaterial"
+TORCH_FLAME = "torchFlameMaterial"
+# flame shape (height, radius), a toon teardrop
+TORCH_FLAME_PROFILE = [(0.0, 0.07), (0.08, 0.14), (0.18, 0.16), (0.3, 0.13), (0.44, 0.07), (0.6, 0.0)]
 
 
 def log(message):
@@ -483,6 +507,180 @@ def ring_materials(ob):
     log("ring: %(floor)d floor faces, %(side)d side faces, %(rope)d rope faces" % counts)
 
 
+def wall_hit(scene, coliseum, azimuth, height):
+    """Where a horizontal ray from the arena's centre, at `height`, first meets the coliseum: (point, normal) or None.
+    azimuth in game degrees (0 = game +Z = Blender -Y, 90 = +X), as lighting.object's sunAzimuth."""
+    a = math.radians(azimuth)
+    d = Vector((math.sin(a), -math.cos(a), 0.0))
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    hit, loc, nrm, _, ob, _ = scene.ray_cast(depsgraph, Vector((0.0, 0.0, height)) + d * TORCH_RAY_START, d,
+                                             distance=40.0)
+    return (loc, nrm) if hit and ob == coliseum else None
+
+
+def add_lathe(bm, base, profile, segments, material, u, smooth):
+    """A closed surface of revolution around +Z at `base`: profile = [(height, radius)], from the bottom to the tip
+    (a radius of 0 closes it). UV u = `u` (the lamp's phase), v = height / the profile's height (the flame shader)."""
+    top = profile[-1][0]
+    rings = []
+    for h, r in profile:
+        if r <= 0.0:
+            rings.append([bm.verts.new(base + Vector((0.0, 0.0, h)))])
+        else:
+            rings.append([bm.verts.new(base + Vector((math.cos(2 * math.pi * i / segments) * r,
+                                                      math.sin(2 * math.pi * i / segments) * r, h)))
+                          for i in range(segments)])
+    faces = []
+    for lo, hi in zip(rings, rings[1:]):
+        for i in range(segments):
+            j = (i + 1) % segments
+            if len(hi) == 1:
+                faces.append(bm.faces.new((lo[i], lo[j], hi[0])))
+            elif len(lo) == 1:
+                faces.append(bm.faces.new((lo[0], hi[j], hi[i])))
+            else:
+                faces.append(bm.faces.new((lo[i], lo[j], hi[j], hi[i])))
+    if len(rings[0]) > 1:
+        faces.append(bm.faces.new(list(reversed(rings[0]))))
+    uv = bm.loops.layers.uv.verify()
+    for f in faces:
+        f.material_index = material
+        f.smooth = smooth
+        for loop in f.loops:
+            loop[uv].uv = (u, (loop.vert.co.z - base.z) / top)
+    return faces
+
+
+def add_box(bm, centre, size, rotation, material):
+    m = Matrix.Translation(centre) @ rotation @ Matrix.Diagonal((size[0], size[1], size[2], 1.0))
+    ret = bmesh.ops.create_cube(bm, size=1.0, matrix=m)
+    faces = {f for v in ret["verts"] for f in v.link_faces}
+    for f in faces:
+        f.material_index = material
+        f.smooth = False
+    return faces
+
+
+def add_rod(bm, start, end, radius, material, segments=6):
+    axis = end - start
+    rotation = axis.to_track_quat('Z', 'Y').to_matrix().to_4x4()
+    m = Matrix.Translation((start + end) / 2) @ rotation
+    ret = bmesh.ops.create_cone(bm, cap_ends=True, segments=segments, radius1=radius, radius2=radius,
+                                depth=axis.length, matrix=m)
+    faces = {f for v in ret["verts"] for f in v.link_faces}
+    for f in faces:
+        f.material_index = material
+        f.smooth = False
+    return faces
+
+
+def add_torches(scene, coliseum):
+    """The night lights (docs/IMPROVEMENT_IDEAS.md idea 4): wall torches in iron brackets, one every TORCH_STEP
+    degrees around the arena, symmetric about the gate (TORCH_FIRST and its mirror), at TORCH_HEIGHT on the tall wall
+    and TORCH_PODIUM_HEIGHT on the front of the seating podium. One object, "torches", with two materials: the iron
+    (toon, like the stone) and the flames (unlit, media/tumbu/arena/torches.material). Returns the light positions in
+    Blender coordinates, at the flames."""
+    me = bpy.data.meshes.new("torches")
+    ob = bpy.data.objects.new("torches", me)
+    export = bpy.data.collections.get("Export")
+    (export or scene.collection).objects.link(ob)
+    me.materials.append(bpy.data.materials.get(TORCH_IRON) or bpy.data.materials.new(TORCH_IRON))
+    me.materials.append(bpy.data.materials.get(TORCH_FLAME) or bpy.data.materials.new(TORCH_FLAME))
+    ob["tumbu_ao_size"] = 512
+
+    bm = bmesh.new()
+    bm.loops.layers.uv.verify()
+    lights = []
+    azimuths = [TORCH_FIRST + TORCH_STEP * k for k in range(int(round(360.0 / TORCH_STEP)) - 1)]
+    for index, azimuth in enumerate(azimuths):
+        podium = TORCH_PODIUM[0] <= azimuth <= TORCH_PODIUM[1]
+        hit = wall_hit(scene, coliseum, azimuth, TORCH_PODIUM_HEIGHT if podium else TORCH_HEIGHT)
+        if hit is None:
+            log("torch at %.0f degrees: no wall, skipped" % azimuth)
+            continue
+        loc, nrm = hit
+        out = Vector((nrm.x, nrm.y, 0.0)).normalized()     # away from the wall, towards the arena
+        side = Vector((-out.y, out.x, 0.0))
+        facing = Matrix((side, out, Vector((0.0, 0.0, 1.0)))).transposed().to_4x4()   # local x along the wall
+        # back plate with two rivet bars, the arm, a ring under the cup, the cup
+        add_box(bm, loc + out * 0.03, (0.24, 0.06, 0.36), facing, 0)
+        add_box(bm, loc + out * 0.065 + Vector((0, 0, 0.12)), (0.28, 0.03, 0.04), facing, 0)
+        add_box(bm, loc + out * 0.065 - Vector((0, 0, 0.12)), (0.28, 0.03, 0.04), facing, 0)
+        cup = loc + out * 0.42 + Vector((0.0, 0.0, 0.3))
+        add_rod(bm, loc + out * 0.05 - Vector((0, 0, 0.05)), cup - Vector((0, 0, 0.17)), 0.035, 0)
+        add_lathe(bm, cup - Vector((0, 0, 0.22)), [(0.0, 0.03), (0.05, 0.05), (0.07, 0.06), (0.22, 0.17), (0.25, 0.15),
+                                                   (0.25, 0.0)], 8, 0, 0.0, False)
+        phase = (index * 0.618034) % 1.0       # golden-ratio steps: neighbouring flames flicker out of step
+        add_lathe(bm, cup + Vector((0, 0, 0.0)), TORCH_FLAME_PROFILE, 8, 1, phase, True)
+        lights.append(cup + Vector((0.0, 0.0, 0.3)) + out * 0.15)
+    bm.to_mesh(me)
+    bm.free()
+    ob["tumbu_shapes"] = TORCHES_VERSION
+    log("torches: %d of %d placed" % (len(lights), len(azimuths)))
+    return lights
+
+
+def neon_segments(ring):
+    """The neon as light segments (Blender coordinates): one per ring side at the ropes' mid height, and the T's tube
+    as the centre lines of its bar and stem (from ring_emblem.png, mapped from above over the 20 x 20 floor)."""
+    import numpy as np
+    me = ring.data
+    corners = []
+    for v in me.vertices:
+        if v.co.z > 1.45 and all((v.co.xy - k).length > 1.0 for k in corners):
+            corners.append(v.co.xy.copy())
+    corners.sort(key=lambda c: math.atan2(c.y, c.x))
+    rope_slot = me.materials.find(RING_ROPES)
+    zs = [me.vertices[i].co.z for f in me.polygons if f.material_index == rope_slot for i in f.vertices]
+    z = (min(zs) + max(zs)) / 2
+    segments = []
+    for a, b in zip(corners, corners[1:] + corners[:1]):
+        # stop short of the posts (the ropes end there)
+        d = (b - a).normalized() * 0.3
+        segments.append((Vector((a.x + d.x, a.y + d.y, z)), Vector((b.x - d.x, b.y - d.y, z))))
+    image = bpy.data.images.load(os.path.join(ROOT, "media", "tumbu", "arena", "ring_emblem.png"), check_existing=True)
+    w, h = image.size
+    px = np.array(image.pixels[:], dtype=np.float32).reshape(h, w, 4)
+    ys, xs = np.nonzero(px[:, :, 1] > 0.5)
+    # Blender image rows go up; game uv = world xz / 20 + 0.5 with v down, which is Blender (x, y) / 20 + 0.5
+    wx = (xs + 0.5) / w * 20.0 - 10.0
+    wy = (ys + 0.5) / h * 20.0 - 10.0
+    rows = {}
+    for x, y in zip(wx, wy):
+        rows.setdefault(round(y, 1), []).append(x)
+    widest = max(max(v) - min(v) for v in rows.values())
+    bar = [y for y, v in rows.items() if max(v) - min(v) > widest * 0.6]
+    stem = [y for y, v in rows.items() if max(v) - min(v) <= widest * 0.6]
+    bar_x = [x for y in bar for x in rows[y]]
+    stem_x = [x for y in stem for x in rows[y]]
+    tz = 0.25
+    bar_y = (min(bar) + max(bar)) / 2
+    stem_mid = (min(stem_x) + max(stem_x)) / 2
+    far = min(stem) if abs(min(stem) - bar_y) > abs(max(stem) - bar_y) else max(stem)
+    segments.append((Vector((min(bar_x), bar_y, tz)), Vector((max(bar_x), bar_y, tz))))
+    segments.append((Vector((stem_mid, bar_y, tz)), Vector((stem_mid, far, tz))))
+    return segments
+
+
+def write_lamps(lights, segments):
+    """media/configuration/lamps.object: the torch lights and the neon segments in game coordinates (Y up), read by
+    Lighting (Lighting::loadLamps)."""
+    def game(p):
+        return "%.3f %.3f %.3f" % (p.x, p.z, -p.y)
+    lines = ["// Generated by scripts/blender/arena_shapes.py from art/arena/Arena.blend: do not edit by hand.",
+             "// The arena's night lights in game coordinates (Y up): each lamp is the light of a wall torch (at its",
+             "// flame); each neon segment runs from one point to another (the ring's ropes, one per side, and the T's",
+             "// tube). Their colour, reach and strength are in lighting.object.",
+             "lamps arena{"]
+    lines += ["\tlamp %s" % game(p) for p in lights]
+    lines += ["\tneon %s %s" % (game(a), game(b)) for a, b in segments]
+    lines.append("}")
+    path = LAMPS
+    with open(path, "w", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
+    log("wrote %s: %d lamps, %d neon segments" % (path, len(lights), len(segments)))
+
+
 def main():
     ob = bpy.data.objects.get("coliseum")
     if ob is None:
@@ -529,6 +727,13 @@ def main():
         ring_materials(ring)
     ring["tumbu_shapes"] = RING_VERSION
     log("ring: shapes version %d -> %d" % (ring_done, RING_VERSION))
+
+    torches = bpy.data.objects.get("torches")
+    if torches is None or torches.get("tumbu_shapes", 0) < TORCHES_VERSION or not os.path.isfile(LAMPS):
+        if torches is not None:
+            bpy.data.meshes.remove(torches.data)
+        lights = add_torches(bpy.context.scene, ob)
+        write_lamps(lights, neon_segments(ring))
     bpy.ops.wm.save_mainfile()
     log("saved " + bpy.data.filepath)
 

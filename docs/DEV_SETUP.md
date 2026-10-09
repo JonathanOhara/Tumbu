@@ -262,6 +262,12 @@ project.
   sideways a flat projection along the wall. Angles unwrap around each face's own centre, so no face spans the wrap at
   180 degrees. Checked with a per-face stretch measure (texture scale against world size): 3 faces of 2232 above 1.35,
   all tiny slivers or one corner.
+- **Wall torches** (the night lights, 2026-10-09; `arena_shapes.py`, the "torches" object's own `tumbu_shapes`
+  version): the script builds the 17 torches (iron bracket and toon flame) by casting rays from the arena's centre onto
+  the walls, puts the object in the Export collection and writes `media/configuration/lamps.object` (light positions
+  and neon segments, game coordinates). Then `.\scripts\bake-arena-ao.ps1 -Only torches` bakes only the torches' AO and
+  exports `torches.mesh` (`-Only <mesh>` skips the long coliseum bake). To change the torches, edit the `TORCH_*`
+  constants and raise `TORCHES_VERSION`: the step deletes the old object and builds it again.
 - **Textures** (`.\scripts\arena-textures.ps1` -> `scripts/blender/arena_textures.py`, Blender's bundled numpy, about
   15 s): `sandstone_col/nrm/hgt.png`, `ringtiles_col/nrm/hgt.png`, `ring_emblem.png` in `media/tumbu/arena/`. Each
   set comes from one height field, so colour, normal and height agree; all tile seamlessly (`-Preview <folder>`
