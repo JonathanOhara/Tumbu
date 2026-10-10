@@ -89,7 +89,7 @@ patch no longer finds the code it patches: then look here.
 them. `devtest.ps1` passes `-mute` by default; add `-mute` to every direct `TUMBU.exe` command and use
 `run.ps1 -Mute`. Only drop it (`devtest.ps1 -Sound`) when the user asks to hear something.
 
-**Keep dev runs windowed at 1600x900 or smaller.** Every test, screenshot and debugging run uses a window of at most
+**Keep dev runs windowed at 1600x900 or smaller.** Jonathan works on other things while tests run, and a window as big as his screen takes over what he is doing. Every test, screenshot and debugging run uses a window of at most
 1600x900 (`devtest.ps1` default 1024x768; `-VideoMode 1600x900` for shots meant for review). Use 1920x1080 or full
 screen only when it is really needed, such as the 1920x1080 frame-rate measurement of per-pixel work in `bench.ps1`. A
 `TUMBU.exe` started directly takes Jonathan's play window from `ogre.cfg` (1920x1080), so prefer `devtest.ps1`, which
