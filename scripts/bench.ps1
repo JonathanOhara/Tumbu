@@ -4,8 +4,8 @@
 #        [-Common "-Hero robot001 -Hour 13"] [-VideoMode 1920x1080]
 #   -Variants  label=devtest.ps1 arguments; the first one is the reference
 #              "@<folder>" among the arguments runs another checkout of the game (its own devtest.ps1, exe and media),
-#              to compare two builds run after run: git worktree add ..\Tumbu-before <commit>, build it there, then
-#              -Variants "before=@..\Tumbu-before","after="
+#              to compare two builds run after run: git worktree add bin\scratch\before <commit>, build it there, then
+#              -Variants "before=@bin\scratch\before","after="
 #   -Common    devtest.ps1 arguments given to every run (the default is the standard robot view at 13:00)
 #   -VideoMode the window size, set for both renderers (their ogre.cfg sections differ otherwise; the OpenGL one was
 #              640x480 while Direct3D 11 had 1024x768)

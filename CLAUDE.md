@@ -42,6 +42,11 @@ from each one you defeat.
 - **Norton 360 on this PC** can block a freshly built `TUMBU.exe` ("Acesso negado" / Access denied, or a
   process stuck at about 2 MB). The user has to allow it or exclude `bin\`. Git over HTTPS needs
   `git -c http.sslBackend=schannel` because Norton intercepts TLS.
+- **Run every game build from inside the repo's `bin\`** (excluded from Norton). Throwaway copies, prototypes and
+  worktrees for comparisons go in **`bin\scratch\<name>\`** (git-ignored, kept between Claude sessions), never in
+  `%TEMP%`, the session scratchpad or a sibling folder such as `..\Tumbu-before`: Norton holds every `TUMBU.exe` it
+  finds in a new place, and each run waits for its scan. Remove a `bin\scratch\<name>\` folder (and `git worktree
+  remove` a worktree) when its work is done.
 
 ## Temporary workarounds (remove when fixed upstream)
 
@@ -180,8 +185,8 @@ materials, textures, GUI) gets a before/after set:
    only a hint: in a normal run the enemy fights, and identical runs vary by ±15–30 %. **The real number comes from
    `scripts/bench.ps1`**: `-bench` runs (no AI, fixed camera: within ~2 % between runs), alternating the variants
    (`-Variants "off=-AA 0","on=-AA 1"`, a DevTest switch when the feature can be turned off in one build; otherwise
-   **compare builds run after run**: `git worktree add ..\Tumbu-before <commit>`, run `scripts\build.ps1` there, then
-   `-Variants "before=@..\Tumbu-before","after="`; each tree uses its own exe and media; remove the worktree afterwards.
+   **compare builds run after run**: `git worktree add bin\scratch\before <commit>`, run `scripts\build.ps1` there, then
+   `-Variants "before=@bin\scratch\before","after="`; each tree uses its own exe and media; remove the worktree afterwards.
    Never compare numbers from different sessions: they drift by 5–10 %), on Direct3D 11 and OpenGL, at the same window size for both
    (`-VideoMode`, default 1024x768; also measure 1920x1080 for anything that costs per pixel: at 1024x768 Direct3D 11 is
    CPU-bound and hides GPU work). It writes `%USERPROFILE%\Tumbu\<feature>\fps.txt` (fps, ms per frame, spread, the
