@@ -100,7 +100,7 @@ sets the window for its run.
 .\scripts\devtest.ps1 -FpsCap 30 -Name fps30        # same, frame rate capped (compare movement across FPS)
 .\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High; -Hour 20.5 = 20:30)
 .\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
-.\scripts\devtest.ps1 -VideoMode 1920x1080 -Name big # window size of the run (default 1024x768; at most 1600x900 for dev runs)
+.\scripts\devtest.ps1 -VideoMode 1600x900 -Name big  # window size of the run (default 1024x768; at most 1600x900 for dev runs)
 bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # memory check: 40 matches via the real UI (see "Memory check")
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
