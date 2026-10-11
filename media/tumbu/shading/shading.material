@@ -263,8 +263,9 @@ material Tumbu/PostProcess/Final{
     }
 }
 
-// Bloom steps (postprocess.compositor): full-screen passes on the quarter-size bloom textures.
-material Tumbu/PostProcess/BrightPass{
+// Bloom (mip chain): the first downsample from the scene, the other downsamples, and the upsamples, one material per
+// level (bloomLevel: this level's weight, the coarser texture's weight, the scale of the result).
+material Tumbu/PostProcess/BloomPrefilter{
     technique{
         pass{
             depth_check off
@@ -274,10 +275,10 @@ material Tumbu/PostProcess/BrightPass{
             vertex_program_ref postprocess_vs{
             }
 
-            fragment_program_ref postprocess_bright_ps{
+            fragment_program_ref postprocess_bloom_prefilter_ps{
             }
 
-            texture_unit scene{
+            texture_unit source{
                 tex_address_mode clamp
                 filtering linear linear none
             }
@@ -285,6 +286,163 @@ material Tumbu/PostProcess/BrightPass{
     }
 }
 
+material Tumbu/PostProcess/BloomDown{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_bloom_down_ps{
+            }
+
+            texture_unit source{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+material Tumbu/PostProcess/BloomUp1{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_bloom_up_ps{
+                param_named bloomLevel float4 1 1 0.16666667 0
+            }
+
+            texture_unit lower{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+
+            texture_unit current{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+material Tumbu/PostProcess/BloomUp2{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_bloom_up_ps{
+                param_named bloomLevel float4 1 1 1 0
+            }
+
+            texture_unit lower{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+
+            texture_unit current{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+material Tumbu/PostProcess/BloomUp3{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_bloom_up_ps{
+                param_named bloomLevel float4 1 1 1 0
+            }
+
+            texture_unit lower{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+
+            texture_unit current{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+material Tumbu/PostProcess/BloomUp4{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_bloom_up_ps{
+                param_named bloomLevel float4 1 1 1 0
+            }
+
+            texture_unit lower{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+
+            texture_unit current{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+material Tumbu/PostProcess/BloomUp5{
+    technique{
+        pass{
+            depth_check off
+            depth_write off
+            cull_hardware none
+
+            vertex_program_ref postprocess_vs{
+            }
+
+            fragment_program_ref postprocess_bloom_up_ps{
+                param_named bloomLevel float4 1 1 1 0
+            }
+
+            texture_unit lower{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+
+            texture_unit current{
+                tex_address_mode clamp
+                filtering linear linear none
+            }
+        }
+    }
+}
+
+// God rays and SSAO: a separable 9-tap blur (postprocess_blur.frag), horizontal then vertical.
 material Tumbu/PostProcess/BlurH{
     technique{
         pass{

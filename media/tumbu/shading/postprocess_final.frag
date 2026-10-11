@@ -5,14 +5,15 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 #include <OgreUnifiedShader.h>
 
 SAMPLER2D(scene, 0);
-SAMPLER2D(bloom, 1);
+SAMPLER2D(bloom, 1);     // half size: the top of the bloom chain (bloomUp1), read with one bilinear sample
 SAMPLER2D(shafts, 2);
 SAMPLER2D(ssao, 3);
 
 OGRE_UNIFORMS(
     // x = exposure, y = saturation, z = contrast, w = vignette
     uniform vec4 postParams;
-    // z = bloom strength (x, y: threshold and knee, used by the bright pass), w = 1: show the bloom alone (DevTest)
+    // z = bloom strength (x, y: threshold and knee, used by the first bloom downsample), w = 1: show the bloom alone
+    // (DevTest)
     uniform vec4 bloomParams;
     // Lens flare (Lighting::notifyMaterialRender): xy = sun position in texture coordinates, z = strength
     // times how much of the sun is visible (0 = hidden by a wall, behind the camera, moon, or flare off)

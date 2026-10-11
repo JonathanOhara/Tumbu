@@ -145,10 +145,11 @@ bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to 
   nodes=… entities=… materials=…` after each match, `heap growth by block size` and the DLL that owns sample blocks (to
   find what grows), and at the end `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED`, also appended
   to `%USERPROFILE%\Tumbu\memory-history.csv` (date, renderer, driver, Ogre, heap, growth).
-  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0, 2026-10-09):
+  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0, 2026-10-09; checked again 2026-10-11 with the mip-chain bloom):
   - every object count returns to the same value each match (`objects=flat`) on both renderers;
-  - **OpenGL:** about 16 MB in the menu, flat from match 2 on (within ±30 KB per match);
-  - **Direct3D 11:** about 27 MB in the menu and 29 to 33 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB per
+  - **OpenGL:** about 15 MB in the menu before the first match and 18 MB after it, flat from match 2 on (within ±30 KB
+    per match);
+  - **Direct3D 11:** about 21 to 27 MB in the menu and 29 to 33 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB per
     match for about 18 matches, to about 85 MB, and **stays flat** (84 to 88 MB over matches 18 to 40; private bytes about
     535 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor; docs/SPECIAL_EFFECTS.md,
     "Known issue") that fills up, not a leak. So the second-half growth of a 40-match run must be near 0; a 12- or
@@ -160,7 +161,9 @@ bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to 
   11 plateau moves, find out why and update this paragraph. `-cycles` logs a `REMINDER` line when the driver or Ogre
   version differs from the one these numbers were measured with. History: +1.7 to 2.3 MB per match (12 matches) before
   the robots were skinned on the GPU, +0.7 to 1.1 after it (2026-10-06); the night lights changed nothing (alternated
-  runs, 2026-10-09).
+  runs, 2026-10-09). The mip-chain bloom (11 render targets instead of 2, 2026-10-11): Direct3D 11 plateau 81 to 88 MB,
+  second half -0.2 MB per match; OpenGL +70 KB (18.03 against 18.09 MB, 3 matches each). The OpenGL level had risen from
+  16.7 MB (2026-10-09) to 18.0 MB before it.
 - **Crash report:** any crash (access violation, uncaught exception, `abort`) writes the call stack to
   `ogre.log` and `%USERPROFILE%\Tumbu\crash.log` (`Main.cpp`). RelWithDebInfo has file:line for game code.
   Ogre frames only show exported names, because the deps are built without PDBs.
@@ -273,8 +276,22 @@ painted toon sky replaced it).
   `*.program` scripts are parsed before any `*.material`.
 - **Post-processing:** `Lighting` adds the `Tumbu/PostProcess` compositor (HDR scene, then tone mapping,
   grading and vignette) to the window viewport for a match and removes it afterwards. MyGUI and the
-  trays draw after it and are not affected. Bloom: a bright pass to quarter size, two H+V blurs, added
-  before tone mapping (`bloomThreshold` / `bloomSoftKnee` / `bloomStrength` in `lighting.object`).
+  trays draw after it and are not affected.
+- **Bloom: a mip chain** (Jimenez, Call of Duty: Advanced Warfare, SIGGRAPH 2014; 2026-10, replacing a bright pass to
+  quarter size and two H+V blurs):
+  - The first downsample (`postprocess_bloomdown.frag` with `BLOOM_PREFILTER`) takes the HDR scene to half size with 13
+    bilinear taps (they cover 6x6 texels, so no bright pixel falls between them), the **Karis average** (each 2x2 group
+    weighted by 1 / (1 + luma), so one very bright pixel cannot make the glow flicker) and the soft threshold
+    (`bloomThreshold` / `bloomSoftKnee` in `lighting.object`). Five more 13-tap downsamples go down to 1/64.
+  - Tent upsamples (`postprocess_bloomup.frag`, one material per level) go back up to half size, each adding its level:
+    `bloomLevel` = this level's weight, the coarser texture's weight, the scale of the result. All six levels are
+    weighted equally (the "Balanced" look, chosen against "tight" and "wide"); the last pass divides by the sum.
+  - The final pass reads `bloomUp1` with one bilinear sample (a tent there cost 0.04 ms at 1920x1080 and looked the
+    same) and adds it times `bloomStrength` (0.85) before tone mapping. Eleven `PF_FLOAT16_RGBA` targets.
+  - Against the old bloom, hot cores keep their shape (the punch and Genki Dama centres, the three neon ropes, which
+    used to melt into one red band) and the glow crawls about 4 times less while the camera pans (`-bloomonly -strip`).
+  - Cost (`bench.ps1`): about +0.075 ms at 1920x1080 on both renderers, nothing measurable at 1024x768. Five levels, a
+    4-tap first step or R11G11B10 targets were no cheaper on Direct3D 11: the cost is the number of passes.
 - **Anti-aliasing: SMAA 1x** (Jimenez et al., MIT; `SMAA_PRESET_HIGH`, luma edges). The match renders into the
   compositor's HDR texture, which has no MSAA, so the FSAA of the start-up dialog / `ogre.cfg` does nothing in a match
   (keep it at 1). Instead `Lighting::enableAntiAliasing` chains the `Tumbu/SMAA` compositor after `Tumbu/PostProcess`

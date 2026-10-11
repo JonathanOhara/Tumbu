@@ -1,7 +1,7 @@
 // Post-processing of a match (Lighting.cpp adds it to the viewport): the scene is rendered into a
 // half-float (HDR) texture with a readable depth buffer; god rays are marched through the sun's shadow map at
-// half size and blurred; the bright parts are extracted at quarter size and blurred twice (bloom); the final
-// pass adds both, then tone maps and grades the image onto the screen. The GUI is drawn after the
+// half size and blurred; the bloom takes the bright parts down a chain of half-size steps to 1/64 and back up (a
+// tight core with a wide falloff); the final pass adds both, then tone maps and grades the image onto the screen. The GUI is drawn after the
 // compositor, so it is not affected.
 compositor Tumbu/PostProcess
 {
@@ -13,8 +13,17 @@ compositor Tumbu/PostProcess
         texture shaftsB target_width_scaled 0.5 target_height_scaled 0.5 PF_FLOAT16_RGBA
         texture ssaoA target_width_scaled 0.5 target_height_scaled 0.5 PF_BYTE_RGBA
         texture ssaoB target_width_scaled 0.5 target_height_scaled 0.5 PF_BYTE_RGBA
-        texture bloomA target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
-        texture bloomB target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
+        texture bloomDown1 target_width_scaled 0.5 target_height_scaled 0.5 PF_FLOAT16_RGBA
+        texture bloomDown2 target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
+        texture bloomDown3 target_width_scaled 0.125 target_height_scaled 0.125 PF_FLOAT16_RGBA
+        texture bloomDown4 target_width_scaled 0.0625 target_height_scaled 0.0625 PF_FLOAT16_RGBA
+        texture bloomDown5 target_width_scaled 0.03125 target_height_scaled 0.03125 PF_FLOAT16_RGBA
+        texture bloomDown6 target_width_scaled 0.015625 target_height_scaled 0.015625 PF_FLOAT16_RGBA
+        texture bloomUp1 target_width_scaled 0.5 target_height_scaled 0.5 PF_FLOAT16_RGBA
+        texture bloomUp2 target_width_scaled 0.25 target_height_scaled 0.25 PF_FLOAT16_RGBA
+        texture bloomUp3 target_width_scaled 0.125 target_height_scaled 0.125 PF_FLOAT16_RGBA
+        texture bloomUp4 target_width_scaled 0.0625 target_height_scaled 0.0625 PF_FLOAT16_RGBA
+        texture bloomUp5 target_width_scaled 0.03125 target_height_scaled 0.03125 PF_FLOAT16_RGBA
 
         target scene
         {
@@ -83,50 +92,110 @@ compositor Tumbu/PostProcess
             }
         }
 
-        // Bloom: bright pass, then horizontal + vertical blur, twice (a wide, soft glow).
-        target bloomA
+        // Bloom (mip chain): the bright parts of the scene down to half size (Karis average and threshold), five more
+        // 13-tap downsamples to 1/64, then tent upsamples back to half size, each adding its level.
+        target bloomDown1
         {
             input none
             pass render_quad
             {
-                material Tumbu/PostProcess/BrightPass
+                material Tumbu/PostProcess/BloomPrefilter
                 input 0 scene
             }
         }
-        target bloomB
+        target bloomDown2
         {
             input none
             pass render_quad
             {
-                material Tumbu/PostProcess/BlurH
-                input 0 bloomA
+                material Tumbu/PostProcess/BloomDown
+                input 0 bloomDown1
             }
         }
-        target bloomA
+        target bloomDown3
         {
             input none
             pass render_quad
             {
-                material Tumbu/PostProcess/BlurV
-                input 0 bloomB
+                material Tumbu/PostProcess/BloomDown
+                input 0 bloomDown2
             }
         }
-        target bloomB
+        target bloomDown4
         {
             input none
             pass render_quad
             {
-                material Tumbu/PostProcess/BlurH
-                input 0 bloomA
+                material Tumbu/PostProcess/BloomDown
+                input 0 bloomDown3
             }
         }
-        target bloomA
+        target bloomDown5
         {
             input none
             pass render_quad
             {
-                material Tumbu/PostProcess/BlurV
-                input 0 bloomB
+                material Tumbu/PostProcess/BloomDown
+                input 0 bloomDown4
+            }
+        }
+        target bloomDown6
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BloomDown
+                input 0 bloomDown5
+            }
+        }
+        target bloomUp5
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BloomUp5
+                input 0 bloomDown6
+                input 1 bloomDown5
+            }
+        }
+        target bloomUp4
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BloomUp4
+                input 0 bloomUp5
+                input 1 bloomDown4
+            }
+        }
+        target bloomUp3
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BloomUp3
+                input 0 bloomUp4
+                input 1 bloomDown3
+            }
+        }
+        target bloomUp2
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BloomUp2
+                input 0 bloomUp3
+                input 1 bloomDown2
+            }
+        }
+        target bloomUp1
+        {
+            input none
+            pass render_quad
+            {
+                material Tumbu/PostProcess/BloomUp1
+                input 0 bloomUp2
+                input 1 bloomDown1
             }
         }
 
@@ -140,7 +209,7 @@ compositor Tumbu/PostProcess
                 identifier 20
                 material Tumbu/PostProcess/Final
                 input 0 scene
-                input 1 bloomA
+                input 1 bloomUp1
                 input 2 shaftsA
                 input 3 ssaoA
             }

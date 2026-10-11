@@ -135,6 +135,10 @@ Techniques in use that have a clear modern replacement, most valuable first:
    from a prototype rendered in game (same page as item 5). The prototype held the cores' shapes (the punch and Genki Dama
    centres, the three neon ropes) and its glow crawled 5 to 10 times less on the T's neon tube while the camera panned; it
    cost about +0.1 ms at 1920x1080 (D3D11 and OpenGL), so the build has a budget of about +0.05 ms.
+   **Built 2026-10-11** (CLAUDE.md "Bloom"): the bloom-only glow crawls 4 times less (1.25 to 0.30 %), and it costs about
+   +0.075 ms at 1920x1080 on both renderers (nothing at 1024x768). The budget was missed: five levels, a 4-tap first step
+   and R11G11B10 targets were no cheaper on Direct3D 11, because the cost is the number of passes. Left: the level
+   weights in `lighting.object`, and the energy effects checked against the new glow.
 3. **Sky: Caelum** — **done (2026-10-06): our own painted toon sky** (CLAUDE.md "The sky"). Original notes (a 2008-era library): Direct3D 11 only (OpenGL falls back to a static skydome), Cg/HLSL shaders, and
    two source patches in `deps.ps1`. Replace with **our own stylised sky shader** (gradient bands, sun and moon discs,
    toon clouds) driven by `lighting.object`: one sky on both renderers, art-directable like Genshin's skies, and a
