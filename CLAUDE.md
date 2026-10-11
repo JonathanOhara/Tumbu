@@ -161,7 +161,12 @@ bin\Release\TUMBU.exe -guitour -mute -nofocus       # every GUI screen, Quit to 
   **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0, 2026-10-09; checked again 2026-10-11 with the mip-chain bloom):
   - every object count returns to the same value each match (`objects=flat`) on both renderers;
   - **OpenGL:** about 15 MB in the menu before the first match and 18 MB after it, flat from match 2 on (within ±30 KB
-    per match);
+    per match). The window size adds a little (640x480 17.9 MB, 1024x768 18.1, 1600x900 18.4; repeatable within 5 KB).
+    **The level itself moves by up to about 1.5 MB between days for reasons outside the game**: the build of 2026-10-09
+    noon measured 16.7 MB that day and 17.9 MB on 2026-10-11, alternated with the current build (17.9); not the
+    driver, a reboot, Windows updates, the NVIDIA shader cache, `Separate Shader Objects`, the options or injected DLLs
+    (checked 2026-10-11). So compare OpenGL levels only between builds alternated in one session; the growth per match
+    is what matters;
   - **Direct3D 11:** about 21 to 27 MB in the menu and 29 to 33 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB per
     match for about 18 matches, to about 85 MB, and **stays flat** (84 to 88 MB over matches 18 to 40; private bytes about
     535 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor; docs/SPECIAL_EFFECTS.md,
@@ -176,7 +181,7 @@ bin\Release\TUMBU.exe -guitour -mute -nofocus       # every GUI screen, Quit to 
   the robots were skinned on the GPU, +0.7 to 1.1 after it (2026-10-06); the night lights changed nothing (alternated
   runs, 2026-10-09). The mip-chain bloom (11 render targets instead of 2, 2026-10-11): Direct3D 11 plateau 81 to 88 MB,
   second half -0.2 MB per match; OpenGL +70 KB (18.03 against 18.09 MB, 3 matches each). The OpenGL level had risen from
-  16.7 MB (2026-10-09) to 18.0 MB before it.
+  16.7 MB (2026-10-09) to 18.0 MB before it, but not because of the game (see the OpenGL item above).
 - **Crash report:** any crash (access violation, uncaught exception, `abort`) writes the call stack to
   `ogre.log` and `%USERPROFILE%\Tumbu\crash.log` (`Main.cpp`). RelWithDebInfo has file:line for game code.
   Ogre frames only show exported names, because the deps are built without PDBs.
