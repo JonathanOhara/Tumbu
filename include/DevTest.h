@@ -15,6 +15,7 @@
  *   -measureanims    log how far the feet travel in the walk/run animations of every legs set, then quit
  *   -mute            silence all sounds (the game and every other switch work as usual)
  *   -nofx            no special-attack effects (EffectsManager::spawn does nothing)
+ *   -bloomonly       the final image shows the bloom alone (x3), to see its shape and measure its flicker
  *   -faceshot        with -quitafter: the screenshot looks at the hero's face (eyes, glow, rim light);
  *                    -faceshot=jyn also charges the Jyn special just before it (eye flare)
  *   -jynwalk         -walktest that also casts and concentrates Jyn while walking; logs the ball's offset
@@ -53,6 +54,8 @@ public:
 	static bool isMuted(void){ return mute; }
 	/// -nofx: special-attack effects are not started (to compare performance or memory with and without them).
 	static bool isFxDisabled(void){ return noFx; }
+	/// -bloomonly: the final pass shows the bloom alone, x3 (Lighting sets bloomParams.w).
+	static bool isBloomOnly(void){ return bloomOnly; }
 	/// -aa=0|1: anti-aliasing of this run regardless of options.cfg (-1 = not given).
 	static int getAntiAliasing(void){ return antiAliasing; }
 	/// -sky=0|1: sky quality of this run (0 Low: no clouds, 1 High: clouds) regardless of options.cfg (-1 = not given).
@@ -147,6 +150,7 @@ private:
 	static int faceShot;
 	static bool jynWalk;
 	static bool noFx;
+	static bool bloomOnly;
 	static int antiAliasing;
 	static int sky;
 	static Ogre::Real bench;

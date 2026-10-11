@@ -36,6 +36,7 @@ bool DevTest::mute = false;
 int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
 bool DevTest::noFx = false;
+bool DevTest::bloomOnly = false;
 int DevTest::antiAliasing = -1;
 int DevTest::sky = -1;
 Ogre::Real DevTest::bench = 0;
@@ -77,6 +78,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			mute = true;
 		}else if( arg == "-nofx" ){
 			noFx = true;
+		}else if( arg == "-bloomonly" ){
+			bloomOnly = true;
 		}else if( Ogre::StringUtil::startsWith( arg, "-aa=" ) ){
 			antiAliasing = Ogre::StringConverter::parseInt( arg.substr( 4 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-sky=" ) ){

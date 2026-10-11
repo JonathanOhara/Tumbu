@@ -12,7 +12,7 @@ SAMPLER2D(ssao, 3);
 OGRE_UNIFORMS(
     // x = exposure, y = saturation, z = contrast, w = vignette
     uniform vec4 postParams;
-    // z = bloom strength (x, y: threshold and knee, used by the bright pass)
+    // z = bloom strength (x, y: threshold and knee, used by the bright pass), w = 1: show the bloom alone (DevTest)
     uniform vec4 bloomParams;
     // Lens flare (Lighting::notifyMaterialRender): xy = sun position in texture coordinates, z = strength
     // times how much of the sun is visible (0 = hidden by a wall, behind the camera, moon, or flare off)
@@ -78,7 +78,8 @@ MAIN_DECLARATION
 {
     vec4 shaftsAndFog = texture2D(shafts, oUv);    // rgb = god rays, a = distance fog
     vec3 colour = mix(texture2D(scene, oUv).rgb * texture2D(ssao, oUv).r, skyHorizon.rgb * fogParams.w, shaftsAndFog.a);
-    colour = (colour + texture2D(bloom, oUv).rgb * bloomParams.z + shaftsAndFog.rgb + lensFlare(oUv)) * postParams.x;
+    vec3 bloomed = texture2D(bloom, oUv).rgb * bloomParams.z;
+    colour = (colour + bloomed + shaftsAndFog.rgb + lensFlare(oUv)) * postParams.x;
     colour = softShoulder(colour);
 
     float luma = dot(colour, vec3(0.2126, 0.7152, 0.0722));
@@ -90,6 +91,10 @@ MAIN_DECLARATION
 
     // Impact flash: the whole frame leans towards the flash colour for an instant (anime "white frame").
     colour = mix(colour, screenFlash.rgb, saturate(screenFlash.w));
+
+    // DevTest -bloomonly: the bloom alone (x3, clipped), to see its shape and measure its flicker with -strip.
+    if (bloomParams.w > 0.5)
+        colour = saturate(bloomed * 3.0);
 
     gl_FragColor = vec4(colour, 1.0);
 }

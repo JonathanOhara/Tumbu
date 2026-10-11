@@ -112,7 +112,7 @@ bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to 
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
   `-fpscap=N`, `-quitafter=S`, `-hour=H` (fractional: `20.5` = 20:30), `-mute` (all sounds at volume 0; also works for a normal game), `-nofx` (no
-  special-attack effects or ki aura, to compare frame rate or memory), `-aa=0|1` (anti-aliasing off / SMAA for this run,
+  special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the bloom alone, x3, through `bloomParams.w`: its shape, and its flicker in a `-strip`; `devtest.ps1 -BloomOnly`), `-aa=0|1` (anti-aliasing off / SMAA for this run,
   whatever `options.cfg` says: `devtest.ps1 -AA 0`), `-sky=0|1` (the painted sky without / with its clouds for this run: `-Sky 0`), `-bench=S`
   (`devtest.ps1 -Bench S`: a steady frame-rate measurement; no AI, the camera fixed from the first frame (the standard
   robot view unless `-camera`), a 3 s warm-up, then S seconds counted with a wall-clock timer; logs `[DEVTEST] bench:

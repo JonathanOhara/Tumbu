@@ -409,7 +409,8 @@ void Lighting::apply( const Keyframe &k ){
 	params->setNamedConstant( "rimColour", toVector4( k.rimColour, k.rimStrength ) );
 	params->setNamedConstant( "toonParams", Ogre::Vector4( rampThreshold, rampSoftness, rimPower, specularSoftness ) );
 	params->setNamedConstant( "postParams", Ogre::Vector4( k.exposure, saturation, contrast, vignette ) );
-	params->setNamedConstant( "bloomParams", Ogre::Vector4( bloomThreshold, bloomSoftKnee, bloomStrength, 0 ) );
+	// w = 1: the final pass shows the bloom alone (DevTest -bloomonly).
+	params->setNamedConstant( "bloomParams", Ogre::Vector4( bloomThreshold, bloomSoftKnee, bloomStrength, DevTest::isBloomOnly() ? 1.0f : 0.0f ) );
 	params->setNamedConstant( "aoParams", Ogre::Vector4( aoAmbient, aoDirect, aoTint, contactShadow ) );
 	params->setNamedConstant( "fogParams", Ogre::Vector4( fogStart, fogDensity, fogMax, fogBrightness ) );
 	// Robots only: the fill light that follows the camera, and how much rim stays on the side the sun misses.

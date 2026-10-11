@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-Renderer D3D11|GL] [-VideoMode 1024x768]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # Every run is windowed at -VideoMode (default 1024x768, so test shots and crops stay comparable), whatever
@@ -34,6 +34,7 @@ param(
     [int]$Sky = -1,
     [double]$Bench = 0,
     [switch]$NoFx,
+    [switch]$BloomOnly,
     [switch]$BenchAI,
     [switch]$BenchChase,
     [string]$Name = 'run',
@@ -78,6 +79,7 @@ if ($Hero)        { $gameArgs += "-hero=$Hero" }
 if ($AA -ge 0)     { $gameArgs += "-aa=$AA" }
 if ($Sky -ge 0)    { $gameArgs += "-sky=$Sky" }
 if ($NoFx)        { $gameArgs += '-nofx' }
+if ($BloomOnly)   { $gameArgs += '-bloomonly' }    # the final image shows the bloom alone (x3)
 if ($BenchAI)     { $gameArgs += '-benchai' }
 if ($BenchChase)  { $gameArgs += '-benchchase' }
 if ($Strip -gt 0)  { $gameArgs += "-strip=$Strip" }    # needs -Camera or -Bench (a fixed camera)
