@@ -112,10 +112,12 @@ private:
 	void runBench(void);
 	/// -strip=N: N consecutive frames while the fixed camera pans; true while it still needs frames.
 	bool runStrip(void);
+	Ogre::String windowList(void);
 	int stripDone;
 	bool benchStarted, benchLogged;
 	unsigned long benchFrames, windowFrames;
 	Ogre::Real windowMin, windowMax;
+	std::vector<Ogre::Real> windowMs;	// ms per frame of each 1 s window of the bench (logged as windows_ms)
 	Ogre::Timer benchTimer, windowTimer;
 	Ogre::Timer phaseTimer;
 	double renderMicros, restMicros;	// frameStarted -> frameRenderingQueued, and from there to the next frame

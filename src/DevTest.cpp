@@ -824,6 +824,15 @@ void DevTest::runSwapTest(void){
 	}
 }
 //-------------------------------------------------------------------------------------
+// The ms per frame of every 1 s window of the bench, so bench.ps1 can tell how long a run must be to be steady.
+Ogre::String DevTest::windowList(void){
+	Ogre::String list;
+	for( size_t i = 0; i < windowMs.size(); i++ ){
+		list += ( i == 0 ? " windows_ms=" : "," ) + Ogre::StringConverter::toString( windowMs[i], 4 );
+	}
+	return list;
+}
+//-------------------------------------------------------------------------------------
 void DevTest::runBench(void){
 	// -bench=S: the same frames every run, so two runs differ only by what was changed. No AI (the enemy and the hero
 	// stand idle), the camera fixed from the first frame; after a 3 s warm-up the frames of S seconds are counted with
@@ -855,6 +864,7 @@ void DevTest::runBench(void){
 		Ogre::Real fps = windowFrames * 1000000.0f / windowMicros;
 		windowMin = ( windowMin == 0 || fps < windowMin ) ? fps : windowMin;
 		windowMax = std::max( windowMax, fps );
+		windowMs.push_back( 1000.0f / fps );
 		windowFrames = 0;
 		windowTimer.reset();
 	}
@@ -877,7 +887,7 @@ void DevTest::runBench(void){
 			" shadows=" + Ogre::StringConverter::toString( tumbu->getShadowPreset() ) +
 			// A hidden or minimised window is not rendered: the loop only spins (thousands of fps, no render time).
 			( phaseFrames > 0 && renderMicros / phaseFrames < 20.0 ? " invalid=window-not-rendered" : "" ) +
-			( benchAI ? " ai" : "" ) + ( benchChase ? " chase" : "" ) );
+			( benchAI ? " ai" : "" ) + ( benchChase ? " chase" : "" ) + windowList() );
 	}
 }
 //-------------------------------------------------------------------------------------

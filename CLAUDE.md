@@ -116,8 +116,8 @@ and tell Jonathan why.
 .\scripts\devtest.ps1 -VideoMode 1600x900 -Name big  # window size of the run (default 1024x768; at most 1600x900 for dev runs)
 bin\Release\TUMBU.exe -guitour -mute -nofocus       # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # memory check: 40 matches via the real UI (see "Memory check")
-.\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
-.\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, 2 runs (~5 min); full run for shaders that loop
+.\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated 8 s runs, D3D11 + OpenGL (~4-7 min)
+.\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, exactly 2 rounds (~3 min)
 .\scripts\devtest.ps1 -Clean                        # old devtest-* screenshots/logs to the Recycle Bin (also before a run)
 .\scripts\devtest.ps1 -Bench 2 -Hour 22 -Camera "1.2,1.7,6,0,1.2,-8" -Strip 16 -VideoMode 1600x900 -Name … # frame strip
 .\scripts\strip.ps1 -Before … -After … -Crop "400,560,560,130" -Out "%USERPROFILE%\Tumbu\<feature>\<case>-strip.png"
@@ -226,14 +226,26 @@ materials, textures, GUI) gets a before/after set:
    **compare builds run after run**: `git worktree add bin\scratch\before <commit>`, run `scripts\build.ps1` there, then
    `-Variants "before=@bin\scratch\before","after="`; each tree uses its own exe and media; remove the worktree afterwards.
    Never compare numbers from different sessions: they drift by 5–10 %), on Direct3D 11 and OpenGL, at the same window size for both
-   (`-VideoMode`, default 1024x768; also measure 1920x1080 for anything that costs per pixel: at 1024x768 Direct3D 11 is
-   CPU-bound and hides GPU work). It writes `%USERPROFILE%\Tumbu\<feature>\fps.txt` (fps, ms per frame, spread, the
-   difference to the first variant and whether it is inside the spread) and appends to
+   (`-VideoMode`, default 1024x768). **Measure only what can answer the question:** work per pixel (shaders,
+   post-processing) shows only at 1920x1080 (at 1024x768 Direct3D 11 is CPU-bound and hides GPU work), so run just
+   `-VideoMode 1920x1080` for it; CPU work (game logic, draw calls, skinning) shows best at 1024x768; a question about
+   one renderer takes `-Renderers D3D11` or `GL`. How it runs (tested 2026-10-11 with identical builds): a thrown-away
+   warm-up run per renderer (the first run of a session was always the fastest), 8 s runs (as precise as 15 s; 5 s read
+   a little low), rounds in alternating order (A B, B A, ...) because Direct3D 11 slows by several % over a session, and
+   the difference taken round by round. It always runs `-Runs` rounds (3) and adds rounds up to `-MaxRuns` (6) only
+   while a difference is neither clear (3 standard errors) nor known to `-Resolution` (0.02 ms, the noise floor: two
+   identical builds came out 0.01 to 0.02 ms apart). Each run takes about 15 s, half of it loading and quitting.
+   Several variants in one launch would save little and only for DevTest switches, so each run is its own launch.
+   Call it from PowerShell: through `powershell -File` the variant list arrives as one string. It writes
+   `%USERPROFILE%\Tumbu\<feature>\fps.txt` (fps, ms per frame, spread, the difference to the first variant with
+   +/- 2 standard errors, and `not significant` when it is smaller than that) and appends to
    `%USERPROFILE%\Tumbu\fps-history.csv`. Report fps and ms next to the image folder. A run whose window was hidden or
    minimised does not render (thousands of fps, `render_ms` near 0): DevTest marks it `invalid=window-not-rendered` and
    `bench.ps1` runs it again, so do not cover or minimise the game window while a benchmark runs. `fps.txt` ends with
-   a `note:` line when the runs were noisy (the time outside rendering varied by more than 0.2 ms, or a variant's runs
-   spread by more than 10 %): run again before trusting the difference.
+   a `note:` line when a variant's runs spread by more than 10 % (something else used the PC): run again. (A note on the
+   time outside rendering, `rest_ms`, was dropped: on OpenGL time moves between `render_ms` and `rest_ms` while their
+   sum stays the same, so it fired on steady runs.) Each `.fps` line ends with `windows_ms=` (the ms per frame of every
+   1 s window), to check how long runs must be.
    For the same reason, compare still frames from `-Bench 3` runs when the change should not alter the image: two runs
    of the same build already differ in about 7 % of the pixels (dust, clock), so that is the bar.
 
