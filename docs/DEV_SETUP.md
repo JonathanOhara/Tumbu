@@ -138,15 +138,17 @@ quit.
 - The output goes to `%USERPROFILE%\Tumbu\devtest-<Name>.png` and `.log`. The log has
   `[DEVTEST] t=… fps=… hero=x y z enemy=x y z` every 0.5 s. The arena is about ±9 units, so any robot
   outside that range is a bug.
-- `TUMBU.exe -guitour` walks through every GUI screen and saves `devtest-gui-*.png`: start menu, options,
-  dialogs, HUD, ESC menu, inventory. It then quits to the menu, plays a second match and leaves with
-  Exit. Clicks are real mouse events through the game's input dispatch.
-- **Memory leak check:** `TUMBU.exe -cycles=12` plays 12 matches through the menus, with 3 enemy kills each,
-  then Quit. After each match it logs a `[DEVTEST] memory …` line to `ogre.log`.
-  - Healthy: `heap=` (bytes really allocated) stays flat from the second match on, and every object count
-    (nodes, entities, materials, textures, meshes, widgets) returns to the same value each time.
+- `.\scripts\devtest.ps1 -GuiTour` (the game switch is `-guitour`) walks through every GUI screen and saves
+  `devtest-gui-*.png`: start menu, options, dialogs, HUD, ESC menu, inventory. It then quits to the menu, plays a
+  second match and leaves with Exit. Clicks are real mouse events through the game's input dispatch.
+- **Memory leak check:** `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` (the game switch is `-cycles=N`) plays
+  matches through the menus, with 3 enemy kills each, then Quit, and prints the heap after each match.
+  - Healthy: every object count (nodes, entities, materials, textures, meshes, widgets) returns to the same value each
+    time, and the heap stops growing: on OpenGL from the second match on; on Direct3D 11 after about 18 matches, when
+    an NVIDIA driver pool has filled up (CLAUDE.md, "Memory check", has the expected numbers).
   - `private=` (Windows' figure) moves around by a few MB. That's driver memory and fragmentation, not a
     leak.
+- Frame rate, frame strips, before/after images and the other DevTest switches: CLAUDE.md, "Automated checks".
 - The raw switches are `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-fpscap=N`, `-quitafter=S` and
   `-hour=H`.
 - **Crash reports:** when the game crashes, the call stack is written to `%USERPROFILE%\Tumbu\crash.log`
@@ -167,8 +169,6 @@ quit.
 | Crash right at start | Delete `%USERPROFILE%\Tumbu\ogre.cfg` and pick Direct3D 11 again. Then check `ogre.log`. |
 | Any other crash | Read `%USERPROFILE%\Tumbu\crash.log` (the call stack). Reproduce it in a RelWithDebInfo build for file:line. |
 
-Harmless log noise: `city_6_*.dds` not found. It is a terrain layer in `Arena.scene` that was never in the
-project.
 
 ---
 

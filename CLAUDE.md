@@ -97,7 +97,7 @@ in the way of a run (for example a window behind others that does not render), d
 .\scripts\devtest.ps1 -Hide terrain -Name …         # parts of the scene hidden: which one draws something?
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated 8 s runs, D3D11 + OpenGL (~4-7 min)
 .\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, exactly 2 rounds (~3 min)
-.\scripts\devtest.ps1 -Clean                        # old devtest-* screenshots/logs to the Recycle Bin (also before a run)
+.\scripts\devtest.ps1 -Clean                        # old devtest-* screenshots/logs to the Recycle Bin (not the <feature>\ folders)
 .\scripts\devtest.ps1 -Bench 2 -Hour 22 -Camera "1.2,1.7,6,0,1.2,-8" -Strip 16 -VideoMode 1600x900 -Name … # frame strip
 .\scripts\strip.ps1 -Before … -After … -Crop "400,560,560,130" -Out "%USERPROFILE%\Tumbu\<feature>\<case>-strip.png"
 ```
@@ -171,6 +171,10 @@ in the way of a run (for example a window behind others that does not render), d
   rendered.
 - The arena is about ±9 units, so any robot position outside that range is a bug.
 - Under DevTest the mouse is never captured.
+- `%USERPROFILE%\Tumbu\<feature>\` folders (comparisons, bench results) are not removed by `-Clean`: send a feature's
+  folders to the Recycle Bin once its work is finished and reviewed.
+- For image analysis beyond `compare.ps1` / `strip.ps1` (pixel values, crops, diffs), Python 3 with Pillow and NumPy is
+  installed (user site packages). Write the script to a file (a heredoc can lose backslashes).
 
 ### Before/after comparisons (for every visible change)
 
@@ -436,7 +440,11 @@ materials, textures, GUI) gets a before/after set:
   `twilight` keyframe brings the sun to the horizon before the moon takes over.
 - **The terrain** (the grass around the ring) is still Ogre's terrain with Ogre's own shader: no shadows (its light map is
   off), no torch, neon or energy light, and our patch for its texture seams (docs/OGRE_BUGS.md, 3, 12, 13). The grass
-  remake replaces it (IMPROVEMENT_IDEAS).
+  remake replaces it (IMPROVEMENT_IDEAS). Layout (`Arena.scene`, one page `Page_00000000.ogt`): 513 x 513 heights over
+  196 x 196 units centred on the origin (0.383 units between vertices), drawn at full detail everywhere (max pixel
+  error 0), leaf tiles of 64 quads (24.5 units: tile edges at 0 and ±24.5), several texture layers blended by blend
+  maps (`Terrain::getLayerCount`, `getBlendTextures`); `Demo::createTerrainPhysic` builds the physics heightfield from
+  the same heights.
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.
