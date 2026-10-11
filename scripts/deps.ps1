@@ -64,7 +64,7 @@ function Build-CMake([string]$name, [string]$sourceDir, [string[]]$options) {
 }
 
 # TEMPORARY WORKAROUNDS: Ogre 14.6 bugs, patched in the downloaded source. Each one is to be removed once Ogre fixes it;
-# how to check and how to remove: CLAUDE.md, "Temporary workarounds (remove when fixed upstream)".
+# how to check and how to remove: docs/OGRE_BUGS.md.
 # A patch whose original code is not found (an Ogre upgrade changed it) prints a warning instead of failing silently.
 # - Terrain::prepare() allocates mDeltaData, and for version-1 terrain files (like the arena's 2011 Ogitor page)
 #   allocates it again before reading, leaking 4 * size^2 bytes (1 MB) on every terrain load.
@@ -82,7 +82,7 @@ function Repair-OgreSource([string]$sourceDir) {
         Write-Host "Ogre: patched the terrain delta-data leak in OgreTerrain.cpp" -ForegroundColor DarkGray
     } elseif (-not $text.Contains('TUMBU patch: the buffer was already allocated')) {
         Write-Warning ("Ogre: the terrain delta-data leak patch did not apply (OgreTerrain.cpp changed). Has Ogre fixed it? " +
-            "See CLAUDE.md, 'Temporary workarounds (remove when fixed upstream)'.")
+            "See docs/OGRE_BUGS.md.")
     }
     $file = Join-Path $sourceDir 'RenderSystems\Direct3D11\src\OgreD3D11RenderSystem.cpp'
     $text = [IO.File]::ReadAllText($file)
@@ -96,7 +96,7 @@ function Repair-OgreSource([string]$sourceDir) {
         Write-Host "Ogre: patched the late shared parameters in OgreD3D11RenderSystem.cpp" -ForegroundColor DarkGray
     } elseif (-not $text.Contains('TUMBU patch: shared parameters')) {
         Write-Warning ("Ogre: the D3D11 shared-parameter patch did not apply (OgreD3D11RenderSystem.cpp changed). Has Ogre fixed " +
-            "it? See CLAUDE.md, 'Temporary workarounds (remove when fixed upstream)'.")
+            "it? See docs/OGRE_BUGS.md.")
     }
     # A shader in Ogre's media, so the installed copy is patched too (no Ogre rebuild needed; build.ps1 stages it).
     foreach ($file in @((Join-Path $sourceDir 'Media\Terrain\TerrainSurface.glsl'), (Join-Path $install 'Media\Terrain\TerrainSurface.glsl'))) {
@@ -111,7 +111,7 @@ function Repair-OgreSource([string]$sourceDir) {
             Write-Host "Ogre: patched the terrain layer UV seams in $file" -ForegroundColor DarkGray
         } elseif (-not $text.Contains('TUMBU patch: no mod()')) {
             Write-Warning ("Ogre: the terrain UV seam patch did not apply ($file changed). Has Ogre fixed it? " +
-                "See CLAUDE.md, 'Temporary workarounds (remove when fixed upstream)'.")
+                "See docs/OGRE_BUGS.md.")
         }
     }
 }

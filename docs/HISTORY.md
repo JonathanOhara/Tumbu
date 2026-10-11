@@ -1,0 +1,173 @@
+# TUMBU – done work: what was built, measured and decided
+
+The record of finished work, so CLAUDE.md can stay about how things are now and docs/IMPROVEMENT_IDEAS.md about what is
+still open. Each entry keeps the decisions, the measurements and the alternatives that were tried, so a later change
+does not repeat them. Newest topics are added at the end of their section. The 2011 → Ogre 14 port itself is in
+docs/MODERNIZATION_PLAN.md, the special-attack rework in docs/SPECIAL_EFFECTS.md, Ogre's bugs in docs/OGRE_BUGS.md.
+
+Frame-rate numbers are from `scripts/bench.ps1` on the development PC (RTX 3070), comparing builds run after run in one
+session; they only mean something against the other variant of the same run.
+
+## Lighting and look
+
+- **Lighting overhaul, phases 0–5** (2026-09/10): toon shading, integrated depth shadows, emissive glow and bloom, baked
+  AO, god rays, lens flare, contact shadows, distance fog, dust, SSAO (how each works: CLAUDE.md, "Rendering pitfalls").
+- **Special attacks light the scene** (2026-10, idea from Genshin / Astral Chain): energy balls and impacts cast coloured
+  light on the floor, walls and robots, four energy lights as shared parameters (`tumbuEnergyLights`).
+- **Hero lighting** (2026-10, Genshin style): a soft toon fill that follows the camera, and the rim kept on the shadow
+  side, so robots read in the coliseum's shadow, at dusk and at night; faint where the sun already lights them. Only the
+  robot shader changed (`tumbuHeroLight`, `hero*` keys in `lighting.object`).
+- **Robot metal** (2026-10): a toon sky reflection in flat bands plus one sharp sun streak along the parts (`tumbuMetal`),
+  option C of the mock-ups (https://claude.ai/artifact/Peu3ZK7cPLMfa1MrhDPcZW). One `$metal` value per part (the 2011
+  spec maps carry no metal information: they are greyscale copies of the colour texture). The streak uses the smooth
+  surface normal, so it stays a clean stripe on grooved parts. Softened in four rounds (2026-10-04) to the values now in
+  the `robotNNN.material` files.
+- **Robots skinned on the GPU** (2026-10-04/05). Found with `-bench`: the robot shaders had no hardware skinning, so every
+  animating part was skinned on the CPU and re-uploaded each frame; on Direct3D 11 that went through STAGING "shadow
+  buffers" and one fighting enemy cost +0.63 ms per frame (+0.02 ms on OpenGL): a still scene ran at 1400 fps, a fight at
+  700. With `RobotSkinning.h` Direct3D 11 fights went from 596 to 1371 fps (1.68 → 0.73 ms, 1024x768), the same as a still
+  scene, and the Direct3D 11 driver memory growth per match halved (1.7–2.3 to 0.7–0.8 MB). The first version uploaded a
+  192-row bone array per draw and made OpenGL 0.08 ms slower than CPU skinning (859 against 920 fps); the 32-bone array
+  (96 rows, 2026-10-05) made it as fast or faster (937 fps) and steadier.
+- **SMAA 1x anti-aliasing** (2026-10). Before it a match had no anti-aliasing at all: the window asks for FSAA, but the
+  scene renders into the post-processing HDR texture, which has no MSAA. Tested: FSAA=4 in the start-up dialog is accepted
+  by the window but leaves the match's edges exactly as jagged; it only affects what is drawn straight to the window (the
+  start screen, the GUI). SMAA was chosen over TAA (blurs toon outlines, needs motion vectors) and FXAA. The stencil that
+  limits the blending-weight pass to edges was proven by clearing the weights to 0.5 as a test (46 % of the pixels
+  changed on Direct3D 11, 27 % on OpenGL; normal runs differ by ~7 %). Cost at 1920x1080: Direct3D 11 +0.095 ms without
+  the stencil, +0.060 ms with it; OpenGL +0.015 / +0.031 ms, both inside the noise; nothing at 1024x768.
+- **OpenGL god rays fixed** (2026-10-06): an old "OpenGL stores the depth texture upside down" flip mirrored every view
+  ray (same length, so distances and fog looked right), and on OpenGL the god rays marched into the sunlit air above the
+  walls, washing the view towards the sun white. The flip is gone (god rays and SSAO).
+- **Dust density** (2026-10-06): about 1200 motes, the middle between the first 2000 (too busy) and 350 (too sparse).
+- **The terrain's light map turned off** (2026-10-06): it drew still, wrong shadows on the grass (docs/OGRE_BUGS.md, 12).
+- **Mip-chain bloom** (2026-10-10/11), replacing a bright pass to quarter size and two H+V blurs:
+  - Chosen from a prototype rendered in game (https://claude.ai/artifact/DwgAko9KuG5ZwW15Eh8x1r): "Balanced" (equal
+    weights on six levels) over "tight" (1 0.7 0.45 0.25 0.12 0.06) and "wide anime glow" (0.4 0.5 0.7 1 1.3 1.6).
+  - Against the old bloom, hot cores keep their shape (the punch and Genki Dama centres, the three neon ropes, which used
+    to melt into one red band), and the glow crawls about 4 times less while the camera pans (bloom-only frame strip of
+    the T's neon tube: 1.25 → 0.30 %). The energy effects needed no retuning (checked 2026-10-11).
+  - Cost: +0.075 ms at 1920x1080 against the old bloom on both renderers, nothing at 1024x768; the budget was +0.05 ms.
+    Five levels, a 4-tap first step and R11G11B10 targets were no cheaper on Direct3D 11. A tent filter in the final pass
+    cost 0.04 ms and looked the same as one bilinear sample.
+  - Where the cost goes (2026-10-11, builds with the chain removed, with its 11 passes writing black without reading
+    anything, and with 3 levels): the whole chain costs about 0.10 ms on Direct3D 11 and 0.14 ms on OpenGL at 1920x1080,
+    and 0.05 to 0.06 ms of that is the passes themselves (some 5 microseconds each, however small); the sampling is the
+    rest, mostly the two half-size passes. Three levels instead of six save only 0.015 / 0.04 ms. Ways to lower it are
+    in docs/IMPROVEMENT_IDEAS.md; none is worth it at 1.4 % of a 144 fps frame.
+- **Khronos PBR Neutral tone mapping tried** (2026-10-10), softShoulder kept: on our display-space image PBR Neutral made
+  every scene about 10 % darker, nearly doubled the near-black pixels at night (its toe acts on visible darks: robot004's
+  navy armour sank), and its highlight whitening turned the deep-red neon pink (rope 238,12,7 became 239,91,91). Without
+  the whitening the neon stayed red but the toe still darkened. Jonathan liked both looks; revisit with a linear workflow.
+- **Robot texture filtering checked** (2026-10-11): anisotropic filtering on the robot texture units changed nothing
+  (identical still shots, same frame-strip crawl); the robots' fine lines are not texture aliasing. Not kept.
+
+## Arena remake (2026-10-06 to 10-09)
+
+- **Art direction** decided after seven rounds of Blender mock-ups rendered from the game's cameras and lighting
+  (https://claude.ai/artifact/LC8UBRa14SbNG46ANuTAu7):
+  - Coliseum: sandstone with moss (big warm ashlar blocks, running bond, two ochre tones, recessed bevelled joints;
+    sparse two-tone toon moss low on the walls, on the ledges and in the joints, its own masked layer). Rejected: grey
+    castle stone (with grey tiles the ring and the walls read as one material), worn ancient, tournament (painted band),
+    dark basalt.
+  - Ring: the hexagon, posts and ropes kept (no gameplay or physics change); the floor became grey tournament stone tiles
+    (1.6 units, four flat greys, a lighter border course). Rejected: a navy canvas mat (blue robot004 disappears on it), a
+    stone platform or a hybrid with an inlaid mat (no ropes means invisible walls or a ring-out rule), white tiles.
+  - Centre: a charcoal painted T (the robots' chest emblem) with a red neon tube inside its edge; ropes in red neon (a
+    white-hot core read pink), glowing at dusk and night.
+  - Field: the grass stays (Ogre terrain). Sky: "painted bands".
+  - Contrast checked on white robot001, blue robot004 and black robot005 at 09, 13, 17, 19 and 22 h.
+  - Stone look: carved masonry from the chase camera's low angle (explainer: https://claude.ai/artifact/3Dr1UwKxTmSTafxekL48Py,
+    option 4).
+- **Shapes** (`scripts/blender/arena_shapes.py`): plinth course, chamfered hard edges, weighted normals; no frame-rate cost.
+- **Textures** generated rather than baked from sculpts (`scripts/arena-textures.ps1`, Blender's numpy): every map of a
+  set comes from one height field, so they agree by construction, and every set tiles; the moss is a field in the height
+  map's G channel that the shader thresholds.
+- **No mesh tangents**: the shader builds the tangent frame per pixel (`tumbuTangentFrame`), the same on both renderers;
+  the meshes got world-scale texture UVs instead (walls unwrapped so v = height / 4.8 m and the courses run level all
+  around; floors mapped from above), and the ring its own floor and rope materials. The arena meshes had carried unused
+  tangents (blender2ogre writes them by default) until 2026-10-09: 27 % of their size.
+- **Stone shader**: normal map, moss and the ring decal, no frame-rate cost (Direct3D 11 driver memory +1.1 MB per match
+  at the time). Then parallax occlusion with hard toon self-shadows: a single linear step left layer stripes on the steep
+  block edges, so the search ends with 4 halvings; the self-shadow only counts a stone at least 10 % of the depth higher
+  (the faces' undulation shaded itself). Cost at 1920x1080, low wall view: Direct3D 11 +0.05 ms (noise), OpenGL +0.18 ms
+  (+0.41 ms with 16/32 layers and a longer shadow march).
+- **Red neon**: no measurable cost (22:00, wide view, both renderers and sizes).
+- **BC7/BC5/BC4 textures** (`scripts/compress-arena-textures.ps1`): the arena's textures in video memory from about 241 MB
+  to 49 MB, slightly faster (low wall view, 1920x1080: Direct3D 11 +1.9 %, OpenGL +1.7 %). texconv converted the
+  sRGB-tagged PNGs to linear until it got `--ignore-srgb` (everything darker, the moss gone).
+- **The painted toon sky** replaced Caelum, a 2008-era library that was Direct3D 11 only (OpenGL fell back to a static
+  skydome), used Cg/HLSL shaders and needed two source patches in `deps.ps1`. Same cost as Caelum (the sky filling the
+  view, 1920x1080: Direct3D 11 +0.006 ms, OpenGL -0.011 ms). The 2011 god-ray march over sky pixels washed the bands out,
+  so it is short now.
+- **blender2ogre's sticky settings** turned the arena on its side once (2026-10-06): the export had relied on the default
+  `SWAP_AXIS`, and a robot export had saved another; every export script now sets it.
+- **The terrain's missing layer** (2026-10-06): the 2011 page had a round patch beside the ring painted with Ogitor's own
+  `city_6` rock, never shipped, which drew black; the page now names the grass textures for that layer (the `.ogt` chunk
+  lengths and checksums were fixed by hand).
+
+## Night lights (2026-10-09)
+
+- Direction from Blender mock-ups rendered with the game's cameras (https://claude.ai/artifact/4X5cxLXTGZuXMQucDSryq8):
+  wall torches in iron brackets (chosen; then 25 % fewer: 17, one every 20 degrees), against stadium lamp posts (they
+  turned the night into day and stood in the camera's way), braziers on the ledges (lit the upper wall, not the fight)
+  and lanterns in the windows (lit almost nothing). Neon light "soft" (strong turned the ring pink), mood "balanced" (the
+  night's moon and ambient x0.75, dusk x0.85).
+- Fixed on the way: the flame's height from its UVs read the wrong way round (blender2ogre writes 1 - v), so the flame's
+  base moved against the cup; the iron brackets lit by their own flame turned the colour of the wall; a mirrored bracket
+  matrix built the plate inside-out (z-fighting); the neon first had the torches' 4 toon bands and drew rings around the
+  ends of the T; the neon's light was too faint under the ropes at first (`neonLight 2`, `neonLightReach 2`).
+- The inventory preview took the arena's lighting (the T's neon turned its feet pink at night): `PreviewLighting` now
+  sets neutral values around each preview render, which exposed Ogre's late shared parameters on Direct3D 11
+  (docs/OGRE_BUGS.md, 1).
+- Cost (22:00, chase view, against the build before): 1920x1080 Direct3D 11 +0.070 ms, OpenGL +0.045 ms; 1024x768 inside
+  the noise; by day about +0.02 / +0.03 ms. Memory unchanged.
+
+## Memory
+
+- The Direct3D 11 heap growth per match is an NVIDIA driver pool tied to the post-processing compositor, not a leak: it
+  rises for about 18 matches and levels off (40-match runs, 2026-10-09). History of the rate: +1.7 to 2.3 MB per match
+  (12 matches) before the GPU skinning, +0.7 to 1.1 after it (2026-10-06); the night lights changed nothing (2026-10-09);
+  the mip-chain bloom (11 render targets instead of 2, 2026-10-11): plateau 81 to 88 MB, second half -0.2 MB per match,
+  OpenGL +70 KB.
+- The Ogre terrain leaked 1 MB per match (docs/OGRE_BUGS.md, 2).
+- **The OpenGL heap level** (2026-10-11): it measured 16.7 MB on 2026-10-09 and 17.9 to 18.0 MB on 2026-10-11. The
+  2026-10-09 build, rebuilt and alternated with the current one, also measured 17.9, so the game is not the cause. Ruled
+  out: the window size (it adds 640x480 17.9 MB, 1024x768 18.1, 1600x900 18.4), the driver (installed 2026-10-06), a
+  reboot (17.93 MB before and after one), Windows updates, the NVIDIA OpenGL shader cache, `Separate Shader Objects`, the
+  options and DLLs injected into the process. Cause unknown; the level is flat across matches.
+
+## Tools and test method
+
+- **DevTest switches** added along the way (CLAUDE.md lists them all): `-bench` (2026-10-04), `-strip` and `-bloomonly`
+  (2026-10-10, for the bloom's flicker), `-nofocus` (2026-10-11: the window no longer takes Jonathan's keyboard focus;
+  without it the game took the focus as soon as its window appeared), `-hide` (2026-10-11, to find which object draws
+  something), `-nohud` (2026-10-11, clean review shots); `devtest.ps1 -GuiTour` (the GUI tour in a dev-size window).
+- **Throwaway builds in `bin\scratch\`** (2026-10-10): Norton held every `TUMBU.exe` it found in a new place, so each run
+  waited for its scan; `bin\` is excluded.
+- **Dev runs at 1600x900 or smaller** (2026-10-10): a window as big as the screen took over Jonathan's work.
+- **Benchmark method** (2026-10-11, tested with identical builds and a five-variant run):
+  - 8 s runs measure the same as 15 s (5 s read a little low); within a run the 1 s windows spread by 4–5 %.
+  - The first run of a session was always the fastest (a cold GPU), so each renderer starts with a thrown-away warm-up.
+  - Direct3D 11 slows by several % over a session (759 → 704 fps in five rounds); with a fixed order the second variant
+    looked ~0.02 ms slower, so rounds alternate (A B, B A) and the difference is taken round by round.
+  - Identical builds come out 0.01 to 0.02 ms apart: the noise floor. Three rounds settle a clear difference.
+  - Each run takes about 15 s, of which about 4 s is loading and quitting, so several variants in one launch would save
+    little (and only for DevTest switches: 7 of the 34 variants in the history were switches, the rest builds).
+  - The old "time outside rendering varied" warning was a false alarm: on OpenGL time moves between `render_ms` and
+    `rest_ms` while their sum stays the same.
+  - Over the history (fps-history.csv), OpenGL is as steady as Direct3D 11 in a typical benchmark (median spread 2.7 %
+    against 2.8 % at 1920x1080), with a worse tail (the worst tenth spread 26 % against 11 %).
+- **Frame-strip checks** (2026-10-11): torch flames (3.3 % crawl still, 3.2 % panning: their own flicker), dust (1.8 /
+  2.0 %, smooth), SMAA on the robot outline (1.02 → 0.89 %), the ropes (0.18 %): nothing to fix.
+- **PowerShell's `bash` is WSL** (2026-10-10): the variant switches of a bloom comparison never happened, so its runs
+  were void.
+
+## Incidents
+
+- **GPU hang during a benchmark** (2026-10-11, 11:40): the NVIDIA driver timed out and Windows reset it (LiveKernelEvent
+  141 and 1b8, watchdog dumps in `C:\Windows\LiveKernelReports`), with a corrected PCI Express error on the root port of
+  the graphics card at the same second (WHEA 17). Every OpenGL launch then crashed while its renderer loaded, until the
+  PC hung and was restarted (Kernel-Power 41). The game was running at ~700 fps then, with no long GPU work, so it points
+  at the driver or the card's PCIe link, not the game. LiveKernelEvent 193 (driver live dumps) also appear on several
+  days since 2026-09-15. If it happens again: look at these events first.

@@ -54,12 +54,14 @@ Paths below are the ones on Jonathan's machine in Sep 2026. Adjust them if thing
 - To rebuild Ogre's own dependencies from scratch, delete `ogredeps` first. Ogre only builds them when that
   folder does not exist.
 - The script patches upstream problems in the downloaded sources (temporary: how to check whether Ogre fixed them and
-  how to remove each patch is in CLAUDE.md, "Temporary workarounds (remove when fixed upstream)"):
+  how to remove each patch is in docs/OGRE_BUGS.md):
   - an Ogre 14.6 terrain memory leak (`Repair-OgreSource`)
   - Ogre 14.6's Direct3D 11 renderer uploading a pass's constants before copying the shared parameters into them (one
     bind late; `Repair-OgreSource`, 2026-10-09). After pulling this change, run `.\scripts\deps.ps1 -Only ogre` once.
+  - Ogre 14.6's terrain shader drawing light seams along each texture repeat (`Media/Terrain/TerrainSurface.glsl`,
+    2026-10-11); patched in the source and in the installed media, so `build.ps1` is enough after it.
 
-  Both patches are idempotent, so running the script again is safe.
+  The patches are idempotent, so running the script again is safe.
 
 ### A.3 Build and run from the command line
 

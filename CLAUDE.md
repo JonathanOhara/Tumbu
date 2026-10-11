@@ -8,7 +8,12 @@ Jonathan made all code, models, textures, music and UI. In Sep 2026 it was reviv
 - Step-by-step setup (tools, dependencies, building in Visual Studio, tests, troubleshooting):
   **[docs/DEV_SETUP.md](docs/DEV_SETUP.md)**.
 - Port history and decisions: **[docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md)**.
-- Backlog of ideas (lighting, environment, special attacks, art, installer, gameplay): **[docs/IMPROVEMENT_IDEAS.md](docs/IMPROVEMENT_IDEAS.md)**.
+- Backlog of open ideas (lighting, environment, special attacks, art, installer, gameplay): **[docs/IMPROVEMENT_IDEAS.md](docs/IMPROVEMENT_IDEAS.md)**.
+- **Done work, with its decisions, measurements and the alternatives tried: [docs/HISTORY.md](docs/HISTORY.md).** Look
+  there for why something is the way it is (a past choice, a cost, a rejected option) before changing it. When a piece
+  of work is finished, move its story (dates, numbers, what was tried) there and keep only how it works in CLAUDE.md and
+  one line in IMPROVEMENT_IDEAS.md.
+- Ogre bugs and quirks we met, and our patches: **[docs/OGRE_BUGS.md](docs/OGRE_BUGS.md)**.
 - Special-attack effects (Genki Dama Jyn, ki blasts, impacts; the effect system and its tests):
   **[docs/SPECIAL_EFFECTS.md](docs/SPECIAL_EFFECTS.md)**.
 - **Before any work on robots, models, parts, animations, specials or the game's look and feel, read
@@ -42,64 +47,23 @@ from each one you defeat.
 - **Norton 360 on this PC** can block a freshly built `TUMBU.exe` ("Acesso negado" / Access denied, or a
   process stuck at about 2 MB). The user has to allow it or exclude `bin\`. Git over HTTPS needs
   `git -c http.sslBackend=schannel` because Norton intercepts TLS.
-- **`bash` typed in PowerShell starts WSL** (`C:\Windows\System32\bash.exe` comes first on the PATH), not Git Bash: it sees another file
-  system and another environment, and a script run that way failed silently (2026-10-10: the variant switches of a
-  bloom comparison never happened, so its runs were void). Write helper scripts in PowerShell, or call Git Bash by its
-  full path (`C:\Program Files\Git\bin\bash.exe`).
+- **`bash` typed in PowerShell starts WSL** (`C:\Windows\System32\bash.exe` comes first on the PATH), not Git Bash: it
+  sees another file system and environment, and scripts run that way fail silently. Write helper scripts in PowerShell,
+  or call Git Bash by its full path (`C:\Program Files\Git\bin\bash.exe`).
 - **Run every game build from inside the repo's `bin\`** (excluded from Norton). Throwaway copies, prototypes and
   worktrees for comparisons go in **`bin\scratch\<name>\`** (git-ignored, kept between Claude sessions), never in
   `%TEMP%`, the session scratchpad or a sibling folder such as `..\Tumbu-before`: Norton holds every `TUMBU.exe` it
   finds in a new place, and each run waits for its scan. Remove a `bin\scratch\<name>\` folder (and `git worktree
   remove` a worktree) when its work is done.
 
-## Temporary workarounds (remove when fixed upstream)
+## Ogre bugs and dependency workarounds
 
-Code that exists **only** because of a bug in a dependency. Each entry says how to tell whether upstream fixed it and
-how to remove our workaround. **Check this list whenever a dependency is upgraded** (`$OgreVersion` etc. in
-`scripts/deps.ps1`), and add an entry here for every new workaround of this kind. `deps.ps1` prints a warning when a
-patch no longer finds the code it patches: then look here.
-
-1. **Ogre: shared parameters reach a pass one bind late on Direct3D 11.**
-   - Bug: in Ogre 14.6.0 (and on Ogre `master` as of 2026-10-09; not reported, searched the OGRECave/ogre issues and the
-     forums), `D3D11RenderSystem::bindGpuProgramParameters` (`RenderSystems/Direct3D11/src/OgreD3D11RenderSystem.cpp`)
-     uploads the pass's constants (`updateDefaultUniformBuffer`) **before** it copies the shared parameters into them
-     (`params->_updateSharedParams()`). OpenGL copies first.
-   - Why it matters: our lighting values are a shared set (`TumbuLighting`). On Direct3D 11 a draw got the values of its
-     pass's previous bind, so a value changed for one render never reached it: the robot preview (`PreviewLighting` in
-     `GUI.cpp`, `Lighting::beginNeutralLighting`) kept the arena's night lighting.
-   - Our workaround: `Repair-OgreSource` in `scripts/deps.ps1` inserts the copy before the upload (marked
-     `// TUMBU patch` in the Ogre source; `.\scripts\deps.ps1 -Only ogre` applies it and rebuilds). Cost: none (bench).
-     We kept the patch instead of moving `TumbuLighting` into a constant buffer bound on its own (which the bug does not
-     hit), because that means rewriting how every shader declares the lighting values.
-   - Fixed upstream when: in the new Ogre's `bindGpuProgramParameters`, `_updateSharedParams()` runs before
-     `updateDefaultUniformBuffer` (or an Ogre issue/commit says so).
-   - To remove: delete the D3D11 block of `Repair-OgreSource`, rebuild Ogre, and check on Direct3D 11:
-     `bin\Release\TUMBU.exe -guitour -hour=22 -mute -nofocus`; in `devtest-gui-pause-inventory.png` the preview robot must be white
-     (neutral light), not night blue. Then delete this entry and its line in the Rendering pitfalls.
-   - With an unpatched Ogre that still has the bug, the preview needs its own fix: copy the shared values into the
-     preview's passes right after setting and after restoring them (`_copySharedParams()`; commit 86720f7).
-2. **Ogre: terrain delta-data leak** (1 MB per match).
-   - Bug: in Ogre 14.6.0 (and on `master` as of 2026-10-09), `Terrain::prepare(StreamSerialiser&)`
-     (`Components/Terrain/src/OgreTerrain.cpp`) allocates `mDeltaData` a second time for version-1 terrain files (our
-     2011 Ogitor page) without freeing the first buffer.
-   - Our workaround: `Repair-OgreSource` removes the second allocation (marked `TUMBU patch`).
-   - Fixed upstream when: the line after `// Load delta data` in the version-1 branch no longer allocates.
-   - To remove: delete the terrain block of `Repair-OgreSource`, rebuild Ogre, and run
-     `.\scripts\devtest.ps1 -Cycles 12 -Renderer GL`: the heap must stay flat from match 2 on. Then delete this entry.
-3. **Ogre: seams along the terrain's texture repeats** (thin light dashed lines on the ground around the ring).
-   - Bug: in Ogre 14.6.0 (and on `master` as of 2026-10-11; no issue found), `blendTerrainLayer` in
-     `Media/Terrain/TerrainSurface.glsl` computes each layer's UV as `mod(uv0 * uvMul, 1.0)`. The UV jumps from 1 to 0
-     where the texture repeats, the GPU takes the mip level from that jump and samples the smallest mip (the texture's
-     average colour), so a 1 to 2 pixel seam runs along every repeat line of the layer, dashed where the layer's blend
-     weight drops below 1/255. Both renderers, any distance. Found 2026-10-11 in the sand patch beside the ring.
-   - Our workaround: `Repair-OgreSource` replaces it by `uv0 * uvMul` (the layer samplers wrap anyway; marked
-     `TUMBU patch`), in the Ogre source and in the installed media (`$install\Media`), so `.\scripts\deps.ps1 -Only ogre`
-     is not needed: re-running the patch and `build.ps1` (which stages `OgreMedia\`) is enough. Cost: none.
-   - Fixed upstream when: `TerrainSurface.glsl` no longer wraps the layer UV with `mod`, or samples with gradients of the
-     unwrapped UV.
-   - To remove: delete the `TerrainSurface.glsl` block of `Repair-OgreSource`, reinstall Ogre's media, and check
-     `.\scripts\devtest.ps1 -Bench 1 -Hour 13 -Camera "4,2.5,9,1.5,0,16" -VideoMode 1600x900`: no light dashed line runs
-     across the sand. Then delete this entry. (When the grass gets its own shader, see "Grass remake", this goes too.)
+**Every Ogre bug, limitation or surprising behaviour goes into [docs/OGRE_BUGS.md](docs/OGRE_BUGS.md)**: what happens,
+where in Ogre, our workaround, and for patched ones how to tell that upstream fixed it and how to remove the patch.
+`Repair-OgreSource` in `scripts/deps.ps1` patches three Ogre bugs (marked `TUMBU patch`): the late shared parameters on
+Direct3D 11, the terrain delta-data leak and the seams along the terrain's texture repeats. **Read OGRE_BUGS.md whenever a
+dependency is upgraded** (`$OgreVersion` etc. in `deps.ps1`); `deps.ps1` warns when a patch no longer finds its code. A
+workaround for a bug in another dependency gets an entry in the same style here.
 
 ## Automated checks (use after every change)
 
@@ -107,29 +71,30 @@ patch no longer finds the code it patches: then look here.
 them. `devtest.ps1` passes `-mute` by default; add `-mute` to every direct `TUMBU.exe` command and use
 `run.ps1 -Mute`. Only drop it (`devtest.ps1 -Sound`) when the user asks to hear something.
 
-**Keep dev runs windowed at 1600x900 or smaller.** Jonathan works on other things while tests run, and a window as big as his screen takes over what he is doing. Every test, screenshot and debugging run uses a window of at most
-1600x900 (`devtest.ps1` default 1024x768; `-VideoMode 1600x900` for shots meant for review). Use 1920x1080 or full
-screen only when it is really needed, such as the 1920x1080 frame-rate measurement of per-pixel work in `bench.ps1`. A
-`TUMBU.exe` started directly takes Jonathan's play window from `ogre.cfg` (1920x1080), so prefer `devtest.ps1`, which
-sets the window for its run.
+**Keep dev runs windowed at 1600x900 or smaller.** Jonathan works on other things while tests run, and a window as big as
+his screen takes over what he is doing. Every test, screenshot and debugging run uses a window of at most 1600x900
+(`devtest.ps1` default 1024x768; `-VideoMode 1600x900` for shots meant for review). Use 1920x1080 or full screen only when
+it is really needed, such as the 1920x1080 frame-rate measurement of per-pixel work in `bench.ps1`. A `TUMBU.exe` started
+directly takes Jonathan's play window from `ogre.cfg` (1920x1080), so prefer `devtest.ps1`, which sets the window for its
+run (all its modes, `-GuiTour` and `-Cycles` included).
 
 **Never take Jonathan's keyboard focus.** A game window Claude starts opens without activating (`-nofocus`: SDL's
 `SDL_WINDOW_NO_ACTIVATION_WHEN_SHOWN` hint), so his typing keeps going to his own window. `devtest.ps1` passes it, and
 `bench.ps1` sets the hint in the environment (older `@folder` trees inherit it); add `-nofocus` to every direct
-`TUMBU.exe` command and to `run.ps1 -Mute -- -nofocus`. A game Jonathan starts himself keeps the normal behaviour. DevTest
-input goes through the game's own dispatch, so an unfocused run still plays and renders normally (checked on both
-renderers, 2026-10-11). If the missing focus gets in the way of a run (for example a window behind others that does not
-render, or a check that needs a focused window), drop it for that run (`devtest.ps1 -Focus`, or leave `-nofocus` out)
-and tell Jonathan why.
+`TUMBU.exe` command and to `run.ps1 -Mute -- -nofocus`. A game Jonathan starts himself keeps the normal behaviour. An
+unfocused run plays and renders normally (DevTest input goes through the game's own dispatch). If the missing focus gets
+in the way of a run (for example a window behind others that does not render), drop it for that run (`devtest.ps1
+-Focus`, or leave `-nofocus` out) and tell Jonathan why.
 
 ```powershell
 .\scripts\devtest.ps1 -QuitAfter 7 -Name check      # auto-starts a match, walks the hero, screenshots, quits
 .\scripts\devtest.ps1 -FpsCap 30 -Name fps30        # same, frame rate capped (compare movement across FPS)
 .\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High; -Hour 20.5 = 20:30)
 .\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
-.\scripts\devtest.ps1 -VideoMode 1600x900 -Name big  # window size of the run (default 1024x768; at most 1600x900 for dev runs)
-bin\Release\TUMBU.exe -guitour -mute -nofocus       # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
+.\scripts\devtest.ps1 -VideoMode 1600x900 -NoHud -Name big  # window size (default 1024x768; at most 1600x900), no HUD
+.\scripts\devtest.ps1 -GuiTour [-Hour 22]          # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # memory check: 40 matches via the real UI (see "Memory check")
+.\scripts\devtest.ps1 -Hide terrain -Name …         # parts of the scene hidden: which one draws something?
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated 8 s runs, D3D11 + OpenGL (~4-7 min)
 .\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, exactly 2 rounds (~3 min)
 .\scripts\devtest.ps1 -Clean                        # old devtest-* screenshots/logs to the Recycle Bin (also before a run)
@@ -137,33 +102,39 @@ bin\Release\TUMBU.exe -guitour -mute -nofocus       # every GUI screen, Quit to 
 .\scripts\strip.ps1 -Before … -After … -Crop "400,560,560,130" -Out "%USERPROFILE%\Tumbu\<feature>\<case>-strip.png"
 ```
 
-- `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
-  `-fpscap=N`, `-quitafter=S`, `-hour=H` (fractional: `20.5` = 20:30), `-mute` (all sounds at volume 0; also works for a normal game), `-nofocus` (the window opens without taking the keyboard focus), `-nofx` (no
-  special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the bloom alone, x3, through `bloomParams.w`: its shape, and its flicker in a `-strip`; `devtest.ps1 -BloomOnly`), `-hide=a,b` (hides parts of the scene for the run, to find which one draws something: `terrain`, `dust`, `sky`, or an entity without its `Entity` suffix, `arena`, `coliseum`, `torches`; `devtest.ps1 -Hide terrain`), `-aa=0|1` (anti-aliasing off / SMAA for this run,
-  whatever `options.cfg` says: `devtest.ps1 -AA 0`), `-sky=0|1` (the painted sky without / with its clouds for this run: `-Sky 0`), `-bench=S`
-  (`devtest.ps1 -Bench S`: a steady frame-rate measurement; no AI, the camera fixed from the first frame (the standard
-  robot view unless `-camera`), a 3 s warm-up, then S seconds counted with a wall-clock timer; logs `[DEVTEST] bench:
-  fps=… ms=… window_min=… window_max=… render_ms=… rest_ms=… render=… size=… aa=… sky=…`, where `render_ms` is the time
-  from `frameStarted` to `frameRenderingQueued` (Ogre updating animation/skinning, culling, draw calls) and `rest_ms` the
-  rest (game logic, Present); `-benchai` keeps the AI, `-benchchase` the chase camera) and
-  `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first:
-  `devtest.ps1 -FaceShot [-Jyn]`), `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point:
-  `devtest.ps1 -Camera "…"`, handy for close-ups of the arena), `-posedump` (every bone of every robot part, animation and frame as Ogre poses it, into `%USERPROFILE%\Tumbu\posedump.txt`;
-  compare a dump before and after a robot export), `-hero=robotNNN` (the hero wears all five parts of that set: `devtest.ps1 -Hero robot005`, to check a
-  given robot's look), `-swaptest` (charges Jyn, pauses, re-selects the head in the inventory so every part and its ki aura
-  shell is rebuilt, resumes and charges again; logs the aura level after each step; use with `-quitafter=9`) and `-flytest` (fly camera: F, fly, Esc
-  without opening the pause menu, F again; logs the game state and camera after each step) and `-jynwalk`
-  (`devtest.ps1 -JynWalk`: casts and concentrates Jyn while the hero walks and logs the ball's offset from the point
-  above the hero where it gathers; it must converge while walking), `-fxtest=NAME` / `-fxtime=S` (starts
-  `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the
-  side: `devtest.ps1 -FxTest NAME [-FxTime 0.3]`; `effect test` is a calibration light + flash; `move:NAME` holds
-  it and circles the spot so trails show; `-fxtest=special:jyn|punch|kick|jynthrow` makes the hero attack instead, `-fxdistance=D`
-  sets the camera distance), `-jynhit[=D]` (the enemy stands still D units in front, no AI, and the hero throws a Genki
-  Dama at it: a real hit; `-jynhit=enemy`: the enemy throws at the hero; `devtest.ps1 -JynHit 6`), `-strip=N` /
-  `-stripstep=D` (with a fixed camera, `-camera` or `-bench`: after the screenshot the camera pans sideways D units per
-  frame, 0.003 by default, about a third of a pixel at 15 units, and N consecutive frames are saved as
-  `devtest-strip-NN.png`; `devtest.ps1 -Strip N [-StripStep D]` renames them `devtest-<Name>-strip-NN.png`). Strips show
-  flicker and crawl of small bright details (bloom, sparks, thin neon) that one screenshot cannot.
+- `DevTest` (`src/DevTest.cpp`) handles these switches:
+  - Modes: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`, `-posedump` (every bone of every robot
+    part, animation and frame as Ogre poses it, into `%USERPROFILE%\Tumbu\posedump.txt`; compare a dump before and after
+    a robot export), `-swaptest` (charges Jyn, pauses, re-selects the head in the inventory so every part and its ki aura
+    shell is rebuilt, resumes and charges again; logs the aura level after each step; use with `-quitafter=9`),
+    `-flytest` (fly camera: F, fly, Esc without opening the pause menu, F again; logs the state and camera after each
+    step), `-jynwalk` (`devtest.ps1 -JynWalk`: casts and concentrates Jyn while the hero walks and logs the ball's offset
+    from the point above the hero where it gathers; it must converge while walking).
+  - Run settings: `-fpscap=N`, `-quitafter=S`, `-hour=H` (fractional: `20.5` = 20:30), `-mute` (all sounds at volume 0;
+    also works for a normal game), `-nofocus`, `-nohud` (no HP/AP bars, log or clock: cleaner review shots;
+    `devtest.ps1 -NoHud`), `-aa=0|1` (anti-aliasing off / SMAA for this run, whatever `options.cfg` says), `-sky=0|1`
+    (the painted sky without / with its clouds), `-hero=robotNNN` (the hero wears all five parts of that set), `-nofx`
+    (no special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the
+    bloom alone, x3: its shape, and its flicker in a strip), `-hide=a,b` (hides `terrain`, `dust`, `sky`, or an entity
+    without its `Entity` suffix: `arena`, `coliseum`, `torches`).
+  - Shots: `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first),
+    `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point), `-fxtest=NAME` / `-fxtime=S` (starts
+    `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the side;
+    `effect test` is a calibration light + flash; `move:NAME` holds it and circles the spot so trails show;
+    `-fxtest=special:jyn|punch|kick|jynthrow` makes the hero attack instead, `-fxdistance=D` sets the camera distance),
+    `-jynhit[=D]` (the enemy stands still D units in front, no AI, and the hero throws a Genki Dama at it: a real hit;
+    `-jynhit=enemy`: the enemy throws at the hero), `-strip=N` / `-stripstep=D` (with a fixed camera, `-camera` or
+    `-bench`: after the screenshot the camera pans sideways D units per frame, 0.003 by default, about a third of a pixel
+    at 15 units, and N consecutive frames are saved; `devtest.ps1 -Strip N` names them `devtest-<Name>-strip-NN.png`).
+    Strips show flicker and crawl of small bright details (bloom, sparks, thin neon) that one screenshot cannot.
+  - `-bench=S` (`devtest.ps1 -Bench S`): a steady frame-rate measurement: no AI, the camera fixed from the first frame
+    (the standard robot view unless `-camera`), a 3 s warm-up, then S seconds counted with a wall-clock timer; logs
+    `[DEVTEST] bench: fps=… ms=… window_min=… window_max=… render_ms=… rest_ms=… render=… size=… aa=… sky=… shadows=…
+    windows_ms=…`, where `render_ms` is the time from `frameStarted` to `frameRenderingQueued` (Ogre updating
+    animation/skinning, culling, draw calls), `rest_ms` the rest (game logic, Present) and `windows_ms` the ms per frame
+    of every 1 s window; `-benchai` keeps the AI, `-benchchase` the chase camera.
+  - Most have a `devtest.ps1` parameter of the same name (`-FaceShot [-Jyn]`, `-Camera "…"`, `-Hero robot005`, `-AA 0`,
+    `-Sky 0`, `-FxTest NAME [-FxTime 0.3]`, `-JynHit 6`, `-BloomOnly`, `-Hide …`, `-NoHud`, …).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - **Memory check:** `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` runs `TUMBU.exe -cycles=40` (40 matches through
@@ -172,33 +143,27 @@ bin\Release\TUMBU.exe -guitour -mute -nofocus       # every GUI screen, Quit to 
   nodes=… entities=… materials=…` after each match, `heap growth by block size` and the DLL that owns sample blocks (to
   find what grows), and at the end `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED`, also appended
   to `%USERPROFILE%\Tumbu\memory-history.csv` (date, renderer, driver, Ogre, heap, growth).
-  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0, 2026-10-09; checked again 2026-10-11 with the mip-chain bloom):
+  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0; checked 2026-10-11):
   - every object count returns to the same value each match (`objects=flat`) on both renderers;
-  - **OpenGL:** about 15 MB in the menu before the first match and 18 MB after it, flat from match 2 on (within ±30 KB
-    per match). The window size adds a little (640x480 17.9 MB, 1024x768 18.1, 1600x900 18.4; repeatable within 5 KB).
-    **The level itself moves by up to about 1.5 MB between days for reasons outside the game**: the build of 2026-10-09
-    noon measured 16.7 MB that day and 17.9 MB on 2026-10-11, alternated with the current build (17.9); not the
-    driver, a reboot, Windows updates, the NVIDIA shader cache, `Separate Shader Objects`, the options or injected DLLs
-    (checked 2026-10-11). So compare OpenGL levels only between builds alternated in one session; the growth per match
-    is what matters;
-  - **Direct3D 11:** about 21 to 27 MB in the menu and 29 to 33 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB per
-    match for about 18 matches, to about 85 MB, and **stays flat** (84 to 88 MB over matches 18 to 40; private bytes about
-    535 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor; docs/SPECIAL_EFFECTS.md,
-    "Known issue") that fills up, not a leak. So the second-half growth of a 40-match run must be near 0; a 12- or
-    21-match run is still filling, and its "per match" number is not a leak rate.
+  - **OpenGL:** about 15 MB in the menu before the first match and 18 MB after it (a little more with a bigger window),
+    flat from match 2 on (within ±30 KB per match). The level itself moves by up to about 1.5 MB between days for
+    reasons outside the game (docs/HISTORY.md, "Memory"), so compare OpenGL levels only between builds alternated in one
+    session; the growth per match is what matters;
+  - **Direct3D 11:** about 21 to 27 MB in the menu and 29 to 33 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB
+    per match for about 18 matches, to about 85 MB, and **stays flat** (81 to 88 MB over matches 18 to 40; private bytes
+    about 535 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor;
+    docs/SPECIAL_EFFECTS.md, "Known issue") that fills up, not a leak. So the second-half growth of a 40-match run must
+    be near 0; a 12- or 21-match run is still filling, and its "per match" number is not a leak rate.
 
   **Comparing builds on Direct3D 11:** the filling rate scatters from 1.5 to 5 MB per match between identical runs and
   drifts upwards over a session, even right after a reboot, so alternate the builds several times (or compare the
   plateau of 40-match runs); never compare single runs. When an object count changes, or the OpenGL heap or the Direct3D
-  11 plateau moves, find out why and update this paragraph. `-cycles` logs a `REMINDER` line when the driver or Ogre
-  version differs from the one these numbers were measured with. History: +1.7 to 2.3 MB per match (12 matches) before
-  the robots were skinned on the GPU, +0.7 to 1.1 after it (2026-10-06); the night lights changed nothing (alternated
-  runs, 2026-10-09). The mip-chain bloom (11 render targets instead of 2, 2026-10-11): Direct3D 11 plateau 81 to 88 MB,
-  second half -0.2 MB per match; OpenGL +70 KB (18.03 against 18.09 MB, 3 matches each). The OpenGL level had risen from
-  16.7 MB (2026-10-09) to 18.0 MB before it, but not because of the game (see the OpenGL item above).
+  11 plateau moves, find out why and update this paragraph (and docs/HISTORY.md). `-cycles` logs a `REMINDER` line when
+  the driver or Ogre version differs from the one these numbers were measured with.
 - **Crash report:** any crash (access violation, uncaught exception, `abort`) writes the call stack to
   `ogre.log` and `%USERPROFILE%\Tumbu\crash.log` (`Main.cpp`). RelWithDebInfo has file:line for game code.
-  Ogre frames only show exported names, because the deps are built without PDBs.
+  Ogre frames only show exported names, because the deps are built without PDBs. When every launch crashes at once
+  (even builds that worked), look at the Windows event log for a GPU driver reset first (docs/HISTORY.md, "Incidents").
 - Also grep `ogre.log` for `not supported` and `Cannot compile`. A failed shader doesn't crash anything: the
   material quietly uses its fallback technique, so screenshots can look fine.
 - It logs `[DEVTEST] t=… fps=… hero=x y z enemy=x y z` every 0.5 s to `ogre.log`.
@@ -213,53 +178,51 @@ Jonathan reviews visual work from side-by-side images, so **any change he can se
 materials, textures, GUI) gets a before/after set:
 
 1. **Before** changing anything, take the shots with the current build: `devtest.ps1 -Name <feature>-before-<case>`
-   with a fixed view (`-NoWalk -Camera "…"`, `-FaceShot`, `-Hero robotNNN`, `-Hour H`). Cover the cases the change
-   affects: a light and a dark robot (`robot001`, `robot005`), day / coliseum shadow / dusk / night (13, 17, 19, 22),
-   and an arena-only view when the arena must stay the same (diff it, and compare against two identical runs: dust and
-   the enemy move between runs).
+   with a fixed view (`-NoWalk -Camera "…"`, `-FaceShot`, `-Hero robotNNN`, `-Hour H`; `-NoHud` unless the change is in
+   the HUD). Cover the cases the change affects: a light and a dark robot (`robot001`, `robot005`), day / coliseum
+   shadow / dusk / night (13, 17, 19, 22), and an arena-only view when the arena must stay the same (diff it, and
+   compare against two identical runs: dust and the enemy move between runs).
 2. After the change, take the same shots as `<feature>-after-<case>`.
-3. Build the pairs with `.\scripts\compare.ps1 -Before … -After … -Out "%USERPROFILE%\Tumbu\<feature>\<case>.png"`, one
-   **folder per feature** (for example `hero-lighting`, `ki-aura`, `metal-softer-3`). Crop to the subject
-   (`-Crop "330,0,380,720"` frames the robot of the standard `-Camera "1.4,1.5,5.7,0,1.05,8.0" -NoWalk` view) and add
-   zoomed crops (`-Zoom 2` to `4`) when the change is small (outlines, edges, anti-aliasing). compare.ps1 also keeps the
-   two full screenshots in the folder's `source\` (`<case>-before.png` / `-after.png`, with their `.fps`), because
-   `devtest.ps1 -Clean` removes the loose `devtest-*` files and a later round may need the same "before".
+3. Build the pairs with `.\scripts\compare.ps1 -Before <png> -After <png> -Out "%USERPROFILE%\Tumbu\<feature>\<case>.png"`
+   (full paths to the screenshots), one **folder per feature** (for example `hero-lighting`, `ki-aura`). Crop to the
+   subject (`-Crop "330,0,380,720"` frames the robot of the standard `-Camera "1.4,1.5,5.7,0,1.05,8.0" -NoWalk` view)
+   and add zoomed crops (`-Zoom 2` to `4`) when the change is small (outlines, edges, anti-aliasing). compare.ps1 also
+   keeps the two full screenshots in the folder's `source\` (with their `.fps`), because `devtest.ps1 -Clean` removes the
+   loose `devtest-*` files and a later round may need the same "before".
    For anything that can flicker or crawl while the camera moves (bloom, small bright details, thin lines), also take a
    frame strip before and after (`devtest.ps1 -Strip 16` with `-Camera` or `-Bench`) and build
-   `.\scripts\strip.ps1 -Before … -After … -Crop … -Out "…\<case>-strip.png"`: per strip a row of frames and a row of
-   the differences between frames x8, plus the **crawl** (how much the brightest value of each pixel column changes per
-   frame, % of its mean; two identical runs of the night T view gave 0.68 and 0.69 %). It keeps the frames in `source\`.
+   `.\scripts\strip.ps1 -Before <name> -After <name> -Crop … -Out "…\<case>-strip.png"`: per strip a row of frames and a
+   row of the differences between frames x8, plus the **crawl** (how much the brightest value of each pixel column
+   changes per frame, % of its mean; two identical runs of the night T view gave 0.68 and 0.69 %). Every sharp edge
+   changes a little as the camera moves a third of a pixel, so judge a strip against a still one (`-StripStep 0.000001`)
+   or against the other variant, not on its own. It keeps the frames in `source\`.
 4. Read the images before reporting, and tell Jonathan the folder. Each tuning round gets a new folder
    (`<feature>-2`, …) whose "before" is the previous round's "after".
 5. **Track the frame rate too.** Every `devtest.ps1` run ends with `fps: avg=… min=… max=…` and saves it as
    `devtest-<Name>.fps` (DevTest turns VSync off, so it is not capped by the monitor); `compare.ps1` prints it under each
-   image (`~N fps (1 run)` and `indicative` for a normal run, `(bench)` for a `-Bench` run), with the change in percent on the AFTER side, and also prints how many pixels differ. That per-shot number is
-   only a hint: in a normal run the enemy fights, and identical runs vary by ±15–30 %. **The real number comes from
-   `scripts/bench.ps1`**: `-bench` runs (no AI, fixed camera: within ~2 % between runs), alternating the variants
-   (`-Variants "off=-AA 0","on=-AA 1"`, a DevTest switch when the feature can be turned off in one build; otherwise
-   **compare builds run after run**: `git worktree add bin\scratch\before <commit>`, run `scripts\build.ps1` there, then
-   `-Variants "before=@bin\scratch\before","after="`; each tree uses its own exe and media; remove the worktree afterwards.
-   Never compare numbers from different sessions: they drift by 5–10 %), on Direct3D 11 and OpenGL, at the same window size for both
-   (`-VideoMode`, default 1024x768). **Measure only what can answer the question:** work per pixel (shaders,
-   post-processing) shows only at 1920x1080 (at 1024x768 Direct3D 11 is CPU-bound and hides GPU work), so run just
-   `-VideoMode 1920x1080` for it; CPU work (game logic, draw calls, skinning) shows best at 1024x768; a question about
-   one renderer takes `-Renderers D3D11` or `GL`. How it runs (tested 2026-10-11 with identical builds): a thrown-away
-   warm-up run per renderer (the first run of a session was always the fastest), 8 s runs (as precise as 15 s; 5 s read
-   a little low), rounds in alternating order (A B, B A, ...) because Direct3D 11 slows by several % over a session, and
-   the difference taken round by round. It always runs `-Runs` rounds (3) and adds rounds up to `-MaxRuns` (6) only
-   while a difference is neither clear (3 standard errors) nor known to `-Resolution` (0.02 ms, the noise floor: two
-   identical builds came out 0.01 to 0.02 ms apart). Each run takes about 15 s, half of it loading and quitting.
-   Several variants in one launch would save little and only for DevTest switches, so each run is its own launch.
-   Call it from PowerShell: through `powershell -File` the variant list arrives as one string. It writes
-   `%USERPROFILE%\Tumbu\<feature>\fps.txt` (fps, ms per frame, spread, the difference to the first variant with
-   +/- 2 standard errors, and `not significant` when it is smaller than that) and appends to
-   `%USERPROFILE%\Tumbu\fps-history.csv`. Report fps and ms next to the image folder. A run whose window was hidden or
-   minimised does not render (thousands of fps, `render_ms` near 0): DevTest marks it `invalid=window-not-rendered` and
-   `bench.ps1` runs it again, so do not cover or minimise the game window while a benchmark runs. `fps.txt` ends with
-   a `note:` line when a variant's runs spread by more than 10 % (something else used the PC): run again. (A note on the
-   time outside rendering, `rest_ms`, was dropped: on OpenGL time moves between `render_ms` and `rest_ms` while their
-   sum stays the same, so it fired on steady runs.) Each `.fps` line ends with `windows_ms=` (the ms per frame of every
-   1 s window), to check how long runs must be.
+   image (`~N fps (1 run)` and `indicative` for a normal run, `(bench)` for a `-Bench` run), with the change in percent
+   on the AFTER side, and how many pixels differ. That per-shot number is only a hint: in a normal run the enemy fights,
+   and identical runs vary by ±15–30 %. **The real number comes from `scripts/bench.ps1`**:
+   - `-bench` runs (no AI, fixed camera), alternating the variants: `-Variants "off=-AA 0","on=-AA 1"` for a DevTest
+     switch; otherwise **compare builds run after run**: `git worktree add bin\scratch\before <commit>`, run
+     `scripts\build.ps1` there, then `-Variants "before=@bin\scratch\before","after="` (each tree uses its own exe and
+     media); remove the worktree afterwards. Never compare numbers from different sessions: they drift by 5–10 %.
+   - **Measure only what can answer the question:** work per pixel (shaders, post-processing) shows only at 1920x1080 (at
+     1024x768 Direct3D 11 is CPU-bound and hides GPU work), so run just `-VideoMode 1920x1080` for it; CPU work (game
+     logic, draw calls, skinning) shows best at 1024x768 (the default); a question about one renderer takes
+     `-Renderers D3D11` or `GL`.
+   - How it runs: a thrown-away warm-up run per renderer, 8 s runs, rounds in alternating order (A B, B A, ...), the
+     difference taken round by round; at least `-Runs` rounds (3), more up to `-MaxRuns` (6) only while a difference is
+     neither clear (3 standard errors) nor known to `-Resolution` (0.02 ms, the noise floor). Each run takes about 15 s.
+     Why it is built this way: docs/HISTORY.md, "Benchmark method". Call it from PowerShell: through
+     `powershell -File` the variant list arrives as one string.
+   - It writes `%USERPROFILE%\Tumbu\<feature>\fps.txt` (fps, ms per frame, spread, the difference to the first variant
+     with +/- 2 standard errors, and `not significant` when it is smaller than that) and appends to
+     `%USERPROFILE%\Tumbu\fps-history.csv`. Report fps and ms next to the image folder. `fps.txt` ends with a `note:`
+     line when a variant's runs spread by more than 10 % (something else used the PC): run again.
+   - A run whose window was hidden or minimised does not render (thousands of fps, `render_ms` near 0): DevTest marks it
+     `invalid=window-not-rendered` and `bench.ps1` runs it again, so do not cover or minimise the game window while a
+     benchmark runs.
    For the same reason, compare still frames from `-Bench 3` runs when the change should not alter the image: two runs
    of the same build already differ in about 7 % of the pixels (dust, clock), so that is the bar.
 
@@ -279,57 +242,45 @@ materials, textures, GUI) gets a before/after set:
 | Scene format | `.scene` from Ogitor 0.4.4 + terrain page `.ogt`, parsed by our `DotSceneLoader` (rapidxml) | `media/scenes/arena` |
 | Installer | NSIS `Tumbu.nsi` (still the 2011 x86 layout; needs updating) | root |
 
-PagedGeometry, SkyX, Cg, CEGUI, OIS, OgreAL and OgreBullet were all removed in the port, and Caelum in 2026-10 (the
-painted toon sky replaced it).
-
 ### Rendering pitfalls (all handled; keep them in mind)
 
-- **Shader generator versus custom shaders.** The viewport uses the RTSS scheme, and the RTSS builds its
-  technique from a material's first *fixed-function* technique, which is its fallback. So
-  `ProgrammableTechniqueResolver` in `BaseApplication.cpp` (a `MaterialManager::Listener` on
-  `MSN_SHADERGEN`) returns a material's own fully programmable technique first. Robots and the sky depend on
-  this.
-- **Strict resource groups.** Only global-pool groups search other groups, and the robot shaders
-  `#include <OgreUnifiedShader.h>` from `OgreInternal`. So `BaseApplication::locateResources` creates `Game`
-  in the global pool.
-- **Direct3D 11 HLSL profile.** A plain `hlsl` program compiles at level 9_1 (64 instructions). The robot
-  programs set `target vs_4_0` / `ps_4_0`.
-- **Patched Ogre bugs:** `deps.ps1` (`Repair-OgreSource`) patches the Ogre source: the terrain delta-data leak, the
-  late shared parameters on Direct3D 11 and the seams along the terrain's texture repeats. All are temporary: see "Temporary workarounds (remove when fixed upstream)".
+- **Ogre rules** (the why of each in docs/OGRE_BUGS.md):
+  - The RTSS builds from a material's first fixed-function technique; `ProgrammableTechniqueResolver`
+    (`BaseApplication.cpp`) returns our programmable one first. Robots and the sky depend on it.
+  - `Game` is a global-pool resource group (only those search other groups; the shaders include
+    `OgreUnifiedShader.h` from `OgreInternal`).
+  - HLSL programs set `target vs_4_0` / `ps_4_0` (the default is level 9_1, 64 instructions).
+  - Every uniform the code sets must stay in use in the shader: setting an optimised-out one from code is fatal (a
+    `param_named` in a script only logs). Shared parameters are safe.
+  - `GpuSharedParameters::setNamedConstant( name, const float*, count )` counts floats, not float4s.
+  - Direct3D 11 has no RG8 format (silently converted); a compositor's final pass reads zeros from the depth texture on
+    Direct3D 11, so depth-based effects run in an earlier pass; `setSkyBox` only takes cube maps.
 - **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
   `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
   particles render white.
 - **Lighting values reach the shaders as shared parameters.** `Lighting::declareSharedParameters` creates
   `TumbuLighting` in `BaseApplication::locateResources`, before any script is parsed; programs reference it
-  with `shared_params_ref TumbuLighting`. Every value is a `float4` (the types must match exactly).
-  On Direct3D 11, Ogre 14.6 delivers shared values one bind late; our patched Ogre fixes that (see "Temporary
-  workarounds (remove when fixed upstream)"): without it, a value changed for one render only does not reach it.
+  with `shared_params_ref TumbuLighting`. Every value is a `float4` (the types must match exactly). On Direct3D 11 this
+  needs our patched Ogre (docs/OGRE_BUGS.md, 1).
 - **Shadows are integrated.** The shadow technique is `SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED` with a
   depth (`PF_DEPTH32F`) map: Ogre only renders the map, and the robot and arena shaders sample it
-  (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). The old modulative/additive receiver
-  passes did not work with our shaders. `shadowParams.x` tells the shaders whether a map is bound.
-  RTSS-lit objects (terrain, particles) do not receive shadows.
+  (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). `shadowParams.x` tells the shaders whether a
+  map is bound. RTSS-lit objects (terrain, particles) do not receive shadows.
   The arena casts with `Tumbu/ShadowCasterTwoSided` (no culling): with Ogre's default back-face casting,
   sun-facing surfaces were missing from the map and light leaked as bright slits where a wall meets a
   slope. Self-shadow stripes are avoided with a normal-offset lookup (`shadowNormalOffset`), so
   `shadowBias` stays small; a large bias let light leak at joints.
-- **A uniform the shader compiler removed does not exist for Ogre.** A uniform the code never reads in the end (for
-  example only used in a branch a `#define` turned off, or multiplied by a constant 0) is optimised out. A
-  `param_named` for it in a script only logs `ScriptCompiler - invalid parameters ... Parameter called X does not
-  exist`, but setting it from code (`GpuProgramParameters::setNamedConstant`, as `Lighting::notifyMaterialRender` does
-  for `flareSun`) throws `InvalidParametersException`, which is fatal. Met while prototyping the bloom (a debug view that
-  skipped the lens flare). Keep every uniform the code sets in use, or use `setIgnoreMissingParams( true )` on those
-  parameters. Shared parameters (`TumbuLighting`) are safe: missing names are skipped.
 - **Every shader source starts with `OGRE_NATIVE_GLSL_VERSION_DIRECTIVE`.** Without it OpenGL compiles the
-  file as old GLSL: `SAMPLER2D(name, n)` then has no binding, so every sampler reads texture unit 0 (this
-  broke shadows and bloom on OpenGL), and `shadow2D` returns a vec4. For HLSL the token is empty.
+  file as old GLSL: `SAMPLER2D(name, n)` then has no binding, so every sampler reads texture unit 0, and `shadow2D`
+  returns a vec4. For HLSL the token is empty.
+- **No `#ifdef` inside `OGRE_UNIFORMS(...)`**: GLSL rejects preprocessor lines inside a macro's arguments, so OpenGL
+  dropped the whole program (Direct3D 11 accepted it); use `OGRE_UNIFORMS_BEGIN` ... `OGRE_UNIFORMS_END`.
 - **Samplers must be defined before use.** `Tumbu/ShadowSampler` lives in `shading.program`, because all
   `*.program` scripts are parsed before any `*.material`.
 - **Post-processing:** `Lighting` adds the `Tumbu/PostProcess` compositor (HDR scene, then tone mapping,
   grading and vignette) to the window viewport for a match and removes it afterwards. MyGUI and the
   trays draw after it and are not affected.
-- **Bloom: a mip chain** (Jimenez, Call of Duty: Advanced Warfare, SIGGRAPH 2014; 2026-10, replacing a bright pass to
-  quarter size and two H+V blurs):
+- **Bloom: a mip chain** (Jimenez, Call of Duty: Advanced Warfare, SIGGRAPH 2014):
   - The first downsample (`postprocess_bloomdown.frag` with `BLOOM_PREFILTER`) takes the HDR scene to half size with 13
     bilinear taps (they cover 6x6 texels, so no bright pixel falls between them), the **Karis average** (each 2x2 group
     weighted by 1 / (1 + luma), so one very bright pixel cannot make the glow flicker) and the soft threshold
@@ -337,19 +288,10 @@ painted toon sky replaced it).
   - Tent upsamples (`postprocess_bloomup.frag`, one material per level, `bloomLevel.x` = the level) go back up to half
     size, each adding its level times its weight: `bloomLevelWeights` in `lighting.object` (half size to 1/64, shared
     `bloomWeightsA/B`; the last pass divides by their sum, so only the ratios matter) and `bloomRadius` (the tent's
-    spread in texels). All six weights are 1: the "Balanced" look, chosen against "tight" (1 0.7 0.45 0.25 0.12 0.06)
-    and "wide" (0.4 0.5 0.7 1 1.3 1.6). A restart is enough to try other weights.
-  - The final pass reads `bloomUp1` with one bilinear sample (a tent there cost 0.04 ms at 1920x1080 and looked the
-    same) and adds it times `bloomStrength` (0.85) before tone mapping. Eleven `PF_FLOAT16_RGBA` targets.
-  - Against the old bloom, hot cores keep their shape (the punch and Genki Dama centres, the three neon ropes, which
-    used to melt into one red band) and the glow crawls about 4 times less while the camera pans (`-bloomonly -strip`).
-  - Cost (`bench.ps1`): about +0.075 ms at 1920x1080 against the old bloom on both renderers, nothing measurable at
-    1024x768. Five levels, a 4-tap first step or R11G11B10 targets were no cheaper on Direct3D 11. Where it goes (2026-10-11,
-    1920x1080, builds with the chain removed, with its 11 passes writing black without reading anything, and with 3
-    levels): the whole chain costs about 0.10 ms on Direct3D 11 and 0.14 ms on OpenGL, and **about 0.05 to 0.06 ms of
-    that is the passes themselves** (some 5 microseconds each to switch the target and run a pass, however small); the
-    sampling is the rest, mostly the two half-size passes. Three levels instead of six save only 0.015 / 0.04 ms, because
-    the small levels cost almost nothing but their pass.
+    spread in texels). All six weights are 1 (the "Balanced" look). A restart is enough to try other weights.
+  - The final pass reads `bloomUp1` with one bilinear sample and adds it times `bloomStrength` (0.85) before tone
+    mapping. Eleven `PF_FLOAT16_RGBA` targets. Cost about 0.10 ms (Direct3D 11) / 0.14 ms (OpenGL) at 1920x1080, half of
+    it the passes themselves (docs/HISTORY.md).
 - **Anti-aliasing: SMAA 1x** (Jimenez et al., MIT; `SMAA_PRESET_HIGH`, luma edges). The match renders into the
   compositor's HDR texture, which has no MSAA, so the FSAA of the start-up dialog / `ogre.cfg` does nothing in a match
   (keep it at 1). Instead `Lighting::enableAntiAliasing` chains the `Tumbu/SMAA` compositor after `Tumbu/PostProcess`
@@ -359,15 +301,11 @@ painted toon sky replaced it).
   window). Off, the chain is exactly `Tumbu/PostProcess`. Shaders: the reference `smaa/SMAA.hlsl` **unmodified**, wrapped
   by `smaa_common.h` (`SMAA_CUSTOM_SL` macros on `OgreUnifiedShader.h`); `smaa.vert` / `smaa.frag` serve all three
   passes (`SMAA_PASS` in `shading.program`). The lookup textures come from `third_party/smaa/AreaTex.h` / `SearchTex.h`,
-  made once in `Lighting::createSMAATextures` (from `BaseApplication::loadResources`) and
-  bound to the `Tumbu/SMAA/Weights` units from code. Pitfalls met: **Ogre's Direct3D 11 renderer has no RG8 format** and
-  silently converted the area texture, which gave dashed outlines on D3D11 only, so it is uploaded as RGBA; a material
-  script cannot name `PF_RG8`. **Stencil:** `edges` and `weights` share one depth-stencil buffer (same size, depth pool
-  1); the edge pass writes stencil 1 where it finds an edge and the blending-weight pass only runs there (the rest keeps
-  the cleared zero weight). Proven by clearing the weights to 0.5 as a test (46 % of the pixels changed on D3D11, 27 % on
-  OpenGL; normal runs differ by ~7 %). Cost (`bench.ps1`, RTX 3070, 1920x1080): Direct3D 11 +0.095 ms without the
-  stencil, **+0.060 ms with it**; OpenGL +0.015 / +0.031 ms, both inside the noise. At 1024x768 it does not show at all.
-  Keep the trailing `pass stencil { check off }` in both targets, or the stencil test leaks into the passes after.
+  made once in `Lighting::createSMAATextures` (from `BaseApplication::loadResources`; the area texture as RGBA, see the
+  Ogre rules) and bound to the `Tumbu/SMAA/Weights` units from code. **Stencil:** `edges` and `weights` share one
+  depth-stencil buffer (same size, depth pool 1); the edge pass writes stencil 1 where it finds an edge and the
+  blending-weight pass only runs there (the rest keeps the cleared zero weight). Keep the trailing
+  `pass stencil { check off }` in both targets, or the stencil test leaks into the passes after.
 - **Emissive glow:** robot materials set `$glowMap` (the `GMheadUV_00N.tga` masks) and `$glowColour`
   (tint, strength). The glow is the part's own texture colour where the mask is white, so each robot glows in
   its eye colour. `Robot::updateEyeGlow` passes a 0..1 flare (custom parameter 0) while Jyn builds up.
@@ -377,17 +315,14 @@ painted toon sky replaced it).
   forward scattering, capped at 10x, soft-saturated), then one blur; the final pass adds it before tone
   mapping. The pass has `identifier 10`: `Lighting::notifyMaterialRender` (a compositor listener) sets the
   camera and shadow-camera matrices and binds the shadow texture right before it renders, so there is no
-  frame of lag. No shadows → no god rays. **No OpenGL y-flip when rebuilding positions from depth** (god rays and
-  SSAO): the old "OpenGL stores the depth texture upside down" flip mirrored every view ray (same length, so distances
-  and fog looked right) and on OpenGL the god rays marched into the sunlit air above the walls, washing the view towards
-  the sun white (fixed 2026-10-06; `%USERPROFILE%\Tumbu\opengl-godrays\`). Inside the march the shadow lookup is an
-  explicit level 0 (`SHAFT_SHADOW_CMP`).
+  frame of lag. No shadows → no god rays. **No OpenGL y-flip when rebuilding positions from depth** (god rays and SSAO):
+  a flip mirrors every view ray. Inside the march the shadow lookup is an explicit level 0 (`SHAFT_SHADOW_CMP`).
   Tuning: `shaftStrength` / `shaftDistance` / `shaftAnisotropy` / `shaftSteps`, plus an optional per-keyframe
-  `shaftStrength` multiplier (strong at dawn and sunset, weak at night).
+  `shaftStrength` multiplier (strong at dawn and sunset, weak at night). Over sky pixels the march is short (0.1 of
+  `shaftDistance`), or it washes the sky's bands out.
 - **Lens flare** (final pass, `identifier 20`): glow, horizontal streak and ghosts through the screen centre.
   `Lighting::setLensFlare` projects the sun to the screen; whether it is hidden is decided on the CPU with
-  five Bullet rays from the camera towards the sun (`updateSunVisibility`, eased over time), because the
-  final pass could not read the scene depth (it sampled zeros on Direct3D 11). `lensFlare` in
+  five Bullet rays from the camera towards the sun (`updateSunVisibility`, eased over time). `lensFlare` in
   `lighting.object` (0 = off); never for the moon.
 - **Energy lights** (`tumbuEnergyLights` / `TUMBU_ENERGY_LIGHTS` in `TumbuToon.h`): up to four coloured point lights
   from special attacks (shared `energyLightPos0..3` = position + radius, `energyLightColour0..3` = colour x
@@ -408,157 +343,117 @@ painted toon sky replaced it).
   "environment" in flat bands (sky, a bright band, a dark horizon line, ground; keyframe colours, so it follows the time
   of day and shows in shadow), tinted by the paint and darker for dark metal, with the sun's glint; plus one sharp sun
   streak stretched along the part (world-vertical axis), which replaces the round highlight (robots pass no spec mask
-  to `tumbuToon`; the 2011 `SM…` maps are greyscale copies of the colour texture and most parts had
-  `$specularCol 0 0 0`). Per part: `$metal` in `robotNNN.material` = amount, amount on dark pixels (low keeps engraved
-  lines crisp, high makes black armour shine), paint tint, sun streak strength. Kept soft (2026-10-04, after four softening
-  rounds): 001 "0.25 0.2 0.3 0.6", 002 "0.35 0.3 0.5 0.6", 003 "0.28 0.2 0.5 0.35", 004 "0.2 0.15 0.5 0.22",
-  005 "0.25 0.35 0.9 0.25". Global
-  look: `metalBands`, `metalBandHeights`, `metalStreak`, `metalGlint`, `metalFresnel`, `metalDiffuse` in
-  `lighting.object` (shared `metalEnv` / `metalShape` / `metalExtra`).
-- **Arena stone** (arena remake, 2026-10; `TumbuStone.h`, `env_stone_ps` / `env_stone_floor_ps` = `env_toon.frag` with
-  `TUMBU_STONE` / `TUMBU_EMBLEM`; base materials `Tumbu/EnvironmentStone` and `Tumbu/EnvironmentStoneFloor` in
-  `shading.material`):
+  to `tumbuToon`). Per part: `$metal` in `robotNNN.material` = amount, amount on dark pixels (low keeps engraved lines
+  crisp, high makes black armour shine), paint tint, sun streak strength. Global look: `metalBands`,
+  `metalBandHeights`, `metalStreak`, `metalGlint`, `metalFresnel`, `metalDiffuse` in `lighting.object` (shared
+  `metalEnv` / `metalShape` / `metalExtra`).
+- **Arena stone** (`TumbuStone.h`, `env_stone_ps` / `env_stone_floor_ps` = `env_toon.frag` with `TUMBU_STONE` /
+  `TUMBU_EMBLEM`; base materials `Tumbu/EnvironmentStone` and `Tumbu/EnvironmentStoneFloor` in `shading.material`):
   - Textures from `scripts/arena-textures.ps1`: `sandstone_*` (4.8 m tile) on the coliseum, `ringtiles_*` (12.8 m) on the
     ring floor, `ring_emblem.png` (the T, its tube, the border course) mapped from above over the 20 x 20 ring floor.
     `*_hgt.png`: R height, G moss field. **The game loads compressed DDS copies** (BC7 colour and masks, BC5 normal and
-    height, BC4 AO; about 241 MB to 49 MB of video memory): `scripts/compress-arena-textures.ps1` (Microsoft texconv,
-    installed by `deps.ps1 -Only texconv` in `D:\TumbuDeps\tools\texconv`) makes them from the PNGs; `build.ps1`, the
-    texture generator and the AO bake run it, and the DDS files are not in git. texconv must get `--ignore-srgb`: the
-    PNGs carry an sRGB tag and it converted them to linear (everything darker, the moss gone). BC5 normal maps keep x
-    and y; the shader rebuilds z.
+    height, BC4 AO): `scripts/compress-arena-textures.ps1` (Microsoft texconv, installed by `deps.ps1 -Only texconv` in
+    `D:\TumbuDeps\tools\texconv`) makes them from the PNGs; `build.ps1`, the texture generator and the AO bake run it,
+    and the DDS files are not in git. texconv must get `--ignore-srgb` (the PNGs carry an sRGB tag). BC5 normal maps
+    keep x and y; the shader rebuilds z.
   - **The low setting** (Shadows off) also drops the stone's parallax and self-shadows (shared `detailParams`, Lighting).
   - **No mesh tangents:** the tangent frame is built per pixel from screen-space derivatives (`tumbuTangentFrame`). The
     texture UVs are at world scale (`arena_shapes.py`), so a tile has the same size everywhere. The export passes
     `tangents=0` (`arena_ao.py`): blender2ogre's `dot_mesh` writes tangents by default, whatever its sticky
-    `GENERATE_TANGENTS` setting, and the arena meshes carried unused ones until 2026-10-09 (27 % of their size).
+    `GENERATE_TANGENTS` setting.
   - Moss is decided in the shader from the moss field, the height above the ground, how much a surface faces up and
     the joints (`$mossParams`, `$mossParams2`, `$mossColour` alpha 0 = none).
-  - **No `#ifdef` inside `OGRE_UNIFORMS(...)`**: GLSL rejects preprocessor lines inside a macro's arguments, so OpenGL
-    dropped the whole program (Direct3D 11 accepted it); use `OGRE_UNIFORMS_BEGIN` ... `OGRE_UNIFORMS_END`.
   - Inside loops whose length varies per pixel (parallax), sample with explicit gradients (`tumbuSampleGrad`:
     `SampleGrad` on Direct3D 11, `textureGrad` on OpenGL).
   - **Parallax occlusion** (`tumbuParallax`): `$stoneParams` = depth in UV units (metres / tile), layers (12 on the
-    coliseum, 6 on the ring; doubled at grazing angles, halved head-on, then 4 halvings), fade-out distance (30), self-shadow
-    strength. The self-shadow (`tumbuParallaxShadow`, 6 steps, hard) only counts a stone at least 10 % of the depth higher,
-    and is skipped where the sun's shadow map already shades. Cost at 1920x1080, low wall view: D3D11 about +0.05 ms,
-    OpenGL +0.18 ms (`%USERPROFILE%\Tumbu\arena-parallax-1080\fps.txt`). Moss inside the joints is hidden at grazing
-    angles (the stones in front cover it), which is right.
-- **Arena neon** (the ring ropes and the tube inside the T on the ring floor; arena remake step 7): an unlit core of
-  `$neonColour` (a deep red, `1 0.012 0.008`: more green or blue turns orange after tone mapping) x `neonStrength`
-  (`lighting.object`, 4), mixed in by the keyframe value `neon` (0..1, 0 when missing: on at twilight, dusk and night,
-  partial at sunset and dawn); the bloom gives the halo. Shared `neonParams` (`Lighting`). Ropes: `Tumbu/EnvironmentNeon`
-  (`env_neon_ps` = `env_toon.frag` with `TUMBU_NEON`); the tube: `env_stone_floor_ps` (`ring_emblem.png` G channel).
-  The neon's light on the tiles and robots is part of the night lights (next item). Cost: none measurable (bench at 22:00, wide view: D3D11 and OpenGL, 1024x768 and 1920x1080, all inside the run-to-run spread).
-- **Night lights** (idea 4, 2026-10-09; direction chosen from https://claude.ai/artifact/4X5cxLXTGZuXMQucDSryq8): 17 wall
-  torches and the red neon's light on the tiles and robots, their own path, so the four energy lights stay free.
-  - Props: `torches.mesh` (iron brackets `torchIronMaterial` + flames `torchFlameMaterial`, `media/tumbu/arena/torches.material`),
-    made by the torch step of `scripts/blender/arena_shapes.py` in `Arena.blend` (every 20 degrees, symmetric about the
-    gate, 3.4 m on the tall wall and 1.7 m on the seating podium, by rays from the centre), exported by
+    coliseum, 6 on the ring; doubled at grazing angles, halved head-on, then 4 halvings), fade-out distance (30),
+    self-shadow strength. The self-shadow (`tumbuParallaxShadow`, 6 steps, hard) only counts a stone at least 10 % of the
+    depth higher, and is skipped where the sun's shadow map already shades.
+- **Arena neon** (the ring ropes and the tube inside the T on the ring floor): an unlit core of `$neonColour` (a deep
+  red, `1 0.012 0.008`: more green or blue turns orange after tone mapping) x `neonStrength` (`lighting.object`, 4),
+  mixed in by the keyframe value `neon` (0..1, 0 when missing: on at twilight, dusk and night, partial at sunset and
+  dawn); the bloom gives the halo. Shared `neonParams` (`Lighting`). Ropes: `Tumbu/EnvironmentNeon` (`env_neon_ps` =
+  `env_toon.frag` with `TUMBU_NEON`); the tube: `env_stone_floor_ps` (`ring_emblem.png` G channel). The neon's light on
+  the tiles and robots is part of the night lights (next item).
+- **Night lights**: 17 wall torches and the red neon's light on the tiles and robots, their own path, so the four energy
+  lights stay free.
+  - Props: `torches.mesh` (iron brackets `torchIronMaterial` + flames `torchFlameMaterial`,
+    `media/tumbu/arena/torches.material`), made by the torch step of `scripts/blender/arena_shapes.py` in `Arena.blend`
+    (every 20 degrees, symmetric about the gate, 3.4 m on the tall wall and 1.7 m on the seating podium), exported by
     `.\scripts\bake-arena-ao.ps1 -Only torches`, placed by `torchesSceneNode` in `Arena.scene`. The same step writes
     `media/configuration/lamps.object` (generated: the torches' light positions and 8 neon segments, the 6 ring sides at
-    the ropes' mid height and the T's bar and stem from `ring_emblem.png`).
+    the ropes' mid height and the T's bar and stem from `ring_emblem.png`). In `arena_shapes.py` the bracket's local
+    frame must stay right-handed (a mirrored matrix builds the plate inside-out).
   - Light: `tumbuArenaLights` / `TUMBU_ARENA_LIGHTS` + `TUMBU_LAMP_UNIFORMS` (`TumbuToon.h`), added as albedo x light by
     `env_toon.frag` (all stone variants) and `robot_toon.frag`. Shared arrays `lampPos[20]` (xyz, w = intensity now) and
     `neonSegA/B[8]`, plus `lampColour` (colour x strength, w = reach), `lampShape` (bands, back side), `neonLight`
     (colour x strength x keyframe `neon`, w = reach), `lampParams` (keyframe `lamps`, flame brightness, time, flicker).
     The array sizes must match `TUMBU_MAX_LAMPS` / `TUMBU_NEON_SEGMENTS` in `Lighting.cpp`. The torches' light is summed
     (quadratic falloff, softer facing away) and then cut into toon bands that are even steps of the square root, so a
-    pool fades out in rings instead of ending in one flat disc; the neon takes the nearest segment.
-  - Every frame `Lighting::updateLamps` sets each torch's intensity: keyframe `lamps` (0..1, 0 when missing: like `neon`,
-    on at twilight, dusk and night, partial at sunset and dawn) x a flicker of three sines, the same formula and phase as
-    its flame in `torch_flame.vert`, so flame and pool flicker together. The flames (`torch_flame.vert/.frag`) are unlit
-    two-tone toon fire above the bloom threshold that sway, flicker and grow out of the cup with `lamps`; alpha-blended,
-    so they cast no shadow and vanish by day. Values: `lampColour`, `lampStrength`, `lampReach`, `lampBands`, `lampBack`,
-    `lampFlicker`, `flameBrightness`, `neonLightColour`, `neonLight`, `neonLightReach`, `neonLightBands` in
-    `lighting.object`. The neon has its own bands (2, shared `neonShape.x`): with the torches' 4 it drew rings around
-    the ends of the T. **The flame's height comes from its UVs, and blender2ogre writes 1 - v**: the vertex shader takes
-    `h = 1 - uv0.y` (0 at the cup). Read the other way round, the sway and the flicker moved the flame's base against
-    the cup and a dying flame shrank towards its tip. The flame is full size from `lamps` 0.3 (sunset), half at dawn
-    (0.15), and opaque as soon as it burns (smaller, never see-through). `Lighting::updateLamps` scales the light by
-    the same growth, so a dying flame leaves no pool of light around it.
+    pool fades out in rings; the neon takes the nearest segment and has its own bands (2, shared `neonShape.x`).
+  - Every frame `Lighting::updateLamps` sets each torch's intensity: keyframe `lamps` (0..1, 0 when missing: like `neon`)
+    x a flicker of three sines, the same formula and phase as its flame in `torch_flame.vert`, so flame and pool flicker
+    together, scaled by the flame's growth (full from `lamps` 0.3, half at dawn), so a dying flame leaves no pool. The
+    flames (`torch_flame.vert/.frag`) are unlit two-tone toon fire above the bloom threshold that sway, flicker and grow
+    out of the cup with `lamps`; alpha-blended, so they cast no shadow and vanish by day. **The flame's height comes from
+    its UVs, and blender2ogre writes 1 - v**: the vertex shader takes `h = 1 - uv0.y` (0 at the cup). Values:
+    `lampColour`, `lampStrength`, `lampReach`, `lampBands`, `lampBack`, `lampFlicker`, `flameBrightness`,
+    `neonLightColour`, `neonLight`, `neonLightReach`, `neonLightBands` in `lighting.object`.
   - The iron brackets do not take the torches' light (`torchIronMaterial` uses `env_iron_ps` = `env_toon.frag` with
-    `TUMBU_NO_LAMPS`): lit by their own flame from 0.3 units away they turned the colour of the wall, so the flame seemed
-    to float, and their toon bands jumped with the flicker. In `arena_shapes.py` the bracket's local frame must stay
-    right-handed: a mirrored matrix built the plate inside-out and its back face z-fought the wall (torches version 2).
-  - No shadows from the torches (their light reaches through anything within `lampReach`, 6 units: they sit on walls
-    that face open space). The grass (Ogre terrain, its own shader) gets no torch or neon light until the grass remake.
-  - **`GpuSharedParameters::setNamedConstant( name, const float*, count )` counts floats, not float4s** (the
-    `GpuProgramParameters` overload counts float4s): passing 20 lit only the first 5 torches.
-  - The neon's light was first too faint on the tiles under the ropes (the segments run at the ropes' mid height,
-    0.75 above the floor): `neonLight 2`, `neonLightReach 2` match the chosen "soft" mock-up.
-  - The night mood ("balanced", chosen with the lights): the night keyframe's moon and ambient x0.75, dusk x0.85.
-  - The neon loop runs only near the ring (`neonShape.yz`: the segments' horizontal extent and top plus the reach,
-    computed by `Lighting` from lamps.object), so the walls and the sky skip it.
+    `TUMBU_NO_LAMPS`): lit by their own flame they turned the colour of the wall and their bands jumped with the flicker.
+  - No shadows from the torches (their light reaches through anything within `lampReach`, 6 units). The grass (Ogre
+    terrain, its own shader) gets no torch or neon light until the grass remake. The neon loop runs only near the ring
+    (`neonShape.yz`, computed by `Lighting` from lamps.object), so the walls and the sky skip it.
   - **The inventory / new-part preview** (`GUI`, its own scene manager) uses the robot shaders and so the same shared
-    values: it took the arena's time of day, and at the world origin the T's neon turned its feet pink at night. A
-    render-target listener on the preview texture (`PreviewLighting`, GUI.cpp) wraps each preview render in
+    values. A render-target listener on the preview texture (`PreviewLighting`, GUI.cpp) wraps each preview render in
     `Lighting::beginNeutralLighting` / `endNeutralLighting` (save the shared values, set the neutral ones of
     `declareSharedParameters`, restore).
-  - Cost (bench at 22:00 against the build before the lights, chase view, 3 runs): 1920x1080 D3D11 +0.070 ms,
-    OpenGL +0.045 ms; 1024x768 inside the run-to-run spread on both. By day (lamps 0) about +0.02 / +0.03 ms.
-    `-cycles`: objects flat, OpenGL flat; D3D11 drifted alike for the old and the new build in one long session (2.4
-    against 1.7 to 2.7 MB per match). Checked at 06, 07 and 18 h too: the flames shrink and the pools fade with `lamps`.
-- **Contact shadows**
- (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
+- **Contact shadows** (`tumbuContact` in `TumbuToon.h`): the arena shader darkens upward-facing surfaces under
   each robot's feet (shared `contactShadowA/B` = feet position + radius, updated every frame by
   `Lighting::updateContactShadows`; strength in `aoParams.w`). No extra geometry. `contactShadow`,
   `contactShadowRadius`.
 - **Distance fog**: computed in the god-ray pass (it has the depth) and stored in that texture's **alpha**;
-  the blur keeps alpha and the final pass mixes towards `skyColour x fogBrightness`. Sky pixels (beyond 600
+  the blur keeps alpha and the final pass mixes towards `skyHorizon x fogBrightness`. Sky pixels (beyond 600
   units) get none. `fogStart` / `fogDensity` / `fogMax` / `fogBrightness`. Works with shadows off too.
 - **Dust** (`dust.particle`, `Tumbu/Dust`, `Demo::createDust`): motes below the wall tops, additive, lit only
   where the shadow map says sunlight reaches them. Each mote's random colour is a seed: `dust.vert` rebuilds
   the billboard around its centre with its own size, a slow swirl and a twinkle (soft gaussian glow, not a
   dot). Far motes grow and dim (always a few soft pixels, never a 1-pixel "star"); hidden within 3 units and
-  beyond 28 (about 1200 motes; the middle between the first 2000, too busy, and 350, too sparse; 2026-10-06). `billboardSize` in `shading.program` must match `particle_width`. `dustSunlight` (x the
+  beyond 28 (about 1200 motes). `billboardSize` in `shading.program` must match `particle_width`. `dustSunlight` (x the
   keyframe `shaftStrength`), `dustShadow`.
 - **Screen-space AO** (`postprocess_ssao.frag`, `identifier 30`, half size + blur): world position and normal
   from depth, 12 spiral samples; the final pass multiplies the scene by it. `ssaoRadius`, `ssaoStrength`
-  (0 = off). Note: the final pass cannot sample the depth texture (it reads zeros on Direct3D 11), so every
-  depth-based effect is computed in an earlier pass.
-- **The sky** (arena remake step 9, 2026-10-06; replaced Caelum, which was Direct3D 11 only and needed two source
-  patches): `sky.vert` / `sky.frag` on `Tumbu/ToonSky`, a 1000-unit box around the arena made by `Sky` (a ManualObject in
-  `RENDER_QUEUE_SKIES_EARLY`, `depth_write off`, so the post-processing still sees sky pixels as far: no fog and no
-  shadow-map haze on them). **Not Ogre's `setSkyBox`:** it accepts only materials whose first unit is a cube map and
-  silently swapped ours for its default ("skybox material ... is not supported, defaulting"). The shader works from the
-  direction to the camera: five hard colour bands up to 50 degrees (`skyZenith` / `skyMid` / `skyHorizon`), a yellow sun
-  disc with a smooth glow (`sunDiscBrightness`, in HDR so it blooms), or between `moonFrom` and `moonUntil` a crescent moon;
-  stars (`stars`, centres projected onto the sky sphere, at least 1.5 pixels wide); with Sky quality High, flat two-tone
+  (0 = off).
+- **The sky**: `sky.vert` / `sky.frag` on `Tumbu/ToonSky`, a 1000-unit box around the arena made by `Sky` (a
+  ManualObject in `RENDER_QUEUE_SKIES_EARLY`, `depth_write off`, so the post-processing still sees sky pixels as far: no
+  fog and no shadow-map haze on them; not `setSkyBox`, see the Ogre rules). The shader works from the direction to the
+  camera: five hard colour bands up to 50 degrees (`skyZenith` / `skyMid` / `skyHorizon`), a yellow sun disc with a
+  smooth glow (`sunDiscBrightness`, in HDR so it blooms), or between `moonFrom` and `moonUntil` a crescent moon; stars
+  (`stars`, centres projected onto the sky sphere, at least 1.5 pixels wide); with Sky quality High, flat two-tone
   cumulus (clusters of round lumps with a flat bottom placed by azimuth and elevation, one per 30-degree sector at most,
   `cloudLit` / `cloudShade` / `cloudCover`; above 1 in HDR, or the tone mapping turns them grey). All keyframe values in
   `lighting.object`, shared values from `Lighting`. The distance fog blends into `skyHorizon` x `fogBrightness`. The
-  god-ray march over sky pixels is short (0.1 of `shaftDistance`): the 2011 value washed the bands out. Same cost as
-  Caelum (bench, 1920x1080, the sky filling the view: D3D11 +0.006 ms, OpenGL -0.011 ms). The `twilight` keyframe still
-  brings the sun to the horizon before the moon takes over.
+  `twilight` keyframe brings the sun to the horizon before the moon takes over.
+- **The terrain** (the grass around the ring) is still Ogre's terrain with Ogre's own shader: no shadows (its light map is
+  off), no torch, neon or energy light, and our patch for its texture seams (docs/OGRE_BUGS.md, 3, 12, 13). The grass
+  remake replaces it (IMPROVEMENT_IDEAS).
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
-  Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame
-  (on Direct3D 11 that path went through STAGING "shadow buffers": one fighting enemy cost +0.9 ms per frame, a fight ran
-  at 600 fps against 1300 standing still). Rules learned the hard way:
+  Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.
+  Rules learned the hard way:
   - **Ogre 14 sends the bones in object space** (`MeshManager::getBonesUseObjectSpace()`, on by default):
     `world_matrix_array_3x4` holds only the bones (blend index i = matrix i), and the entity's world matrix must come
     from `world_matrix` (`robotWorld`). Treating the array as world-space bones puts the robot at the world origin.
   - **Bone indices are `uint4` on Direct3D 11** (`R8G8B8A8_UINT`) and floats on OpenGL (`ROBOT_SKIN_INPUTS`).
   - **Weights:** Ogre keeps the 4 largest per vertex (the arms have up to 9; it logs a warning) and stores 1 to 4 floats
     per mesh; a missing last component reads as 1, so a sum above 1.5 means the fourth is not real.
-  - **Every pass must skin**: Ogre checks only pass 0 of the best technique to choose GPU skinning, but the shadow caster
-    is not checked, so the robots have their own skinned `Tumbu/RobotShadowCaster` (`shadow_caster_material` in
-    `robots.material`); with Ogre's default caster their shadows would keep the rest pose. A new robot pass or material
-    needs a skinned vertex program too.
+  - **Every pass must skin** (docs/OGRE_BUGS.md, 10): the robots have their own skinned `Tumbu/RobotShadowCaster`
+    (`shadow_caster_material` in `robots.material`). A new robot pass or material needs a skinned vertex program too.
   - DevTest logs `skinning: N entities on the GPU, M on the CPU` when a match starts: M must be 0.
   - **The bone array is small on purpose (32 bones, `boneMatrices[96]`):** Ogre uploads the whole declared array for
     every draw (on OpenGL each pass of each part also hashes it for its uniform cache), and a robot mesh uses at most
     22 of its skeleton's 50 bones. `Part::build` logs an error for a mesh that uses more than `ROBOT_MAX_BONES`
     (`Part.cpp`, keep it equal to the array in `RobotSkinning.h`).
-
-  Measured (`bench.ps1`, 1024x768, 2026-10-04): Direct3D 11 fight 596 → 1371 fps (1.68 → 0.73 ms), the same as a still
-  scene now. OpenGL with the first 192-row bone array was 0.08 ms slower than CPU skinning (859 against 920 fps); with
-  the 96-row array it is as fast or faster (937 fps) and steadier (builds compared run after run, 2026-10-05,
-  `%USERPROFILE%\Tumbu\bone-array-ab\fps.txt`).
-  Before/after images: `%USERPROFILE%\Tumbu\gpu-skinning\` (identical poses, outlines, aura, shadows, inventory preview).
-- **`ogre.cfg` keeps a window size per renderer.** The OpenGL section said 640x480 while Direct3D 11 had 1024x768, so
-  quick D3D11/OpenGL comparisons were not at the same size; `devtest.ps1` and `bench.ps1` set both sections for each
-  run (`-VideoMode`, default 1024x768) and restore the file afterwards.
 
 ### Object lifetime rules (each one was a real leak or crash)
 
@@ -591,8 +486,7 @@ painted toon sky replaced it).
   - `ogre.cfg`: render system and window. **It holds Jonathan's settings for playing** (Direct3D 11, windowed 1920x1080,
     VSync), used when he starts `bin\Release\TUMBU.exe` himself: never change it for good. `devtest.ps1` (all its
     modes) and `bench.ps1` set the window for their run (`-VideoMode`, default 1024x768; `-Renderer`) and always
-    restore the file. A `TUMBU.exe` started directly (for example `-guitour`) uses his settings, so its window is
-    1920x1080.
+    restore the file. A `TUMBU.exe` started directly uses his settings, so its window is 1920x1080.
   - `options.cfg`: `SkyQuality`, `Shadows` (0 off, 1 normal = default, 2 high), `FrameLimit`. For
     `FrameLimit`, `-1` means VSync, the default; the other values are 144/72/60/0 = unlimited.
     `AntiAliasing`: 0 off, 1 SMAA (default).
@@ -669,11 +563,10 @@ through a listener registry in `BaseApplication`.
   `ConfigScriptLoader::getSingleton().getConfigScript("<type>", "<name>")->findChild("key")->getValueI()`.
 - `DotSceneLoader` is the Ogitor dotScene loader. Lights and camera are placed by their nodes, and meshes are
   loaded with the AUTODETECT group.
-  A terrain layer whose texture is missing takes layer 0's textures (`replaceMissingTerrainLayers`, a safety net): the
-  2011 page had a round patch beside the ring painted with Ogitor's own `city_6` rock, never shipped, which drew black.
-  The page itself now names the grass textures for that layer (2026-10-06): the `.ogt` is Ogre `StreamSerialiser` chunks
-  (id, version, length, a SuperFastHash checksum of those three) with length-prefixed strings, so the names were
-  replaced and the lengths and checksums of the two enclosing chunks (`TERR`, `TLIN`) fixed.
+  A terrain layer whose texture is missing takes layer 0's textures (`replaceMissingTerrainLayers`, a safety net; a
+  missing layer texture draws black). The terrain page `.ogt` is Ogre `StreamSerialiser` chunks (id, version, length, a
+  SuperFastHash checksum of those three) with length-prefixed strings: editing a string means fixing the lengths and
+  checksums of the enclosing chunks (`TERR`, `TLIN`).
 - `DevTest` is the unattended test harness. `Util` handles barrel spawning. `Log` / `LogManager` provide the
   on-screen log.
 - The game design used Portuguese. Some identifiers are Portuguese (`sofrerDano` = take damage,
@@ -722,15 +615,14 @@ through a listener registry in `BaseApplication`.
   if needed. Details are in DEV_SETUP Part B.
 - **blender2ogre remembers its settings between runs** (`%APPDATA%\Blender Foundation\Blender\<version>\config\scripts\io_ogre.json`,
   saved whenever the add-on unloads). Every export script must set what it relies on with `io_ogre.config.update(...)`
-  before `api.dot_mesh`, never trust the defaults: the robot export sets `SWAP_AXIS 'xyz'` (Y-up files), and the arena
-  export, which relied on the default `xz-y`, then wrote the arena lying on its side (found 2026-10-06; `arena_ao.py`
-  now sets it). After any export, compare the new mesh's bounding box with the old one (`OgreXMLConverter` to XML).
+  before `api.dot_mesh`, never trust the defaults: the robot export sets `SWAP_AXIS 'xyz'` (Y-up files), the arena
+  export `xz-y`. After any export, compare the new mesh's bounding box with the old one (`OgreXMLConverter` to XML).
 - **`art/`** holds the modern Blender working files (the 2011 `.blend` files in `media/` stay untouched).
   `art/arena/Arena.blend` (coliseum + arena floor) is the source of `coliseum.mesh`, `arena.mesh` and their
   baked AO maps (`*_ao.png`, second UV set): edit it, then run `.\scripts\bake-arena-ao.ps1` (headless Blender
   5.2 + blender2ogre; `-Rebuild` recreates it from the 2011 files and **discards manual edits**, so never use
   it once `Arena.blend` has been edited by hand). Details in DEV_SETUP Part B.
-  Arena remake: `scripts/blender/arena_shapes.py` adds the big shapes, the world-scale texture UVs and the ring's floor and
+  `scripts/blender/arena_shapes.py` adds the big shapes, the world-scale texture UVs and the ring's floor and
   rope materials to `Arena.blend` (each step once; the object property `tumbu_shapes` records them), and
   `.\scripts\arena-textures.ps1` generates the stone, tile and emblem textures.
   `art/robots/robot00N.blend` are the robots, converted once from 2.49 with Blender 4.5 LTS
@@ -740,9 +632,8 @@ through a listener registry in `BaseApplication`.
   **The robot `.mesh` / `.skeleton` files are exported from them** with `.\scripts\export-robots.ps1 [-Robot N] [-Save]
   [-Install]` (headless **Blender 4.5**: blender2ogre's animation export does not work on Blender 5). Before installing,
   it checks that every weight, normal and bone at every frame of every action matches Blender, and it compares the
-  skinned vertices with the installed files. Since 2026-10-05 the game's robots come from this export: Ogre poses every
-  bone within 0.0005 units of the 2011 files, and the parts carry the 2011 normals as custom normals. Rules (export
-  details and the reasons in DEV_SETUP Part B, "Robot export"):
+  skinned vertices with the installed files. The game's robots come from this export (the parts carry the 2011 normals
+  as custom normals). Rules (export details and the reasons in DEV_SETUP Part B, "Robot export"):
   - at most 4 bone weights per vertex, and no vertex group that is not a bone;
   - 30 fps; an action's frame range is what plays (robot003/005 `right_punch` is 1-21);
   - `no_pose` (the rest pose) is not exported, and `Part.cpp` treats it as optional;
@@ -765,8 +656,7 @@ through a listener registry in `BaseApplication`.
   gone), and blender2ogre (commit `0d094a4`) still reads the old API, so its animation export fails on 5.2.
   Keep the robot `.blend` files in Blender 4.5: a file saved by Blender 5 is not guaranteed to open losslessly in
   4.5, and `export-robots.ps1` needs 4.5. Both robot scripts default to 4.5 (`bake-robot-ao.ps1` saves the robot file
-  too; checked 2026-10-05: it bakes the same AO in 4.5). Blender 5.2 stays fine for static meshes (the arena,
-  `bake-arena-ao.ps1`).
+  too). Blender 5.2 stays fine for static meshes (the arena, `bake-arena-ao.ps1`).
   **Before upgrading Blender (or blender2ogre), check that blender2ogre still exports animation with it**: install
   blender2ogre for the new Blender, then run `.\scripts\export-robots.ps1 -Blender <new blender.exe>` without
   `-Save`/`-Install` (it exports to `%TEMP%` only): every robot must report "all parts match Blender" and the comparison
@@ -777,9 +667,9 @@ through a listener registry in `BaseApplication`.
   raw `new`/`delete`, and `NULL`. Match it.
 - **Encoding and line endings:** `.gitattributes` normalizes line endings to LF in the repo. Some
   media text files are **Windows-1252 / Latin-1** (Portuguese accents in comments). Keep the encoding. The C++ sources are
-  all UTF-8 since 2026-10-06 (`Demo.cpp`, `CharacterEnemy.cpp`, `SpecialJyn.cpp` and `CollisionDetectionListener.h` were
-  converted: MSVC warned C4828 on every build, and the header is included almost everywhere); the build has no warnings,
-  so a new one is worth reading.
+  all UTF-8 (MSVC warns C4828 on anything else); the build has no warnings, so a new one is worth reading. Text from a
+  shell heredoc can lose its backslashes (`\b` became a backspace in CLAUDE.md once): edit files with the Edit/Write
+  tools or a script file, and check for control characters after a scripted edit.
 - New data or tuning belongs in `*.object` scripts rather than hardcoded values.
 - Physics objects must be destroyed before the world, and GUI/MyGUI before the textures it uses. Follow the
   existing order in `TUMBU::destroyScene` and `GUI::~GUI`.
