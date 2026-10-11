@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz"] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-Renderer D3D11|GL] [-VideoMode 1024x768]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # Every run is windowed at -VideoMode (default 1024x768, so test shots and crops stay comparable), whatever
@@ -39,6 +39,8 @@ param(
     [string]$Name = 'run',
     [ValidateSet('', 'D3D11', 'GL')] [string]$Renderer = '',
     [ValidatePattern('^\d+x\d+$')] [string]$VideoMode = '1024x768',
+    [int]$Strip = 0,
+    [double]$StripStep = 0,
     [int]$Cycles = 0,
     [switch]$Clean,
     [int]$TimeoutSeconds = 180
@@ -78,6 +80,8 @@ if ($Sky -ge 0)    { $gameArgs += "-sky=$Sky" }
 if ($NoFx)        { $gameArgs += '-nofx' }
 if ($BenchAI)     { $gameArgs += '-benchai' }
 if ($BenchChase)  { $gameArgs += '-benchchase' }
+if ($Strip -gt 0)  { $gameArgs += "-strip=$Strip" }    # needs -Camera or -Bench (a fixed camera)
+if ($StripStep -gt 0) { $gameArgs += "-stripstep=" + $StripStep.ToString([cultureinfo]::InvariantCulture) }
 if ($Bench -gt 0)  { $gameArgs += "-bench=" + $Bench.ToString([cultureinfo]::InvariantCulture) }
 if ($Cycles -gt 0) {
     # The memory check drives the game itself (menu, match, kills, back to the menu) and quits when done.
@@ -86,7 +90,7 @@ if ($Cycles -gt 0) {
     $TimeoutSeconds = [math]::Max($TimeoutSeconds, 30 * $Cycles + 120)
 }
 
-Remove-Item "$work\devtest.png" -ErrorAction SilentlyContinue
+Remove-Item "$work\devtest.png", "$work\devtest-strip-*.png" -ErrorAction SilentlyContinue
 $cfgFile = Join-Path $work 'ogre.cfg'
 $cfgSaved = $null
 if (Test-Path $cfgFile) {
@@ -118,6 +122,13 @@ if (-not $finished) {
 
 Copy-Item "$work\ogre.log" "$work\devtest-$Name.log" -Force
 if (Test-Path "$work\devtest.png") { Copy-Item "$work\devtest.png" "$work\devtest-$Name.png" -Force }
+# -Strip: the frames as devtest-<Name>-strip-NN.png (scripts/strip.ps1 compares two strips).
+if ($Strip -gt 0) {
+    Remove-Item "$work\devtest-$Name-strip-*.png" -ErrorAction SilentlyContinue
+    $frames = @(Get-ChildItem "$work\devtest-strip-*.png" -ErrorAction SilentlyContinue)
+    foreach ($f in $frames) { Move-Item $f.FullName ("$work\devtest-$Name-" + $f.Name.Substring(8)) -Force }
+    Write-Host "strip: $($frames.Count) frames  $work\devtest-$Name-strip-NN.png"
+}
 if ($Cycles -gt 0) {
     Write-Host "exit=$($proc.ExitCode)  log=$work\devtest-$Name.log"
     $heaps = @()

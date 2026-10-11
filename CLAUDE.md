@@ -106,6 +106,8 @@ bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to 
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
 .\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, 2 runs (~5 min); full run for shaders that loop
 .\scripts\devtest.ps1 -Clean                        # old devtest-* screenshots/logs to the Recycle Bin (also before a run)
+.\scripts\devtest.ps1 -Bench 2 -Hour 22 -Camera "1.2,1.7,6,0,1.2,-8" -Strip 16 -VideoMode 1600x900 -Name … # frame strip
+.\scripts\strip.ps1 -Before … -After … -Crop "400,560,560,130" -Out "%USERPROFILE%\Tumbu\<feature>\<case>-strip.png"
 ```
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
@@ -130,7 +132,11 @@ bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to 
   side: `devtest.ps1 -FxTest NAME [-FxTime 0.3]`; `effect test` is a calibration light + flash; `move:NAME` holds
   it and circles the spot so trails show; `-fxtest=special:jyn|punch|kick|jynthrow` makes the hero attack instead, `-fxdistance=D`
   sets the camera distance), `-jynhit[=D]` (the enemy stands still D units in front, no AI, and the hero throws a Genki
-  Dama at it: a real hit; `-jynhit=enemy`: the enemy throws at the hero; `devtest.ps1 -JynHit 6`).
+  Dama at it: a real hit; `-jynhit=enemy`: the enemy throws at the hero; `devtest.ps1 -JynHit 6`), `-strip=N` /
+  `-stripstep=D` (with a fixed camera, `-camera` or `-bench`: after the screenshot the camera pans sideways D units per
+  frame, 0.003 by default, about a third of a pixel at 15 units, and N consecutive frames are saved as
+  `devtest-strip-NN.png`; `devtest.ps1 -Strip N [-StripStep D]` renames them `devtest-<Name>-strip-NN.png`). Strips show
+  flicker and crawl of small bright details (bloom, sparks, thin neon) that one screenshot cannot.
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
 - **Memory check:** `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` runs `TUMBU.exe -cycles=40` (40 matches through
@@ -183,6 +189,11 @@ materials, textures, GUI) gets a before/after set:
    zoomed crops (`-Zoom 2` to `4`) when the change is small (outlines, edges, anti-aliasing). compare.ps1 also keeps the
    two full screenshots in the folder's `source\` (`<case>-before.png` / `-after.png`, with their `.fps`), because
    `devtest.ps1 -Clean` removes the loose `devtest-*` files and a later round may need the same "before".
+   For anything that can flicker or crawl while the camera moves (bloom, small bright details, thin lines), also take a
+   frame strip before and after (`devtest.ps1 -Strip 16` with `-Camera` or `-Bench`) and build
+   `.\scripts\strip.ps1 -Before … -After … -Crop … -Out "…\<case>-strip.png"`: per strip a row of frames and a row of
+   the differences between frames x8, plus the **crawl** (how much the brightest value of each pixel column changes per
+   frame, % of its mean; two identical runs of the night T view gave 0.68 and 0.69 %). It keeps the frames in `source\`.
 4. Read the images before reporting, and tell Jonathan the folder. Each tuning round gets a new folder
    (`<feature>-2`, …) whose "before" is the previous round's "after".
 5. **Track the frame rate too.** Every `devtest.ps1` run ends with `fps: avg=… min=… max=…` and saves it as

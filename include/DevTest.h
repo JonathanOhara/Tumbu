@@ -29,6 +29,9 @@
  *                    Dama at it (-fxtest=special:jynthrow): screenshot of a real Jyn hit, fxtime after the throw
  *                    -jynhit=enemy: the other way round, the enemy throws its Genki Dama at the hero
  *   -camera=x,y,z,tx,ty,tz  with -quitafter: the screenshot looks from (x,y,z) at (tx,ty,tz)
+ *   -strip=N         with a fixed camera (-camera or -bench): after the screenshot, pan the camera sideways by
+ *                    -stripstep=D units per frame (0.003: about a third of a pixel at 15 units) and save N
+ *                    consecutive frames as <workPath>/devtest-strip-NN.png (flicker and crawl of small bright details)
  *   -hero=robotNNN   the hero wears all five parts of that set (instead of the demo.object loadout)
  *   -swaptest        charge Jyn, Esc, Inventory, re-select the head (every part and its aura shell is rebuilt),
  *                    resume, charge Jyn again; logs the aura level after each step (use with -quitafter=9)
@@ -104,6 +107,9 @@ private:
 	int flyStep;
 	/// -bench=S: a steady frame-rate measurement (no AI, fixed camera, S seconds after a warm-up).
 	void runBench(void);
+	/// -strip=N: N consecutive frames while the fixed camera pans; true while it still needs frames.
+	bool runStrip(void);
+	int stripDone;
 	bool benchStarted, benchLogged;
 	unsigned long benchFrames, windowFrames;
 	Ogre::Real windowMin, windowMax;
@@ -155,6 +161,8 @@ private:
 	static bool flyTest;
 	static bool swapTest;
 	static Ogre::Vector3 cameraEye, cameraTarget;
+	static int stripFrames;
+	static Ogre::Real stripStep;
 };
 
 #endif // #ifndef __DevTest_h_

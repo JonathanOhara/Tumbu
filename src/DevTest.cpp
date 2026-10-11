@@ -52,6 +52,8 @@ bool DevTest::flyTest = false;
 bool DevTest::swapTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
 Ogre::Vector3 DevTest::cameraTarget = Ogre::Vector3::ZERO;
+int DevTest::stripFrames = 0;
+Ogre::Real DevTest::stripStep = 0.003f;
 //-------------------------------------------------------------------------------------
 void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	Ogre::StringVector args = Ogre::StringUtil::split( commandLine, " \t" );
@@ -117,6 +119,10 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 				cameraEye = Ogre::Vector3( Ogre::StringConverter::parseReal( v[0] ), Ogre::StringConverter::parseReal( v[1] ), Ogre::StringConverter::parseReal( v[2] ) );
 				cameraTarget = Ogre::Vector3( Ogre::StringConverter::parseReal( v[3] ), Ogre::StringConverter::parseReal( v[4] ), Ogre::StringConverter::parseReal( v[5] ) );
 			}
+		}else if( Ogre::StringUtil::startsWith( arg, "-strip=" ) ){
+			stripFrames = Ogre::StringConverter::parseInt( arg.substr( 7 ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-stripstep=" ) ){
+			stripStep = Ogre::StringConverter::parseReal( arg.substr( 11 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
 			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hero=" ) ){
@@ -171,6 +177,7 @@ DevTest::DevTest(void){
 	benchStarted = benchLogged = false;
 	renderMicros = restMicros = 0;
 	phaseFrames = 0;
+	stripDone = -1;
 	benchFrames = windowFrames = 0;
 	windowMin = windowMax = 0;
 	tourStep	= 0;
@@ -184,7 +191,12 @@ DevTest::DevTest(void){
 		" walktest=" + Ogre::StringConverter::toString( walkTest ) +
 		" fpscap=" + Ogre::StringConverter::toString( fpsCap ) +
 		" quitafter=" + Ogre::StringConverter::toString( quitAfter ) +
-		( fxTest.empty() ? "" : " fxtest=" + fxTest + " fxtime=" + Ogre::StringConverter::toString( fxTime ) + " fxdistance=" + Ogre::StringConverter::toString( fxDistance ) ) );
+		( fxTest.empty() ? "" : " fxtest=" + fxTest + " fxtime=" + Ogre::StringConverter::toString( fxTime ) + " fxdistance=" + Ogre::StringConverter::toString( fxDistance ) ) +
+		( stripFrames > 0 ? " strip=" + Ogre::StringConverter::toString( stripFrames ) + " stripstep=" + Ogre::StringConverter::toString( stripStep ) : "" ) );
+	if( stripFrames > 0 && !fixedCamera ){
+		log( "strip: ignored, it needs a fixed camera (-camera or -bench)" );
+		stripFrames = 0;
+	}
 }
 //-------------------------------------------------------------------------------------
 DevTest::~DevTest(void){
@@ -288,7 +300,7 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 			faceJynPresses++;
 		}
 
-		if( playTime >= nextLogTime ){
+		if( playTime >= nextLogTime && stripDone < 0 ){	// not during -strip: each of its frames waits for a PNG
 			logPositions();
 			nextLogTime += 0.5f;
 		}
@@ -323,9 +335,14 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 		}
 
 		if( quitAfter > 0 && playTime >= quitAfter ){
-			Ogre::String shot = tumbu->workPath + "devtest.png";
-			tumbu->mWindow->writeContentsToFile( shot );
-			log( "screenshot saved to " + shot );
+			if( stripDone < 0 ){
+				Ogre::String shot = tumbu->workPath + "devtest.png";
+				tumbu->mWindow->writeContentsToFile( shot );
+				log( "screenshot saved to " + shot );
+			}
+			if( runStrip() ){
+				break;
+			}
 			if( faceShot > 0 && tumbu->getDemo() != NULL ){
 				log( "faceshot: hero eye flare " + Ogre::StringConverter::toString( tumbu->getDemo()->mainChar->getEyeGlowBoost() ) + " aura " + Ogre::StringConverter::toString( tumbu->getDemo()->mainChar->getAuraLevel() ) );
 			}
@@ -496,6 +513,28 @@ void DevTest::holdEnemy(void){
 			quitAfter = playTime + fxTime;
 		}
 	}
+}
+//-------------------------------------------------------------------------------------
+bool DevTest::runStrip(void){
+	// -strip=N: frame k is saved at the start of the next frame (the window then holds it), and the camera moves on by
+	// stripStep to its right. The screenshot was taken first, so it matches the strip's frame 0 view.
+	if( stripFrames <= 0 ){
+		return false;
+	}
+	TUMBU* tumbu = TUMBU::getInstance();
+	if( stripDone >= 0 ){
+		Ogre::String file = tumbu->workPath + "devtest-strip-" + ( stripDone < 10 ? "0" : "" ) + Ogre::StringConverter::toString( stripDone ) + ".png";
+		tumbu->mWindow->writeContentsToFile( file );
+	}
+	stripDone++;
+	if( stripDone >= stripFrames ){
+		log( "strip: " + Ogre::StringConverter::toString( stripFrames ) + " frames saved, the camera moved " + Ogre::StringConverter::toString( stripStep ) + " units per frame" );
+		return false;
+	}
+	Ogre::Vector3 back = ( cameraEye - cameraTarget ).normalisedCopy();
+	Ogre::Vector3 offset = Ogre::Vector3::UNIT_Y.crossProduct( back ).normalisedCopy() * ( stripStep * stripDone );
+	placeCamera( cameraEye + offset, cameraTarget + offset );
+	return true;
 }
 //-------------------------------------------------------------------------------------
 void DevTest::placeCamera( const Ogre::Vector3 &eye, const Ogre::Vector3 &target ){
