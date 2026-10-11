@@ -283,9 +283,11 @@ painted toon sky replaced it).
     bilinear taps (they cover 6x6 texels, so no bright pixel falls between them), the **Karis average** (each 2x2 group
     weighted by 1 / (1 + luma), so one very bright pixel cannot make the glow flicker) and the soft threshold
     (`bloomThreshold` / `bloomSoftKnee` in `lighting.object`). Five more 13-tap downsamples go down to 1/64.
-  - Tent upsamples (`postprocess_bloomup.frag`, one material per level) go back up to half size, each adding its level:
-    `bloomLevel` = this level's weight, the coarser texture's weight, the scale of the result. All six levels are
-    weighted equally (the "Balanced" look, chosen against "tight" and "wide"); the last pass divides by the sum.
+  - Tent upsamples (`postprocess_bloomup.frag`, one material per level, `bloomLevel.x` = the level) go back up to half
+    size, each adding its level times its weight: `bloomLevelWeights` in `lighting.object` (half size to 1/64, shared
+    `bloomWeightsA/B`; the last pass divides by their sum, so only the ratios matter) and `bloomRadius` (the tent's
+    spread in texels). All six weights are 1: the "Balanced" look, chosen against "tight" (1 0.7 0.45 0.25 0.12 0.06)
+    and "wide" (0.4 0.5 0.7 1 1.3 1.6). A restart is enough to try other weights.
   - The final pass reads `bloomUp1` with one bilinear sample (a tent there cost 0.04 ms at 1920x1080 and looked the
     same) and adds it times `bloomStrength` (0.85) before tone mapping. Eleven `PF_FLOAT16_RGBA` targets.
   - Against the old bloom, hot cores keep their shape (the punch and Genki Dama centres, the three neon ropes, which

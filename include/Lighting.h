@@ -142,6 +142,9 @@ private:
 	/// Robot metal (see lighting.object): reflection band brightness (sky, bright band, horizon line, ground), band
 	/// heights + streak strength, and glint strength, glint size, fresnel minimum, how much metal dims the diffuse.
 	Ogre::Vector4 metalEnv, metalShape, metalExtra;
+	/// Bloom mip chain (see lighting.object): the weights of the half-size to 1/16 levels, and the 1/32 and 1/64
+	/// weights, 1 / the sum of all six, and the radius of the upsample tent in texels.
+	Ogre::Vector4 bloomWeightsA, bloomWeightsB;
 
 	static Lighting* instance;
 };

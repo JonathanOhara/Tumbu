@@ -264,7 +264,7 @@ material Tumbu/PostProcess/Final{
 }
 
 // Bloom (mip chain): the first downsample from the scene, the other downsamples, and the upsamples, one material per
-// level (bloomLevel: this level's weight, the coarser texture's weight, the scale of the result).
+// level (bloomLevel.x: the level; the weights are shared values from lighting.object).
 material Tumbu/PostProcess/BloomPrefilter{
     technique{
         pass{
@@ -318,7 +318,7 @@ material Tumbu/PostProcess/BloomUp1{
             }
 
             fragment_program_ref postprocess_bloom_up_ps{
-                param_named bloomLevel float4 1 1 0.16666667 0
+                param_named bloomLevel float4 1 0 0 0
             }
 
             texture_unit lower{
@@ -345,7 +345,7 @@ material Tumbu/PostProcess/BloomUp2{
             }
 
             fragment_program_ref postprocess_bloom_up_ps{
-                param_named bloomLevel float4 1 1 1 0
+                param_named bloomLevel float4 2 0 0 0
             }
 
             texture_unit lower{
@@ -372,7 +372,7 @@ material Tumbu/PostProcess/BloomUp3{
             }
 
             fragment_program_ref postprocess_bloom_up_ps{
-                param_named bloomLevel float4 1 1 1 0
+                param_named bloomLevel float4 3 0 0 0
             }
 
             texture_unit lower{
@@ -399,7 +399,7 @@ material Tumbu/PostProcess/BloomUp4{
             }
 
             fragment_program_ref postprocess_bloom_up_ps{
-                param_named bloomLevel float4 1 1 1 0
+                param_named bloomLevel float4 4 0 0 0
             }
 
             texture_unit lower{
@@ -426,7 +426,7 @@ material Tumbu/PostProcess/BloomUp5{
             }
 
             fragment_program_ref postprocess_bloom_up_ps{
-                param_named bloomLevel float4 1 1 1 0
+                param_named bloomLevel float4 5 0 0 0
             }
 
             texture_unit lower{

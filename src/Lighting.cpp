@@ -93,6 +93,16 @@ Lighting::Lighting( Ogre::SceneManager* sceneMgr ){
 	bloomThreshold		= requireChild( cfg, name, "bloomThreshold" )->getValueF();
 	bloomSoftKnee		= requireChild( cfg, name, "bloomSoftKnee" )->getValueF();
 	bloomStrength		= requireChild( cfg, name, "bloomStrength" )->getValueF();
+	ConfigNode* levels	= requireChild( cfg, name, "bloomLevelWeights" );
+	if( levels->getValues().size() != 6 ){
+		OGRE_EXCEPT( Ogre::Exception::ERR_INVALIDPARAMS, "lighting.object: 'bloomLevelWeights' needs six values (half size to 1/64)", "Lighting" );
+	}
+	Ogre::Real weightSum = 0;
+	for( unsigned int i = 0; i < 6; i++ ){
+		weightSum += levels->getValueF( i );
+	}
+	bloomWeightsA		= Ogre::Vector4( levels->getValueF( 0 ), levels->getValueF( 1 ), levels->getValueF( 2 ), levels->getValueF( 3 ) );
+	bloomWeightsB		= Ogre::Vector4( levels->getValueF( 4 ), levels->getValueF( 5 ), weightSum > 0 ? 1.0f / weightSum : 0.0f, requireChild( cfg, name, "bloomRadius" )->getValueF() );
 	aoAmbient			= requireChild( cfg, name, "aoAmbient" )->getValueF();
 	aoDirect			= requireChild( cfg, name, "aoDirect" )->getValueF();
 	aoTint				= requireChild( cfg, name, "aoTint" )->getValueF();
@@ -197,6 +207,8 @@ static void setNeutralValues( Ogre::GpuSharedParametersPtr params ){
 	params->setNamedConstant( "shadowParams", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "postParams", Ogre::Vector4( 1, 1, 1, 0 ) );
 	params->setNamedConstant( "bloomParams", Ogre::Vector4( 1.5f, 0.5f, 0, 0 ) );
+	params->setNamedConstant( "bloomWeightsA", Ogre::Vector4( 1, 1, 1, 1 ) );
+	params->setNamedConstant( "bloomWeightsB", Ogre::Vector4( 1, 1, 1.0f / 6.0f, 1 ) );
 	params->setNamedConstant( "aoParams", Ogre::Vector4( 1, 0.5f, 0.5f, 0 ) );
 	params->setNamedConstant( "shadowOffset", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "shaftParams", Ogre::Vector4( 0, 40, 0.5f, 16 ) );
@@ -248,7 +260,7 @@ void Lighting::endNeutralLighting(void){
 //-------------------------------------------------------------------------------------
 void Lighting::declareSharedParameters(void){
 	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().createSharedParameters( SHARED_PARAMS );
-	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "aoParams", "shadowOffset", "shaftParams", "contactShadowA", "contactShadowB", "fogParams", "dustParams",
+	const char* names[] = { "sunDirection", "sunColour", "skyColour", "groundColour", "shadowColour", "rimColour", "toonParams", "shadowParams", "postParams", "bloomParams", "bloomWeightsA", "bloomWeightsB", "aoParams", "shadowOffset", "shaftParams", "contactShadowA", "contactShadowB", "fogParams", "dustParams",
 		// Special-attack effects (EffectsManager): energy lights and the screen flash.
 		"energyLightPos0", "energyLightPos1", "energyLightPos2", "energyLightPos3",
 		"energyLightColour0", "energyLightColour1", "energyLightColour2", "energyLightColour3", "screenFlash",
@@ -426,6 +438,8 @@ void Lighting::apply( const Keyframe &k ){
 	Ogre::Real neonBound = neonRadius + neonLightReach;
 	params->setNamedConstant( "neonShape", Ogre::Vector4( neonLightBands, neonBound * neonBound, neonTop + neonLightReach, 0 ) );
 	params->setNamedConstant( "neonLight", toVector4( neonLightColour * ( neonLight * k.neon ), neonLightReach ) );
+	params->setNamedConstant( "bloomWeightsA", bloomWeightsA );
+	params->setNamedConstant( "bloomWeightsB", bloomWeightsB );
 	params->setNamedConstant( "metalEnv", metalEnv );
 	params->setNamedConstant( "metalShape", metalShape );
 	params->setNamedConstant( "metalExtra", metalExtra );

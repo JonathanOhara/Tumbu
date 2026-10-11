@@ -33,6 +33,11 @@ lighting configuration{
 	bloomThreshold 1.3
 	bloomSoftKnee 0.4
 	bloomStrength 0.85
+	// How much each level of the chain adds, from half size (the tight core) to 1/64 (the widest haze); they are
+	// normalised, so only their ratios matter ("tight": 1 0.7 0.45 0.25 0.12 0.06, "wide": 0.4 0.5 0.7 1 1.3 1.6).
+	// bloomRadius: the spread of each upsample step, in texels (1 = the reference filter; above 1 widens every level).
+	bloomLevelWeights 1 1 1 1 1 1
+	bloomRadius 1
 
 	// Baked ambient occlusion (scripts/bake-arena-ao.ps1, robot AO maps): how much it darkens the ambient light and
 	// the sun (0..1), and how much occluded areas lean towards the shadow colour instead of grey.
