@@ -154,6 +154,7 @@ private:
 	static bool jynWalk;
 	static bool noFx;
 	static bool bloomOnly;
+	static bool noHud;
 	static int antiAliasing;
 	static int sky;
 	static Ogre::Real bench;

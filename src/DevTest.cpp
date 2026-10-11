@@ -37,6 +37,7 @@ int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
 bool DevTest::noFx = false;
 bool DevTest::bloomOnly = false;
+bool DevTest::noHud = false;
 int DevTest::antiAliasing = -1;
 int DevTest::sky = -1;
 Ogre::Real DevTest::bench = 0;
@@ -81,6 +82,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			noFx = true;
 		}else if( arg == "-bloomonly" ){
 			bloomOnly = true;
+		}else if( arg == "-nohud" ){
+			noHud = true;	// review shots without the HP/AP bars, the log and the clock
 		}else if( arg == "-nofocus" ){
 			// The window opens without taking the keyboard focus from what the user is doing (the test scripts pass it;
 			// a game started by hand keeps the normal behaviour). SDL reads its hints from the environment too.
@@ -287,6 +290,9 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 				log( "skinning: " + Ogre::StringConverter::toString( gpu ) + " entities on the GPU, " + Ogre::StringConverter::toString( cpu ) + " on the CPU" + cpuNames );
 			}
 			hideObjects();
+			if( noHud ){
+				GUI::getInstance()->hideBattleLayout();
+			}
 			stage = PLAYING;
 		}
 		break;

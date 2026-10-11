@@ -1,6 +1,7 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-Hide terrain,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-NoHud] [-Hide terrain,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
+#        .\scripts\devtest.ps1 -GuiTour [-Hour 22] [-Renderer GL]      # every GUI screen: devtest-gui-*.png
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # Every run is windowed at -VideoMode (default 1024x768, so test shots and crops stay comparable), whatever
 # %USERPROFILE%\Tumbu\ogre.cfg says: Jonathan's own ogre.cfg is set for playing (windowed 1920x1080, VSync), so the
@@ -38,6 +39,7 @@ param(
     [double]$Bench = 0,
     [switch]$NoFx,
     [switch]$BloomOnly,
+    [switch]$NoHud,
     [switch]$BenchAI,
     [switch]$BenchChase,
     [string]$Name = 'run',
@@ -46,6 +48,7 @@ param(
     [int]$Strip = 0,
     [double]$StripStep = 0,
     [int]$Cycles = 0,
+    [switch]$GuiTour,
     [switch]$Clean,
     [int]$TimeoutSeconds = 180
 )
@@ -84,6 +87,7 @@ if ($AA -ge 0)     { $gameArgs += "-aa=$AA" }
 if ($Sky -ge 0)    { $gameArgs += "-sky=$Sky" }
 if ($NoFx)        { $gameArgs += '-nofx' }
 if ($BloomOnly)   { $gameArgs += '-bloomonly' }
+if ($NoHud)       { $gameArgs += '-nohud' }    # no HP/AP bars, log or clock: cleaner review shots
 if ($Hide)        { $gameArgs += "-hide=$Hide" }    # parts hidden for the run: terrain, dust, sky, arena, coliseum, torches    # the final image shows the bloom alone (x3)
 if ($BenchAI)     { $gameArgs += '-benchai' }
 if ($BenchChase)  { $gameArgs += '-benchchase' }
@@ -96,6 +100,13 @@ if ($Cycles -gt 0) {
     if (-not $Sound) { $gameArgs += '-mute' }
     if (-not $Focus) { $gameArgs += '-nofocus' }
     $TimeoutSeconds = [math]::Max($TimeoutSeconds, 30 * $Cycles + 120)
+}
+if ($GuiTour) {
+    # Every GUI screen, Quit to menu, a 2nd match, Exit: devtest-gui-*.png (the window of -VideoMode, not the play window).
+    $gameArgs = @('-guitour')
+    if ($Hour -ge 0) { $gameArgs += "-hour=" + $Hour.ToString([cultureinfo]::InvariantCulture) }
+    if (-not $Sound) { $gameArgs += '-mute' }
+    if (-not $Focus) { $gameArgs += '-nofocus' }
 }
 
 Remove-Item "$work\devtest.png", "$work\devtest-strip-[0-9]*.png" -ErrorAction SilentlyContinue
