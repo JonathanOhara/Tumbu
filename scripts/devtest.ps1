@@ -68,6 +68,7 @@ if (-not $NoWalk -and $Bench -le 0) { $gameArgs += '-walktest' }
 if ($FpsCap -gt 0) { $gameArgs += "-fpscap=$FpsCap" }
 if ($Hour -ge 0)   { $gameArgs += "-hour=" + $Hour.ToString([cultureinfo]::InvariantCulture) }    # fractional: 20.5 = 20:30
 if (-not $Sound)  { $gameArgs += '-mute' }
+$gameArgs += '-nofocus'    # the window does not take the keyboard focus from what Jonathan is doing
 if ($FaceShot)    { $gameArgs += $(if ($Jyn) { '-faceshot=jyn' } else { '-faceshot' }) }
 if ($JynWalk)     { $gameArgs += "-jynwalk" }
 if ($JynHit -gt 0) { $gameArgs += "-jynhit=" + $JynHit.ToString([cultureinfo]::InvariantCulture) }
@@ -89,6 +90,7 @@ if ($Cycles -gt 0) {
     # The memory check drives the game itself (menu, match, kills, back to the menu) and quits when done.
     $gameArgs = @("-cycles=$Cycles")
     if (-not $Sound) { $gameArgs += '-mute' }
+    $gameArgs += '-nofocus'
     $TimeoutSeconds = [math]::Max($TimeoutSeconds, 30 * $Cycles + 120)
 }
 

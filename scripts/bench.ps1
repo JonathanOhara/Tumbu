@@ -52,6 +52,9 @@ $parsed = foreach ($v in $Variants) {
     $label, $vArgs = $v.Split('=', 2)
     [pscustomobject]@{ Label = $label; Args = $vArgs }
 }
+# The game windows do not take the keyboard focus (SDL reads the hint from the environment): devtest.ps1 passes -nofocus,
+# and older trees (@folder) inherit this.
+$env:SDL_WINDOW_NO_ACTIVATION_WHEN_SHOWN = '1'
 $original = Get-Content $cfg -Raw
 $results = @()
 try {

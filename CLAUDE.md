@@ -70,7 +70,7 @@ patch no longer finds the code it patches: then look here.
    - Fixed upstream when: in the new Ogre's `bindGpuProgramParameters`, `_updateSharedParams()` runs before
      `updateDefaultUniformBuffer` (or an Ogre issue/commit says so).
    - To remove: delete the D3D11 block of `Repair-OgreSource`, rebuild Ogre, and check on Direct3D 11:
-     `bin\Release\TUMBU.exe -guitour -hour=22 -mute`; in `devtest-gui-pause-inventory.png` the preview robot must be white
+     `bin\Release\TUMBU.exe -guitour -hour=22 -mute -nofocus`; in `devtest-gui-pause-inventory.png` the preview robot must be white
      (neutral light), not night blue. Then delete this entry and its line in the Rendering pitfalls.
    - With an unpatched Ogre that still has the bug, the preview needs its own fix: copy the shared values into the
      preview's passes right after setting and after restoring them (`_copySharedParams()`; commit 86720f7).
@@ -95,13 +95,20 @@ screen only when it is really needed, such as the 1920x1080 frame-rate measureme
 `TUMBU.exe` started directly takes Jonathan's play window from `ogre.cfg` (1920x1080), so prefer `devtest.ps1`, which
 sets the window for its run.
 
+**Never take Jonathan's keyboard focus.** A game window Claude starts opens without activating (`-nofocus`: SDL's
+`SDL_WINDOW_NO_ACTIVATION_WHEN_SHOWN` hint), so his typing keeps going to his own window. `devtest.ps1` passes it, and
+`bench.ps1` sets the hint in the environment (older `@folder` trees inherit it); add `-nofocus` to every direct
+`TUMBU.exe` command and to `run.ps1 -Mute -- -nofocus`. A game Jonathan starts himself keeps the normal behaviour. DevTest
+input goes through the game's own dispatch, so an unfocused run still plays and renders normally (checked on both
+renderers, 2026-10-11).
+
 ```powershell
 .\scripts\devtest.ps1 -QuitAfter 7 -Name check      # auto-starts a match, walks the hero, screenshots, quits
 .\scripts\devtest.ps1 -FpsCap 30 -Name fps30        # same, frame rate capped (compare movement across FPS)
 .\scripts\devtest.ps1 -Hour 22 -Name night         # clock starts at 22:00 (night sky with Sky quality High; -Hour 20.5 = 20:30)
 .\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
 .\scripts\devtest.ps1 -VideoMode 1600x900 -Name big  # window size of the run (default 1024x768; at most 1600x900 for dev runs)
-bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
+bin\Release\TUMBU.exe -guitour -mute -nofocus       # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # memory check: 40 matches via the real UI (see "Memory check")
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated steady runs, D3D11 + OpenGL
 .\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, 2 runs (~5 min); full run for shaders that loop
@@ -111,7 +118,7 @@ bin\Release\TUMBU.exe -guitour -mute                # every GUI screen, Quit to 
 ```
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
-  `-fpscap=N`, `-quitafter=S`, `-hour=H` (fractional: `20.5` = 20:30), `-mute` (all sounds at volume 0; also works for a normal game), `-nofx` (no
+  `-fpscap=N`, `-quitafter=S`, `-hour=H` (fractional: `20.5` = 20:30), `-mute` (all sounds at volume 0; also works for a normal game), `-nofocus` (the window opens without taking the keyboard focus), `-nofx` (no
   special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the bloom alone, x3, through `bloomParams.w`: its shape, and its flicker in a `-strip`; `devtest.ps1 -BloomOnly`), `-aa=0|1` (anti-aliasing off / SMAA for this run,
   whatever `options.cfg` says: `devtest.ps1 -AA 0`), `-sky=0|1` (the painted sky without / with its clouds for this run: `-Sky 0`), `-bench=S`
   (`devtest.ps1 -Bench S`: a steady frame-rate measurement; no AI, the camera fixed from the first frame (the standard

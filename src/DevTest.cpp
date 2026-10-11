@@ -80,6 +80,14 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			noFx = true;
 		}else if( arg == "-bloomonly" ){
 			bloomOnly = true;
+		}else if( arg == "-nofocus" ){
+			// The window opens without taking the keyboard focus from what the user is doing (the test scripts pass it;
+			// a game started by hand keeps the normal behaviour). SDL reads its hints from the environment too.
+#ifdef _WIN32
+			_putenv_s( "SDL_WINDOW_NO_ACTIVATION_WHEN_SHOWN", "1" );
+#else
+			setenv( "SDL_WINDOW_NO_ACTIVATION_WHEN_SHOWN", "1", 1 );
+#endif
 		}else if( Ogre::StringUtil::startsWith( arg, "-aa=" ) ){
 			antiAliasing = Ogre::StringConverter::parseInt( arg.substr( 4 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-sky=" ) ){
