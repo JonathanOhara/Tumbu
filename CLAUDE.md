@@ -642,6 +642,12 @@ through a listener registry in `BaseApplication`.
 
 ## Conventions when editing
 
+- **How a piece of work goes:** step by step, and after each step that works: its checks (below and "Automated checks"),
+  the docs updated, then commit and **push straight to `master`** (`git -c http.sslBackend=schannel push origin master`;
+  no branches unless Jonathan asks). Run `.\scripts\devtest.ps1 -Cycles 40` on both renderers after a step that adds or
+  changes GPU resources, render targets, materials or objects created per match. Before/after images and bench
+  results go in `%USERPROFILE%\Tumbu\<feature>\` and are named only in the chat report: **never write those folder
+  paths into CLAUDE.md or docs/** (Jonathan cleans the folder up); put the numbers and findings there instead.
 - **Geometry: Blender is the source of truth.** Never edit a `.mesh` (or `.skeleton`) file directly, by hand,
   through XML, or with a script that patches vertices. Every geometry change (shape, normals, UVs,
   clean-up, materials assigned to faces) is made in the Blender file, then the `.mesh` is generated again
