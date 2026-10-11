@@ -141,6 +141,17 @@ Techniques in use that have a clear modern replacement, most valuable first:
    and R11G11B10 targets were no cheaper on Direct3D 11, because the cost is the number of passes. The level weights and the
    tent radius are in `lighting.object` (`bloomLevelWeights`, `bloomRadius`). The energy effects were checked
    against the new glow (2026-10-11): no retuning needed.
+   **Possible later, low priority** (measured 2026-10-11, CLAUDE.md "Bloom"): the chain costs about 0.10 ms (Direct3D 11) /
+   0.14 ms (OpenGL) at 1920x1080, half of it the fixed cost of its 11 passes. Ways to lower it, none worth it at
+   0.1 ms (1.4 % of a 144 fps frame):
+   - a **compute-shader downsample** (one dispatch for the six downsamples, like AMD FidelityFX SPD): saves about 5 pass
+     costs, ~0.02 to 0.03 ms. Ogre 14.6 has compositor `compute` passes, but its Direct3D 11 renderer gives a texture one
+     writable view (one mip), so it must write our separate level textures; OpenGL binds images differently; the 13-tap
+     filter needs neighbours across thread-group tiles. The five upsamples stay passes (each needs the coarser one done).
+   - **fold the last upsample into the final pass** (one half-size pass less, ~0.01 ms; a tent there cost 0.04 ms at
+     full size, so it needs care);
+   - a **Bloom quality option** (6 / 3 levels / off) for weak GPUs, where the per-pixel part grows: 3 levels save
+     0.015 / 0.04 ms here, off saves 0.10 / 0.14 ms.
 3. **Sky: Caelum** — **done (2026-10-06): our own painted toon sky** (CLAUDE.md "The sky"). Original notes (a 2008-era library): Direct3D 11 only (OpenGL falls back to a static skydome), Cg/HLSL shaders, and
    two source patches in `deps.ps1`. Replace with **our own stylised sky shader** (gradient bands, sun and moon discs,
    toon clouds) driven by `lighting.object`: one sky on both renderers, art-directable like Genshin's skies, and a

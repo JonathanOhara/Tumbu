@@ -329,8 +329,13 @@ painted toon sky replaced it).
     same) and adds it times `bloomStrength` (0.85) before tone mapping. Eleven `PF_FLOAT16_RGBA` targets.
   - Against the old bloom, hot cores keep their shape (the punch and Genki Dama centres, the three neon ropes, which
     used to melt into one red band) and the glow crawls about 4 times less while the camera pans (`-bloomonly -strip`).
-  - Cost (`bench.ps1`): about +0.075 ms at 1920x1080 on both renderers, nothing measurable at 1024x768. Five levels, a
-    4-tap first step or R11G11B10 targets were no cheaper on Direct3D 11: the cost is the number of passes.
+  - Cost (`bench.ps1`): about +0.075 ms at 1920x1080 against the old bloom on both renderers, nothing measurable at
+    1024x768. Five levels, a 4-tap first step or R11G11B10 targets were no cheaper on Direct3D 11. Where it goes (2026-10-11,
+    1920x1080, builds with the chain removed, with its 11 passes writing black without reading anything, and with 3
+    levels): the whole chain costs about 0.10 ms on Direct3D 11 and 0.14 ms on OpenGL, and **about 0.05 to 0.06 ms of
+    that is the passes themselves** (some 5 microseconds each to switch the target and run a pass, however small); the
+    sampling is the rest, mostly the two half-size passes. Three levels instead of six save only 0.015 / 0.04 ms, because
+    the small levels cost almost nothing but their pass.
 - **Anti-aliasing: SMAA 1x** (Jimenez et al., MIT; `SMAA_PRESET_HIGH`, luma edges). The match renders into the
   compositor's HDR texture, which has no MSAA, so the FSAA of the start-up dialog / `ogre.cfg` does nothing in a match
   (keep it at 1). Instead `Lighting::enableAntiAliasing` chains the `Tumbu/SMAA` compositor after `Tumbu/PostProcess`
