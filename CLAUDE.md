@@ -100,7 +100,9 @@ sets the window for its run.
 `bench.ps1` sets the hint in the environment (older `@folder` trees inherit it); add `-nofocus` to every direct
 `TUMBU.exe` command and to `run.ps1 -Mute -- -nofocus`. A game Jonathan starts himself keeps the normal behaviour. DevTest
 input goes through the game's own dispatch, so an unfocused run still plays and renders normally (checked on both
-renderers, 2026-10-11).
+renderers, 2026-10-11). If the missing focus gets in the way of a run (for example a window behind others that does not
+render, or a check that needs a focused window), drop it for that run (`devtest.ps1 -Focus`, or leave `-nofocus` out)
+and tell Jonathan why.
 
 ```powershell
 .\scripts\devtest.ps1 -QuitAfter 7 -Name check      # auto-starts a match, walks the hero, screenshots, quits

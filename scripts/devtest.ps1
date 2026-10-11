@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-Renderer D3D11|GL] [-VideoMode 1024x768]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
 # Every run is windowed at -VideoMode (default 1024x768, so test shots and crops stay comparable), whatever
@@ -9,7 +9,8 @@
 # -Cycles N runs the memory check instead (TUMBU.exe -cycles=N: N matches through the real UI) and prints a short
 # report: the heap after each match, the summary line, and for 20 matches or more the heap growth per match in the
 # first and the second half (the Direct3D 11 driver pool fills over ~18 matches, then the second half is near 0).
-# The game runs muted (-mute) unless -Sound is given.
+# The game runs muted (-mute) unless -Sound is given, and its window opens without taking the keyboard focus
+# (-nofocus) unless -Focus is given.
 # -Clean moves the old per-run files (devtest-*.png/.log/.fps, also the bench runs') to the Recycle Bin first; given
 # alone (.\scripts\devtest.ps1 -Clean) it only cleans.
 # It ends with the frame rate of the run ("fps: avg=... min=... max=..."; VSync is off under DevTest), also saved as
@@ -21,6 +22,7 @@ param(
     [double]$QuitAfter = 8,
     [switch]$NoWalk,
     [switch]$Sound,
+    [switch]$Focus,
     [switch]$FaceShot,
     [switch]$Jyn,
     [switch]$JynWalk,
@@ -68,7 +70,7 @@ if (-not $NoWalk -and $Bench -le 0) { $gameArgs += '-walktest' }
 if ($FpsCap -gt 0) { $gameArgs += "-fpscap=$FpsCap" }
 if ($Hour -ge 0)   { $gameArgs += "-hour=" + $Hour.ToString([cultureinfo]::InvariantCulture) }    # fractional: 20.5 = 20:30
 if (-not $Sound)  { $gameArgs += '-mute' }
-$gameArgs += '-nofocus'    # the window does not take the keyboard focus from what Jonathan is doing
+if (-not $Focus)  { $gameArgs += '-nofocus' }    # the window does not take the keyboard focus from what Jonathan is doing
 if ($FaceShot)    { $gameArgs += $(if ($Jyn) { '-faceshot=jyn' } else { '-faceshot' }) }
 if ($JynWalk)     { $gameArgs += "-jynwalk" }
 if ($JynHit -gt 0) { $gameArgs += "-jynhit=" + $JynHit.ToString([cultureinfo]::InvariantCulture) }
@@ -90,7 +92,7 @@ if ($Cycles -gt 0) {
     # The memory check drives the game itself (menu, match, kills, back to the menu) and quits when done.
     $gameArgs = @("-cycles=$Cycles")
     if (-not $Sound) { $gameArgs += '-mute' }
-    $gameArgs += '-nofocus'
+    if (-not $Focus) { $gameArgs += '-nofocus' }
     $TimeoutSeconds = [math]::Max($TimeoutSeconds, 30 * $Cycles + 120)
 }
 
