@@ -18,8 +18,9 @@ Visual track, most important first (impact on what the player sees, against the 
    robots, a darker "balanced" night (CLAUDE.md "Night lights").
 4. **Own stylised sky** (Rendering modernization 3) — **done (2026-10-06)**: the painted toon sky replaced Caelum (CLAUDE.md
    "The sky"); the same sky on OpenGL, Caelum and its patches gone. **Folded into the arena remake as its last step** (2026-10-06): the "painted bands" style.
-5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook. **In progress**: the
-   "Balanced" look chosen on 2026-10-10 (equal weights on six levels; options page in Rendering modernization 5).
+5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook. **Done
+   (2026-10-11)**: the "Balanced" look chosen on 2026-10-10 (equal weights on six levels; options page in Rendering
+   modernization 5); the energy effects were checked against it and need no retuning.
 6. **Tune Jyn in real fights** (idea 9): no code, only play time.
 7. **Grass remake** (Art side): our own toon shader for the terrain, with the real shadows (it has none since the light
    map was turned off, 2026-10-06; see "Grass remake" under Art side).
@@ -138,8 +139,8 @@ Techniques in use that have a clear modern replacement, most valuable first:
    **Built 2026-10-11** (CLAUDE.md "Bloom"): the bloom-only glow crawls 4 times less (1.25 to 0.30 %), and it costs about
    +0.075 ms at 1920x1080 on both renderers (nothing at 1024x768). The budget was missed: five levels, a 4-tap first step
    and R11G11B10 targets were no cheaper on Direct3D 11, because the cost is the number of passes. The level weights and the
-   tent radius are in `lighting.object` (`bloomLevelWeights`, `bloomRadius`). Left: the energy effects checked against
-   the new glow.
+   tent radius are in `lighting.object` (`bloomLevelWeights`, `bloomRadius`). The energy effects were checked
+   against the new glow (2026-10-11): no retuning needed.
 3. **Sky: Caelum** — **done (2026-10-06): our own painted toon sky** (CLAUDE.md "The sky"). Original notes (a 2008-era library): Direct3D 11 only (OpenGL falls back to a static skydome), Cg/HLSL shaders, and
    two source patches in `deps.ps1`. Replace with **our own stylised sky shader** (gradient bands, sun and moon discs,
    toon clouds) driven by `lighting.object`: one sky on both renderers, art-directable like Genshin's skies, and a

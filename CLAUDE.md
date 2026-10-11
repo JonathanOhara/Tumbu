@@ -42,6 +42,10 @@ from each one you defeat.
 - **Norton 360 on this PC** can block a freshly built `TUMBU.exe` ("Acesso negado" / Access denied, or a
   process stuck at about 2 MB). The user has to allow it or exclude `bin\`. Git over HTTPS needs
   `git -c http.sslBackend=schannel` because Norton intercepts TLS.
+- **`bash` typed in PowerShell starts WSL** (`C:\Windows\System32\bash.exe` comes first on the PATH), not Git Bash: it sees another file
+  system and another environment, and a script run that way failed silently (2026-10-10: the variant switches of a
+  bloom comparison never happened, so its runs were void). Write helper scripts in PowerShell, or call Git Bash by its
+  full path (`C:\Program Files\Git\bin\bash.exe`).
 - **Run every game build from inside the repo's `bin\`** (excluded from Norton). Throwaway copies, prototypes and
   worktrees for comparisons go in **`bin\scratch\<name>\`** (git-ignored, kept between Claude sessions), never in
   `%TEMP%`, the session scratchpad or a sibling folder such as `..\Tumbu-before`: Norton holds every `TUMBU.exe` it
@@ -278,6 +282,13 @@ painted toon sky replaced it).
   sun-facing surfaces were missing from the map and light leaked as bright slits where a wall meets a
   slope. Self-shadow stripes are avoided with a normal-offset lookup (`shadowNormalOffset`), so
   `shadowBias` stays small; a large bias let light leak at joints.
+- **A uniform the shader compiler removed does not exist for Ogre.** A uniform the code never reads in the end (for
+  example only used in a branch a `#define` turned off, or multiplied by a constant 0) is optimised out. A
+  `param_named` for it in a script only logs `ScriptCompiler - invalid parameters ... Parameter called X does not
+  exist`, but setting it from code (`GpuProgramParameters::setNamedConstant`, as `Lighting::notifyMaterialRender` does
+  for `flareSun`) throws `InvalidParametersException`, which is fatal. Met while prototyping the bloom (a debug view that
+  skipped the lens flare). Keep every uniform the code sets in use, or use `setIgnoreMissingParams( true )` on those
+  parameters. Shared parameters (`TumbuLighting`) are safe: missing names are skipped.
 - **Every shader source starts with `OGRE_NATIVE_GLSL_VERSION_DIRECTIVE`.** Without it OpenGL compiles the
   file as old GLSL: `SAMPLER2D(name, n)` then has no binding, so every sampler reads texture unit 0 (this
   broke shadows and bloom on OpenGL), and `shadow2D` returns a vec4. For HLSL the token is empty.
