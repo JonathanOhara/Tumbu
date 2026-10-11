@@ -3,7 +3,7 @@
 
 // Includes
 #include <OgreString.h>
-#include <OgreVector3.h>
+#include <OgreVector.h>
 #include <OgreQuaternion.h>
 #include <OgreResourceGroupManager.h>
 #include <vector>
