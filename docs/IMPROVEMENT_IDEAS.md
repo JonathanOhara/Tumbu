@@ -18,15 +18,18 @@ Visual track, most important first (impact on what the player sees, against the 
    robots, a darker "balanced" night (CLAUDE.md "Night lights").
 4. **Own stylised sky** (Rendering modernization 3) — **done (2026-10-06)**: the painted toon sky replaced Caelum (CLAUDE.md
    "The sky"); the same sky on OpenGL, Caelum and its patches gone. **Folded into the arena remake as its last step** (2026-10-06): the "painted bands" style.
-5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook.
+5. **Mip-chain bloom** (Rendering modernization 2): better glow on the ki attacks, the game's hook. **In progress**: the
+   "Balanced" look chosen on 2026-10-10 (equal weights on six levels; options page in Rendering modernization 5).
 6. **Tune Jyn in real fights** (idea 9): no code, only play time.
 7. **Grass remake** (Art side): our own toon shader for the terrain, with the real shadows (it has none since the light
    map was turned off, 2026-10-06; see "Grass remake" under Art side).
 8. **Robot art pass:** richer textures and toon-friendly normals (Art side).
-9. **Khronos PBR Neutral tone mapping** (Rendering modernization 5): small; fold into the bloom work.
+9. **Khronos PBR Neutral tone mapping** (Rendering modernization 5): tried with the bloom work (2026-10-10), **softShoulder
+   kept**; revisit with the linear workflow (item 12).
 10. **Cloud shadows** (idea 5).
 11. **Colour-grading tables per time of day** (idea 6).
-12. **Linear workflow** (Rendering modernization 4): only with a full retune of the look.
+12. **Linear workflow** (Rendering modernization 4): only with a full retune of the look. Revisit PBR Neutral tone mapping
+    then (Rendering modernization 5).
 13. **GTAO** (Rendering modernization 6) and the **smaller extras** (idea 7).
 14. **OpenGL frame rate** (Rendering modernization 9): about 30 % behind Direct3D 11; only worth it if OpenGL becomes a
     target (a Linux build).
@@ -128,6 +131,10 @@ Techniques in use that have a clear modern replacement, most valuable first:
 2. **Bloom: one bright pass + two H/V blurs at quarter size** (pre-2014 style). Replace with the **downsample/upsample
    mip-chain bloom** (Jimenez, Call of Duty: Advanced Warfare, SIGGRAPH 2014; used by Unreal and Unity): wider, more
    natural falloff, stable without flicker on small bright pixels (eyes, sparks, the Genki Dama).
+   **Chosen 2026-10-10: "Balanced"** (equal weights on six levels, half size to 1/64) over "tight" and "wide anime glow",
+   from a prototype rendered in game (same page as item 5). The prototype held the cores' shapes (the punch and Genki Dama
+   centres, the three neon ropes) and its glow crawled 5 to 10 times less on the T's neon tube while the camera panned; it
+   cost about +0.1 ms at 1920x1080 (D3D11 and OpenGL), so the build has a budget of about +0.05 ms.
 3. **Sky: Caelum** — **done (2026-10-06): our own painted toon sky** (CLAUDE.md "The sky"). Original notes (a 2008-era library): Direct3D 11 only (OpenGL falls back to a static skydome), Cg/HLSL shaders, and
    two source patches in `deps.ps1`. Replace with **our own stylised sky shader** (gradient bands, sun and moon discs,
    toon clouds) driven by `lighting.object`: one sky on both renderers, art-directable like Genshin's skies, and a
@@ -136,9 +143,17 @@ Techniques in use that have a clear modern replacement, most valuable first:
    a **linear workflow** (sRGB textures decoded, light added in linear, encoded at the end): energy lights, bloom and
    fog blend correctly. Big retune of every value, so only together with a larger look pass; many toon games accept
    gamma-space lighting.
+   When this is done, try **Khronos PBR Neutral** tone mapping again (item 5): it was kept out in 2026-10 because our image
+   is in display space.
 5. **Tone mapping: a per-channel soft shoulder.** Bright saturated colours shift hue as their channels roll off at
    different rates (an orange highlight turns yellow). **Khronos PBR Neutral** (2024) keeps base colours 1:1 up to a
    point and compresses only highlights, hue-preserving: the same goal ("the art keeps its colours"), done better.
+   **Tried 2026-10-10 with the mip-chain bloom prototype, softShoulder kept** (options page:
+   https://claude.ai/artifact/DwgAko9KuG5ZwW15Eh8x1r). On our display-space image PBR Neutral as published made every scene
+   about 10 % darker and nearly doubled the near-black pixels at night (its toe acts on visible darks: robot004's navy armour
+   sank), and its highlight whitening turned the deep-red neon pink (rope 238,12,7 became 239,91,91). Without the whitening
+   the neon stayed red, but the toe still darkened. Jonathan liked both looks. **Revisit it together with the linear
+   workflow (item 4)**: PBR Neutral expects linear light, and there it is the natural choice.
 6. **SSAO: 12 spiral samples.** **GTAO** (ground-truth AO) gives more accurate contact darkening for a similar cost.
    Low priority: the arena and robots also have baked AO.
 7. **Uncompressed TGA/PNG textures.** **Arena done (2026-10-06):** BC7 / BC5 / BC4 DDS made from the PNGs by `scripts/compress-arena-textures.ps1` (the arena's textures in video memory: about 241 MB to 49 MB; slightly faster (bench, low wall view, 1920x1080: D3D11 +1.9 %, OpenGL +1.7 %)); the robots still use TGA. Original notes: **BC7** (colour) and **BC5** (normal maps) DDS with mipmaps: about 4x less video
