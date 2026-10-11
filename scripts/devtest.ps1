@@ -96,7 +96,7 @@ if ($Cycles -gt 0) {
     $TimeoutSeconds = [math]::Max($TimeoutSeconds, 30 * $Cycles + 120)
 }
 
-Remove-Item "$work\devtest.png", "$work\devtest-strip-*.png" -ErrorAction SilentlyContinue
+Remove-Item "$work\devtest.png", "$work\devtest-strip-[0-9]*.png" -ErrorAction SilentlyContinue
 $cfgFile = Join-Path $work 'ogre.cfg'
 $cfgSaved = $null
 if (Test-Path $cfgFile) {
@@ -131,7 +131,7 @@ if (Test-Path "$work\devtest.png") { Copy-Item "$work\devtest.png" "$work\devtes
 # -Strip: the frames as devtest-<Name>-strip-NN.png (scripts/strip.ps1 compares two strips).
 if ($Strip -gt 0) {
     Remove-Item "$work\devtest-$Name-strip-*.png" -ErrorAction SilentlyContinue
-    $frames = @(Get-ChildItem "$work\devtest-strip-*.png" -ErrorAction SilentlyContinue)
+    $frames = @(Get-ChildItem "$work\devtest-strip-[0-9]*.png" -ErrorAction SilentlyContinue)
     foreach ($f in $frames) { Move-Item $f.FullName ("$work\devtest-$Name-" + $f.Name.Substring(8)) -Force }
     Write-Host "strip: $($frames.Count) frames  $work\devtest-$Name-strip-NN.png"
 }
