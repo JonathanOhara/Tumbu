@@ -171,3 +171,7 @@ session; they only mean something against the other variant of the same run.
   PC hung and was restarted (Kernel-Power 41). The game was running at ~700 fps then, with no long GPU work, so it points
   at the driver or the card's PCIe link, not the game. LiveKernelEvent 193 (driver live dumps) also appear on several
   days since 2026-09-15. If it happens again: look at these events first.
+- **A failing hard disk on the development PC** (found 2026-10-11): Disk 0, a 2 TB Seagate ST2000DM001 with no
+  partitions, reports a size of about 4 GB, and Windows logs that it retried a read at block 0 (event `disk` 153) every
+  day: 1203 times between 2026-08-12 and 2026-10-11. Nothing of the project is on it (C:, D:, E: are other disks). Told
+  Jonathan; if benchmarks show odd stalls, this disk is a suspect.
