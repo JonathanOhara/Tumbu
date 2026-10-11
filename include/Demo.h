@@ -53,6 +53,8 @@ public:
 	int TOTAL_ENEMIES;
 	int numberOfenemies;
 
+	DotSceneLoader* getLoader(){ return mLoader; }
+
 	void setCamera( Camera* _camera );
 	Camera* getCamera();
 

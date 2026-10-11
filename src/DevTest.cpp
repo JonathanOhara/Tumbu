@@ -53,6 +53,7 @@ bool DevTest::flyTest = false;
 bool DevTest::swapTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
 Ogre::Vector3 DevTest::cameraTarget = Ogre::Vector3::ZERO;
+Ogre::String DevTest::hideList = "";
 int DevTest::stripFrames = 0;
 Ogre::Real DevTest::stripStep = 0.003f;
 //-------------------------------------------------------------------------------------
@@ -130,6 +131,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 				cameraEye = Ogre::Vector3( Ogre::StringConverter::parseReal( v[0] ), Ogre::StringConverter::parseReal( v[1] ), Ogre::StringConverter::parseReal( v[2] ) );
 				cameraTarget = Ogre::Vector3( Ogre::StringConverter::parseReal( v[3] ), Ogre::StringConverter::parseReal( v[4] ), Ogre::StringConverter::parseReal( v[5] ) );
 			}
+		}else if( Ogre::StringUtil::startsWith( arg, "-hide=" ) ){
+			hideList = arg.substr( 6 );
 		}else if( Ogre::StringUtil::startsWith( arg, "-strip=" ) ){
 			stripFrames = Ogre::StringConverter::parseInt( arg.substr( 7 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-stripstep=" ) ){
@@ -283,6 +286,7 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 				}
 				log( "skinning: " + Ogre::StringConverter::toString( gpu ) + " entities on the GPU, " + Ogre::StringConverter::toString( cpu ) + " on the CPU" + cpuNames );
 			}
+			hideObjects();
 			stage = PLAYING;
 		}
 		break;
@@ -821,6 +825,47 @@ void DevTest::runSwapTest(void){
 			+ " aura=" + Ogre::StringConverter::toString( demo->mainChar->getAuraLevel() )
 			+ " shell=" + Ogre::StringConverter::toString( demo->mainChar->head->auraEntity != NULL && demo->mainChar->head->auraEntity->getVisible() ) );
 		swapStep++;
+	}
+}
+//-------------------------------------------------------------------------------------
+// -hide=terrain,coliseum,...: hides parts of the arena for the run, to find which one draws something. Names: terrain,
+// dust, sky, or an entity's name without "Entity" (arena, coliseum, torches).
+void DevTest::hideObjects(void){
+	if( hideList.empty() ){
+		return;
+	}
+	TUMBU* tumbu = TUMBU::getInstance();
+	Ogre::SceneManager* sceneMgr = tumbu->mSceneMgr;
+	Ogre::StringVector names = Ogre::StringUtil::split( hideList, "," );
+	for( size_t i = 0; i < names.size(); i++ ){
+		const Ogre::String &name = names[i];
+		bool hidden = false;
+		if( name == "terrain" && tumbu->getDemo() != NULL && tumbu->getDemo()->getLoader()->getTerrainGroup() != NULL ){
+			Ogre::TerrainGroup::TerrainIterator it = tumbu->getDemo()->getLoader()->getTerrainGroup()->getTerrainIterator();
+			while( it.hasMoreElements() ){
+				Ogre::Terrain* terrain = it.getNext()->instance;
+				if( terrain != NULL ){
+					terrain->_getRootSceneNode()->setVisible( false );
+					hidden = true;
+				}
+			}
+		}else if( name == "dust" || name == "sky" ){
+			const Ogre::String type = name == "dust" ? "ParticleSystem" : "ManualObject";
+			const Ogre::SceneManager::MovableObjectMap &objects = sceneMgr->getMovableObjects( type );
+			for( Ogre::SceneManager::MovableObjectMap::const_iterator o = objects.begin(); o != objects.end(); o++ ){
+				Ogre::MovableObject* object = o->second;
+				bool match = name == "dust" ? object->getName().find( "ust" ) != Ogre::String::npos
+					: object->getRenderQueueGroup() == Ogre::RENDER_QUEUE_SKIES_EARLY;
+				if( match ){
+					object->setVisible( false );
+					hidden = true;
+				}
+			}
+		}else if( sceneMgr->hasEntity( name + "Entity" ) ){
+			sceneMgr->getEntity( name + "Entity" )->setVisible( false );
+			hidden = true;
+		}
+		log( "hide " + name + ( hidden ? ": hidden" : ": not found" ) );
 	}
 }
 //-------------------------------------------------------------------------------------

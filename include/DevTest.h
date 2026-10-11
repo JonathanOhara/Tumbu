@@ -113,6 +113,7 @@ private:
 	/// -strip=N: N consecutive frames while the fixed camera pans; true while it still needs frames.
 	bool runStrip(void);
 	Ogre::String windowList(void);
+	void hideObjects(void);
 	int stripDone;
 	bool benchStarted, benchLogged;
 	unsigned long benchFrames, windowFrames;
@@ -167,6 +168,7 @@ private:
 	static bool flyTest;
 	static bool swapTest;
 	static Ogre::Vector3 cameraEye, cameraTarget;
+	static Ogre::String hideList;
 	static int stripFrames;
 	static Ogre::Real stripStep;
 };

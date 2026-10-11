@@ -86,6 +86,20 @@ patch no longer finds the code it patches: then look here.
    - Fixed upstream when: the line after `// Load delta data` in the version-1 branch no longer allocates.
    - To remove: delete the terrain block of `Repair-OgreSource`, rebuild Ogre, and run
      `.\scripts\devtest.ps1 -Cycles 12 -Renderer GL`: the heap must stay flat from match 2 on. Then delete this entry.
+3. **Ogre: seams along the terrain's texture repeats** (thin light dashed lines on the ground around the ring).
+   - Bug: in Ogre 14.6.0 (and on `master` as of 2026-10-11; no issue found), `blendTerrainLayer` in
+     `Media/Terrain/TerrainSurface.glsl` computes each layer's UV as `mod(uv0 * uvMul, 1.0)`. The UV jumps from 1 to 0
+     where the texture repeats, the GPU takes the mip level from that jump and samples the smallest mip (the texture's
+     average colour), so a 1 to 2 pixel seam runs along every repeat line of the layer, dashed where the layer's blend
+     weight drops below 1/255. Both renderers, any distance. Found 2026-10-11 in the sand patch beside the ring.
+   - Our workaround: `Repair-OgreSource` replaces it by `uv0 * uvMul` (the layer samplers wrap anyway; marked
+     `TUMBU patch`), in the Ogre source and in the installed media (`$install\Media`), so `.\scripts\deps.ps1 -Only ogre`
+     is not needed: re-running the patch and `build.ps1` (which stages `OgreMedia\`) is enough. Cost: none.
+   - Fixed upstream when: `TerrainSurface.glsl` no longer wraps the layer UV with `mod`, or samples with gradients of the
+     unwrapped UV.
+   - To remove: delete the `TerrainSurface.glsl` block of `Repair-OgreSource`, reinstall Ogre's media, and check
+     `.\scripts\devtest.ps1 -Bench 1 -Hour 13 -Camera "4,2.5,9,1.5,0,16" -VideoMode 1600x900`: no light dashed line runs
+     across the sand. Then delete this entry. (When the grass gets its own shader, see "Grass remake", this goes too.)
 
 ## Automated checks (use after every change)
 
@@ -125,7 +139,7 @@ bin\Release\TUMBU.exe -guitour -mute -nofocus       # every GUI screen, Quit to 
 
 - `DevTest` (`src/DevTest.cpp`) handles these switches: `-autoplay`, `-walktest`, `-guitour`, `-cycles=N`, `-measureanims`,
   `-fpscap=N`, `-quitafter=S`, `-hour=H` (fractional: `20.5` = 20:30), `-mute` (all sounds at volume 0; also works for a normal game), `-nofocus` (the window opens without taking the keyboard focus), `-nofx` (no
-  special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the bloom alone, x3, through `bloomParams.w`: its shape, and its flicker in a `-strip`; `devtest.ps1 -BloomOnly`), `-aa=0|1` (anti-aliasing off / SMAA for this run,
+  special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the bloom alone, x3, through `bloomParams.w`: its shape, and its flicker in a `-strip`; `devtest.ps1 -BloomOnly`), `-hide=a,b` (hides parts of the scene for the run, to find which one draws something: `terrain`, `dust`, `sky`, or an entity without its `Entity` suffix, `arena`, `coliseum`, `torches`; `devtest.ps1 -Hide terrain`), `-aa=0|1` (anti-aliasing off / SMAA for this run,
   whatever `options.cfg` says: `devtest.ps1 -AA 0`), `-sky=0|1` (the painted sky without / with its clouds for this run: `-Sky 0`), `-bench=S`
   (`devtest.ps1 -Bench S`: a steady frame-rate measurement; no AI, the camera fixed from the first frame (the standard
   robot view unless `-camera`), a 3 s warm-up, then S seconds counted with a wall-clock timer; logs `[DEVTEST] bench:
@@ -280,8 +294,8 @@ painted toon sky replaced it).
   in the global pool.
 - **Direct3D 11 HLSL profile.** A plain `hlsl` program compiles at level 9_1 (64 instructions). The robot
   programs set `target vs_4_0` / `ps_4_0`.
-- **Patched Ogre bugs:** `deps.ps1` (`Repair-OgreSource`) patches the Ogre source: the terrain delta-data leak and the
-  late shared parameters on Direct3D 11. Both are temporary: see "Temporary workarounds (remove when fixed upstream)".
+- **Patched Ogre bugs:** `deps.ps1` (`Repair-OgreSource`) patches the Ogre source: the terrain delta-data leak, the
+  late shared parameters on Direct3D 11 and the seams along the terrain's texture repeats. All are temporary: see "Temporary workarounds (remove when fixed upstream)".
 - **Vertex colours:** the RTSS only uses per-vertex or per-particle colours when the pass has
   `diffuse vertexcolour`. Every particle material (`media/particle/PE_materials.material`) needs it, or the
   particles render white.

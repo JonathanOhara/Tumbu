@@ -98,6 +98,22 @@ function Repair-OgreSource([string]$sourceDir) {
         Write-Warning ("Ogre: the D3D11 shared-parameter patch did not apply (OgreD3D11RenderSystem.cpp changed). Has Ogre fixed " +
             "it? See CLAUDE.md, 'Temporary workarounds (remove when fixed upstream)'.")
     }
+    # A shader in Ogre's media, so the installed copy is patched too (no Ogre rebuild needed; build.ps1 stages it).
+    foreach ($file in @((Join-Path $sourceDir 'Media\Terrain\TerrainSurface.glsl'), (Join-Path $install 'Media\Terrain\TerrainSurface.glsl'))) {
+        if (-not (Test-Path $file)) { continue }
+        $text = [IO.File]::ReadAllText($file)
+        $wrap = '    vec2 uv = mod(uv0 * uvMul, 1.0);'
+        if ($text.Contains($wrap)) {
+            $text = $text.Replace($wrap, "    // TUMBU patch: no mod(), the sampler wraps; mod() made the UV jump at every repeat, so the GPU took the`n" +
+                "    // smallest mip there and drew a 1-2 pixel seam of the texture's average colour along each repeat line`n" +
+                '    vec2 uv = uv0 * uvMul;')
+            [IO.File]::WriteAllText($file, $text)
+            Write-Host "Ogre: patched the terrain layer UV seams in $file" -ForegroundColor DarkGray
+        } elseif (-not $text.Contains('TUMBU patch: no mod()')) {
+            Write-Warning ("Ogre: the terrain UV seam patch did not apply ($file changed). Has Ogre fixed it? " +
+                "See CLAUDE.md, 'Temporary workarounds (remove when fixed upstream)'.")
+        }
+    }
 }
 
 if ($Only -in 'all', 'ogre') {
