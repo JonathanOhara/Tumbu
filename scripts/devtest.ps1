@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-NoHud] [-Hide terrain,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-HeroPos "x,z"] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-NoHud] [-Hide field,grass,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 #        .\scripts\devtest.ps1 -GuiTour [-Hour 22] [-Renderer GL]      # every GUI screen: devtest-gui-*.png
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
@@ -34,6 +34,7 @@ param(
     [double]$JynHit = 0,
     [string]$Camera = '',
     [string]$Hero = "",
+    [string]$HeroPos = "",
     [int]$AA = -1,
     [int]$Sky = -1,
     [double]$Bench = 0,
@@ -83,6 +84,7 @@ if ($FxTest -or $JynHit -gt 0) { $gameArgs += "-fxtime=" + $FxTime.ToString([cul
 if ($FxDistance -gt 0) { $gameArgs += "-fxdistance=" + $FxDistance.ToString([cultureinfo]::InvariantCulture) }
 if ($Camera)      { $gameArgs += "-camera=$Camera" }
 if ($Hero)        { $gameArgs += "-hero=$Hero" }
+if ($HeroPos)     { $gameArgs += "-heropos=$HeroPos" }
 if ($AA -ge 0)     { $gameArgs += "-aa=$AA" }
 if ($Sky -ge 0)    { $gameArgs += "-sky=$Sky" }
 if ($NoFx)        { $gameArgs += '-nofx' }

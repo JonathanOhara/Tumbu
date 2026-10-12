@@ -178,13 +178,17 @@ def add_ao_uv(ob):
 
 
 def bake_target(ob, image):
-    """Makes `image` the bake target (active image node) of every material of `ob`."""
+    """Makes `image` the bake target (active image node) of every material of `ob`. Returns the node trees and the
+    nodes that were active before, so that the bake can give them back (the field's active node is its painted field
+    map: texture painting in Blender paints the active image node)."""
+    previous = []
     for slot in ob.material_slots:
         mat = slot.material
         if mat is None:
             continue
         mat.use_nodes = True
         nodes = mat.node_tree.nodes
+        previous.append((nodes, nodes.active))
         node = nodes.get("TumbuAO")
         if node is None:
             node = nodes.new("ShaderNodeTexImage")
@@ -192,6 +196,7 @@ def bake_target(ob, image):
             node.location = (-600, -300)
         node.image = image
         nodes.active = node
+    return previous
 
 
 def clean_ao(image, passes=2):
@@ -220,12 +225,15 @@ def bake(ob, scene):
         bpy.data.images.remove(old)
     image = bpy.data.images.new(name, size, size, alpha=False)
     image.colorspace_settings.name = "Non-Color"
-    bake_target(ob, image)
+    previous = bake_target(ob, image)
 
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.objects.active = ob
     ob.select_set(True)
     bpy.ops.object.bake(type='AO', uv_layer=AO_UV, margin=8, margin_type='EXTEND')
+    for nodes, node in previous:
+        if node is not None:
+            nodes.active = node
     clean_ao(image)
 
     path = os.path.join(MEDIA, name + ".png")

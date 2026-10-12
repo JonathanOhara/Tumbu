@@ -19,11 +19,6 @@
             <rotation qw="-0.996782" qx="0.0746108" qy="0.0291098" qz="0.00348937" />
         </camera>
     </environment>
-    <terrain worldSize="196" mapSize="513" pagenameprefix="Page" colourmapEnabled="false" colourMapTextureSize="128" tuningCompositeMapDistance="2000" tuningMaxPixelError="0" tuningMinBatchSize="33" tuningMaxBatchSize="65" tuningSkirtSize="10" tuningUseRayBoxDistancealculation="false">
-        <terrainPages>
-            <terrainPage name="Page_00000000.ogt" pageX="0" pageY="0" />
-        </terrainPages>
-    </terrain>
     <nodes>
         <node name="demoScene" id="151554912">
             <position x="0" y="0" z="0" />
@@ -54,6 +49,12 @@
                         <subentity index="0" materialName="coliseumMaterial" />
                     </entity>
                 </node>
+            </node>
+            <node name="fieldSceneNode" id="91000002">
+                <position x="0" y="0" z="0" />
+                <rotation qw="1" qx="0" qy="0" qz="0" />
+                <scale x="1" y="1" z="1" />
+                <entity name="fieldEntity" meshFile="field.mesh" castShadows="false" />
             </node>
             <node name="torchesSceneNode" id="91000001">
                 <position x="0" y="0" z="0" />

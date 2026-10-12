@@ -1,0 +1,51 @@
+// The field: the ground around the ring and the hills (field.mesh, the "field" object of art/arena/Arena.blend;
+// scripts/arena-field.ps1). The wild meadow (field_toon.frag): grass, earth and rock chosen by the painted field map,
+// textures from scripts/arena-textures.ps1 -Only meadow, AO baked by scripts/bake-arena-ao.ps1 -Only field.
+material fieldMaterial{
+    receive_shadows on
+    technique{
+        pass{
+            vertex_program_ref field_toon_vs{
+            }
+            fragment_program_ref field_toon_ps{
+                // tile sizes in metres: grass, earth, rock, noise
+                param_named layerScale float4 5 4 6 7.3
+                // earth edge, edge breakup, rim darkness, broad tone variation of the grass
+                param_named fieldParams float4 0.5 0.6 0.28 0.14
+                // the hills' earth (beyond the walls): from 30 units over 4, cracks 1.4x larger, darker and redder
+                param_named hillParams float4 30 4 1.4 0
+                param_named hillEarthTint float4 0.85 0.70 0.58 1
+            }
+            texture_unit fieldMap{
+                texture field_map.dds
+                tex_address_mode clamp
+            }
+            texture_unit shadowMap{
+                content_type shadow
+                sampler_ref Tumbu/ShadowSampler
+            }
+            texture_unit aoMap{
+                texture field_ao.dds
+                tex_address_mode clamp
+            }
+            texture_unit grassMap{
+                texture meadow_grass_col.dds
+                filtering anisotropic
+                max_anisotropy 8
+            }
+            texture_unit earthMap{
+                texture meadow_earth_col.dds
+                filtering anisotropic
+                max_anisotropy 8
+            }
+            texture_unit rockMap{
+                texture meadow_rock_col.dds
+                filtering anisotropic
+                max_anisotropy 8
+            }
+            texture_unit noiseMap{
+                texture meadow_noise.dds
+            }
+        }
+    }
+}

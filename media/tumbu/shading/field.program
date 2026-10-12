@@ -1,0 +1,24 @@
+// The field's programs (field_toon.vert / .frag; material fieldMaterial in media/tumbu/arena/field.material).
+vertex_program field_toon_vs glsl glsles hlsl
+{
+    source field_toon.vert
+    target vs_4_0
+    default_params
+    {
+        param_named_auto wMat world_matrix
+        param_named_auto wvpMat worldviewproj_matrix
+        param_named_auto texViewProj texture_viewproj_matrix 0
+        shared_params_ref TumbuLighting
+    }
+}
+
+fragment_program field_toon_ps glsl glsles hlsl
+{
+    source field_toon.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto camPos camera_position
+    }
+}

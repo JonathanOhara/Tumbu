@@ -5,14 +5,14 @@ into, with what we do about it. **Add every new one here** (CLAUDE.md says so), 
 upgraded** (`$OgreVersion` in `scripts/deps.ps1`): a patch may no longer be needed, or no longer apply. `deps.ps1` prints
 a warning when a patch no longer finds the code it patches.
 
-None of these is reported upstream yet (OGRECave/ogre on GitHub). The three patched bugs are good candidates for issues
-or pull requests (the terrain seam fix is one line); that is Jonathan's call, since it posts publicly under his account.
+None of these is reported upstream yet (OGRECave/ogre on GitHub). The patched bug is a good candidate for an issue or a
+pull request; that is Jonathan's call, since it posts publicly under his account.
 
 | # | What | Kind | Our answer |
 |---|---|---|---|
 | 1 | Shared parameters reach a pass one bind late on Direct3D 11 | bug | patched (`Repair-OgreSource`) |
-| 2 | Terrain delta-data leak (1 MB per match) | bug | patched |
-| 3 | Seams along the terrain's texture repeats | bug | patched (shader media) |
+| 2 | Terrain delta-data leak (1 MB per match) | bug | retired (no Ogre terrain since 2026-10-12) |
+| 3 | Seams along the terrain's texture repeats | bug | retired |
 | 4 | An optimised-out uniform set from code is a fatal error | behaviour | keep uniforms in use |
 | 5 | `GpuSharedParameters::setNamedConstant` counts floats, not float4s | API trap | pass float counts |
 | 6 | No RG8 texture format on Direct3D 11 (silently converted) | limitation | upload as RGBA |
@@ -21,8 +21,8 @@ or pull requests (the terrain seam fix is one line); that is Jonathan's call, si
 | 9 | The RTSS builds from a material's first fixed-function technique | design | `ProgrammableTechniqueResolver` |
 | 10 | GPU skinning is chosen from pass 0 only; shadow casters are not checked | design | every robot pass skins |
 | 11 | A plain `hlsl` program compiles at level 9_1 | default | `target vs_4_0` / `ps_4_0` |
-| 12 | The terrain light map is baked from the terrain's own heights only | design | light map off |
-| 13 | The terrain's RTSS shadow stage does not fit an integrated depth shadow map | limitation | grass without shadows until the grass remake |
+| 12 | The terrain light map is baked from the terrain's own heights only | design | retired |
+| 13 | The terrain's RTSS shadow stage does not fit an integrated depth shadow map | limitation | retired |
 | 14 | Direct3D 11 compute passes get one writable view (one mip) per texture | limitation | none needed yet |
 | 15 | Strict resource groups: only global-pool groups search other groups | design | `Game` in the global pool |
 
@@ -49,34 +49,6 @@ or pull requests (the terrain seam fix is one line); that is Jonathan's call, si
   (neutral light), not night blue. Then delete this entry.
 - With an unpatched Ogre that still has the bug, the preview needs its own fix: copy the shared values into the preview's
   passes right after setting and after restoring them (`_copySharedParams()`; commit 86720f7).
-
-### 2. Terrain delta-data leak (1 MB per match)
-
-- Bug: in Ogre 14.6.0 (and on `master` as of 2026-10-09), `Terrain::prepare(StreamSerialiser&)`
-  (`Components/Terrain/src/OgreTerrain.cpp`) allocates `mDeltaData` a second time for version-1 terrain files (our 2011
-  Ogitor page) without freeing the first buffer.
-- Our workaround: the patch removes the second allocation.
-- Fixed upstream when: the line after `// Load delta data` in the version-1 branch no longer allocates.
-- To remove: delete the terrain block of `Repair-OgreSource`, rebuild Ogre, and run
-  `.\scripts\devtest.ps1 -Cycles 12 -Renderer GL`: the heap must stay flat from match 2 on. Then delete this entry.
-
-### 3. Seams along the terrain's texture repeats
-
-- Bug: in Ogre 14.6.0 (and on `master` as of 2026-10-11; no issue found), `blendTerrainLayer` in
-  `Media/Terrain/TerrainSurface.glsl` computes each layer's UV as `mod(uv0 * uvMul, 1.0)`. The UV jumps from 1 to 0 where
-  the texture repeats, the GPU takes the mip level from that jump and samples the smallest mip (the texture's average
-  colour), so a 1 to 2 pixel light seam runs along every repeat line of the layer, dashed where the layer's blend weight
-  drops below 1/255 (the function skips such layers). Both renderers, any distance. Found 2026-10-11 in the sand patch
-  beside the ring (`DevTest -hide=terrain` showed it was the terrain; a crack was ruled out because hiding the sky did
-  not change its colour).
-- Our workaround: the patch replaces it by `uv0 * uvMul` (the layer samplers wrap anyway), in the Ogre source and in the
-  installed media (`$install\Media`), so no Ogre rebuild is needed: `build.ps1` stages `OgreMedia\` into `bin\`. Cost: none.
-- Fixed upstream when: `TerrainSurface.glsl` no longer wraps the layer UV with `mod`, or samples with gradients of the
-  unwrapped UV.
-- To remove: delete the `TerrainSurface.glsl` block of `Repair-OgreSource`, reinstall Ogre's media, and check
-  `.\scripts\devtest.ps1 -Bench 1 -Hour 13 -Camera "4,2.5,9,1.5,0,16" -VideoMode 1600x900`: no light dashed line runs
-  across the sand. Then delete this entry. When the grass gets its own shader (IMPROVEMENT_IDEAS, "Grass remake"), this
-  patch goes too.
 
 ## Worked around in our code
 
@@ -132,19 +104,6 @@ kept the rest pose. So every robot pass skins, and the robots have their own ski
 Without a `target`, Direct3D 11 compiles HLSL at feature level 9_1 (64 instructions). Our programs set `target vs_4_0` /
 `ps_4_0`.
 
-### 12. The terrain light map is baked from the terrain's own heights only
-
-Ogre bakes the terrain's light map once at load from the terrain heights alone (mountains, the ground under the
-coliseum), not from meshes such as the coliseum, so it drew still, wrong shadows on the grass. It is off since
-2026-10-06 (`DotSceneLoader::processTerrain`); the grass has no shadows until it gets its own shader.
-
-### 13. The terrain's RTSS shadow stage does not fit an integrated depth shadow map
-
-Rebuilding Ogre's terrain material after the shadow technique is set makes its shader generator add a shadow stage, but
-that stage expects a different shadow setup from our integrated depth map (`SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED`,
-sampled by our shaders) and drew long dark wedges (2026-10-06). Our own grass shader must sample `shadowMap` like
-`env_toon.frag` (`tumbuShadow`).
-
 ### 14. Direct3D 11 compute passes get one writable view per texture
 
 Ogre 14.6 has compositor `compute` passes, but its Direct3D 11 render system creates one unordered-access view per
@@ -156,3 +115,23 @@ docs/HISTORY.md, "Mip-chain bloom").
 
 Only groups in the global pool search other groups for resources. The robot shaders `#include <OgreUnifiedShader.h>` from
 `OgreInternal`, so `BaseApplication::locateResources` creates `Game` in the global pool.
+
+## Retired: the Ogre terrain (2026-10-12)
+
+The game no longer uses Ogre's Terrain and Paging components: the field around the ring is a mesh modelled in
+`art/arena/Arena.blend` (docs/HISTORY.md, "Grass remake"), so these went with them. Kept here in case the terrain comes
+back:
+
+- **2. Terrain delta-data leak (1 MB per match):** `Terrain::prepare(StreamSerialiser&)` (Ogre 14.6.0) allocated
+  `mDeltaData` a second time for version-1 terrain files (the 2011 Ogitor page) without freeing the first buffer. It was
+  patched in `Repair-OgreSource` (the second allocation removed).
+- **3. Seams along the terrain's texture repeats:** `blendTerrainLayer` in `Media/Terrain/TerrainSurface.glsl` computed
+  each layer's UV as `mod(uv0 * uvMul, 1.0)`; the jump at each repeat made the GPU take the smallest mip there, a 1 to 2
+  pixel seam of the texture's average colour along every repeat line. It was patched to `uv0 * uvMul`.
+- **12. The terrain light map is baked from the terrain's own heights only** (not from meshes such as the coliseum), so
+  it drew still, wrong shadows on the grass; it was turned off.
+- **13. The terrain's RTSS shadow stage does not fit an integrated depth shadow map:** rebuilding the terrain material
+  after the shadow technique is set added a shadow stage that drew long dark wedges.
+- **The terrain did not draw its own heights** in the ditch around the ring: it drew the ground there higher than its
+  height data (found 2026-10-12 while prototyping tall grass, whose short blades were buried; the cause was not
+  confirmed, perhaps its level of detail). The Blender mesh made from the same heights matches them to the millimetre.

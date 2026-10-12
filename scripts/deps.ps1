@@ -66,24 +66,11 @@ function Build-CMake([string]$name, [string]$sourceDir, [string[]]$options) {
 # TEMPORARY WORKAROUNDS: Ogre 14.6 bugs, patched in the downloaded source. Each one is to be removed once Ogre fixes it;
 # how to check and how to remove: docs/OGRE_BUGS.md.
 # A patch whose original code is not found (an Ogre upgrade changed it) prints a warning instead of failing silently.
-# - Terrain::prepare() allocates mDeltaData, and for version-1 terrain files (like the arena's 2011 Ogitor page)
-#   allocates it again before reading, leaking 4 * size^2 bytes (1 MB) on every terrain load.
 # - D3D11RenderSystem::bindGpuProgramParameters uploads a pass's constants before it copies the shared parameters
 #   ("TumbuLighting") into them, so on Direct3D 11 every shared value reached a pass one bind late (OpenGL copies
 #   first). The patch copies them before the upload too; Ogre's own later call stays (it uploads shared sets backed by
 #   a GPU buffer, which only exist after the loop in between).
 function Repair-OgreSource([string]$sourceDir) {
-    $file = Join-Path $sourceDir 'Components\Terrain\src\OgreTerrain.cpp'
-    $text = [IO.File]::ReadAllText($file)
-    $leak = "            // Load delta data`n            mDeltaData = OGRE_ALLOC_T(float, numVertices, MEMCATEGORY_GEOMETRY);`n"
-    if ($text.Contains($leak)) {
-        $text = $text.Replace($leak, "            // Load delta data (TUMBU patch: the buffer was already allocated above; allocating again leaked it)`n")
-        [IO.File]::WriteAllText($file, $text)
-        Write-Host "Ogre: patched the terrain delta-data leak in OgreTerrain.cpp" -ForegroundColor DarkGray
-    } elseif (-not $text.Contains('TUMBU patch: the buffer was already allocated')) {
-        Write-Warning ("Ogre: the terrain delta-data leak patch did not apply (OgreTerrain.cpp changed). Has Ogre fixed it? " +
-            "See docs/OGRE_BUGS.md.")
-    }
     $file = Join-Path $sourceDir 'RenderSystems\Direct3D11\src\OgreD3D11RenderSystem.cpp'
     $text = [IO.File]::ReadAllText($file)
     $upload = "        std::vector<ID3D11Buffer*> buffers = {NULL};`n`n        if(params->getConstantList().size())`n"
@@ -98,22 +85,6 @@ function Repair-OgreSource([string]$sourceDir) {
         Write-Warning ("Ogre: the D3D11 shared-parameter patch did not apply (OgreD3D11RenderSystem.cpp changed). Has Ogre fixed " +
             "it? See docs/OGRE_BUGS.md.")
     }
-    # A shader in Ogre's media, so the installed copy is patched too (no Ogre rebuild needed; build.ps1 stages it).
-    foreach ($file in @((Join-Path $sourceDir 'Media\Terrain\TerrainSurface.glsl'), (Join-Path $install 'Media\Terrain\TerrainSurface.glsl'))) {
-        if (-not (Test-Path $file)) { continue }
-        $text = [IO.File]::ReadAllText($file)
-        $wrap = '    vec2 uv = mod(uv0 * uvMul, 1.0);'
-        if ($text.Contains($wrap)) {
-            $text = $text.Replace($wrap, "    // TUMBU patch: no mod(), the sampler wraps; mod() made the UV jump at every repeat, so the GPU took the`n" +
-                "    // smallest mip there and drew a 1-2 pixel seam of the texture's average colour along each repeat line`n" +
-                '    vec2 uv = uv0 * uvMul;')
-            [IO.File]::WriteAllText($file, $text)
-            Write-Host "Ogre: patched the terrain layer UV seams in $file" -ForegroundColor DarkGray
-        } elseif (-not $text.Contains('TUMBU patch: no mod()')) {
-            Write-Warning ("Ogre: the terrain UV seam patch did not apply ($file changed). Has Ogre fixed it? " +
-                "See docs/OGRE_BUGS.md.")
-        }
-    }
 }
 
 if ($Only -in 'all', 'ogre') {
@@ -125,7 +96,9 @@ if ($Only -in 'all', 'ogre') {
         '-DOGRE_BUILD_SAMPLES=OFF', '-DOGRE_BUILD_TESTS=OFF', '-DOGRE_BUILD_TOOLS=ON',
         '-DOGRE_INSTALL_SAMPLES=OFF', '-DOGRE_INSTALL_DOCS=OFF', '-DOGRE_INSTALL_PDB=ON',
         '-DOGRE_BUILD_COMPONENT_BITES=ON', '-DOGRE_BUILD_COMPONENT_OVERLAY=ON', '-DOGRE_BUILD_COMPONENT_OVERLAY_IMGUI=ON',
-        '-DOGRE_BUILD_COMPONENT_TERRAIN=ON', '-DOGRE_BUILD_COMPONENT_PAGING=ON', '-DOGRE_BUILD_COMPONENT_RTSHADERSYSTEM=ON',
+        '-DOGRE_BUILD_COMPONENT_RTSHADERSYSTEM=ON',
+        # no Terrain / Paging since 2026-10-12: the field is a mesh from Blender (its two terrain patches went with it)
+        '-DOGRE_BUILD_COMPONENT_TERRAIN=OFF', '-DOGRE_BUILD_COMPONENT_PAGING=OFF',
         '-DOGRE_BUILD_COMPONENT_BULLET=ON', '-DOGRE_BUILD_COMPONENT_MESHLODGENERATOR=ON',
         '-DOGRE_BUILD_COMPONENT_VOLUME=OFF', '-DOGRE_BUILD_COMPONENT_PROPERTY=OFF',
         '-DOGRE_BUILD_COMPONENT_PYTHON=OFF', '-DOGRE_BUILD_COMPONENT_JAVA=OFF', '-DOGRE_BUILD_COMPONENT_CSHARP=OFF',

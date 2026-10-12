@@ -1,5 +1,5 @@
 # Compresses the arena's textures (media/tumbu/arena/*.png) into DDS with a full mip chain, which the materials use:
-#   *_col.png, ring_emblem.png, gym_arena.png  -> BC7  (colour, or three masks)
+#   *_col.png, ring_emblem.png, gym_arena.png, field_map.png, *_noise.png  -> BC7  (colour, or three masks)
 #   *_nrm.png, *_hgt.png                         -> BC5  (two channels: normal x/y, the shader rebuilds z; height + moss)
 #   *_ao.png                                     -> BC4  (one channel)
 # About 4x less video memory than the PNGs (decoded to RGBA8), faster loading, no visible change. The PNGs stay as the
@@ -19,7 +19,7 @@ $jobs = foreach ($png in Get-ChildItem $dir -Filter *.png) {
     $n = $png.BaseName
     if ($n -like '*_nrm' -or $n -like '*_hgt') { $format = 'BC5_UNORM'; $wrap = $true }
     elseif ($n -like '*_ao') { $format = 'BC4_UNORM'; $wrap = $false }
-    else { $format = 'BC7_UNORM'; $wrap = $n -like '*_col' }
+    else { $format = 'BC7_UNORM'; $wrap = $n -like '*_col' -or $n -like '*_noise' }
     [pscustomobject]@{ File = $png.FullName; Format = $format; Wrap = $wrap }
 }
 foreach ($j in $jobs) {

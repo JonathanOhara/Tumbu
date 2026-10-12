@@ -12,11 +12,15 @@ Sets, written to media/tumbu/arena/:
   sandstone_hgt.png  R height (1 = block face, 0 = bottom of a joint), G moss patch field (the shader decides where
                      moss grows from it, the wall height and the joints; tunable without running this again)
   ringtiles_col/nrm/hgt.png  the grey tournament tiles of the ring floor (each tile one of four flat greys)
+  meadow_grass_col / meadow_earth_col / meadow_rock_col.png  the field's layers (field_toon.frag): the wild meadow's
+                     grass with flowers, the bare earth with stones, the rock of the hill tops
+  meadow_noise.png   R mid-scale noise (breaks up the layer edges), G broad tone field, B fine noise
   ring_emblem.png    R the charcoal T, G the neon tube inside its edge, B the border course (the band of tiles along
                      the ring's edge): a decal over the 20 x 20 ring floor (row 0 = Ogre z -10, the far side from
                      the hero's spawn, so the T is upright for the hero)
 
 Usage: blender --background --factory-startup --python arena_textures.py -- <repo root> [--preview <folder>]
+       [--only stone|tiles|emblem|meadow]
 """
 import bpy
 import numpy as np
@@ -29,6 +33,7 @@ if not args:
 ROOT = args[0]
 OUT = os.path.join(ROOT, "media", "tumbu", "arena")
 PREVIEW = args[args.index("--preview") + 1] if "--preview" in args else None
+ONLY = args[args.index("--only") + 1] if "--only" in args else None     # stone, tiles, emblem or meadow
 
 # --- coliseum sandstone -----------------------------------------------------------------------------------------
 STONE_SIZE = 2048           # pixels
@@ -63,6 +68,16 @@ EMBLEM_TUBE = (0.17, 0.29)  # the neon tube runs this far inside the T's edge (m
 EMBLEM_BORDER = 1.0         # width of the border course along the ring's edge (metres)
 # the ring floor's corners in plan view (Blender x, y = the post positions of arena.mesh)
 RING_CORNERS = [(-9.89, -5.03), (-0.12, -9.94), (10.0, -4.87), (9.88, 5.06), (-0.12, 9.94), (-10.0, 4.87)]
+
+# --- the field (wild meadow) ------------------------------------------------------------------------------------
+MEADOW_SIZE = 1024          # grass, earth and rock (their tile sizes in metres: layerScale in field.material)
+MEADOW_NOISE_SIZE = 512
+# The stones in the earth: 2026-10-12 they stood out (bigger, lighter, more of them); a softened set (smaller, fewer,
+# two tones of the earth's own hue) went too far, and these are 3/4 of the way from the first set to the softened one.
+EARTH_STONES = 0.0975               # fraction of the Voronoi cells (36 x 36 per tile) with a stone
+EARTH_STONE_RADIUS = (4.375, 4.5)   # pixels: base + random extra
+EARTH_STONE_SHADE = (0.5875, 0.49, 0.3925)
+EARTH_STONE_LIT = (0.67, 0.5725, 0.46)
 
 
 def log(message):
@@ -262,18 +277,162 @@ def save(name, rgb, folder):
     log("wrote " + path)
 
 
+def rank_noise(size, sigma, seed):
+    """Periodic noise whose values are ranks (0..1, evenly spread): a threshold t keeps the fraction t of the area below
+    it. Gaussian-filtered white noise; sigma = the blob size in pixels."""
+    rng = np.random.default_rng(seed)
+    k = np.fft.fftfreq(size)
+    kx, ky = np.meshgrid(k, k)
+    a = np.real(np.fft.ifft2(np.fft.fft2(rng.standard_normal((size, size)))
+                             * np.exp(-2 * (np.pi ** 2) * (sigma ** 2) * (kx ** 2 + ky ** 2))))
+    out = np.empty(size * size)
+    out[np.argsort(a.ravel())] = np.arange(size * size) / (size * size)
+    return out.reshape(size, size)
+
+
+def voronoi(size, cells, seed):
+    """Jittered-grid Voronoi, periodic: distance to the nearest (F1) and second nearest (F2) point in pixels, and the
+    nearest cell's id per pixel."""
+    rng = np.random.default_rng(seed)
+    c = size / cells
+    pts = (np.stack(np.meshgrid(np.arange(cells), np.arange(cells), indexing='ij'), -1)
+           + rng.uniform(0.1, 0.9, (cells, cells, 2))) * c
+    yy, xx = np.mgrid[0:size, 0:size].astype(np.float32)
+    gi = (yy // c).astype(int)
+    gj = (xx // c).astype(int)
+    f1 = np.full((size, size), 1e9, np.float32)
+    f2 = np.full((size, size), 1e9, np.float32)
+    ids = np.zeros((size, size), int)
+    for di in (-1, 0, 1):
+        for dj in (-1, 0, 1):
+            ci = (gi + di) % cells
+            cj = (gj + dj) % cells
+            p = pts[ci, cj]
+            py = p[..., 0] + np.where(gi + di < 0, -size, np.where(gi + di >= cells, size, 0))
+            px = p[..., 1] + np.where(gj + dj < 0, -size, np.where(gj + dj >= cells, size, 0))
+            d = np.hypot(yy - py, xx - px)
+            closer = d < f1
+            f2 = np.where(closer, f1, np.minimum(f2, d))
+            ids = np.where(closer, ci * cells + cj, ids)
+            f1 = np.where(closer, d, f1)
+    return f1, f2, ids
+
+
+def tufts(image, count, colours, length, seed, density=None):
+    """Little 'V' tufts of 2-3 blades, 2 pixels wide, painted into `image` (row 0 at the top), wrapping at the edges."""
+    size = image.shape[0]
+    rng = np.random.default_rng(seed)
+    placed = 0
+    rows, cols, tones = [], [], []
+    while placed < count:
+        x, y = rng.uniform(0, size, 2)
+        if density is not None and rng.uniform() > density[int(y) % size, int(x) % size]:
+            continue
+        placed += 1
+        tone = rng.integers(len(colours))
+        blade_length = rng.uniform(*length)
+        lean = rng.uniform(-0.5, 0.5)
+        for b in range(rng.integers(2, 4)):
+            a = lean + (b - 1) * rng.uniform(0.35, 0.6) - np.pi / 2
+            t = np.linspace(0.0, 1.0, int(blade_length * 2) + 2)
+            for ox, oy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+                rows.append(np.floor(y + np.sin(a) * blade_length * t - 0.5 + oy).astype(int))
+                cols.append(np.floor(x + np.cos(a) * blade_length * t - 0.5 + ox).astype(int))
+                tones.append(np.full(len(t), tone))
+    rows = np.concatenate(rows) % size
+    cols = np.concatenate(cols) % size
+    image[rows, cols] = np.asarray(colours, np.float32)[np.concatenate(tones)]
+
+
+def discs(image, centres, radii, colour):
+    """Filled discs (wrapping at the edges)."""
+    size = image.shape[0]
+    for (x, y), r in zip(centres, radii):
+        span = np.arange(int(np.floor(-r)), int(np.ceil(r)) + 1)
+        dy, dx = np.meshgrid(span, span, indexing='ij')
+        inside = (dx + np.round(x) - x) ** 2 + (dy + np.round(y) - y) ** 2 <= r * r
+        image[(dy[inside] + int(np.round(y))) % size, (dx[inside] + int(np.round(x))) % size] = colour
+
+
+def meadow():
+    """The field's textures (the wild meadow, chosen from the grass remake's mock-ups): grass of layered round tufts with
+    shaded undersides, blade strokes and clusters of white and yellow flowers; earth with flat tones, cracks, a few
+    stones (shaded side and a lit top in the earth's own hue) and stray grass; rock for the hill tops; and the noise
+    the field shader breaks the layer edges and the grass tones with. All tile (layerScale in field.material)."""
+    n = MEADOW_SIZE
+    grass = np.zeros((n, n, 3), np.float32)
+    grass[:] = (0.29, 0.40, 0.17)
+    for seed, threshold, colour in ((81, 0.45, (0.35, 0.47, 0.20)), (82, 0.62, (0.40, 0.52, 0.23)),
+                                    (83, 0.78, (0.46, 0.58, 0.27))):
+        m = rank_noise(n, 9, seed) + (rank_noise(n, 60, seed + 10) - 0.5) * 0.5 > threshold
+        under = np.roll(m, 4, 0) & ~m           # the clump's lower edge, seen from the low camera
+        grass[under] *= 0.78
+        grass[m] = colour
+    tufts(grass, 1600, [(0.50, 0.61, 0.29), (0.25, 0.34, 0.14)], (8, 16), 44)
+    flowers = rank_noise(n, 70, 45)
+    rng = np.random.default_rng(46)
+    centres, radii, white = [], [], []
+    while len(centres) < 420:
+        x, y = rng.uniform(0, n, 2)
+        if flowers[int(y), int(x)] < 0.72:
+            continue
+        white.append(rng.uniform() < 0.6)
+        radii.append(rng.uniform(3.5, 6))
+        centres.append((x, y))
+    for (c, r, w) in zip(centres, radii, white):
+        discs(grass, [c], [r], (0.925, 0.92, 0.863) if w else (0.95, 0.80, 0.275))
+        discs(grass, [c], [r * 0.4], (0.94, 0.77, 0.235) if w else (0.78, 0.47, 0.157))
+
+    earth = np.zeros((n, n, 3), np.float32)
+    earth[:] = (0.60, 0.47, 0.35)
+    f1, f2, ids = voronoi(n, 12, 51)
+    tone = np.random.default_rng(52).uniform(0, 1, 144)[ids]
+    earth[tone > 0.7] = (0.65, 0.52, 0.39)
+    earth[tone < 0.25] = (0.55, 0.43, 0.32)
+    cracks = ((f2 - f1) < (1.2 + rank_noise(n, 6, 53) * 2.0)) & (rank_noise(n, 30, 58) > 0.45)
+    earth[cracks] = (0.40, 0.30, 0.22)
+    f1, f2, ids = voronoi(n, 36, 54)
+    radius = EARTH_STONE_RADIUS[0] + np.random.default_rng(55).uniform(0, 1, 36 * 36)[ids] * EARTH_STONE_RADIUS[1]
+    stones = (f1 < radius) & (np.random.default_rng(56).uniform(0, 1, 36 * 36)[ids] < EARTH_STONES)
+    earth[stones] = EARTH_STONE_SHADE
+    lit = stones & np.roll(np.roll(stones, 2, 0), 2, 1)
+    earth[lit] = EARTH_STONE_LIT
+    tufts(earth, 500, [(0.42, 0.52, 0.23), (0.32, 0.42, 0.18)], (7, 14), 57)
+
+    rock = np.zeros((n, n, 3), np.float32)
+    rock[:] = (0.56, 0.55, 0.52)
+    f1, f2, ids = voronoi(n, 8, 61)
+    tone = np.random.default_rng(62).uniform(0, 1, 64)[ids]
+    rock[tone > 0.66] = (0.63, 0.62, 0.58)
+    rock[tone < 0.3] = (0.49, 0.48, 0.46)
+    rock[(f2 - f1) < 3] = (0.36, 0.35, 0.34)
+
+    m = MEADOW_NOISE_SIZE
+    noise = np.stack([rank_noise(m, 24, 71), rank_noise(m, 60, 72), rank_noise(m, 4, 73)], -1)
+    return grass, earth, rock, noise
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    colour, normal, hm = sandstone()
-    save("sandstone_col", colour, OUT)
-    save("sandstone_nrm", normal * 0.5 + 0.5, OUT)
-    save("sandstone_hgt", np.concatenate([hm, np.zeros_like(hm[..., :1])], axis=-1), OUT)
-    colour, normal, hm = ring_tiles()
-    save("ringtiles_col", colour, OUT)
-    save("ringtiles_nrm", normal * 0.5 + 0.5, OUT)
-    save("ringtiles_hgt", np.concatenate([hm, np.zeros_like(hm[..., :1])], axis=-1), OUT)
-    save("ring_emblem", emblem(), OUT)
-    if PREVIEW:
+    if ONLY in (None, "stone"):
+        colour, normal, hm = sandstone()
+        save("sandstone_col", colour, OUT)
+        save("sandstone_nrm", normal * 0.5 + 0.5, OUT)
+        save("sandstone_hgt", np.concatenate([hm, np.zeros_like(hm[..., :1])], axis=-1), OUT)
+    if ONLY in (None, "tiles"):
+        colour, normal, hm = ring_tiles()
+        save("ringtiles_col", colour, OUT)
+        save("ringtiles_nrm", normal * 0.5 + 0.5, OUT)
+        save("ringtiles_hgt", np.concatenate([hm, np.zeros_like(hm[..., :1])], axis=-1), OUT)
+    if ONLY in (None, "emblem"):
+        save("ring_emblem", emblem(), OUT)
+    if ONLY in (None, "meadow"):
+        grass, earth, rock, noise = meadow()
+        save("meadow_grass_col", grass, OUT)
+        save("meadow_earth_col", earth, OUT)
+        save("meadow_rock_col", rock, OUT)
+        save("meadow_noise", noise, OUT)
+    if PREVIEW and ONLY is None:
         # the same maps tiled 2 x 2, to check the seams by eye
         for n in ("sandstone_col", "sandstone_nrm", "ringtiles_col"):
             img = bpy.data.images.load(os.path.join(OUT, n + ".png"))

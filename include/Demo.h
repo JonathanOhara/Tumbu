@@ -3,9 +3,6 @@
 
 #include <Ogre.h>
 
-#include <Terrain/OgreTerrain.h>
-#include <Terrain/OgreTerrainGroup.h>
-#include <Terrain/OgreTerrainMaterialGeneratorA.h>
 
 #include <iostream>
 
@@ -62,8 +59,6 @@ public:
 	Physics::DynamicsWorld* getPhysicWorld();
 
 	void initialiseGameResources(void);
-	/// Waits on the loading screen until the terrain's background light map calculation is done.
-	void waitForTerrainLighting(void);
 
 protected:
 
@@ -73,8 +68,7 @@ private:
 	void createLightEffects(void);
 	void initializePhysicsStuff(void);
 	void createSky(void);
-	void createSimpleTerrain(void);
-	void createTerrainPhysic(void);
+	void createFieldPhysic(void);
 	void createArena(void);
 	void createDust(void);
 	void createMainCharacter(void);
@@ -91,14 +85,12 @@ private:
 	Physics::RigidBody
 		*defaultPlaneBody;
 
-	
-	float * pDataConvert;
 
 	SimpleRigidBody
 		*arenaRigidBody,
 		*colliseumRigidBody,
 		*floorRigidBody,
-		*terrainRigidBody;
+		*fieldRigidBody;
 
 	Physics::DynamicsWorld* physicWorld;
 #ifdef TUMBU_DEBUG

@@ -60,8 +60,8 @@ from each one you defeat.
 
 **Every Ogre bug, limitation or surprising behaviour goes into [docs/OGRE_BUGS.md](docs/OGRE_BUGS.md)**: what happens,
 where in Ogre, our workaround, and for patched ones how to tell that upstream fixed it and how to remove the patch.
-`Repair-OgreSource` in `scripts/deps.ps1` patches three Ogre bugs (marked `TUMBU patch`): the late shared parameters on
-Direct3D 11, the terrain delta-data leak and the seams along the terrain's texture repeats. **Read OGRE_BUGS.md whenever a
+`Repair-OgreSource` in `scripts/deps.ps1` patches one Ogre bug (marked `TUMBU patch`): the late shared parameters on
+Direct3D 11 (the two terrain patches went with the Ogre terrain, 2026-10-12). **Read OGRE_BUGS.md whenever a
 dependency is upgraded** (`$OgreVersion` etc. in `deps.ps1`); `deps.ps1` warns when a patch no longer finds its code. A
 workaround for a bug in another dependency gets an entry in the same style here.
 
@@ -94,7 +94,7 @@ in the way of a run (for example a window behind others that does not render), d
 .\scripts\devtest.ps1 -VideoMode 1600x900 -NoHud -Name big  # window size (default 1024x768; at most 1600x900), no HUD
 .\scripts\devtest.ps1 -GuiTour [-Hour 22]          # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
 .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # memory check: 40 matches via the real UI (see "Memory check")
-.\scripts\devtest.ps1 -Hide terrain -Name …         # parts of the scene hidden: which one draws something?
+.\scripts\devtest.ps1 -Hide field -Name …           # parts of the scene hidden: which one draws something?
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated 8 s runs, D3D11 + OpenGL (~4-7 min)
 .\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, exactly 2 rounds (~3 min)
 .\scripts\devtest.ps1 -Clean                        # old devtest-* screenshots/logs to the Recycle Bin (not the <feature>\ folders)
@@ -115,8 +115,8 @@ in the way of a run (for example a window behind others that does not render), d
     `devtest.ps1 -NoHud`), `-aa=0|1` (anti-aliasing off / SMAA for this run, whatever `options.cfg` says), `-sky=0|1`
     (the painted sky without / with its clouds), `-hero=robotNNN` (the hero wears all five parts of that set), `-nofx`
     (no special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the
-    bloom alone, x3: its shape, and its flicker in a strip), `-hide=a,b` (hides `terrain`, `dust`, `sky`, or an entity
-    without its `Entity` suffix: `arena`, `coliseum`, `torches`).
+    bloom alone, x3: its shape, and its flicker in a strip), `-hide=a,b` (hides `dust`, `sky`, or an entity without its
+    `Entity` suffix: `field`, `arena`, `coliseum`, `torches`).
   - Shots: `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first),
     `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point), `-fxtest=NAME` / `-fxtime=S` (starts
     `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the side;
@@ -143,15 +143,15 @@ in the way of a run (for example a window behind others that does not render), d
   nodes=… entities=… materials=…` after each match, `heap growth by block size` and the DLL that owns sample blocks (to
   find what grows), and at the end `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED`, also appended
   to `%USERPROFILE%\Tumbu\memory-history.csv` (date, renderer, driver, Ogre, heap, growth).
-  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0; checked 2026-10-11):
+  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0; checked 2026-10-12, with the field from Blender):
   - every object count returns to the same value each match (`objects=flat`) on both renderers;
-  - **OpenGL:** about 15 MB in the menu before the first match and 18 MB after it (a little more with a bigger window),
+  - **OpenGL:** about 16.5 MB in the menu before the first match and 20 MB after it (a little more with a bigger window),
     flat from match 2 on (within ±30 KB per match). The level itself moves by up to about 1.5 MB between days for
     reasons outside the game (docs/HISTORY.md, "Memory"), so compare OpenGL levels only between builds alternated in one
     session; the growth per match is what matters;
-  - **Direct3D 11:** about 21 to 27 MB in the menu and 29 to 33 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB
-    per match for about 18 matches, to about 85 MB, and **stays flat** (81 to 88 MB over matches 18 to 40; private bytes
-    about 535 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor;
+  - **Direct3D 11:** about 21 to 27 MB in the menu and 31 to 35 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB
+    per match for about 18 matches, to about 88 MB, and **stays flat** (87 to 92 MB over matches 18 to 40; private bytes
+    about 500 to 535 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor;
     docs/SPECIAL_EFFECTS.md, "Known issue") that fills up, not a leak. So the second-half growth of a 40-match run must
     be near 0; a 12- or 21-match run is still filling, and its "per match" number is not a leak rate.
 
@@ -236,14 +236,14 @@ materials, textures, GUI) gets a before/after set:
 |---|---|---|
 | Rendering | **Ogre 14.6.0** (built from source), Direct3D 11 (default) + OpenGL 3+. RTSS with `MSN_SHADERGEN` viewport scheme | everywhere |
 | App shell / input | `OgreBites::ApplicationContext` + **SDL2** (`InputListener`, keyboard, mouse, gamepad), `TrayManager` for debug UI | `BaseApplication`, `Input.h` |
-| Terrain | OgreTerrain + OgrePaging | `DotSceneLoader`, `Demo::createTerrainPhysic` |
+| Field | A mesh from `art/arena/Arena.blend` (the 2011 Ogre terrain's heights, then edited in Blender) with our toon meadow shader; trimesh physics from the same mesh | `Demo::createFieldPhysic`, `field_toon.frag` |
 | Physics | **Bullet 3.25** + Ogre's `Bullet` component, behind a small layer that mirrors the old OgreBullet API | `Physics.h/.cpp`, `SimpleRigidBody`, `Robot`, `Special*`, `Demo` |
 | GUI | **MyGUI 3.5.1** (Ogre platform, BlackBlue theme). Layouts are in `media/gui/*.layout` | `GUI.cpp/.h` |
 | Audio | **miniaudio 0.11.25** + stb_vorbis. Files are loaded through Ogre resources; 3D sounds follow scene nodes | `Sound`, `SoundManager` |
 | Sky | Our own **painted toon sky** (`sky.frag`, `Tumbu/ToonSky`): colour bands, sun, moon, stars; High adds clouds. Colours and the sun from `lighting.object`, the same on Direct3D 11 and OpenGL | `Sky`, `Lighting` |
 | Lighting | Soft anime toon look: one sun keyed by the clock (`lighting.object`), toon ramp + hemispheric ambient + rim light + outlines in our own shaders, a camera-relative "hero" fill on the robots, integrated depth shadow map, HDR compositor with god rays, bloom and tone mapping, then SMAA anti-aliasing; the sky's sun follows it | `Lighting`, `media/tumbu/shading/` |
 | Shaders | Robot and arena shaders in unified GLSL/HLSL (`OgreUnifiedShader.h`), sharing `TumbuToon.h`; materials set textures through `set $var` | `media/tumbu/robots/`, `media/tumbu/shading/` |
-| Scene format | `.scene` from Ogitor 0.4.4 + terrain page `.ogt`, parsed by our `DotSceneLoader` (rapidxml) | `media/scenes/arena` |
+| Scene format | `.scene` (first made by Ogitor 0.4.4, now edited by hand: one node per arena mesh), parsed by our `DotSceneLoader` (rapidxml) | `media/scenes/arena` |
 | Installer | NSIS `Tumbu.nsi` (still the 2011 x86 layout; needs updating) | root |
 
 ### Rendering pitfalls (all handled; keep them in mind)
@@ -269,7 +269,7 @@ materials, textures, GUI) gets a before/after set:
 - **Shadows are integrated.** The shadow technique is `SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED` with a
   depth (`PF_DEPTH32F`) map: Ogre only renders the map, and the robot and arena shaders sample it
   (`tumbuShadow` in `TumbuToon.h`, `content_type shadow` texture unit). `shadowParams.x` tells the shaders whether a
-  map is bound. RTSS-lit objects (terrain, particles) do not receive shadows.
+  map is bound. RTSS-lit objects (particles) do not receive shadows.
   The arena casts with `Tumbu/ShadowCasterTwoSided` (no culling): with Ogre's default back-face casting,
   sun-facing surfaces were missing from the map and light leaked as bright slits where a wall meets a
   slope. Self-shadow stripes are avoided with a normal-offset lookup (`shadowNormalOffset`), so
@@ -405,8 +405,8 @@ materials, textures, GUI) gets a before/after set:
     `neonLightColour`, `neonLight`, `neonLightReach`, `neonLightBands` in `lighting.object`.
   - The iron brackets do not take the torches' light (`torchIronMaterial` uses `env_iron_ps` = `env_toon.frag` with
     `TUMBU_NO_LAMPS`): lit by their own flame they turned the colour of the wall and their bands jumped with the flicker.
-  - No shadows from the torches (their light reaches through anything within `lampReach`, 6 units). The grass (Ogre
-    terrain, its own shader) gets no torch or neon light until the grass remake. The neon loop runs only near the ring
+  - No shadows from the torches (their light reaches through anything within `lampReach`, 6 units). The field
+    (`field_toon.frag`) takes them too. The neon loop runs only near the ring
     (`neonShape.yz`, computed by `Lighting` from lamps.object), so the walls and the sky skip it.
   - **The inventory / new-part preview** (`GUI`, its own scene manager) uses the robot shaders and so the same shared
     values. A render-target listener on the preview texture (`PreviewLighting`, GUI.cpp) wraps each preview render in
@@ -438,13 +438,21 @@ materials, textures, GUI) gets a before/after set:
   `cloudLit` / `cloudShade` / `cloudCover`; above 1 in HDR, or the tone mapping turns them grey). All keyframe values in
   `lighting.object`, shared values from `Lighting`. The distance fog blends into `skyHorizon` x `fogBrightness`. The
   `twilight` keyframe brings the sun to the horizon before the moon takes over.
-- **The terrain** (the grass around the ring) is still Ogre's terrain with Ogre's own shader: no shadows (its light map is
-  off), no torch, neon or energy light, and our patch for its texture seams (docs/OGRE_BUGS.md, 3, 12, 13). The grass
-  remake replaces it (IMPROVEMENT_IDEAS). Layout (`Arena.scene`, one page `Page_00000000.ogt`): 513 x 513 heights over
-  196 x 196 units centred on the origin (0.383 units between vertices), drawn at full detail everywhere (max pixel
-  error 0), leaf tiles of 64 quads (24.5 units: tile edges at 0 and ±24.5), several texture layers blended by blend
-  maps (`Terrain::getLayerCount`, `getBlendTextures`); `Demo::createTerrainPhysic` builds the physics heightfield from
-  the same heights.
+- **The field** (the ground around the ring and the hills beyond the walls; the grass remake, 2026-10-12): `field.mesh`,
+  the `field` object of `art/arena/Arena.blend`, built once by `scripts/arena-field.ps1` (`arena_field.py`) from the 2011
+  Ogre terrain's heights (`art/arena/terrain_2011.ogt`: 513 x 513 over 196 x 196 units) and from then on edited in
+  Blender like the rest of the arena. Full detail (0.38 units between vertices) inside 34 units of the centre, the hills
+  outside decimated to 12 % (31 k vertices in all). One UV map ("AO", projected from above over the whole 196 x 196
+  field) reads the baked AO (`field_ao.png`: the walls' shade on the ground, `bake-arena-ao.ps1 -Only field`) and the
+  **field map** (`media/tumbu/arena/field_map.png`, texture-painted in Blender: R earth, 0.5 = the edge; G rock; B the
+  tall grass's height). Placed by `fieldSceneNode` in `Arena.scene` (casts no shadow); `Demo::createFieldPhysic` makes
+  its trimesh body (tag `TERRAIN`), so the physics are the ground that is drawn.
+  - The shader (`field_toon.vert/.frag`, `fieldMaterial` in `media/tumbu/arena/field.material`): the wild meadow. Grass,
+    earth and rock (`meadow_*_col.png`, `arena-textures.ps1 -Only meadow`; tiles in metres from world positions,
+    `layerScale`) chosen by the field map, their edges broken up by `meadow_noise.png` and crisp at any distance; a thin
+    shaded rim on the earth along the grass; a broad tone field against visible repeats; the hills' earth beyond
+    30 units larger and redder (`hillParams`, `hillEarthTint`). Lit like the stone: toon ramp, shadow map, AO, contact
+    shadows, energy lights, torches and neon.
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.
@@ -489,7 +497,7 @@ materials, textures, GUI) gets a before/after set:
   groups:
   - `OgreInternal`, `Essential`
   - `General`: the game's shared media. Ogre 14 looks up fonts in the default group.
-  - `Game`, `Plants`, `TerrainTextures`, `MyGUI`
+  - `Game`, `Plants`, `MyGUI`
 - **Per-user folder `%USERPROFILE%\Tumbu\`** holds:
   - `ogre.cfg`: render system and window. **It holds Jonathan's settings for playing** (Direct3D 11, windowed 1920x1080,
     VSync), used when he starts `bin\Release\TUMBU.exe` himself: never change it for good. `devtest.ps1` (all its
@@ -529,7 +537,7 @@ through a listener registry in `BaseApplication`.
 - `StartScreen` / `CutScene` is the title-screen background, drawn in `RENDER_QUEUE_BACKGROUND`.
 - `Demo` runs one match. It loads `Arena.scene` through `DotSceneLoader` and sets up:
   - lights and shadows, the physics world and the Sky
-  - terrain heightfield physics and the arena/coliseum trimesh physics
+  - the field, arena and coliseum trimesh physics
   - the hero (`Character`), the enemy (`CharacterEnemy`) and the `Camera`
 
   Each frame it steps physics at a fixed 120 Hz and dispatches collisions manually: manifolds are mapped to
@@ -569,12 +577,10 @@ through a listener registry in `BaseApplication`.
   `EffectsManager::gameTime(evt.timeSinceLastFrame)`, and particles slow down through the controller time factor.
 - `ConfigScriptLoader` (`ConfigScript.*`) is an Ogre `ScriptLoader` for `*.object` files:
   `ConfigScriptLoader::getSingleton().getConfigScript("<type>", "<name>")->findChild("key")->getValueI()`.
-- `DotSceneLoader` is the Ogitor dotScene loader. Lights and camera are placed by their nodes, and meshes are
-  loaded with the AUTODETECT group.
-  A terrain layer whose texture is missing takes layer 0's textures (`replaceMissingTerrainLayers`, a safety net; a
-  missing layer texture draws black). The terrain page `.ogt` is Ogre `StreamSerialiser` chunks (id, version, length, a
-  SuperFastHash checksum of those three) with length-prefixed strings: editing a string means fixing the lengths and
-  checksums of the enclosing chunks (`TERR`, `TLIN`).
+- `DotSceneLoader` is the Ogitor dotScene loader (its terrain support is gone with the Ogre terrain). Lights and camera
+  are placed by their nodes, and meshes are loaded with the AUTODETECT group. The 2011 terrain page
+  (`art/arena/terrain_2011.ogt`, read by `arena-field.ps1` only to build the field or its map again) is Ogre `StreamSerialiser` chunks (id, version,
+  length, a SuperFastHash checksum of those three): the heights in `TERR`, then the layers and the blend maps.
 - `DevTest` is the unattended test harness. `Util` handles barrel spawning. `Log` / `LogManager` provide the
   on-screen log.
 - The game design used Portuguese. Some identifiers are Portuguese (`sofrerDano` = take damage,
@@ -626,13 +632,16 @@ through a listener registry in `BaseApplication`.
   before `api.dot_mesh`, never trust the defaults: the robot export sets `SWAP_AXIS 'xyz'` (Y-up files), the arena
   export `xz-y`. After any export, compare the new mesh's bounding box with the old one (`OgreXMLConverter` to XML).
 - **`art/`** holds the modern Blender working files (the 2011 `.blend` files in `media/` stay untouched).
-  `art/arena/Arena.blend` (coliseum + arena floor) is the source of `coliseum.mesh`, `arena.mesh` and their
-  baked AO maps (`*_ao.png`, second UV set): edit it, then run `.\scripts\bake-arena-ao.ps1` (headless Blender
+  `art/arena/Arena.blend` (coliseum, ring, torches and the field) is the source of `coliseum.mesh`, `arena.mesh`,
+  `torches.mesh`, `field.mesh` and their baked AO maps (`*_ao.png`, second UV set; the field's only UV set): edit it,
+  then run `.\scripts\bake-arena-ao.ps1` (`-Only <mesh>` for one of them; headless Blender
   5.2 + blender2ogre; `-Rebuild` recreates it from the 2011 files and **discards manual edits**, so never use
   it once `Arena.blend` has been edited by hand). Details in DEV_SETUP Part B.
   `scripts/blender/arena_shapes.py` adds the big shapes, the world-scale texture UVs and the ring's floor and
   rope materials to `Arena.blend` (each step once; the object property `tumbu_shapes` records them), and
-  `.\scripts\arena-textures.ps1` generates the stone, tile and emblem textures.
+  `.\scripts\arena-textures.ps1` generates the stone, tile, emblem and meadow textures. `scripts/blender/arena_field.py`
+  (`.\scripts\arena-field.ps1`) built the field and its first field map; editing the field (sculpting the ground,
+  painting the map) is DEV_SETUP Part B, "The field".
   `art/robots/robot00N.blend` are the robots, converted once from 2.49 with Blender 4.5 LTS
   (`scripts/convert-legacy-blend.ps1`, which keeps the animations). They are the source for any robot change.
   `.\scripts\bake-robot-ao.ps1` bakes `media/tumbu/robot00N/AO<part>UV_00N.png` through the texture UVs (each

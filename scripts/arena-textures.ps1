@@ -1,7 +1,9 @@
 # Generates the arena remake textures (scripts/blender/arena_textures.py) into media/tumbu/arena/.
-# Usage: .\scripts\arena-textures.ps1 [-Preview <folder>] [-Blender <path to blender.exe>]
+# Usage: .\scripts\arena-textures.ps1 [-Only stone|tiles|emblem|meadow] [-Preview <folder>] [-Blender <path to blender.exe>]
+#   -Only     writes only that set (meadow: the field's grass, earth, rock and noise)
 #   -Preview  also writes 2x2 tiled copies there, to check the seams by eye
 param(
+    [string]$Only = '',
     [string]$Preview = '',
     [string]$Blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
 )
@@ -10,6 +12,7 @@ $root = Split-Path $PSScriptRoot -Parent
 if (-not (Test-Path $Blender)) { throw "Blender not found: $Blender (pass -Blender)" }
 
 $scriptArgs = @('--background', '--factory-startup', '--python', (Join-Path $PSScriptRoot 'blender\arena_textures.py'), '--', $root)
+if ($Only) { $scriptArgs += @('--only', $Only) }
 if ($Preview) { New-Item -ItemType Directory -Force $Preview | Out-Null; $scriptArgs += @('--preview', $Preview) }
 
 # Blender prints to stderr; Windows PowerShell 5.1 would turn that into errors under 'Stop' (the exit code decides).

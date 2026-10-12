@@ -1,13 +1,9 @@
 #include <Ogre.h>
-#include <Terrain/OgreTerrain.h>
-#include <Terrain/OgreTerrainGroup.h>
-#include <Terrain/OgreTerrainMaterialGeneratorA.h>
 
 
 #include <iostream>
 
 #include "DotSceneLoader.h"
-#include "Lighting.h"
 
 #pragma warning(disable:4390)
 #pragma warning(disable:4305)
@@ -16,22 +12,11 @@ using namespace std;
 
 #define IMPORT_CAMERA 0
 
-DotSceneLoader::DotSceneLoader() : mSceneMgr(0), mTerrainGroup(0) {
-    mTerrainGlobalOptions = OGRE_NEW Ogre::TerrainGlobalOptions();
+DotSceneLoader::DotSceneLoader() : mSceneMgr(0) {
 }
 
 DotSceneLoader::~DotSceneLoader(){
 	Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Destructor");
-
-	if(mTerrainGroup){
-		Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Destroying Terraing Group");
-        OGRE_DELETE mTerrainGroup;
-    }
-
-	Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Destroying Terraing Global Options");
-    OGRE_DELETE mTerrainGlobalOptions;
-
-	Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] Destructor End");
 }
 
 void DotSceneLoader::parseDotScene(const Ogre::String &SceneName, const Ogre::String &groupName, Ogre::SceneManager *yourSceneMgr, Ogre::SceneNode *pAttachNode, const Ogre::String &sPrependNode){
@@ -138,10 +123,8 @@ void DotSceneLoader::processScene(rapidxml::xml_node<>* XMLRoot){
     }
 #endif
 
-    // Process terrain (?)
-    pElement = XMLRoot->first_node("terrain");
-    if(pElement)
-        processTerrain(pElement);
+    // The 2011 scene's Ogre terrain (Ogitor) is gone: the field is a mesh from Arena.blend (fieldEntity, a node like
+    // the others; scripts/arena-field.ps1).
 }
 
 void DotSceneLoader::processNodes(rapidxml::xml_node<>* XMLNode){
@@ -236,94 +219,6 @@ void DotSceneLoader::processEnvironment(rapidxml::xml_node<>* XMLNode){
     pElement = XMLNode->first_node("userDataReference");
     if(pElement)
         processUserDataReference(pElement);
-}
-
-void DotSceneLoader::processTerrain(rapidxml::xml_node<>* XMLNode){
-	Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] Process Terrain" );
-
-    Ogre::Real worldSize = getAttribReal(XMLNode, "worldSize");
-    int mapSize = Ogre::StringConverter::parseInt(XMLNode->first_attribute("mapSize")->value());
-    bool colourmapEnabled = getAttribBool(XMLNode, "colourmapEnabled");
-    int colourMapTextureSize = Ogre::StringConverter::parseInt(XMLNode->first_attribute("colourMapTextureSize")->value());
-    int compositeMapDistance = Ogre::StringConverter::parseInt(XMLNode->first_attribute("tuningCompositeMapDistance")->value());
-    int maxPixelError = Ogre::StringConverter::parseInt(XMLNode->first_attribute("tuningMaxPixelError")->value());
-    
-    // The terrain's baked light map follows the sun of the lighting rig at load time (the scene's light is the
-    // sun; the 2011 loader added a second directional light here).
-    Lighting* lighting = Lighting::getInstance();
-
-    mTerrainGlobalOptions->setMaxPixelError((Ogre::Real)maxPixelError);
-    mTerrainGlobalOptions->setCompositeMapDistance((Ogre::Real)compositeMapDistance);
-    mTerrainGlobalOptions->setLightMapDirection(lighting->getLightDirection());
-    // No light map: Ogre bakes it once at load from the terrain's own heights (mountains, the ground around the
-    // coliseum), so it drew still, wrong shadows on the grass inside the arena (the coliseum mesh is not part of it).
-    // The grass gets no shadows until it has its own toon shader (docs/IMPROVEMENT_IDEAS.md, "Grass remake").
-    static_cast<Ogre::TerrainMaterialGeneratorA*>( mTerrainGlobalOptions->getDefaultMaterialGenerator().get() )->setLightmapEnabled( false );
-    mTerrainGlobalOptions->setCompositeMapAmbient(lighting->getAmbientColour());
-    mTerrainGlobalOptions->setCompositeMapDiffuse(lighting->getSunColour());
-
-    mTerrainGroup = OGRE_NEW Ogre::TerrainGroup(mSceneMgr, Ogre::Terrain::ALIGN_X_Z, mapSize, worldSize);
-    mTerrainGroup->setOrigin(Ogre::Vector3::ZERO);
-
-    mTerrainGroup->setResourceGroup("General");
-
-    rapidxml::xml_node<>* pElement;
-    rapidxml::xml_node<>* pPageElement;
-
-    // Process terrain pages (*)
-    pElement = XMLNode->first_node("terrainPages");
-    if(pElement)
-    {
-        pPageElement = pElement->first_node("terrainPage");
-        while(pPageElement)
-        {
-            processTerrainPage(pPageElement);
-            pPageElement = pPageElement->next_sibling("terrainPage");
-        }
-    }
-    mTerrainGroup->loadAllTerrains(true);
-    replaceMissingTerrainLayers();
-
-    mTerrainGroup->freeTemporaryResources();
-    //mTerrain->setPosition(mTerrainPosition);
-
-	Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] Process Terrain End" );
-}
-
-// A terrain layer whose texture is not in the game draws black ("Texture layer will be blank"): the 2011 page has a
-// round patch beside the ring painted with Ogitor's own city_6 rock, which was never shipped. Such a layer takes the
-// first layer's textures (the grass), so the patch disappears into the field. Ogre still logs the missing texture
-// once while it prepares the page, before this runs (devtest.ps1 filters that line).
-void DotSceneLoader::replaceMissingTerrainLayers(void){
-	Ogre::ResourceGroupManager &resources = Ogre::ResourceGroupManager::getSingleton();
-	Ogre::TerrainGroup::TerrainIterator it = mTerrainGroup->getTerrainIterator();
-	while( it.hasMoreElements() ){
-		Ogre::Terrain* terrain = it.getNext()->instance;
-		if( terrain == NULL || terrain->getLayerCount() == 0 ){
-			continue;
-		}
-		for( Ogre::uint8 layer = 1; layer < terrain->getLayerCount(); layer++ ){
-			const Ogre::String &diffuse = terrain->getLayerTextureName( layer, 0 );
-			if( resources.resourceExistsInAnyGroup( diffuse ) ){
-				continue;
-			}
-			Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] terrain layer " + Ogre::StringConverter::toString( (int) layer ) + ": '" + diffuse + "' is missing, using layer 0 ('" + terrain->getLayerTextureName( 0, 0 ) + "')" );
-			for( Ogre::uint8 sampler = 0; sampler < terrain->getLayerDeclaration().size(); sampler++ ){
-				terrain->setLayerTextureName( layer, sampler, terrain->getLayerTextureName( 0, sampler ) );
-			}
-		}
-	}
-}
-
-void DotSceneLoader::processTerrainPage(rapidxml::xml_node<>* XMLNode){
-	Ogre::LogManager::getSingleton().logMessage( "[DotSceneLoader] Process Terrain Page" );
-    Ogre::String name = getAttrib(XMLNode, "name");
-    int pageX = Ogre::StringConverter::parseInt(XMLNode->first_attribute("pageX")->value());
-    int pageY = Ogre::StringConverter::parseInt(XMLNode->first_attribute("pageY")->value());
-
-    if (Ogre::ResourceGroupManager::getSingleton().resourceExists(mTerrainGroup->getResourceGroup(), name)){
-        mTerrainGroup->defineTerrain(pageX, pageY, name);
-    }
 }
 
 void DotSceneLoader::processUserDataReference(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent){

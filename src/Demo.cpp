@@ -17,10 +17,9 @@ Demo::Demo(){
 	mainChar					= NULL;
 	tutorial					= NULL;
 
-	terrainRigidBody			= NULL;
+	fieldRigidBody				= NULL;
 	camera						= NULL;
 	mLoader						= NULL;
-	pDataConvert				= NULL;
 	physicWorld					= NULL;
 	sky							= NULL;
 	lighting					= NULL;
@@ -105,10 +104,9 @@ Demo::~Demo(void){
 	if ( colliseumRigidBody != NULL ){
 		delete colliseumRigidBody;
 	}
-	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Terrain...");
-	if ( terrainRigidBody != NULL ){
-		delete terrainRigidBody;
-		delete[] pDataConvert;
+	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Field...");
+	if ( fieldRigidBody != NULL ){
+		delete fieldRigidBody;
 	}
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Phycs...");
 	if ( physicWorld != NULL ){
@@ -208,11 +206,9 @@ void Demo::initializeDemo(){
 	tumbu->renderOneFrame();
 	mLoader = new DotSceneLoader();
 	tumbu->renderOneFrame();
-	// Before the scene: the terrain bakes its light map from the sun direction.
 	lighting = Lighting::getInstance();
 	lighting->setClock( tumbu->getClock() );
 	mLoader->parseDotScene("Arena.scene", "General", mSceneMgr);
-	waitForTerrainLighting();
 
 	gui->startLoad("Loading Scene...");
 	tumbu->renderOneFrame();
@@ -237,10 +233,10 @@ void Demo::initializeDemo(){
 	createSky();
 
 
-	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating terrain physics" );
+	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating field physics" );
 	gui->startLoad("Loading Terrain...");
 	tumbu->renderOneFrame();
-	createTerrainPhysic();
+	createFieldPhysic();
 
 	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating arena physics" );
 	gui->startLoad("Loading Terrain...");
@@ -348,69 +344,12 @@ void Demo::createArena(void){
 	colliseumRigidBody	= tumbu->createSimpleRigidBody( physicWorld, coliseumEntity, coliseumNode, Ogre::Vector3(0,0,0), Ogre::Quaternion::IDENTITY, 0.1f, 0.8f, tumbu->isCastShadows(), TumbuEnums::SCENE_OBJECT );
 }
 //-------------------------------------------------------------------------------------
-void Demo::createTerrainPhysic(void){
-	Ogre::Terrain* pTerrain;
-	Ogre::SceneNode* pTerrainNode;
-	Physics::CollisionShape* mTerrainShape;
-	Physics::RigidBody* defaultTerrainBody;
-
-	pTerrain = mLoader->getTerrainGroup()->getTerrain( 0, 0 );
-
-    float* terrainHeightData = pTerrain->getHeightData();
-    Ogre::Vector3 terrainPosition = pTerrain->getPosition();
-
-    pDataConvert= new float[pTerrain->getSize() *pTerrain->getSize()];
-    for(int i=0;i<pTerrain->getSize();i++)
-		memcpy(
-		pDataConvert+pTerrain->getSize() * i, // source
-			terrainHeightData + pTerrain->getSize() * (pTerrain->getSize()-i-1), // target
-			sizeof(float)*(pTerrain->getSize()) // size
-		);
-
-    float metersBetweenVertices = pTerrain->getWorldSize()/(pTerrain->getSize()-1); //edit: fixed 0 -> 1 on 2010-08-13
-	Ogre::Vector3 localScaling(metersBetweenVertices, 1, metersBetweenVertices);
-
-	const float      terrainBodyRestitution  = 0.1f;
-	const float      terrainBodyFriction     = 0.8f;
-
-	mTerrainShape = new Physics::HeightmapCollisionShape(
-		pTerrain->getSize(), 
-		pTerrain->getSize(),	
-		localScaling,
-		pDataConvert,
-		pTerrain->getMaxHeight(), 
-		pTerrain->getMinHeight(), 
-		true);
-
-	defaultTerrainBody = new Physics::RigidBody(
-		"Terrain", 
-		getPhysicWorld());
-
-	Ogre::Vector3 position(
-		terrainPosition.x,
-		terrainPosition.y + (pTerrain->getMaxHeight()-1.5f)/2,
-		terrainPosition.z
-	);
-
-	pTerrainNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("terrain_node");
-	defaultTerrainBody->setStaticShape (pTerrainNode, mTerrainShape, terrainBodyRestitution, terrainBodyFriction, position);
-
-	defaultTerrainBody->getBulletRigidBody()->getWorldTransform().setRotation(
-		btQuaternion(
-			Ogre::Quaternion::IDENTITY.x,
-			Ogre::Quaternion::IDENTITY.y,
-			Ogre::Quaternion::IDENTITY.z,
-			Ogre::Quaternion::IDENTITY.w)
-		);
-
-	terrainRigidBody = new SimpleRigidBody( mSceneMgr, TumbuEnums::TERRAIN );
-
-	terrainRigidBody->setOgreBulletRigidBody( defaultTerrainBody );
-	terrainRigidBody->shape = mTerrainShape;
-	terrainRigidBody->node = pTerrainNode;
-}
-//-------------------------------------------------------------------------------------
-void Demo::createSimpleTerrain(void){
+void Demo::createFieldPhysic(void){
+	// The field (field.mesh from Arena.blend): a static triangle mesh, like the ring and the coliseum, so the physics are
+	// exactly the ground that is drawn. Tagged TERRAIN (an energy ball that hits it explodes, as on the ring).
+	Ogre::SceneNode* fieldNode = mSceneMgr->getSceneNode( "fieldSceneNode" );
+	Ogre::Entity* fieldEntity = mSceneMgr->getEntity( "fieldEntity" );
+	fieldRigidBody = tumbu->createSimpleRigidBody( physicWorld, fieldEntity, fieldNode, Ogre::Vector3(0,0,0), Ogre::Quaternion::IDENTITY, 0.1f, 0.8f, false, TumbuEnums::TERRAIN );
 }
 //-------------------------------------------------------------------------------------
 void Demo::createMainCharacter(void){
@@ -496,30 +435,10 @@ void Demo::startInitialConversation(void){
 
 }
 //-------------------------------------------------------------------------------------
-void Demo::waitForTerrainLighting(void){
-	// The terrain computes its light map and composite map in a background thread after loading. Until the
-	// result arrives (a few seconds) the grass renders dark, so wait for it on the loading screen. Frames must
-	// be rendered meanwhile: the work queue hands the result over on the main thread.
-	Ogre::TerrainGroup* terrain = mLoader->getTerrainGroup();
-	if( terrain == NULL ){
-		return;
-	}
-	gui->startLoad( "Lighting Terrain..." );
-	Ogre::Timer timer;
-	while( terrain->isDerivedDataUpdateInProgress() && timer.getMilliseconds() < 30000 ){
-		tumbu->renderOneFrame();
-	}
-	if( terrain->isDerivedDataUpdateInProgress() ){
-		Ogre::LogManager::getSingleton().logWarning( "[Demo] terrain lighting still updating after 30 s; continuing" );
-	}else{
-		Ogre::LogManager::getSingleton().logMessage( "[Demo] terrain lighting ready after " + Ogre::StringConverter::toString( timer.getMilliseconds() ) + " ms" );
-	}
-}
-//-------------------------------------------------------------------------------------
 void Demo::initialiseGameResources(void){
 	// Ogre 14 initialises every group at startup; this only covers groups that are still pending.
 	Ogre::ResourceGroupManager &rgm = Ogre::ResourceGroupManager::getSingleton();
-	const char* groups[] = { "Plants", "TerrainTextures", "Game" };
+	const char* groups[] = { "Plants", "Game" };
 	for( size_t i = 0; i < sizeof(groups) / sizeof(groups[0]); i++ ){
 		if( rgm.resourceGroupExists( groups[i] ) && !rgm.isResourceGroupInitialised( groups[i] ) ){
 			rgm.initialiseResourceGroup( groups[i] );

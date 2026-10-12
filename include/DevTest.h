@@ -34,6 +34,8 @@
  *                    -stripstep=D units per frame (0.003: about a third of a pixel at 15 units) and save N
  *                    consecutive frames as <workPath>/devtest-strip-NN.png (flicker and crawl of small bright details)
  *   -hero=robotNNN   the hero wears all five parts of that set (instead of the demo.object loadout)
+ *   -heropos=x,z     the hero starts there instead of on the ring (for example in the tall grass) and falls onto the
+ *                    ground below
  *   -swaptest        charge Jyn, Esc, Inventory, re-select the head (every part and its aura shell is rebuilt),
  *                    resume, charge Jyn again; logs the aura level after each step (use with -quitafter=9)
  *   -flytest         fly camera check: F, fly, Esc (no pause menu), F again; screenshot while flying
@@ -62,6 +64,8 @@ public:
 	static int getSky(void){ return sky; }
 	/// -hero=robotNNN: the set every hero part comes from, or empty for the demo.object loadout.
 	static const Ogre::String &getHeroSet(void){ return heroSet; }
+	/// -heropos=x,z: where the hero starts (true), dropped from 1.5 units above the ground; false = on the ring.
+	static bool getHeroStart( Ogre::Vector3 &position );
 
 	DevTest(void);
 	virtual ~DevTest(void);
@@ -161,6 +165,8 @@ private:
 	static bool benchAI, benchChase;
 	static Ogre::String fxTest;
 	static Ogre::String heroSet;
+	static bool heroStartSet;
+	static Ogre::Vector3 heroStart;
 	static Ogre::Real fxTime;
 	static Ogre::Real fxDistance;
 	static Ogre::Real jynHit;

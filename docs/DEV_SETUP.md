@@ -55,11 +55,8 @@ Paths below are the ones on Jonathan's machine in Sep 2026. Adjust them if thing
   folder does not exist.
 - The script patches upstream problems in the downloaded sources (temporary: how to check whether Ogre fixed them and
   how to remove each patch is in docs/OGRE_BUGS.md):
-  - an Ogre 14.6 terrain memory leak (`Repair-OgreSource`)
   - Ogre 14.6's Direct3D 11 renderer uploading a pass's constants before copying the shared parameters into them (one
     bind late; `Repair-OgreSource`, 2026-10-09). After pulling this change, run `.\scripts\deps.ps1 -Only ogre` once.
-  - Ogre 14.6's terrain shader drawing light seams along each texture repeat (`Media/Terrain/TerrainSurface.glsl`,
-    2026-10-11); patched in the source and in the installed media, so `build.ps1` is enough after it.
 
   The patches are idempotent, so running the script again is safe.
 
@@ -311,6 +308,41 @@ quit.
 - blender2ogre exports only **selected** objects (its `SELECTED_ONLY` setting) and silently skips the
   others: select the object before calling `api.dot_mesh`.
 
+### The field (the `field` object of `art/arena/Arena.blend`)
+
+The ground around the ring and the hills beyond the walls: `media/tumbu/arena/field.mesh`, drawn by the meadow shader
+(`fieldMaterial`) and used as the physics of the ground. It was the 2011 Ogre terrain until 2026-10-12;
+`scripts/blender/arena_field.py` built it once from that terrain's heights, and from then on Blender is its only source.
+
+- **What is in Arena.blend:** the object `field` (Export collection): a grid with 0.38 units between vertices inside 34
+  units of the centre (the coliseum), the hills outside reduced to 12 % of their vertices. Do not move, turn or scale the
+  object itself; edit its vertices. Its material `fieldMaterial` shows the **field map** (`media/tumbu/arena/field_map.png`,
+  image node "FieldMap") as its colour, so in Material Preview you see where the earth, the rock and the tall grass are.
+- **Changing the ground's shape:** Sculpt Mode (Grab, Draw, Smooth, Flatten...) or Edit Mode with proportional editing.
+  Inside the coliseum there is detail enough for paths and ditches; for more somewhere, subdivide those faces in Edit
+  Mode. Keep the ground under the ring and the walls (the grass and the AO need a surface there). Then save the file and
+  run `.\scripts\arena-field.ps1`: it lays the UV map out again from above (moving vertices sideways never shifts the map
+  under them), bakes the AO (the walls' shade on the ground, about 3 minutes) and exports `field.mesh`. Start a match:
+  the physics come from the same mesh, so the robots and the energy balls meet the ground you see.
+- **Painting the field map** (where the earth, the rock and the tall grass are): select `field`, the Texture Paint
+  workspace, the image `field_map` in the paint slots. One colour channel is one thing, so paint with the brush blend mode
+  **Add** to put some in and **Subtract** to take it out, with a pure colour:
+  - red (1, 0, 0) = **earth**. The edge is where red is 0.5; the shader breaks it up with noise, so a soft brush edge is
+    fine. No tall grass grows on the earth.
+  - green (0, 1, 0) = **rock** (the hill tops).
+  - blue (0, 0, 1) = **tall grass height** (1 = `fullHeight` of `media/configuration/grass.object`, 0.9 m; 0 = none).
+    The first map: from 0.31 near the earth band to 1 at 22 units from the centre, none beyond 30.
+
+  Save the image (Image > Save, or Alt+S in the image editor): it writes `field_map.png` itself, outside the .blend. Run
+  `.\scripts\compress-arena-textures.ps1` (the game reads the DDS copy for the ground; the grass reads the PNG when a
+  match loads), then start a match. No AO bake or export is needed for painting alone.
+- **Rules:** keep the field map and the mesh in the same file layout (`arena-field.ps1` never overwrites them; only
+  `-Rebuild`, which builds the field again from the 2011 terrain, and `-NewMap`, which writes the first map again, discard
+  hand work). The field casts no shadow. Its AO uses the scene's `tumbu_ao_distance` like the rest of the arena.
+- **Tuning without Blender:** the meadow's look is in `media/tumbu/arena/field.material` (tile sizes, edge breakup, the
+  earth's rim, the hills' earth), the textures in `scripts/blender/arena_textures.py` (`.\scripts\arena-textures.ps1
+  -Only meadow`).
+
 ### Robot export (`art/robots/robot00N.blend` -> `media/tumbu/robot00N/`)
 
 The robots' `.mesh` and `.skeleton` files are generated from the Blender files, which are the source of truth: whatever
@@ -375,9 +407,9 @@ an animator sees in Blender is what the game plays.
 
 ### Other tools (backed up in `D:\Backup\OgreSDK\OGRE_tools`)
 
-- **Ogitor 0.4.4** was the scene editor that produced `media/scenes/arena/Arena.scene` and the terrain
-  `.ogt`. Ogitor is abandoned. A modern replacement is Blender + blender2ogre's `.scene` export, or
-  hand-editing the XML.
+- **Ogitor 0.4.4** was the scene editor that produced `media/scenes/arena/Arena.scene` and the terrain `.ogt`. It is
+  no longer used (abandoned upstream): the field is modelled in Blender ("The field" above) and `Arena.scene` is edited by
+  hand (one node per arena mesh).
 - **OgreMeshy** is a mesh viewer for checking exports.
 - **ParticleEditor** was used to author `media/particle/*.particle`.
 

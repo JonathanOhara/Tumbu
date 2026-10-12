@@ -123,6 +123,38 @@ session; they only mean something against the other variant of the same run.
 - Cost (22:00, chase view, against the build before): 1920x1080 Direct3D 11 +0.070 ms, OpenGL +0.045 ms; 1024x768 inside
   the noise; by day about +0.02 / +0.03 ms. Memory unchanged.
 
+## Grass remake (2026-10-12)
+
+- Direction from two decision pages with in-game mock-ups (https://claude.ai/artifact/XynMB45r7suQkAyFBA4V55, looks and
+  ways to get our shader on the ground; https://claude.ai/artifact/FYxBgrmU9PwroZquVRcVsr, tall grass and the Blender
+  proof), built in a throwaway prototype. Jonathan's picks: the "wild meadow" ground (over a painted lawn and a
+  tournament turf), toon blades for the tall grass (over thin dense blades and alpha cards), the density as prototyped,
+  the field as a mesh from Blender (Blender the single source of all geometry: no Ogitor), the earth's stones at 3/4 of
+  the way from the first set to a softened one (the first stood out as white circles, the softened went too far), and
+  grass that the robots push aside even though they stay in the ring today (they may leave it later).
+- How the games do tall grass (from the research page): generated, not modelled. Artists paint where it grows and how
+  tall; code builds the blades at load; the vertex shader bends them (wind, characters). Ghost of Tsushima (GDC 2021) is
+  the only documented one (Bezier blades rebuilt on the GPU, about 83 000 on screen); Breath of the Wild, Xenoblade 3,
+  Genshin and Relink were analysed from footage. Xenoblade's only public note: a temporal filter against its grass
+  flickering.
+- Ways to get our shader on the ground that were weighed: a custom `TerrainMaterialGenerator` for the Ogre terrain
+  (prototyped: works, `-0.04 ms`), the RTSS terrain stage (rejected, docs/OGRE_BUGS.md retired 13), and the field as a
+  mesh from Blender (chosen). The prototype found that the Ogre terrain drew the ditch around the ring higher than its own
+  heights (it buried short blades); the Blender mesh matches the heights to the millimetre.
+- **Step 1, the field from Blender:** `arena_field.py` read the 2011 page (heights and blend maps) and built the `field`
+  object in `Arena.blend` (513 x 513 grid, hills beyond 34 units decimated to 12 %: 263 k to 31 k vertices; 1.4 MB mesh
+  instead of the 16.5 MB page), the first field map (earth band from 8.3 to 13.5 units with a wobbling outer edge, the
+  2011 desert and ice layers on the hills, tall grass rising from 14 to 22 units) and a top-down UV map; the AO bake (2048,
+  2.6 minutes) adds the walls' shade on the ground. The meadow textures moved from the prototype's Pillow script into
+  `arena_textures.py` (numpy only). The game lost its Ogre terrain code, the Terrain and Paging components, the old layer
+  textures and the Ogitor project file; the physics became a trimesh of the same mesh. `deps.ps1` dropped the two terrain
+  patches.
+- Cost of step 1 (1920x1080, the standard robot view, against the build before): Direct3D 11 -0.070 ms (729 to 768 fps),
+  OpenGL inside the noise (+0.009 +/- 0.014 ms). The prototype had shown that the old terrain's cost was its shading per
+  pixel, not its triangles. Memory (40 matches each): flat on both renderers; the levels about 2 MB higher (OpenGL 19.9 MB
+  after match 1 instead of 18; the Direct3D 11 plateau 87 to 92 MB instead of 81 to 88), the field's triangle-mesh
+  physics (62 k triangles with their BVH, about 3 MB) against the old 1 MB heightfield.
+
 ## Memory
 
 - The Direct3D 11 heap growth per match is an NVIDIA driver pool tied to the post-processing compositor, not a leak: it

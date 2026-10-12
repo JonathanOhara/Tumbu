@@ -8,8 +8,8 @@ foreach(_dll IN LISTS _dlls)
 	file(COPY_FILE "${_dll}" "${BIN_DIR}/${_name}" ONLY_IF_DIFFERENT)
 endforeach()
 
-# Ogre's media: core shaders/materials (Main), the shader generator library, terrain shaders and the tray UI pack.
-foreach(_dir Main RTShaderLib Terrain)
+# Ogre's media: core shaders/materials (Main), the shader generator library and the tray UI pack.
+foreach(_dir Main RTShaderLib)
 	file(COPY "${DEPS_INSTALL}/Media/${_dir}" DESTINATION "${BIN_DIR}/OgreMedia")
 endforeach()
 file(COPY "${DEPS_INSTALL}/Media/packs/SdkTrays.zip" DESTINATION "${BIN_DIR}/OgreMedia/packs")

@@ -45,6 +45,8 @@ bool DevTest::benchAI = false;
 bool DevTest::benchChase = false;
 Ogre::String DevTest::fxTest = "";
 Ogre::String DevTest::heroSet = "";
+bool DevTest::heroStartSet = false;
+Ogre::Vector3 DevTest::heroStart = Ogre::Vector3::ZERO;
 Ogre::Real DevTest::fxTime = 0.3f;
 Ogre::Real DevTest::fxDistance = 4.0f;
 Ogre::Real DevTest::jynHit = 0;
@@ -142,6 +144,12 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			stripStep = Ogre::StringConverter::parseReal( arg.substr( 11 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
 			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-heropos=" ) ){
+			Ogre::StringVector v = Ogre::StringUtil::split( arg.substr( 9 ), "," );
+			if( v.size() == 2 ){
+				heroStartSet = true;
+				heroStart = Ogre::Vector3( Ogre::StringConverter::parseReal( v[0] ), 0, Ogre::StringConverter::parseReal( v[1] ) );
+			}
 		}else if( Ogre::StringUtil::startsWith( arg, "-hero=" ) ){
 			heroSet = arg.substr( 6 );
 		}else if( Ogre::StringUtil::startsWith( arg, "-hour=" ) ){
@@ -834,8 +842,27 @@ void DevTest::runSwapTest(void){
 	}
 }
 //-------------------------------------------------------------------------------------
-// -hide=terrain,coliseum,...: hides parts of the arena for the run, to find which one draws something. Names: terrain,
-// dust, sky, or an entity's name without "Entity" (arena, coliseum, torches).
+bool DevTest::getHeroStart( Ogre::Vector3 &position ){
+	if( !heroStartSet ){
+		return false;
+	}
+	position = heroStart;
+	Demo* demo = TUMBU::getInstance()->getDemo();
+	if( demo != NULL && demo->getPhysicWorld() != NULL ){
+		btVector3 from( heroStart.x, 80.0f, heroStart.z ), to( heroStart.x, -40.0f, heroStart.z );
+		btCollisionWorld::ClosestRayResultCallback hit( from, to );
+		demo->getPhysicWorld()->getBulletCollisionWorld()->rayTest( from, to, hit );
+		if( hit.hasHit() ){
+			position.y = hit.m_hitPointWorld.y();
+		}
+	}
+	position.y += 1.5f;
+	Ogre::LogManager::getSingleton().logMessage( "[DEVTEST] hero starts at " + Ogre::StringConverter::toString( position ) );
+	return true;
+}
+//-------------------------------------------------------------------------------------
+// -hide=field,coliseum,...: hides parts of the arena for the run, to find which one draws something. Names: dust, sky,
+// grass, or an entity's name without "Entity" (field, arena, coliseum, torches).
 void DevTest::hideObjects(void){
 	if( hideList.empty() ){
 		return;
@@ -846,15 +873,9 @@ void DevTest::hideObjects(void){
 	for( size_t i = 0; i < names.size(); i++ ){
 		const Ogre::String &name = names[i];
 		bool hidden = false;
-		if( name == "terrain" && tumbu->getDemo() != NULL && tumbu->getDemo()->getLoader()->getTerrainGroup() != NULL ){
-			Ogre::TerrainGroup::TerrainIterator it = tumbu->getDemo()->getLoader()->getTerrainGroup()->getTerrainIterator();
-			while( it.hasMoreElements() ){
-				Ogre::Terrain* terrain = it.getNext()->instance;
-				if( terrain != NULL ){
-					terrain->_getRootSceneNode()->setVisible( false );
-					hidden = true;
-				}
-			}
+		if( name == "grass" && sceneMgr->hasSceneNode( "GrassNode" ) ){
+			sceneMgr->getSceneNode( "GrassNode" )->setVisible( false );
+			hidden = true;
 		}else if( name == "dust" || name == "sky" ){
 			const Ogre::String type = name == "dust" ? "ParticleSystem" : "ManualObject";
 			const Ogre::SceneManager::MovableObjectMap &objects = sceneMgr->getMovableObjects( type );

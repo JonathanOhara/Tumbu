@@ -10,7 +10,8 @@ Visual track, most important first (impact on what the player sees, against the 
 the arena remake, the night arena lights, the painted toon sky, the mip-chain bloom (docs/HISTORY.md).
 
 1. **Tune Jyn in real fights** (idea 9): no code, only play time.
-2. **Grass remake** (Art side): our own toon shader for the terrain, with the real shadows (see "Grass remake").
+2. **Grass remake** (Art side), in progress: the field from Blender with the meadow shader is done (2026-10-12); the
+   toon tall grass is next (see "Grass remake").
 3. **Robot art pass:** richer textures and toon-friendly normals (Art side).
 4. **Cloud shadows** (idea 5).
 5. **Colour-grading tables per time of day** (idea 6).
@@ -108,17 +109,13 @@ shadows with normal offset (a single map is right for an arena this small), the 
 - **Arena remake** (coliseum retexture with parallax occlusion and self-shadows, the stone-tile ring, the red neon, the
   painted sky) — done (2026-10-06, docs/HISTORY.md). Note: the parallax suits the stone, not flat surfaces; the sun's
   shadow map and the contact shadows still land on the flat surface, only the stones' own shadows follow the depth.
-- **Grass remake** (the field between the ring and the walls; still the 2011 Ogre terrain with Ogre's built-in shader):
-  - Give the terrain our own toon shader, so the grass is lit like the stone and the robots: toon bands, the sun's real
-    shadow map (the coliseum's and the robots' moving shadows), contact shadows, the energy lights and the night lights
-    (torches and neon, `TUMBU_ARENA_LIGHTS`), moss-like colour variation; the shader blends the terrain's layers itself.
-  - **New layer textures in the toon style.** The sand / dirt patch beside the ring (a terrain layer) is a low-resolution,
-    blurry smear that looks out of place next to the crisp toon walls and tiles; the grass is a photo texture. Repaint or
-    generate them like the arena's (`scripts/arena-textures.ps1`): flat colour areas, clear shapes, sharp at the chase
-    camera's distance. Our own shader also retires the Ogre terrain-shader patch (docs/OGRE_BUGS.md, 3).
-  - **The shadows.** Since 2026-10-06 the terrain's light map is off and the grass has no shadows at all; Ogre's terrain
-    shadow stage does not fit our integrated depth map (docs/OGRE_BUGS.md, 12 and 13). Our own shader must sample
-    `shadowMap` like `env_toon.frag` (`tumbuShadow`).
+- **Grass remake** (the field between the ring and the walls; decisions in docs/HISTORY.md, "Grass remake"):
+  - The field as a mesh from Blender with the wild-meadow toon shader — done (2026-10-12).
+  - **Next: toon tall grass** generated at load from the field map's B channel, bent by the wind, the robots' feet and
+    low energy balls; then its shimmer while the camera moves (we have SMAA, no temporal filter) and its cost.
+  - Extras for later (Jonathan: after the main part): the torches' light on the blades is already in the shader, more
+    could come: flowers or taller reeds as a second blade kind, an impact shockwave rolling across the field, cut or
+    burnt grass where a Genki Dama lands.
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first rule in
   CLAUDE.md.

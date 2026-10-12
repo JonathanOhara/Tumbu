@@ -797,10 +797,13 @@ void Character::buildCharacter(){
 	charRigidBody->getBulletRigidBody()->setAngularFactor( 0 );
 
 	if( !charBuilded ){
-		charRigidBody->setPosition(0.0f, 0.2f, 8);
+		// DevTest -heropos=x,z: somewhere else than the ring (for example in the tall grass)
+		Ogre::Vector3 start( 0.0f, 0.2f, 8 );
+		DevTest::getHeroStart( start );
+		charRigidBody->setPosition( start.x, start.y, start.z );
 
 		robotNode->yaw(Ogre::Degree(180));
-		robotNode->setPosition(0.0f, 0.2f, 8);
+		robotNode->setPosition( start );
 	}else{
 		robotNode->setPosition( position );
 		robotNode->setOrientation( rotation );
