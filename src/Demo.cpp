@@ -27,6 +27,7 @@ Demo::Demo(){
 	dust						= NULL;
 	effects						= NULL;
 	dustNode					= NULL;
+	grass						= NULL;
 }
 //-------------------------------------------------------------------------------------
 Demo::~Demo(void){
@@ -56,6 +57,9 @@ Demo::~Demo(void){
 	if( dust != NULL ){
 		mSceneMgr->destroyParticleSystem( dust );
 		mSceneMgr->destroySceneNode( dustNode );
+	}
+	if( grass != NULL ){
+		delete grass;
 	}
 	Ogre::LogManager::getSingletonPtr()->logMessage("\tDeleting Effects...");
 	if( effects != NULL ){
@@ -243,6 +247,9 @@ void Demo::initializeDemo(){
 	tumbu->renderOneFrame();
 	createArena();
 	createDust();
+	gui->startLoad("Loading Grass...");
+	tumbu->renderOneFrame();
+	createGrass();
 
 	Ogre::LogManager::getSingleton().logMessage( "[Demo] Creating hero" );
 	gui->startLoad("Loading Character...");
@@ -350,6 +357,11 @@ void Demo::createFieldPhysic(void){
 	Ogre::SceneNode* fieldNode = mSceneMgr->getSceneNode( "fieldSceneNode" );
 	Ogre::Entity* fieldEntity = mSceneMgr->getEntity( "fieldEntity" );
 	fieldRigidBody = tumbu->createSimpleRigidBody( physicWorld, fieldEntity, fieldNode, Ogre::Vector3(0,0,0), Ogre::Quaternion::IDENTITY, 0.1f, 0.8f, false, TumbuEnums::TERRAIN );
+}
+//-------------------------------------------------------------------------------------
+void Demo::createGrass(void){
+	// After the ring and the coliseum: a blade grows only where a ray from above hits the field first.
+	grass = new Grass( mSceneMgr, physicWorld->getBulletCollisionWorld(), fieldRigidBody->getOgreBulletRigidBody( "" )->getBulletRigidBody() );
 }
 //-------------------------------------------------------------------------------------
 void Demo::createMainCharacter(void){

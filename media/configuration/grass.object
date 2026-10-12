@@ -1,0 +1,34 @@
+// The field's tall grass (Grass.cpp): toon blades generated when a match loads, where the field map's B channel says
+// (media/tumbu/arena/field_map.png, painted in Blender: B = height x fullHeight; arena_field.py). Read at match start,
+// so a restart is enough to try other values. The wind and the push (robots, energy balls) and the colours are in the
+// material (Tumbu/FieldGrass, media/tumbu/arena/grass.material).
+grass field{
+	material Tumbu/FieldGrass
+	// blades tried per square metre (fewer grow: not on the earth, the rock or under the ring and the walls)
+	density 40
+	// metres: a blade where the map's B is 1, before the clump, patch and per-blade variation (x 0.4 .. 1.9)
+	fullHeight 0.9
+	// no blade shorter than this (metres)
+	minHeight 0.06
+	// blade width at the root (metres): width + widthJitter x random, x (0.7 + 0.6 sqrt(height)) x widthScale
+	// (the toon blades of the mock-ups: 2.2x the thin "dense blades")
+	width 0.028
+	widthJitter 0.02
+	widthScale 2.2
+	// how far the tip curves over, x its height: bend + bendJitter x random
+	bend 0.25
+	bendJitter 0.45
+	// metres: blades in one clump cell share height, lean and tone; the height also varies over patches this big
+	clumpSize 0.9
+	patchSize 23
+	// no blades this far inside the field shader's earth edge (field map R, threshold fieldParams.x), + random jitter
+	earthMargin 0.08
+	earthJitter 0.1
+	// segments per blade (2 vertices each, plus the tip)
+	segments 3
+	// metres: the blades are drawn in square chunks this big (each culled on its own)
+	chunkSize 8
+	// units covered by the field map (the field's size, arena_field.py)
+	mapExtent 196
+	seed 1234
+}

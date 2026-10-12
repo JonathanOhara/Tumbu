@@ -10,8 +10,8 @@ Visual track, most important first (impact on what the player sees, against the 
 the arena remake, the night arena lights, the painted toon sky, the mip-chain bloom (docs/HISTORY.md).
 
 1. **Tune Jyn in real fights** (idea 9): no code, only play time.
-2. **Grass remake** (Art side), in progress: the field from Blender with the meadow shader is done (2026-10-12); the
-   toon tall grass is next (see "Grass remake").
+2. **Grass remake** (Art side) — done (2026-10-12): the field from Blender, the meadow shader and the toon tall grass;
+   extras open (see "Grass remake").
 3. **Robot art pass:** richer textures and toon-friendly normals (Art side).
 4. **Cloud shadows** (idea 5).
 5. **Colour-grading tables per time of day** (idea 6).
@@ -110,9 +110,10 @@ shadows with normal offset (a single map is right for an arena this small), the 
   painted sky) — done (2026-10-06, docs/HISTORY.md). Note: the parallax suits the stone, not flat surfaces; the sun's
   shadow map and the contact shadows still land on the flat surface, only the stones' own shadows follow the depth.
 - **Grass remake** (the field between the ring and the walls; decisions in docs/HISTORY.md, "Grass remake"):
-  - The field as a mesh from Blender with the wild-meadow toon shader — done (2026-10-12).
-  - **Next: toon tall grass** generated at load from the field map's B channel, bent by the wind, the robots' feet and
-    low energy balls; then its shimmer while the camera moves (we have SMAA, no temporal filter) and its cost.
+  - The field as a mesh from Blender with the wild-meadow toon shader, and the toon tall grass (generated at load from
+    the field map, bent by the wind, the robots' feet and low energy balls) — done (2026-10-12).
+  - If the cost matters later (+0.15 to +0.24 ms at 1920x1080): thin the far chunks (fewer blades beyond 20 units, wider
+    ones), as Ghost of Tsushima does.
   - Extras for later (Jonathan: after the main part): the torches' light on the blades is already in the shader, more
     could come: flowers or taller reeds as a second blade kind, an impact shockwave rolling across the field, cut or
     burnt grass where a Genki Dama lands.

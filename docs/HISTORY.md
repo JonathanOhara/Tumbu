@@ -154,6 +154,20 @@ session; they only mean something against the other variant of the same run.
   pixel, not its triangles. Memory (40 matches each): flat on both renderers; the levels about 2 MB higher (OpenGL 19.9 MB
   after match 1 instead of 18; the Direct3D 11 plateau 87 to 92 MB instead of 81 to 88), the field's triangle-mesh
   physics (62 k triangles with their BVH, about 3 MB) against the old 1 MB heightfield.
+- **Step 2, the toon tall grass** (`Grass`): the prototype's toon blades moved into the game, placed from the field map
+  instead of radius rules (the map's first B channel bakes those rules in: short near the earth band, full height from
+  22 units, none beyond 30). 45 k blades, 316 k vertices in 54 chunks of 8 m, built in about 250 ms at match load
+  (144 k tries: 15 k on the earth or rock, 54 k under the ring, walls and seats). The robots' push radius went from the
+  prototype's 0.9 to 1.2 units from the robot's centre: at 0.9 the parting hid behind the robot's own legs. Checked with
+  the hero standing in the grass (DevTest `-heropos`), push on against push off.
+- Cost (1920x1080, against the same build with `-hide=grass`): the standard robot view Direct3D 11 +0.147 ms, OpenGL
+  +0.176 ms; the field view (grass filling the screen, the worst case) +0.239 / +0.208 ms. The budget was 0.3 ms.
+- Shimmer (the risk named on the decision page; we have SMAA, no temporal filter): frame strips of the field view at
+  13:00 and 22:00, the camera panning a third of a pixel per frame. Crawl 2.11 % with the grass against 2.54 % for the
+  bare ground (22:00: 2.52 / 3.04 %), and 1.55 % with the camera still (the wind alone). The blades crawl less than the
+  ground's texture under them, so no anti-shimmer work was needed.
+- Memory (40 matches each): flat on both renderers; after match 1 OpenGL 21.2 MB (+1.3 MB) and Direct3D 11 40 MB
+  (+6 MB, its driver's copies of the 17 MB of blade vertices), the Direct3D 11 plateau unchanged (88 to 92 MB).
 
 ## Memory
 

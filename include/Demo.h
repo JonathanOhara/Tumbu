@@ -18,6 +18,7 @@
 #include "EffectsManager.h"
 #include "FlyCamera.h"
 #include "SimpleRigidBody.h"
+#include "Grass.h"
 
 #include "DotSceneLoader.h"
 
@@ -69,6 +70,7 @@ private:
 	void initializePhysicsStuff(void);
 	void createSky(void);
 	void createFieldPhysic(void);
+	void createGrass(void);
 	void createArena(void);
 	void createDust(void);
 	void createMainCharacter(void);
@@ -107,6 +109,7 @@ private:
 	FlyCamera		*flyCamera;
 	Ogre::ParticleSystem	*dust;
 	Ogre::SceneNode		*dustNode;
+	Grass			*grass;
 	TUMBU			*tumbu;
 	Tutorial		*tutorial;
 

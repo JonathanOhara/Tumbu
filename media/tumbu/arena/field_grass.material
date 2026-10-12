@@ -1,0 +1,28 @@
+// The field's tall grass: toon blades (Grass.cpp builds them from field_map.png; media/configuration/grass.object).
+// Restart the match to see a change.
+material Tumbu/FieldGrass{
+    receive_shadows on
+    technique{
+        pass{
+            // a blade is one strip, seen from both sides
+            cull_hardware none
+            vertex_program_ref grass_vs{
+                // wind: direction (x, z), strength, gust wavelength (metres)
+                param_named windParams float4 0.8 0.6 0.35 9
+                // push: robot radius (from its centre), energy ball radius, strength, how far above the blades a ball still pushes
+                param_named pushParams float4 1.2 1.6 1.6 1.2
+            }
+            fragment_program_ref grass_ps{
+                param_named rootColour float4 0.20 0.29 0.11 1
+                param_named tipColour float4 0.52 0.66 0.22 1
+                param_named tipColour2 float4 0.66 0.70 0.24 1
+                // root occlusion, translucency, gust lightening, tone bands along the blade
+                param_named grassShade float4 0.55 0.45 0.25 2
+            }
+            texture_unit shadowMap{
+                content_type shadow
+                sampler_ref Tumbu/ShadowSampler
+            }
+        }
+    }
+}

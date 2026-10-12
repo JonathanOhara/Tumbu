@@ -116,7 +116,8 @@ in the way of a run (for example a window behind others that does not render), d
     (the painted sky without / with its clouds), `-hero=robotNNN` (the hero wears all five parts of that set), `-nofx`
     (no special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the
     bloom alone, x3: its shape, and its flicker in a strip), `-hide=a,b` (hides `dust`, `sky`, or an entity without its
-    `Entity` suffix: `field`, `arena`, `coliseum`, `torches`).
+    `Entity` suffix: `field`, `arena`, `coliseum`, `torches`; `grass` the tall grass), `-heropos=x,z` (the hero starts
+    there instead of on the ring, dropped onto the ground: in the tall grass, to see it pushed aside).
   - Shots: `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first),
     `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point), `-fxtest=NAME` / `-fxtime=S` (starts
     `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the side;
@@ -143,15 +144,15 @@ in the way of a run (for example a window behind others that does not render), d
   nodes=… entities=… materials=…` after each match, `heap growth by block size` and the DLL that owns sample blocks (to
   find what grows), and at the end `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED`, also appended
   to `%USERPROFILE%\Tumbu\memory-history.csv` (date, renderer, driver, Ogre, heap, growth).
-  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0; checked 2026-10-12, with the field from Blender):
+  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0; checked 2026-10-12, with the field from Blender and the tall grass):
   - every object count returns to the same value each match (`objects=flat`) on both renderers;
-  - **OpenGL:** about 16.5 MB in the menu before the first match and 20 MB after it (a little more with a bigger window),
+  - **OpenGL:** about 16.5 MB in the menu before the first match and 21 MB after it (a little more with a bigger window),
     flat from match 2 on (within ±30 KB per match). The level itself moves by up to about 1.5 MB between days for
     reasons outside the game (docs/HISTORY.md, "Memory"), so compare OpenGL levels only between builds alternated in one
     session; the growth per match is what matters;
-  - **Direct3D 11:** about 21 to 27 MB in the menu and 31 to 35 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB
+  - **Direct3D 11:** about 21 to 27 MB in the menu and 35 to 41 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB
     per match for about 18 matches, to about 88 MB, and **stays flat** (87 to 92 MB over matches 18 to 40; private bytes
-    about 500 to 535 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor;
+    about 500 to 560 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor;
     docs/SPECIAL_EFFECTS.md, "Known issue") that fills up, not a leak. So the second-half growth of a 40-match run must
     be near 0; a 12- or 21-match run is still filling, and its "per match" number is not a leak rate.
 
@@ -453,6 +454,21 @@ materials, textures, GUI) gets a before/after set:
     shaded rim on the earth along the grass; a broad tone field against visible repeats; the hills' earth beyond
     30 units larger and redder (`hillParams`, `hillEarthTint`). Lit like the stone: toon ramp, shadow map, AO, contact
     shadows, energy lights, torches and neon.
+- **The tall grass** (`Grass`, owned by `Demo`, built after the ring and the coliseum physics; `-hide=grass`): toon blades
+  of real geometry, generated when a match loads. Where the field map's B is above 0 (height = B x `fullHeight`), a blade
+  is tried `density` times per square metre; it grows only where a Bullet ray from above hits the field first (not the
+  ring, the walls or the seats) and not on the earth or the rock (the field shader's own edge rule: the field map, the
+  same noise and `fieldParams` / `layerScale` read from `fieldMaterial`, a little inside the edge). Clumps (`clumpSize`
+  cells) share height, lean and tone; a patch noise varies the height. Each blade is a curved strip of `segments` quads
+  and a tip, in square chunks of `chunkSize` metres (one static ManualObject each, culled on its own). Every vertex
+  carries t (0 root .. 1 tip), its side, tone and seed (uv0) and the blade's root and height (uv1), so `grass.vert` bends
+  each blade from its root: wind gusts rolling across the field plus a flutter (`windParams`), and pushed aside by the
+  robots' feet (the contact-shadow positions, so a robot that walks into the grass parts it) and by energy balls flying
+  low over it (the energy lights; `pushParams`). `grass.frag`: root-to-tip colour in two hard bands, two tip tones per
+  clump, lighter tips in a gust, darker roots, translucent tips against the sun, the shadow map, energy lights, torches
+  and neon. No shadow cast. Tuning: `media/configuration/grass.object` (placement) and
+  `media/tumbu/arena/field_grass.material` (`Tumbu/FieldGrass`: wind, push, colours). DevTest `-heropos=x,z` starts the
+  hero there (in the grass) to look at the push.
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.
@@ -537,7 +553,7 @@ through a listener registry in `BaseApplication`.
 - `StartScreen` / `CutScene` is the title-screen background, drawn in `RENDER_QUEUE_BACKGROUND`.
 - `Demo` runs one match. It loads `Arena.scene` through `DotSceneLoader` and sets up:
   - lights and shadows, the physics world and the Sky
-  - the field, arena and coliseum trimesh physics
+  - the field, arena and coliseum trimesh physics, then the tall grass (`Grass`)
   - the hero (`Character`), the enemy (`CharacterEnemy`) and the `Camera`
 
   Each frame it steps physics at a fixed 120 Hz and dispatches collisions manually: manifolds are mapped to

@@ -1,0 +1,23 @@
+// The field's tall grass (grass.vert / grass.frag; material Tumbu/FieldGrass in media/tumbu/arena/field_grass.material).
+vertex_program grass_vs glsl glsles hlsl
+{
+    source grass.vert
+    target vs_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto wvpMat worldviewproj_matrix
+    }
+}
+
+fragment_program grass_ps glsl glsles hlsl
+{
+    source grass.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto camPos camera_position
+        param_named_auto texViewProj texture_viewproj_matrix 0
+    }
+}
