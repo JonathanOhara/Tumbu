@@ -176,6 +176,8 @@ session; they only mean something against the other variant of the same run.
   day: 1203 times between 2026-08-12 and 2026-10-11. Nothing of the project is on it (C:, D:, E: are other disks).
   Jonathan removed it the same evening (and cleaned the PC inside); after it: no disk retries, no WHEA error, every
   device OK, the graphics card at PCIe 4.0 x16 under load, and the bench at 1920x1080 as before (Direct3D 11 747 fps,
-  OpenGL 622 fps, against 736 / 610 that morning). Noticed then, not changed: the memory runs at 2133 MHz although it
-  is rated 3200 (XMP/DOCP off in the BIOS), both monitors are set to 60 Hz (they offer 165 and 144 Hz over
-  DisplayPort), and the card reaches 80-82 °C at full load with its fans at about 90 %.
+  OpenGL 622 fps, against 736 / 610 that morning). Then changed: XMP I in the BIOS (the memory runs at its rated 3200 MHz instead of 2133; booted cleanly, every bench run
+  completed), both monitors at 144 Hz (they had been at 60; idle GPU power 21.5 W to 23 W, the memory clock still drops to
+  idle), G-SYNC Compatible on the main monitor. At full uncapped load the card sits at 80-82 °C with its fans at about
+  90 %, near its 83 °C target, which is within spec. The bench after XMP: 1920x1080 Direct3D 11 733 fps, OpenGL 607
+  (GPU-bound, the same as before within the drift between sessions); 1024x768 Direct3D 11 1246 fps.
