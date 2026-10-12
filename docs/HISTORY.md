@@ -173,5 +173,9 @@ session; they only mean something against the other variant of the same run.
   days since 2026-09-15. If it happens again: look at these events first.
 - **A failing hard disk on the development PC** (found 2026-10-11): Disk 0, a 2 TB Seagate ST2000DM001 with no
   partitions, reports a size of about 4 GB, and Windows logs that it retried a read at block 0 (event `disk` 153) every
-  day: 1203 times between 2026-08-12 and 2026-10-11. Nothing of the project is on it (C:, D:, E: are other disks). Told
-  Jonathan; if benchmarks show odd stalls, this disk is a suspect.
+  day: 1203 times between 2026-08-12 and 2026-10-11. Nothing of the project is on it (C:, D:, E: are other disks).
+  Jonathan removed it the same evening (and cleaned the PC inside); after it: no disk retries, no WHEA error, every
+  device OK, the graphics card at PCIe 4.0 x16 under load, and the bench at 1920x1080 as before (Direct3D 11 747 fps,
+  OpenGL 622 fps, against 736 / 610 that morning). Noticed then, not changed: the memory runs at 2133 MHz although it
+  is rated 3200 (XMP/DOCP off in the BIOS), both monitors are set to 60 Hz (they offer 165 and 144 Hz over
+  DisplayPort), and the card reaches 80-82 °C at full load with its fans at about 90 %.
