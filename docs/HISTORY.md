@@ -180,4 +180,5 @@ session; they only mean something against the other variant of the same run.
   completed), both monitors at 144 Hz (they had been at 60; idle GPU power 21.5 W to 23 W, the memory clock still drops to
   idle), G-SYNC Compatible on the main monitor. At full uncapped load the card sits at 80-82 °C with its fans at about
   90 %, near its 83 °C target, which is within spec. The bench after XMP: 1920x1080 Direct3D 11 733 fps, OpenGL 607
-  (GPU-bound, the same as before within the drift between sessions); 1024x768 Direct3D 11 1246 fps.
+  (GPU-bound, the same as before within the drift between sessions); 1024x768 Direct3D 11 1246 fps. Windows Memory
+  Diagnostic (standard test, about 30 minutes) found no errors with XMP on (2026-10-12).
