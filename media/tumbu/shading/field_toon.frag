@@ -1,7 +1,7 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // The field, fragment stage: the wild meadow. The painted field map (arena_field.py) chooses between grass, earth and
 // snow; their edges are broken up by a noise and stay crisp at any distance (toon), the earth has a thin shaded rim along
-// the grass and the snow one along its lower edge; the steepest faces in the snow are bare rock. Every texture tiles at
+// the grass and the snow one along its lower edge; the steepest faces in the snow are bare earth. Every texture tiles at
 // world scale (layerScale metres). Lit like the arena (TumbuToon.h): the toon ramp, the sun's shadow map, the baked AO
 // (the walls' shade on the ground), contact shadows, energy lights, torches and neon.
 #include <OgreUnifiedShader.h>
@@ -12,15 +12,14 @@ SAMPLER2DSHADOW(shadowMap, 1);
 SAMPLER2D(aoMap, 2);
 SAMPLER2D(grassMap, 3);
 SAMPLER2D(earthMap, 4);
-SAMPLER2D(rockMap, 5);
-SAMPLER2D(noiseMap, 6);     // r mid-scale breakup, g broad tone field
-SAMPLER2D(snowMap, 7);
+SAMPLER2D(noiseMap, 5);     // r mid-scale breakup, g broad tone field
+SAMPLER2D(snowMap, 6);
 
 OGRE_UNIFORMS_BEGIN
     TUMBU_LIGHTING_UNIFORMS
     TUMBU_LAMP_UNIFORMS
     uniform vec3 camPos;
-    uniform vec4 layerScale;    // tile size in metres: grass, earth, rock, noise
+    uniform vec4 layerScale;    // tile size in metres: grass, earth, (unused), noise
     // x earth edge (threshold on the field map's r), y edge breakup (noise amount), z rim darkness, w broad tone
     // variation of the grass
     uniform vec4 fieldParams;
@@ -28,7 +27,7 @@ OGRE_UNIFORMS_BEGIN
     // scale (larger cracks far away)
     uniform vec4 hillParams;
     uniform vec4 hillEarthTint;
-    // the snow: x bare rock where the slope (1 - normal.y) is above this, y its breakup by the noise, z the width of the
+    // the snow: x bare earth where the slope (1 - normal.y) is above this, y its breakup by the noise, z the width of the
     // shaded rim along the snow's lower edge (on the field map's g), w how dark that rim is
     uniform vec4 snowParams;
     uniform vec4 snowTile;      // x the snow's tile size in metres
@@ -69,9 +68,9 @@ MAIN_DECLARATION
     float snowMask = fieldStep(0.5, snowField);
     float snowRim = snowMask - fieldStep(0.5 + snowParams.z, snowField);
     vec3 snow = texture2D(snowMap, w / snowTile.x).rgb * (1.0 - snowRim * snowParams.w);
-    vec3 rock = texture2D(rockMap, w / layerScale.z).rgb;
+    // the hills' earth shows through on the steepest faces
     float bare = fieldStep(snowParams.x, 1.0 - n.y + breakup * snowParams.y);
-    albedo = mix(albedo, mix(snow, rock, bare), snowMask);
+    albedo = mix(albedo, mix(snow, earth, bare), snowMask);
 
     float ao = texture2D(aoMap, oUv).r;
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(n, sunDirection.xyz), shadowParams);

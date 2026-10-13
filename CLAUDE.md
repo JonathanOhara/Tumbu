@@ -451,7 +451,7 @@ materials, textures, GUI) gets a before/after set:
   - The shader (`field_toon.vert/.frag`, `fieldMaterial` in `media/tumbu/arena/field.material`): the wild meadow. Grass,
     earth and snow (`meadow_*_col.png`, `arena-textures.ps1 -Only meadow`; tiles in metres from world positions,
     `layerScale`, `snowTile`) chosen by the field map, their edges broken up by `meadow_noise.png` and crisp at any
-    distance; a thin shaded rim on the earth along the grass and on the snow along its lower edge; bare cool rock on the
+    distance; a thin shaded rim on the earth along the grass and on the snow along its lower edge; the hills' brown earth on the
     snow's steepest faces (`snowParams`: from about 66 degrees); a broad tone field against visible repeats; the hills'
     earth beyond 30 units larger and redder (`hillParams`, `hillEarthTint`). Lit like the stone: toon ramp, shadow map, AO, contact
     shadows, energy lights, torches and neon.

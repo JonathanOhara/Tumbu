@@ -12,8 +12,8 @@ Sets, written to media/tumbu/arena/:
   sandstone_hgt.png  R height (1 = block face, 0 = bottom of a joint), G moss patch field (the shader decides where
                      moss grows from it, the wall height and the joints; tunable without running this again)
   ringtiles_col/nrm/hgt.png  the grey tournament tiles of the ring floor (each tile one of four flat greys)
-  meadow_grass_col / meadow_earth_col / meadow_rock_col.png  the field's layers (field_toon.frag): the wild meadow's
-                     grass with flowers, the bare earth with stones, the rock of the hill tops
+  meadow_grass_col / meadow_earth_col / meadow_snow_col.png  the field's layers (field_toon.frag): the wild meadow's
+                     grass with flowers, the bare earth with stones, the snow of the hill tops
   meadow_noise.png   R mid-scale noise (breaks up the layer edges), G broad tone field, B fine noise
   ring_emblem.png    R the charcoal T, G the neon tube inside its edge, B the border course (the band of tiles along
                      the ring's edge): a decal over the 20 x 20 ring floor (row 0 = Ogre z -10, the far side from
@@ -70,7 +70,7 @@ EMBLEM_BORDER = 1.0         # width of the border course along the ring's edge (
 RING_CORNERS = [(-9.89, -5.03), (-0.12, -9.94), (10.0, -4.87), (9.88, 5.06), (-0.12, 9.94), (-10.0, 4.87)]
 
 # --- the field (wild meadow) ------------------------------------------------------------------------------------
-MEADOW_SIZE = 1024          # grass, earth, rock and snow (their tile sizes in metres: layerScale in field.material)
+MEADOW_SIZE = 1024          # grass, earth and snow (their tile sizes in metres: layerScale in field.material)
 MEADOW_NOISE_SIZE = 512
 # The stones in the earth: 2026-10-12 they stood out (bigger, lighter, more of them); a softened set (smaller, fewer,
 # two tones of the earth's own hue) went too far, and these are 3/4 of the way from the first set to the softened one.
@@ -360,7 +360,7 @@ def meadow():
     """The field's textures (the wild meadow, chosen from the grass remake's mock-ups): grass of layered round tufts with
     shaded undersides, blade strokes and clusters of white and yellow flowers; earth with flat tones, cracks, a few
     stones (shaded side and a lit top in the earth's own hue) and stray grass; snow for the hill tops (wind drifts in a
-    cool shade, each with a bright crest) and the cool dark rock of their steepest faces; and the noise the field shader
+    cool shade, each with a bright crest); and the noise the field shader
     breaks the layer edges and the grass tones with. All tile (layerScale and snowParams in field.material)."""
     n = MEADOW_SIZE
     grass = np.zeros((n, n, 3), np.float32)
@@ -402,14 +402,6 @@ def meadow():
     earth[lit] = EARTH_STONE_LIT
     tufts(earth, 500, [(0.42, 0.52, 0.23), (0.32, 0.42, 0.18)], (7, 14), 57)
 
-    rock = np.zeros((n, n, 3), np.float32)
-    rock[:] = (0.43, 0.43, 0.47)
-    f1, f2, ids = voronoi(n, 8, 61)
-    tone = np.random.default_rng(62).uniform(0, 1, 64)[ids]
-    rock[tone > 0.66] = (0.49, 0.49, 0.53)
-    rock[tone < 0.3] = (0.37, 0.37, 0.41)
-    rock[(f2 - f1) < 3] = (0.27, 0.27, 0.31)
-
     # snow: almost white, with drifts stretched along the wind (x) in a cool shade; the crest on each drift's upper
     # edge (row - 1 = up in the texture) is the brightest
     snow = np.zeros((n, n, 3), np.float32)
@@ -422,7 +414,7 @@ def meadow():
 
     m = MEADOW_NOISE_SIZE
     noise = np.stack([rank_noise(m, 24, 71), rank_noise(m, 60, 72), rank_noise(m, 4, 73)], -1)
-    return grass, earth, rock, snow, noise
+    return grass, earth, snow, noise
 
 
 def main():
@@ -440,10 +432,9 @@ def main():
     if ONLY in (None, "emblem"):
         save("ring_emblem", emblem(), OUT)
     if ONLY in (None, "meadow"):
-        grass, earth, rock, snow, noise = meadow()
+        grass, earth, snow, noise = meadow()
         save("meadow_grass_col", grass, OUT)
         save("meadow_earth_col", earth, OUT)
-        save("meadow_rock_col", rock, OUT)
         save("meadow_snow_col", snow, OUT)
         save("meadow_noise", noise, OUT)
     if PREVIEW and ONLY is None:

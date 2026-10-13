@@ -329,7 +329,7 @@ The ground around the ring and the hills beyond the walls: `media/tumbu/arena/fi
   **Add** to put some in and **Subtract** to take it out, with a pure colour:
   - red (1, 0, 0) = **earth**. The edge is where red is 0.5; the shader breaks it up with noise, so a soft brush edge is
     fine. No tall grass grows on the earth.
-  - green (0, 1, 0) = **snow** (the hill tops). The shader shows bare rock on the snow's steepest faces (steeper than
+  - green (0, 1, 0) = **snow** (the hill tops). The shader shows the hills' earth on the snow's steepest faces (steeper than
     about 66 degrees, `snowParams` in `field.material`), so cliffs come from the shape, not from the map. No tall grass
     grows on the snow.
   - blue (0, 0, 1) = **tall grass height** (1 = `fullHeight` of `media/configuration/grass.object`, 0.9 m; 0 = none).
@@ -342,7 +342,7 @@ The ground around the ring and the hills beyond the walls: `media/tumbu/arena/fi
   `-Rebuild`, which builds the field again from the 2011 terrain, and `-NewMap`, which writes the first map again, discard
   hand work). The field casts no shadow. Its AO uses the scene's `tumbu_ao_distance` like the rest of the arena.
 - **Tuning without Blender:** the meadow's look is in `media/tumbu/arena/field.material` (tile sizes, edge breakup, the
-  earth's rim, the hills' earth, the snow and its bare rock), the textures in `scripts/blender/arena_textures.py` (`.\scripts\arena-textures.ps1
+  earth's rim, the hills' earth, the snow and the earth on its steep faces), the textures in `scripts/blender/arena_textures.py` (`.\scripts\arena-textures.ps1
   -Only meadow`).
 
 ### Robot export (`art/robots/robot00N.blend` -> `media/tumbu/robot00N/`)

@@ -1,7 +1,7 @@
 // The field's tall grass (Grass.cpp): toon blades generated when a match loads, where the field map's B channel says
 // (media/tumbu/arena/field_map.png, painted in Blender: B = height x fullHeight; arena_field.py). Read at match start,
 // so a restart is enough to try other values. The wind and the push (robots, energy balls) and the colours are in the
-// material (Tumbu/FieldGrass, media/tumbu/arena/grass.material).
+// material (Tumbu/FieldGrass, media/tumbu/arena/field_grass.material).
 grass field{
 	material Tumbu/FieldGrass
 	// blades tried per square metre (fewer grow: not on the earth, the snow or under the ring and the walls)

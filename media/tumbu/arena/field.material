@@ -8,14 +8,14 @@ material fieldMaterial{
             vertex_program_ref field_toon_vs{
             }
             fragment_program_ref field_toon_ps{
-                // tile sizes in metres: grass, earth, rock, noise
-                param_named layerScale float4 5 4 6 7.3
+                // tile sizes in metres: grass, earth, (unused), noise
+                param_named layerScale float4 5 4 0 7.3
                 // earth edge, edge breakup, rim darkness, broad tone variation of the grass
                 param_named fieldParams float4 0.5 0.6 0.28 0.14
                 // the hills' earth (beyond the walls): from 30 units over 4, cracks 1.4x larger, darker and redder
                 param_named hillParams float4 30 4 1.4 0
                 param_named hillEarthTint float4 0.85 0.70 0.58 1
-                // the snow on the hill tops: bare rock on slopes steeper than about 66 degrees (1 - normal.y 0.6),
+                // the snow on the hill tops: bare earth (the hills' earth) on slopes steeper than about 66 degrees (1 - normal.y 0.6),
                 // broken up by 0.25 of the noise; a shaded rim 0.06 wide along its lower edge, 12 % darker
                 param_named snowParams float4 0.67 0.12 0.06 0.12
                 param_named snowTile float4 8 0 0 0
@@ -39,11 +39,6 @@ material fieldMaterial{
             }
             texture_unit earthMap{
                 texture meadow_earth_col.dds
-                filtering anisotropic
-                max_anisotropy 8
-            }
-            texture_unit rockMap{
-                texture meadow_rock_col.dds
                 filtering anisotropic
                 max_anisotropy 8
             }

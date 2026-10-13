@@ -16,7 +16,7 @@ field is modelled, painted and exported like the rest of the arena: Blender is t
    afterwards it is painted by hand in Blender). Over the 196 x 196 field, seen from above like the UV map:
      R  earth (bare ground; 0.5 is the edge, the shader breaks it up with noise): the band of earth around the ring
         (EARTH_INNER to EARTH_OUTER, its outer edge wobbling by EARTH_WOBBLE) and the 2011 "desert" layer on the hills
-     G  snow: the 2011 "ice" layer on the hill tops (field_toon.frag shows bare rock on its steepest faces)
+     G  snow: the 2011 "ice" layer on the hill tops (field_toon.frag shows the earth on its steepest faces)
      B  tall grass height (x GRASS_FULL metres; 0 = no tall grass): rises from GRASS_SHORT at GRASS_RISE[0] units from the
         centre to 1 at GRASS_RISE[1], and stops at GRASS_OUTER (the grass is generated at load only where B > 0, on the
         field and not under the walls, the ring or the earth; Demo, docs/IMPROVEMENT_IDEAS.md "Grass remake")

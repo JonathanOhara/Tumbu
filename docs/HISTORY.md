@@ -171,7 +171,8 @@ session; they only mean something against the other variant of the same run.
 - **Snow on the hill tops** (2026-10-13, Jonathan: the tops looked like a white version of the earth): the field map's G
   (the 2011 "ice" layer) drew `meadow_rock_col`, grey Voronoi cells like the earth's. It now draws snow
   (`meadow_snow_col`: near white, wind drifts in a cool shade with a bright crest, no cells) with a thin shaded rim along
-  its lower edge, and bare rock (the old texture, darker and cooler) only where the slope passes about 66 degrees. The
+  its lower edge, and the hills' brown earth only where the slope passes about 66 degrees (first a darker grey rock;
+  Jonathan: under the snow should be the brown earth, so `meadow_rock_col` went). The
   peaks are steep (median 59 degrees inside the snow); at 0.6 (about 60 degrees) with more noise the rock covered too
   much and its round holes read as a pair of eyes on the middle peak. Cost on the peak view at 1920x1080: Direct3D 11
   +0.009 +/- 0.013 ms, OpenGL -0.008 +/- 0.030 ms, both not significant. Memory (40 matches): flat on both renderers (OpenGL 21.5 MB, the
