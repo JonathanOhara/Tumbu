@@ -4,7 +4,7 @@
 // material (Tumbu/FieldGrass, media/tumbu/arena/grass.material).
 grass field{
 	material Tumbu/FieldGrass
-	// blades tried per square metre (fewer grow: not on the earth, the rock or under the ring and the walls)
+	// blades tried per square metre (fewer grow: not on the earth, the snow or under the ring and the walls)
 	density 40
 	// metres: a blade where the map's B is 1, before the clump, patch and per-blade variation (x 0.4 .. 1.9)
 	fullHeight 0.9

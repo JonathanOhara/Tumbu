@@ -445,19 +445,20 @@ materials, textures, GUI) gets a before/after set:
   Blender like the rest of the arena. Full detail (0.38 units between vertices) inside 34 units of the centre, the hills
   outside decimated to 12 % (31 k vertices in all). One UV map ("AO", projected from above over the whole 196 x 196
   field) reads the baked AO (`field_ao.png`: the walls' shade on the ground, `bake-arena-ao.ps1 -Only field`) and the
-  **field map** (`media/tumbu/arena/field_map.png`, texture-painted in Blender: R earth, 0.5 = the edge; G rock; B the
-  tall grass's height). Placed by `fieldSceneNode` in `Arena.scene` (casts no shadow); `Demo::createFieldPhysic` makes
+  **field map** (`media/tumbu/arena/field_map.png`, texture-painted in Blender: R earth, 0.5 = the edge; G snow (the hill
+  tops); B the tall grass's height). Placed by `fieldSceneNode` in `Arena.scene` (casts no shadow); `Demo::createFieldPhysic` makes
   its trimesh body (tag `TERRAIN`), so the physics are the ground that is drawn.
   - The shader (`field_toon.vert/.frag`, `fieldMaterial` in `media/tumbu/arena/field.material`): the wild meadow. Grass,
-    earth and rock (`meadow_*_col.png`, `arena-textures.ps1 -Only meadow`; tiles in metres from world positions,
-    `layerScale`) chosen by the field map, their edges broken up by `meadow_noise.png` and crisp at any distance; a thin
-    shaded rim on the earth along the grass; a broad tone field against visible repeats; the hills' earth beyond
-    30 units larger and redder (`hillParams`, `hillEarthTint`). Lit like the stone: toon ramp, shadow map, AO, contact
+    earth and snow (`meadow_*_col.png`, `arena-textures.ps1 -Only meadow`; tiles in metres from world positions,
+    `layerScale`, `snowTile`) chosen by the field map, their edges broken up by `meadow_noise.png` and crisp at any
+    distance; a thin shaded rim on the earth along the grass and on the snow along its lower edge; bare cool rock on the
+    snow's steepest faces (`snowParams`: from about 66 degrees); a broad tone field against visible repeats; the hills'
+    earth beyond 30 units larger and redder (`hillParams`, `hillEarthTint`). Lit like the stone: toon ramp, shadow map, AO, contact
     shadows, energy lights, torches and neon.
 - **The tall grass** (`Grass`, owned by `Demo`, built after the ring and the coliseum physics; `-hide=grass`): toon blades
   of real geometry, generated when a match loads. Where the field map's B is above 0 (height = B x `fullHeight`), a blade
   is tried `density` times per square metre; it grows only where a Bullet ray from above hits the field first (not the
-  ring, the walls or the seats) and not on the earth or the rock (the field shader's own edge rule: the field map, the
+  ring, the walls or the seats) and not on the earth or the snow (the field shader's own edge rule: the field map, the
   same noise and `fieldParams` / `layerScale` read from `fieldMaterial`, a little inside the edge). Clumps (`clumpSize`
   cells) share height, lean and tone; a patch noise varies the height. Each blade is a curved strip of `segments` quads
   and a tip, in square chunks of `chunkSize` metres (one static ManualObject each, culled on its own). Every vertex

@@ -70,7 +70,7 @@ EMBLEM_BORDER = 1.0         # width of the border course along the ring's edge (
 RING_CORNERS = [(-9.89, -5.03), (-0.12, -9.94), (10.0, -4.87), (9.88, 5.06), (-0.12, 9.94), (-10.0, 4.87)]
 
 # --- the field (wild meadow) ------------------------------------------------------------------------------------
-MEADOW_SIZE = 1024          # grass, earth and rock (their tile sizes in metres: layerScale in field.material)
+MEADOW_SIZE = 1024          # grass, earth, rock and snow (their tile sizes in metres: layerScale in field.material)
 MEADOW_NOISE_SIZE = 512
 # The stones in the earth: 2026-10-12 they stood out (bigger, lighter, more of them); a softened set (smaller, fewer,
 # two tones of the earth's own hue) went too far, and these are 3/4 of the way from the first set to the softened one.
@@ -277,14 +277,16 @@ def save(name, rgb, folder):
     log("wrote " + path)
 
 
-def rank_noise(size, sigma, seed):
+def rank_noise(size, sigma, seed, sigma_y=None):
     """Periodic noise whose values are ranks (0..1, evenly spread): a threshold t keeps the fraction t of the area below
-    it. Gaussian-filtered white noise; sigma = the blob size in pixels."""
+    it. Gaussian-filtered white noise; sigma = the blob size in pixels (sigma_y: another size across the rows, for
+    stretched blobs)."""
     rng = np.random.default_rng(seed)
     k = np.fft.fftfreq(size)
     kx, ky = np.meshgrid(k, k)
+    sy = sigma if sigma_y is None else sigma_y
     a = np.real(np.fft.ifft2(np.fft.fft2(rng.standard_normal((size, size)))
-                             * np.exp(-2 * (np.pi ** 2) * (sigma ** 2) * (kx ** 2 + ky ** 2))))
+                             * np.exp(-2 * (np.pi ** 2) * ((sigma * kx) ** 2 + (sy * ky) ** 2))))
     out = np.empty(size * size)
     out[np.argsort(a.ravel())] = np.arange(size * size) / (size * size)
     return out.reshape(size, size)
@@ -357,8 +359,9 @@ def discs(image, centres, radii, colour):
 def meadow():
     """The field's textures (the wild meadow, chosen from the grass remake's mock-ups): grass of layered round tufts with
     shaded undersides, blade strokes and clusters of white and yellow flowers; earth with flat tones, cracks, a few
-    stones (shaded side and a lit top in the earth's own hue) and stray grass; rock for the hill tops; and the noise
-    the field shader breaks the layer edges and the grass tones with. All tile (layerScale in field.material)."""
+    stones (shaded side and a lit top in the earth's own hue) and stray grass; snow for the hill tops (wind drifts in a
+    cool shade, each with a bright crest) and the cool dark rock of their steepest faces; and the noise the field shader
+    breaks the layer edges and the grass tones with. All tile (layerScale and snowParams in field.material)."""
     n = MEADOW_SIZE
     grass = np.zeros((n, n, 3), np.float32)
     grass[:] = (0.29, 0.40, 0.17)
@@ -400,16 +403,26 @@ def meadow():
     tufts(earth, 500, [(0.42, 0.52, 0.23), (0.32, 0.42, 0.18)], (7, 14), 57)
 
     rock = np.zeros((n, n, 3), np.float32)
-    rock[:] = (0.56, 0.55, 0.52)
+    rock[:] = (0.43, 0.43, 0.47)
     f1, f2, ids = voronoi(n, 8, 61)
     tone = np.random.default_rng(62).uniform(0, 1, 64)[ids]
-    rock[tone > 0.66] = (0.63, 0.62, 0.58)
-    rock[tone < 0.3] = (0.49, 0.48, 0.46)
-    rock[(f2 - f1) < 3] = (0.36, 0.35, 0.34)
+    rock[tone > 0.66] = (0.49, 0.49, 0.53)
+    rock[tone < 0.3] = (0.37, 0.37, 0.41)
+    rock[(f2 - f1) < 3] = (0.27, 0.27, 0.31)
+
+    # snow: almost white, with drifts stretched along the wind (x) in a cool shade; the crest on each drift's upper
+    # edge (row - 1 = up in the texture) is the brightest
+    snow = np.zeros((n, n, 3), np.float32)
+    snow[:] = (0.90, 0.93, 0.97)
+    drift = rank_noise(n, 60, 63, 14) + (rank_noise(n, 25, 64) - 0.5) * 0.25 > 0.72
+    crest = drift & ~np.roll(drift, 5, 0)
+    snow[drift] = (0.80, 0.86, 0.94)
+    snow[crest] = (0.96, 0.98, 1.0)
+    snow[rank_noise(n, 3, 65) > 0.997] = (0.74, 0.80, 0.90)    # a few pits
 
     m = MEADOW_NOISE_SIZE
     noise = np.stack([rank_noise(m, 24, 71), rank_noise(m, 60, 72), rank_noise(m, 4, 73)], -1)
-    return grass, earth, rock, noise
+    return grass, earth, rock, snow, noise
 
 
 def main():
@@ -427,10 +440,11 @@ def main():
     if ONLY in (None, "emblem"):
         save("ring_emblem", emblem(), OUT)
     if ONLY in (None, "meadow"):
-        grass, earth, rock, noise = meadow()
+        grass, earth, rock, snow, noise = meadow()
         save("meadow_grass_col", grass, OUT)
         save("meadow_earth_col", earth, OUT)
         save("meadow_rock_col", rock, OUT)
+        save("meadow_snow_col", snow, OUT)
         save("meadow_noise", noise, OUT)
     if PREVIEW and ONLY is None:
         # the same maps tiled 2 x 2, to check the seams by eye

@@ -115,8 +115,15 @@ shadows with normal offset (a single map is right for an arena this small), the 
   - If the cost matters later (+0.15 to +0.24 ms at 1920x1080): thin the far chunks (fewer blades beyond 20 units, wider
     ones), as Ghost of Tsushima does.
   - Extras for later (Jonathan: after the main part): the torches' light on the blades is already in the shader, more
-    could come: flowers or taller reeds as a second blade kind, an impact shockwave rolling across the field, cut or
-    burnt grass where a Genki Dama lands.
+    could come: flowers or taller reeds, an impact shockwave rolling across the field, cut or burnt grass where a Genki
+    Dama lands.
+  - **Flowers** (Jonathan, 2026-10-13, after Xenoblade 3's meadows): in the games that document it, flowers are not
+    made by the blade generator but are small artist-made models drawn many at once and placed by the same procedural
+    rules as the grass (Ghost of Tsushima: GPU-instanced flowers and pampas grass placed in its grass tiles; Horizon Zero
+    Dawn: almost all vegetation placed at run time from density maps). Xenoblade 3 has no public talk; its screenshots
+    show the same split (blades, plus clumps of stems with flower heads). For us: a few flower models made in Blender
+    (stem, leaves, a toon head), copied into the grass chunks by `Grass` where a field-map channel or a drift noise says
+    so, bent by the same wind and push (root and height in uv1).
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first rule in
   CLAUDE.md.

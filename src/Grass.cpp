@@ -156,11 +156,11 @@ void Grass::build( btCollisionWorld* world, const btCollisionObject* field ){
 		if( tall < 0.02f ){
 			continue;
 		}
-		// not on the earth or the rock (the field shader's rule, a little inside its edge)
+		// not on the earth or the snow (the field shader's rule, a little inside its edge)
 		const float breakup = noise.sample( x / layerScale.w, z / layerScale.w, 0, true ) - 0.5f;
 		const float earth = fieldMap.sample( u, v, 0, false ) + breakup * fieldParams.y;
-		const float rock = fieldMap.sample( u, v, 1, false ) + breakup * 0.4f;
-		if( earth > fieldParams.x - earthMargin + U( rng ) * earthJitter || rock > 0.5f - earthMargin ){
+		const float snow = fieldMap.sample( u, v, 1, false ) + breakup * 0.4f;
+		if( earth > fieldParams.x - earthMargin + U( rng ) * earthJitter || snow > 0.5f - earthMargin ){
 			onEarth++;
 			continue;
 		}
@@ -252,6 +252,6 @@ void Grass::build( btCollisionWorld* world, const btCollisionObject* field ){
 	Ogre::LogManager::getSingleton().logMessage( "[Grass] " + Ogre::StringConverter::toString( (int)placed ) + " blades, "
 		+ Ogre::StringConverter::toString( (int)vertices ) + " vertices in " + Ogre::StringConverter::toString( (int)chunks.size() )
 		+ " chunks (" + Ogre::StringConverter::toString( (int)candidates ) + " tried: " + Ogre::StringConverter::toString( (int)onEarth )
-		+ " on earth or rock, " + Ogre::StringConverter::toString( (int)covered ) + " covered) in "
+		+ " on earth or snow, " + Ogre::StringConverter::toString( (int)covered ) + " covered) in "
 		+ Ogre::StringConverter::toString( (int)timer.getMilliseconds() ) + " ms" );
 }

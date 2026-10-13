@@ -317,19 +317,21 @@ The ground around the ring and the hills beyond the walls: `media/tumbu/arena/fi
 - **What is in Arena.blend:** the object `field` (Export collection): a grid with 0.38 units between vertices inside 34
   units of the centre (the coliseum), the hills outside reduced to 12 % of their vertices. Do not move, turn or scale the
   object itself; edit its vertices. Its material `fieldMaterial` shows the **field map** (`media/tumbu/arena/field_map.png`,
-  image node "FieldMap") as its colour, so in Material Preview you see where the earth, the rock and the tall grass are.
+  image node "FieldMap") as its colour, so in Material Preview you see where the earth, the snow and the tall grass are.
 - **Changing the ground's shape:** Sculpt Mode (Grab, Draw, Smooth, Flatten...) or Edit Mode with proportional editing.
   Inside the coliseum there is detail enough for paths and ditches; for more somewhere, subdivide those faces in Edit
   Mode. Keep the ground under the ring and the walls (the grass and the AO need a surface there). Then save the file and
   run `.\scripts\arena-field.ps1`: it lays the UV map out again from above (moving vertices sideways never shifts the map
   under them), bakes the AO (the walls' shade on the ground, about 3 minutes) and exports `field.mesh`. Start a match:
   the physics come from the same mesh, so the robots and the energy balls meet the ground you see.
-- **Painting the field map** (where the earth, the rock and the tall grass are): select `field`, the Texture Paint
+- **Painting the field map** (where the earth, the snow and the tall grass are): select `field`, the Texture Paint
   workspace, the image `field_map` in the paint slots. One colour channel is one thing, so paint with the brush blend mode
   **Add** to put some in and **Subtract** to take it out, with a pure colour:
   - red (1, 0, 0) = **earth**. The edge is where red is 0.5; the shader breaks it up with noise, so a soft brush edge is
     fine. No tall grass grows on the earth.
-  - green (0, 1, 0) = **rock** (the hill tops).
+  - green (0, 1, 0) = **snow** (the hill tops). The shader shows bare rock on the snow's steepest faces (steeper than
+    about 66 degrees, `snowParams` in `field.material`), so cliffs come from the shape, not from the map. No tall grass
+    grows on the snow.
   - blue (0, 0, 1) = **tall grass height** (1 = `fullHeight` of `media/configuration/grass.object`, 0.9 m; 0 = none).
     The first map: from 0.31 near the earth band to 1 at 22 units from the centre, none beyond 30.
 
@@ -340,7 +342,7 @@ The ground around the ring and the hills beyond the walls: `media/tumbu/arena/fi
   `-Rebuild`, which builds the field again from the 2011 terrain, and `-NewMap`, which writes the first map again, discard
   hand work). The field casts no shadow. Its AO uses the scene's `tumbu_ao_distance` like the rest of the arena.
 - **Tuning without Blender:** the meadow's look is in `media/tumbu/arena/field.material` (tile sizes, edge breakup, the
-  earth's rim, the hills' earth), the textures in `scripts/blender/arena_textures.py` (`.\scripts\arena-textures.ps1
+  earth's rim, the hills' earth, the snow and its bare rock), the textures in `scripts/blender/arena_textures.py` (`.\scripts\arena-textures.ps1
   -Only meadow`).
 
 ### Robot export (`art/robots/robot00N.blend` -> `media/tumbu/robot00N/`)

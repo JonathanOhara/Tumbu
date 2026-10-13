@@ -168,6 +168,14 @@ session; they only mean something against the other variant of the same run.
   ground's texture under them, so no anti-shimmer work was needed.
 - Memory (40 matches each): flat on both renderers; after match 1 OpenGL 21.2 MB (+1.3 MB) and Direct3D 11 40 MB
   (+6 MB, its driver's copies of the 17 MB of blade vertices), the Direct3D 11 plateau unchanged (88 to 92 MB).
+- **Snow on the hill tops** (2026-10-13, Jonathan: the tops looked like a white version of the earth): the field map's G
+  (the 2011 "ice" layer) drew `meadow_rock_col`, grey Voronoi cells like the earth's. It now draws snow
+  (`meadow_snow_col`: near white, wind drifts in a cool shade with a bright crest, no cells) with a thin shaded rim along
+  its lower edge, and bare rock (the old texture, darker and cooler) only where the slope passes about 66 degrees. The
+  peaks are steep (median 59 degrees inside the snow); at 0.6 (about 60 degrees) with more noise the rock covered too
+  much and its round holes read as a pair of eyes on the middle peak. Cost on the peak view at 1920x1080: Direct3D 11
+  +0.009 +/- 0.013 ms, OpenGL -0.008 +/- 0.030 ms, both not significant. Memory (40 matches): flat on both renderers (OpenGL 21.5 MB, the
+  Direct3D 11 plateau 87 to 93 MB).
 
 ## Memory
 

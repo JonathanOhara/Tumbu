@@ -1,18 +1,20 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // The field, fragment stage: the wild meadow. The painted field map (arena_field.py) chooses between grass, earth and
-// rock; their edges are broken up by a noise and stay crisp at any distance (toon), the earth has a thin shaded rim along
-// the grass. Every texture tiles at world scale (layerScale metres). Lit like the arena (TumbuToon.h): the toon ramp,
-// the sun's shadow map, the baked AO (the walls' shade on the ground), contact shadows, energy lights, torches and neon.
+// snow; their edges are broken up by a noise and stay crisp at any distance (toon), the earth has a thin shaded rim along
+// the grass and the snow one along its lower edge; the steepest faces in the snow are bare rock. Every texture tiles at
+// world scale (layerScale metres). Lit like the arena (TumbuToon.h): the toon ramp, the sun's shadow map, the baked AO
+// (the walls' shade on the ground), contact shadows, energy lights, torches and neon.
 #include <OgreUnifiedShader.h>
 #include "TumbuToon.h"
 
-SAMPLER2D(fieldMap, 0);     // r earth (0.5 = the edge), g rock, b tall grass height (read by the grass, not here)
+SAMPLER2D(fieldMap, 0);     // r earth (0.5 = the edge), g snow, b tall grass height (read by the grass, not here)
 SAMPLER2DSHADOW(shadowMap, 1);
 SAMPLER2D(aoMap, 2);
 SAMPLER2D(grassMap, 3);
 SAMPLER2D(earthMap, 4);
 SAMPLER2D(rockMap, 5);
 SAMPLER2D(noiseMap, 6);     // r mid-scale breakup, g broad tone field
+SAMPLER2D(snowMap, 7);
 
 OGRE_UNIFORMS_BEGIN
     TUMBU_LIGHTING_UNIFORMS
@@ -26,6 +28,10 @@ OGRE_UNIFORMS_BEGIN
     // scale (larger cracks far away)
     uniform vec4 hillParams;
     uniform vec4 hillEarthTint;
+    // the snow: x bare rock where the slope (1 - normal.y) is above this, y its breakup by the noise, z the width of the
+    // shaded rim along the snow's lower edge (on the field map's g), w how dark that rim is
+    uniform vec4 snowParams;
+    uniform vec4 snowTile;      // x the snow's tile size in metres
 OGRE_UNIFORMS_END
 
 // A hard edge, anti-aliased over about a pixel (the toon look at any distance).
@@ -58,9 +64,14 @@ MAIN_DECLARATION
     float hills = saturate((length(w) - hillParams.x) / hillParams.y);
     vec3 earth = texture2D(earthMap, w / (layerScale.y * mix(1.0, hillParams.z, hills))).rgb * (1.0 - rim * fieldParams.z);
     earth *= mix(vec3_splat(1.0), hillEarthTint.rgb, hills);
-    vec3 rock = texture2D(rockMap, w / layerScale.z).rgb;
     vec3 albedo = mix(grass, earth, earthMask);
-    albedo = mix(albedo, rock, fieldStep(0.5, field.g + breakup * 0.4));
+    float snowField = field.g + breakup * 0.4;
+    float snowMask = fieldStep(0.5, snowField);
+    float snowRim = snowMask - fieldStep(0.5 + snowParams.z, snowField);
+    vec3 snow = texture2D(snowMap, w / snowTile.x).rgb * (1.0 - snowRim * snowParams.w);
+    vec3 rock = texture2D(rockMap, w / layerScale.z).rgb;
+    float bare = fieldStep(snowParams.x, 1.0 - n.y + breakup * snowParams.y);
+    albedo = mix(albedo, mix(snow, rock, bare), snowMask);
 
     float ao = texture2D(aoMap, oUv).r;
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(n, sunDirection.xyz), shadowParams);
