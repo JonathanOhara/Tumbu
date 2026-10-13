@@ -200,6 +200,15 @@ session; they only mean something against the other variant of the same run.
     Only 3 of 8 clumps found ground between 21 and 27 units (the walls and seats cover most of that band), so a clump
     may now retry elsewhere (`retries`, 0 for the flowers so their layout stayed). Cost on the wide view at 1920x1080,
     reeds hidden against shown: Direct3D 11 -0.008 +/- 0.008 ms, OpenGL +0.011 +/- 0.054 ms, both not significant.
+    Memory (40 matches on each renderer): flat.
+  - **Shockwave and burnt grass:** a `grass` layer in `effects.object` (`jyn_impact`: a strong wave across the whole field
+    and a burnt patch of 3.2 units; `blast_hit`: a small ripple), sent to the grass, flower and field shaders as shared
+    parameters like the energy lights. A frame strip could not show the wave: saving each frame takes longer than a
+    frame, so the game jumped ahead between them (the wave and the embers were gone a few frames in); one run per moment
+    (0.15 / 0.35 / 0.6 / 0.9 s after the impact) shows it. Cost on the field view at 1920x1080, against the build
+    before: OpenGL -0.028 +/- 0.071 ms; Direct3D 11 first +0.032 +/- 0.020 ms, because every blade vertex and field
+    pixel walked the eight burn slots even with none burnt; with the count of patches passed (`grassWaveWidth.z`, the
+    loop stops there) +0.014 +/- 0.017 ms, not significant. Memory (40 matches on Direct3D 11, 20 on OpenGL): flat.
 
 ## Memory
 

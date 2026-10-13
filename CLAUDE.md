@@ -93,7 +93,7 @@ in the way of a run (for example a window behind others that does not render), d
 .\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
 .\scripts\devtest.ps1 -VideoMode 1600x900 -NoHud -Name big  # window size (default 1024x768; at most 1600x900), no HUD
 .\scripts\devtest.ps1 -GuiTour [-Hour 22]          # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
-.\scripts\memcheck.ps1                              # memory check, both renderers, judged: a PASS/FAIL block with the numbers each (~25 min)
+.\scripts\memcheck.ps1                              # memory check, both renderers, judged: a PASS/FAIL block with the numbers each (~18 min)
 .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # the same run on one renderer, with the full report (see "Memory check")
 .\scripts\devtest.ps1 -Hide field -Name …           # parts of the scene hidden: which one draws something?
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated 8 s runs, D3D11 + OpenGL (~4-7 min)
@@ -144,9 +144,10 @@ in the way of a run (for example a window behind others that does not render), d
   - **When:** after a step that adds or changes GPU resources, render targets, materials, meshes or anything created per
     match (a leak per match shows nowhere else), before its commit. Not for a change of values only (tuning in
     `*.object` or material parameters, a texture replaced at the same size).
-  - **How:** start it with `run_in_background` and wait for the notification (about 25 minutes: 40 matches on Direct3D 11,
-    then 40 on OpenGL); do not poll it. `-Renderers GL` for one renderer; `-Cycles N` for a quick look (growth is judged
-    only from 10 matches on OpenGL and 40 on Direct3D 11, so a short run checks the objects and that nothing crashes).
+  - **How:** start it with `run_in_background` and wait for the notification (about 18 minutes: 40 matches on Direct3D 11,
+    then 20 on OpenGL, which is flat from match 2 on); do not poll it. `-Renderers GL` for one renderer; `-Cycles N` /
+    `-GlCycles N` for a quick look (growth is judged only from 10 matches on OpenGL and 40 on Direct3D 11, so a short run
+    checks the objects and that nothing crashes).
   - **Reading it:** one block per renderer, `== <renderer>: PASS|FAIL`, then `FAILED` lines (what broke), `heap` (menu,
     after match 1, last, range over the second half), `growth` (KB per match in each half and overall, with the limit),
     `objects` (every count, `flat` or which one changed after which match), `previous` (the last run of the same length
@@ -509,6 +510,22 @@ materials, textures, GUI) gets a before/after set:
     set's share of the grass's wind, in uv0.y). `retries` lets a clump that found no ground (the walls and seats cover
     much of that band) try another spot; the flowers have none, so their layout stays. Chunks `Reeds<key>` under
     `ReedNode`; DevTest `-hide=reeds`.
+  - **Impacts on the field** (2026-10-13; the `grass` layer of `effects.object`, `EffectGrassLayer`):
+    - **Shockwave:** `EffectsManager::grassWave` keeps the newest two waves; every frame `updateGrass` sends each one's
+      centre, front distance (speed x age) and fading strength (shared `grassWave0/1`, widths in `grassWaveWidth`).
+      `grassBend` (`TumbuGrass.h`) bends a plant away from the centre by a gaussian of its distance to the front, for the
+      grass, flowers and reeds alike. `jyn_impact` rolls a strong one across the whole field, `blast_hit` a small ripple.
+    - **Burnt grass:** `EffectsManager::burnGrass` (only when the effect is within `burnHeight` of the ground below it,
+      `groundBelow`) keeps the newest eight patches (shared array `grassBurn[8]`: x, z, radius, burnt 0..1 + embers 0..1
+      above 1; the size is `EffectsManager::GRASS_BURNS`). Inside a patch the vertex shaders shrink the plants to 20 %
+      (`TUMBU_GRASS_BURNT`), the fragment shaders char them (`burntColour`) with glowing ember tips for the first
+      `embers` seconds (`emberColour`, HDR, so they bloom), and `field_toon.frag` scorches the ground (`scorchColour`,
+      its edge broken up by the noise). It stays `burnHold` seconds, then everything grows back over `regrow`
+      (`jyn_impact`: 3.2 units, 4 s of embers, 20 s, 40 s). Cleared when the match ends.
+    - To look at them: `devtest.ps1 -HeroPos -14,-6 -FxTest jyn_impact -FxTime 0.6 -Camera "-6,5,-1,-15,0,-7"` (the
+      impact 2 units in front of the hero, in the grass; `-FxTime 8` the charred patch, `-FxTime 40 -QuitAfter 46` it
+      growing back). A frame strip cannot time a shockwave (saving each frame takes longer than a frame): take one run
+      per moment.
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.
@@ -672,8 +689,9 @@ through a listener registry in `BaseApplication`.
   Orbs and trails have an alpha-blended dark underlay pass: additive alone turns white over the sunlit arena.
   Impacts are one-billboard particles drawn by `energy_burst.frag` (FLASH, RING, DOME, SMOKE, DEBRIS): the particle
   alpha is the life left (ColourFader), so the shader animates without extra uniforms.
-  Effect layers: `light`, `screen`, `trail`, `particles`, `converge` (a pool of motes moved in C++: the Genki Dama
-  gathering) and `lightning` (a BillboardChain of jagged arcs); `Effect::setScale` gives layers the ball radius.
+  Effect layers: `light`, `screen`, `grass` (shockwave and burnt patch on the field, see "The tall grass"), `trail`,
+  `particles`, `converge` (a pool of motes moved in C++: the Genki Dama gathering) and `lightning` (a BillboardChain of
+  jagged arcs); `Effect::setScale` gives layers the ball radius.
   Renderer settings such as `billboard_type` go through `ParticleSystem::getRenderer()->setParameter`.
 - `media/tumbu/shading/` holds the shared toon lighting (`TumbuToon.h`), the arena shaders and base
   material (`Tumbu/EnvironmentToon`, used by `arena.material` and `coliseum.material`), and the
@@ -718,7 +736,7 @@ through a listener registry in `BaseApplication`.
 
 - **How a piece of work goes:** step by step, and after each step that works: its checks (below and "Automated checks"),
   the docs updated, then commit and **push straight to `master`** (`git -c http.sslBackend=schannel push origin master`;
-  no branches unless Jonathan asks). Run `.\scripts\memcheck.ps1` (both renderers, about 25 minutes, in the background)
+  no branches unless Jonathan asks). Run `.\scripts\memcheck.ps1` (both renderers, about 18 minutes, in the background)
   after a step that adds or changes GPU resources, render targets, materials or objects created per match: a leak per
   match shows nowhere else. Not needed for a change of values only (tuning in `*.object` or material parameters,
   textures replaced at the same size). Before/after images and bench

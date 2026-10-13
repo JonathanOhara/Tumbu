@@ -1,8 +1,10 @@
-# The memory check (CLAUDE.md, "Memory check"): N matches through the real UI on each renderer (devtest.ps1 -Cycles N),
+# The memory check (CLAUDE.md, "Memory check"): matches through the real UI on each renderer (devtest.ps1 -Cycles N),
 # judged against the expected values and compared with the previous run of the same length. Run it (in the background,
-# about 12 minutes per renderer for 40 matches) after a change that adds or changes GPU resources, render targets,
+# about 12 minutes for the 40 matches on Direct3D 11, 6 for the 20 on OpenGL) after a change that adds or changes GPU resources, render targets,
 # materials or objects created per match.
-# Usage: .\scripts\memcheck.ps1 [-Cycles 40] [-Renderers D3D11,GL]
+# Usage: .\scripts\memcheck.ps1 [-Cycles 40] [-GlCycles 20] [-Renderers D3D11,GL]
+#   -Cycles is the matches on Direct3D 11 (its driver pool takes about 18 to fill, so 40 judge the plateau), -GlCycles on
+#   OpenGL (flat from match 2 on, so 20 are enough; growth is judged from 10).
 #
 # Per renderer it prints a block like this (numbers made up):
 #   == GL: PASS (40 matches, driver 4.6.0.0, Ogre 14.6.0)
@@ -27,6 +29,7 @@
 # Exit code 1 when a check fails.
 param(
     [int]$Cycles = 40,
+    [int]$GlCycles = 20,
     [ValidateSet('D3D11', 'GL')] [string[]]$Renderers = @('D3D11', 'GL'),
     [double]$GlGrowthKB = 30,
     [double]$D3dSecondHalfKB = 300,
@@ -45,17 +48,18 @@ function MB([double]$kb) { '{0:0.0} MB' -f ($kb / 1024) }
 function Num([string]$s) { [double]::Parse($s, [Globalization.CultureInfo]::InvariantCulture) }
 
 foreach ($r in $Renderers) {
+    $n = if ($r -eq 'GL') { $GlCycles } else { $Cycles }
     # the previous run of this renderer and length, read before this run appends its own line
     $previous = $null
     if (Test-Path $historyFile) {
-        $previous = Import-Csv $historyFile | Where-Object { $_.render -eq $r -and [int]$_.matches -eq $Cycles } | Select-Object -Last 1
+        $previous = Import-Csv $historyFile | Where-Object { $_.render -eq $r -and [int]$_.matches -eq $n } | Select-Object -Last 1
     }
 
     $report = Join-Path $out "memcheck-$r.txt"
     $gameLog = Join-Path $out "devtest-memcheck-$r.log"
     # every stream (devtest.ps1 reports with Write-Host), into the report instead of the console
     $ErrorActionPreference = 'Continue'
-    $lines = & (Join-Path $PSScriptRoot 'devtest.ps1') -Cycles $Cycles -Renderer $r -Name "memcheck-$r" *>&1 | ForEach-Object { "$_" }
+    $lines = & (Join-Path $PSScriptRoot 'devtest.ps1') -Cycles $n -Renderer $r -Name "memcheck-$r" *>&1 | ForEach-Object { "$_" }
     $ErrorActionPreference = 'Stop'
     Set-Content $report $lines
 
@@ -93,7 +97,7 @@ foreach ($r in $Renderers) {
     $errors = $log | Where-Object { $_ -match 'EXCEPTION|Fatal' -and $_ -notmatch 'Information Queue' } | Select-Object -First 3
     if ($errors) { $problems += 'an exception or fatal error'; $evidence += $errors | ForEach-Object { "  log: $_" } }
     $played = $perMatch.Count - 1
-    if ($played -lt $Cycles) { $problems += "only $([math]::Max($played, 0)) of $Cycles matches finished" }
+    if ($played -lt $n) { $problems += "only $([math]::Max($played, 0)) of $n matches finished" }
 
     $heapLine = ''
     $growthLine = ''
@@ -159,7 +163,7 @@ foreach ($r in $Renderers) {
             }
             if ($previous.driver -ne $driver) { $notes += "NOTE the driver changed since the previous run ($($previous.driver) -> $driver): levels may move" }
         } else {
-            $previousLine = "none of $Cycles matches on $r in $historyFile"
+            $previousLine = "none of $n matches on $r in $historyFile"
         }
 
         # evidence for a FAIL: what the heap grew by in the last matches and which DLLs own the sample blocks
@@ -184,7 +188,7 @@ foreach ($r in $Renderers) {
     if ($growthLine) { Write-Host "  growth   $growthLine" }
     if ($objectsLine) { Write-Host "  objects  $objectsLine" }
     if ($previousLine) { Write-Host "  previous $previousLine" }
-    foreach ($n in $notes) { Write-Host "  $n" }
+    foreach ($note in $notes) { Write-Host "  $note" }
     foreach ($e in $evidence) { Write-Host $e }
     $lines | Where-Object { $_ -match 'REMINDER' } | ForEach-Object { Write-Host "  $_" }
     Write-Host "  files    report $report, game log $gameLog"

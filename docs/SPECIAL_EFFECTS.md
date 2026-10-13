@@ -42,6 +42,8 @@ Particle Swarm Optimization is kept as an option (`gather pso` in `skill jyn`).
   documented at the top of the file. Layers (`EffectLayers.cpp`):
   - `light`: a coloured point light for the toon shaders (see below)
   - `screen`: screen flash, camera shake, hit-stop
+  - `grass`: a shockwave rolling across the field's tall grass and a burnt patch where the effect lands near the ground
+    (CLAUDE.md, "The tall grass", "Impacts on the field")
   - `trail`: an Ogre `RibbonTrail` following the effect
   - `particles`: an Ogre particle system from a template in `media/tumbu/effects/effects.particle`
   - `converge`: a pool of motes moved in C++ towards the effect (the Genki Dama gathering)

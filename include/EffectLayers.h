@@ -35,6 +35,16 @@ private:
 	Ogre::Real flashAmount, flashTime, shakeAmplitude, shakeTime, shakeRange, hitStop;
 };
 
+/// "grass": a one-shot shockwave across the field's tall grass and a burnt patch where the effect starts.
+class EffectGrassLayer: public EffectLayer{
+public:
+	EffectGrassLayer( Effect* _effect, ConfigNode* node );
+	bool update( Ogre::Real age, Ogre::Real time );
+private:
+	Ogre::Real wave, waveSpeed, waveWidth, waveTime;
+	Ogre::Real burn, burnHeight, embers, burnHold, regrow;
+};
+
 /**
  * "trail": a ribbon left behind by the moving effect (Ogre RibbonTrail), in the effect's colour. Each point fades
  * out and narrows over "fadeTime" seconds; once the effect is released the ribbon dies out and the layer ends.

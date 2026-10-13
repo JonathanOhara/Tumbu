@@ -18,6 +18,9 @@ material Tumbu/FieldGrass{
                 param_named tipColour2 float4 0.66 0.70 0.24 1
                 // root occlusion, translucency, gust lightening, tone bands along the blade
                 param_named grassShade float4 0.55 0.45 0.25 2
+                // burnt grass (effects.object, "grass" layer): the charred tips, and the embers' colour x glow
+                param_named burntColour float4 0.16 0.12 0.09 0
+                param_named emberColour float4 1.0 0.38 0.08 3
             }
             texture_unit shadowMap{
                 content_type shadow

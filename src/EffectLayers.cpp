@@ -9,6 +9,8 @@ EffectLayer* createEffectLayer( Effect* effect, ConfigNode* node ){
 		return new EffectLightLayer( effect, node );
 	}else if( type == "screen" ){
 		return new EffectScreenLayer( effect, node );
+	}else if( type == "grass" ){
+		return new EffectGrassLayer( effect, node );
 	}else if( type == "trail" ){
 		return new EffectTrailLayer( effect, node );
 	}else if( type == "particles" ){
@@ -102,6 +104,31 @@ bool EffectScreenLayer::update( Ogre::Real age, Ogre::Real time ){
 	}
 	if( hitStop > 0 ){
 		manager->hitStop( hitStop );
+	}
+	return false;	// one-shot
+}
+//-------------------------------------------------------------------------------------
+//------------------------------------- GRASS -----------------------------------------
+//-------------------------------------------------------------------------------------
+EffectGrassLayer::EffectGrassLayer( Effect* _effect, ConfigNode* node ): EffectLayer( _effect ){
+	wave		= Effect::readReal( node, "wave", 0 );
+	waveSpeed	= Effect::readReal( node, "waveSpeed", 12 );
+	waveWidth	= Effect::readReal( node, "waveWidth", 2 );
+	waveTime	= Effect::readReal( node, "waveTime", 1.5f );
+	burn		= Effect::readReal( node, "burn", 0 );
+	burnHeight	= Effect::readReal( node, "burnHeight", 2.5f );
+	embers		= Effect::readReal( node, "embers", 3 );
+	burnHold	= Effect::readReal( node, "burnHold", 15 );
+	regrow		= Effect::readReal( node, "regrow", 30 );
+}
+//-------------------------------------------------------------------------------------
+bool EffectGrassLayer::update( Ogre::Real age, Ogre::Real time ){
+	EffectsManager* manager = effect->getManager();
+	if( wave > 0 ){
+		manager->grassWave( effect->getPosition(), wave, waveSpeed, waveWidth, waveTime );
+	}
+	if( burn > 0 ){
+		manager->burnGrass( effect->getPosition(), burn, burnHeight, embers, burnHold, regrow );
 	}
 	return false;	// one-shot
 }

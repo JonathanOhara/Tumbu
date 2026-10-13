@@ -43,6 +43,13 @@
 //     shake       camera shake amplitude in world units; shakeTime: seconds; shakeRange: full shake within this
 //                 distance of the camera, none beyond twice it
 //     hitStop     seconds the game nearly stops (the impact "hangs"), real time
+//
+// grass: what the effect does to the field's tall grass, flowers and reeds when it starts (once; EffectsManager)
+//     wave        strength of a shockwave rolling out across the grass (0 = none): the plants at its front bend away
+//                 from the impact; waveSpeed: units per second; waveWidth: units; waveTime: seconds it rolls (fading)
+//     burn        radius of a burnt patch (0 = none), only when the effect is within burnHeight of the ground below it:
+//                 the plants are flattened and charred, the field scorched; embers: seconds the burnt tips glow;
+//                 burnHold: seconds it stays burnt; regrow: seconds it then takes to grow back
 
 // Calibration effect for DevTest -fxtest=test: a strong orange light, a flash and a shake.
 effect test
@@ -193,6 +200,14 @@ effect trailtest
 // Punch or kick blast hits a robot: star flash, shockwave, spark burst, a flash of light, a small jolt.
 effect blast_hit
 {
+	// a punch or kick ball's hit: a small ripple through the grass
+	grass
+	{
+		wave 0.8
+		waveSpeed 9
+		waveWidth 1.5
+		waveTime 1.1
+	}
 	particles
 	{
 		template Tumbu/Fx/HitFlash
@@ -256,6 +271,19 @@ effect blast_wall
 // smoke, a strong light and a camera shake.
 effect jyn_impact
 {
+	// the Genki Dama's blast flattens the field in a ring and burns it where it lands
+	grass
+	{
+		wave 1.8
+		waveSpeed 13
+		waveWidth 2.5
+		waveTime 2.2
+		burn 3.2
+		burnHeight 2.5
+		embers 4
+		burnHold 20
+		regrow 40
+	}
 	screen
 	{
 		flash 0.45

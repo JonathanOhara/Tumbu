@@ -20,6 +20,7 @@ OGRE_UNIFORMS_BEGIN
     uniform vec4 pushParams;    // the grass's (set by Grass.cpp)
     // x how much of the grass's wind a flower takes, y how much of its push
     uniform vec4 flowerParams;
+    TUMBU_GRASS_UNIFORMS
 OGRE_UNIFORMS_END
 
 MAIN_PARAMETERS
@@ -40,13 +41,18 @@ MAIN_DECLARATION
     wind.z *= flowerParams.x * uv0.y;
     vec4 push = pushParams;
     push.z *= flowerParams.y;
+    // burnt: the plant collapses towards its root (flower.frag chars it)
+    vec2 burnt = TUMBU_GRASS_BURNT(uv1.xz);
+    float keep = 1.0 - 0.8 * burnt.x;
+    vec3 p = uv1.xyz + (vertex.xyz - uv1.xyz) * vec3(1.0, keep, 1.0);
     float pushed;
-    vec4 bent = grassBend(vertex.xyz, uv1.xyz, uv1.w, uv0.x, uv0.w, lampParams.z, wind, push,
-        contactShadowA, contactShadowB, energyLightPos0, energyLightPos1, energyLightPos2, energyLightPos3, pushed);
+    vec4 bent = grassBend(p, uv1.xyz, uv1.w * keep, uv0.x, uv0.w, lampParams.z, wind, push,
+        contactShadowA, contactShadowB, energyLightPos0, energyLightPos1, energyLightPos2, energyLightPos3,
+        grassWave0, grassWave1, grassWaveWidth, pushed);
     gl_Position = mul(wvpMat, vec4(bent.xyz, 1.0));
     oWorldPos = bent.xyz;
     oNormal = normal;
     oUv = uv0;
-    oExtra = vec4(bent.w, pushed, 0.0, 0.0);
+    oExtra = vec4(bent.w, pushed, burnt.x, burnt.y);
     oColour = colour;
 }

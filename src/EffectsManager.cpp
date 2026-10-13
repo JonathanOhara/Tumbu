@@ -35,6 +35,10 @@ EffectsManager::~EffectsManager(void){
 	updateLights();
 	flashAmount = 0;
 	updateScreen( 0 );
+	// and no shockwave or burnt grass in the next match
+	grassWaves.clear();
+	grassBurns.clear();
+	updateGrass( 0 );
 	Ogre::ControllerManager::getSingleton().setTimeFactor( 1 );
 	instance = NULL;
 }
@@ -105,6 +109,88 @@ void EffectsManager::hitStop( Ogre::Real duration ){
 	hitStopLeft = std::max( hitStopLeft, duration );
 }
 //-------------------------------------------------------------------------------------
+void EffectsManager::grassWave( const Ogre::Vector3 &position, Ogre::Real strength, Ogre::Real speed, Ogre::Real width, Ogre::Real duration ){
+	GrassWave wave;
+	wave.position = position;
+	wave.strength = strength;
+	wave.speed = speed;
+	wave.width = std::max<Ogre::Real>( width, 0.1f );
+	wave.duration = std::max<Ogre::Real>( duration, 0.01f );
+	wave.age = 0;
+	if( (int)grassWaves.size() >= GRASS_WAVES ){
+		grassWaves.erase( grassWaves.begin() );
+	}
+	grassWaves.push_back( wave );
+}
+//-------------------------------------------------------------------------------------
+void EffectsManager::burnGrass( const Ogre::Vector3 &position, Ogre::Real radius, Ogre::Real height, Ogre::Real embers, Ogre::Real hold, Ogre::Real regrow ){
+	// only an impact near the ground burns it (not a ball that bursts high on a wall)
+	const Ogre::Vector3 ground = groundBelow( position );
+	if( ground == position || position.y - ground.y > height ){
+		return;
+	}
+	GrassBurn burn;
+	burn.position = ground;
+	burn.radius = radius;
+	burn.embers = embers;
+	burn.hold = hold;
+	burn.regrow = std::max<Ogre::Real>( regrow, 0.01f );
+	burn.age = 0;
+	if( (int)grassBurns.size() >= GRASS_BURNS ){
+		grassBurns.erase( grassBurns.begin() );
+	}
+	grassBurns.push_back( burn );
+}
+//-------------------------------------------------------------------------------------
+void EffectsManager::updateGrass( Ogre::Real time ){
+	Ogre::GpuSharedParametersPtr params = Ogre::GpuProgramManager::getSingleton().getSharedParameters( "TumbuLighting" );
+	// shockwaves: x z of the centre, the front's distance from it, its strength now (0 = none)
+	std::vector<GrassWave>::iterator w = grassWaves.begin();
+	while( w != grassWaves.end() ){
+		w->age += time;
+		if( w->age >= w->duration ){
+			w = grassWaves.erase( w );
+		}else{
+			w++;
+		}
+	}
+	Ogre::Vector4 width( 1, 1, 0, 0 );
+	for( int slot = 0; slot < GRASS_WAVES; slot++ ){
+		Ogre::Vector4 wave( 0, 0, 0, 0 );
+		if( slot < (int)grassWaves.size() ){
+			const GrassWave &g = grassWaves[slot];
+			const Ogre::Real fade = 1 - g.age / g.duration;
+			wave = Ogre::Vector4( g.position.x, g.position.z, g.speed * g.age, g.strength * fade * fade );
+			width[slot] = g.width;
+		}
+		params->setNamedConstant( "grassWave" + Ogre::StringConverter::toString( slot ), wave );
+	}
+
+	// burnt patches: x z, radius, how burnt (0..1) plus the embers (0..1) above 1; their count goes in grassWaveWidth.z
+	float data[GRASS_BURNS * 4] = { 0 };
+	std::vector<GrassBurn>::iterator b = grassBurns.begin();
+	while( b != grassBurns.end() ){
+		b->age += time;
+		if( b->age >= b->hold + b->regrow ){
+			b = grassBurns.erase( b );
+		}else{
+			b++;
+		}
+	}
+	for( size_t i = 0; i < grassBurns.size() && (int)i < GRASS_BURNS; i++ ){
+		const GrassBurn &g = grassBurns[i];
+		const Ogre::Real burnt = g.age < g.hold ? 1 : 1 - ( g.age - g.hold ) / g.regrow;
+		const Ogre::Real embers = g.embers > 0 ? std::max<Ogre::Real>( 0, 1 - g.age / g.embers ) : 0;
+		data[i * 4 + 0] = g.position.x;
+		data[i * 4 + 1] = g.position.z;
+		data[i * 4 + 2] = g.radius;
+		data[i * 4 + 3] = burnt + embers;
+	}
+	width.z = (Ogre::Real)std::min<size_t>( grassBurns.size(), GRASS_BURNS );
+	params->setNamedConstant( "grassWaveWidth", width );
+	params->setNamedConstant( "grassBurn", data, GRASS_BURNS * 4 );
+}
+//-------------------------------------------------------------------------------------
 bool EffectsManager::frameRenderingQueued( const Ogre::FrameEvent &evt ){
 	Ogre::Real realTime = evt.timeSinceLastFrame;
 	bool playing = TUMBU::getInstance()->isPlaying();
@@ -129,6 +215,7 @@ bool EffectsManager::frameRenderingQueued( const Ogre::FrameEvent &evt ){
 		}
 		updateLights();
 		updateScreen( realTime );
+		updateGrass( time );
 	}
 	// Paused or flying: the lights and the flash stay as they were.
 	lightRequests.clear();

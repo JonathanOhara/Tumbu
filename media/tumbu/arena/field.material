@@ -19,6 +19,8 @@ material fieldMaterial{
                 // broken up by 0.25 of the noise; a shaded rim 0.06 wide along its lower edge, 12 % darker
                 param_named snowParams float4 0.67 0.12 0.06 0.12
                 param_named snowTile float4 8 0 0 0
+                // where an impact burnt the field (effects.object, "grass" layer): the scorched ground, how far towards it
+                param_named scorchColour float4 0.17 0.13 0.10 0.8
             }
             texture_unit fieldMap{
                 texture field_map.dds

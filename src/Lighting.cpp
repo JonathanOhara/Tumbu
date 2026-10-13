@@ -5,6 +5,7 @@
 #include "TUMBU.h"
 #include "Demo.h"
 #include "Physics.h"
+#include "EffectsManager.h"
 #include "smaa/AreaTex.h"
 #include "smaa/SearchTex.h"
 Lighting* Lighting::instance = NULL;
@@ -192,6 +193,10 @@ static void setNeutralValues( Ogre::GpuSharedParametersPtr params ){
 	params->setNamedConstant( "lampPos", &zeros[0], TUMBU_MAX_LAMPS * 4 );
 	params->setNamedConstant( "neonSegA", &zeros[0], TUMBU_NEON_SEGMENTS * 4 );
 	params->setNamedConstant( "neonSegB", &zeros[0], TUMBU_NEON_SEGMENTS * 4 );
+	params->setNamedConstant( "grassBurn", &zeros[0], EffectsManager::GRASS_BURNS * 4 );
+	params->setNamedConstant( "grassWave0", Ogre::Vector4( 0, 0, 0, 0 ) );
+	params->setNamedConstant( "grassWave1", Ogre::Vector4( 0, 0, 0, 0 ) );
+	params->setNamedConstant( "grassWaveWidth", Ogre::Vector4( 1, 1, 0, 0 ) );
 	params->setNamedConstant( "lampColour", Ogre::Vector4( 0, 0, 0, 1 ) );
 	params->setNamedConstant( "lampShape", Ogre::Vector4( 4, 0.25f, 0, 0 ) );
 	params->setNamedConstant( "neonShape", Ogre::Vector4( 2, 0, 0, 0 ) );
@@ -276,7 +281,10 @@ void Lighting::declareSharedParameters(void){
 		"metalEnv", "metalShape", "metalExtra",
 		// The arena's night lights (TUMBU_LAMP_UNIFORMS): the torches' colour and reach, their bands, the neon's light;
 		// lampParams: x = keyframe lamps, y = flame brightness, z = time, w = flicker (the flames).
-		"lampColour", "lampShape", "neonShape", "neonLight", "lampParams" };
+		"lampColour", "lampShape", "neonShape", "neonLight", "lampParams",
+		// The tall grass (TUMBU_GRASS_UNIFORMS, TumbuGrass.h; EffectsManager::updateGrass): shockwaves (x z, front, strength)
+		// and their widths.
+		"grassWave0", "grassWave1", "grassWaveWidth" };
 	for( size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++ ){
 		params->addConstantDefinition( names[i], Ogre::GCT_FLOAT4 );
 	}
@@ -284,6 +292,8 @@ void Lighting::declareSharedParameters(void){
 	params->addConstantDefinition( "lampPos", Ogre::GCT_FLOAT4, TUMBU_MAX_LAMPS );
 	params->addConstantDefinition( "neonSegA", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
 	params->addConstantDefinition( "neonSegB", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
+	// Burnt grass: x z, radius, burnt (0..1) + embers (0..1).
+	params->addConstantDefinition( "grassBurn", Ogre::GCT_FLOAT4, EffectsManager::GRASS_BURNS );
 	setNeutralValues( params );
 }
 //-------------------------------------------------------------------------------------

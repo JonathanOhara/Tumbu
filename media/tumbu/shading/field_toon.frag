@@ -6,6 +6,7 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // (the walls' shade on the ground), contact shadows, energy lights, torches and neon.
 #include <OgreUnifiedShader.h>
 #include "TumbuToon.h"
+#include "TumbuGrass.h"
 
 SAMPLER2D(fieldMap, 0);     // r earth (0.5 = the edge), g snow, b tall grass height (read by the grass, not here)
 SAMPLER2DSHADOW(shadowMap, 1);
@@ -31,6 +32,9 @@ OGRE_UNIFORMS_BEGIN
     // shaded rim along the snow's lower edge (on the field map's g), w how dark that rim is
     uniform vec4 snowParams;
     uniform vec4 snowTile;      // x the snow's tile size in metres
+    // where an impact burnt the field (TUMBU_GRASS_UNIFORMS): rgb the scorched ground, w how dark it gets (0..1)
+    uniform vec4 scorchColour;
+    TUMBU_GRASS_UNIFORMS
 OGRE_UNIFORMS_END
 
 // A hard edge, anti-aliased over about a pixel (the toon look at any distance).
@@ -71,6 +75,9 @@ MAIN_DECLARATION
     // the hills' earth shows through on the steepest faces
     float bare = fieldStep(snowParams.x, 1.0 - n.y + breakup * snowParams.y);
     albedo = mix(albedo, mix(snow, earth, bare), snowMask);
+    // scorched where an impact burnt the field, its edge broken up by the noise
+    float burnt = TUMBU_GRASS_BURNT(w).x;
+    albedo = mix(albedo, scorchColour.rgb, scorchColour.w * fieldStep(0.35, burnt + breakup * 0.5));
 
     float ao = texture2D(aoMap, oUv).r;
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(n, sunDirection.xyz), shadowParams);

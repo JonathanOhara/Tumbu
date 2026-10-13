@@ -14,6 +14,9 @@ material Tumbu/FieldFlower{
             fragment_program_ref flower_ps{
                 // occlusion at the foot (in the grass), translucency against the sun, tone variation between flowers
                 param_named flowerShade float4 0.6 0.35 0.16 0
+                // burnt (effects.object, "grass" layer): charred, and the embers' colour x glow
+                param_named burntColour float4 0.16 0.12 0.09 0
+                param_named emberColour float4 1.0 0.38 0.08 3
             }
             texture_unit shadowMap{
                 content_type shadow
