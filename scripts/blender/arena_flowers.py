@@ -1,14 +1,15 @@
 """
-The field's flowers: small toon flower models in art/arena/Flowers.blend, exported to media/tumbu/arena/flower_<kind>.mesh.
-Grass.cpp plants them among the tall grass when a match loads (media/configuration/grass.object, "flowers field") and
-grass.vert's wind and push bend them like the blades (flower.vert). After the games that do flowers well (Ghost of
+The field's flowers and reeds: small toon plant models in art/arena/Flowers.blend, exported to
+media/tumbu/arena/flower_<kind>.mesh and reed_<kind>.mesh. Grass.cpp plants them among the tall grass when a match loads
+(media/configuration/grass.object, "flowers field" and "reeds field") and grass.vert's wind and push bend them like the
+blades (flower.vert). After the games that do flowers well (Ghost of
 Tsushima, Horizon Zero Dawn, the Xenoblade meadows): the blades are generated, the flowers are made by hand and placed by
 the same rules.
 
 Run through scripts/arena-flowers.ps1 (headless Blender 5.2 + blender2ogre):
   - opens art/arena/Flowers.blend (creates it the first time) and builds each flower of KINDS that is not in it yet
     (--rebuild: all of them again, which discards hand edits);
-  - exports every mesh object in the "Flowers" collection whose name starts with "flower_".
+  - exports every mesh object in the "Flowers" collection whose name starts with "flower_" or "reed_".
 
 A flower's rules (Grass.cpp reads them):
   - the root is the object's origin and it grows up Blender's z (1 unit = 1 metre); the object's own location only
@@ -63,14 +64,15 @@ class Builder:
         self.colours.append(colour)
         self.smooth.append(smooth)
 
-    def tube(self, path, radii, colour, sides=5):
-        """A stem along `path` (points), `radii` per point, closed at neither end (the ends are hidden)."""
+    def tube(self, path, radii, colour, sides=5, widen=True):
+        """A stem along `path` (points), `radii` per point (x STEM_WIDTH unless widen=False), closed at neither end (the
+        ends are hidden)."""
         rings = []
         for i, p in enumerate(path):
             d = (path[min(i + 1, len(path) - 1)] - path[max(i - 1, 0)]).normalized()
             side = d.cross(Vector((0, 1, 0)) if abs(d.y) < 0.9 else Vector((1, 0, 0))).normalized()
             up = d.cross(side)
-            rings.append([self.vert(p + (side * math.cos(a) + up * math.sin(a)) * radii[i] * STEM_WIDTH)
+            rings.append([self.vert(p + (side * math.cos(a) + up * math.sin(a)) * radii[i] * (STEM_WIDTH if widen else 1))
                           for a in (k * 2 * math.pi / sides for k in range(sides))])
         for i in range(len(rings) - 1):
             for k in range(sides):
@@ -233,7 +235,64 @@ def marigold(b):
     b.dome(path[-1] + n * 0.006, n, 0.014, 0.01, (0.62, 0.30, 0.06), 6)
 
 
-KINDS = [("daisy", daisy), ("poppy", poppy), ("lupine", lupine), ("forgetmenot", forgetmenot), ("marigold", marigold)]
+REED_LEAF = (0.36, 0.50, 0.20)
+REED_LEAF_DRY = (0.60, 0.58, 0.30)
+
+
+def reed_leaves(b, count, length, seed):
+    """Long leaves at the foot of a reed clump, rising steeply and arching over, some of them dry."""
+    for k in range(count):
+        a = math.radians(k * 360 / count + (seed * 47 + k * 71) % 40)
+        out = Vector((math.cos(a), math.sin(a), 0))
+        l = length * (0.75 + 0.25 * ((k * 37 + seed) % 5) / 4)
+        b.blade(out * 0.05, (out + Vector((0, 0, 2.2))).normalized(), out, l, 0.034, -1.1,
+                REED_LEAF_DRY if k % 3 == 2 else REED_LEAF, profile=(0.6, 1.0, 0.9, 0.7, 0.4))
+
+
+def pampas(b):
+    """Pampas grass: five tall straw stems leaning out a little, each with a cream plume of slender feathers that flags
+    to the side the stem leans to."""
+    stems = [(0, 1.75, 0.16), (72, 1.55, 0.24), (144, 1.85, 0.18), (216, 1.45, 0.26), (288, 1.65, 0.2)]
+    for angle, height, lean in stems:
+        a = math.radians(angle)
+        out = Vector((math.cos(a), math.sin(a), 0))
+        top = out * (lean * height * 0.5) + Vector((0, 0, height))
+        path = [out * 0.07 + q for q in curve(top, out * 0.03, 6)]
+        b.tube(path, [0.008, 0.0075, 0.007, 0.0065, 0.006, 0.0055], (0.70, 0.66, 0.42))
+        n, side, up = head_frame(path)
+        # a plume: slender feathers close around the top, all flagging to the side the stem leans to
+        for k in range(12):
+            fa = k * 2 * math.pi / 12 + angle
+            spread = side * math.cos(fa) + up * math.sin(fa)
+            outer = k % 2
+            d = (n + spread * (0.28 if outer else 0.14)).normalized()
+            colour = (0.95, 0.90, 0.76) if outer else (0.88, 0.82, 0.66)
+            b.blade(path[-1] - n * (0.26 + 0.04 * outer) + spread * 0.008, d, out, 0.40 + 0.06 * ((k * 5) % 3) / 2, 0.06,
+                    0.55 + 0.25 * outer, colour, (0.99, 0.96, 0.86), profile=(0.4, 0.9, 1.0, 0.8))
+    reed_leaves(b, 9, 0.85, 1)
+
+
+def cattail(b):
+    """Cattails (bulrush): four tall green stems, each with a brown velvet head and a thin spike above it, among long
+    arching leaves."""
+    stems = [(20, 1.35, 0.12), (130, 1.5, 0.14), (230, 1.25, 0.18), (320, 1.45, 0.1)]
+    for angle, height, lean in stems:
+        a = math.radians(angle)
+        out = Vector((math.cos(a), math.sin(a), 0))
+        top = out * (lean * height * 0.5) + Vector((0, 0, height))
+        path = [out * 0.06 + q for q in curve(top, out * 0.02, 6)]
+        b.tube(path, [0.007, 0.0065, 0.006, 0.0055, 0.005, 0.005], (0.32, 0.46, 0.18))
+        n = (path[-1] - path[-2]).normalized()
+        head = [path[-1] - n * 0.24 + n * (0.2 * t) for t in (0, 0.1, 0.5, 0.9, 1.0)]
+        b.tube(head, [0.012, 0.028, 0.031, 0.027, 0.012], (0.42, 0.25, 0.12), 6, widen=False)
+        b.tube([head[-1], head[-1] + n * 0.1], [0.004, 0.002], (0.48, 0.40, 0.22), 4, widen=False)
+    reed_leaves(b, 10, 1.0, 2)
+
+
+# (object name, builder): flower_* are the flowers, reed_* the reeds
+KINDS = [("flower_daisy", daisy), ("flower_poppy", poppy), ("flower_lupine", lupine),
+         ("flower_forgetmenot", forgetmenot), ("flower_marigold", marigold),
+         ("reed_pampas", pampas), ("reed_cattail", cattail)]
 
 
 def srgb_to_linear(c):
@@ -288,8 +347,7 @@ def main():
     if collection is None:
         collection = bpy.data.collections.new("Flowers")
         bpy.context.scene.collection.children.link(collection)
-    for i, (kind, build) in enumerate(KINDS):
-        name = "flower_" + kind
+    for i, (name, build) in enumerate(KINDS):
         ob = bpy.data.objects.get(name)
         if ob is not None and REBUILD:
             me = ob.data
@@ -301,7 +359,7 @@ def main():
     bpy.ops.wm.save_as_mainfile(filepath=BLEND)
     log("saved " + BLEND)
     for ob in sorted(collection.objects, key=lambda o: o.name):
-        if ob.type == 'MESH' and ob.name.startswith("flower_"):
+        if ob.type == 'MESH' and (ob.name.startswith("flower_") or ob.name.startswith("reed_")):
             export(ob)
 
 

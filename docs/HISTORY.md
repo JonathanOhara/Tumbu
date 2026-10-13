@@ -192,6 +192,14 @@ session; they only mean something against the other variant of the same run.
     +0.005 +/- 0.011 ms, both not significant. Memory (40 matches): flat on both renderers; OpenGL 21.6 MB after match 1
     (about 0.6 MB above the run before the flowers in the same session: their material and programs, made once), the
     Direct3D 11 plateau 91 MB, second half +54 KB per match.
+- **The grass extras** (2026-10-13, Jonathan: reeds, a shockwave across the field, burnt grass, all three).
+  - **Reeds:** pampas grass and cattails made like the flowers (the same script, file and code, a second plant set).
+    The first pampas plumes closed into spindles, then opened into lily-like stars (the feathers curled towards their
+    own spread); they read as pampas once all the feathers of a plume flag to the side the stem leans to. Out near the
+    walls, where the grass is 0.9 m tall, clumps of 1.3 to 2.3 m were lost again: planted at 2 to 3 m, 2 to 3 per clump.
+    Only 3 of 8 clumps found ground between 21 and 27 units (the walls and seats cover most of that band), so a clump
+    may now retry elsewhere (`retries`, 0 for the flowers so their layout stayed). Cost on the wide view at 1920x1080,
+    reeds hidden against shown: Direct3D 11 -0.008 +/- 0.008 ms, OpenGL +0.011 +/- 0.054 ms, both not significant.
 
 ## Memory
 

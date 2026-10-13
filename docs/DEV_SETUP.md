@@ -347,20 +347,22 @@ The ground around the ring and the hills beyond the walls: `media/tumbu/arena/fi
   earth's rim, the hills' earth, the snow and the earth on its steep faces), the textures in
   `scripts/blender/arena_textures.py` (`.\scripts\arena-textures.ps1 -Only meadow`).
 
-### The flowers (`art/arena/Flowers.blend`)
+### The flowers and reeds (`art/arena/Flowers.blend`)
 
 - **What is in Flowers.blend:** the collection "Flowers" with one object per kind: `flower_daisy`, `flower_poppy`,
-  `flower_lupine`, `flower_forgetmenot`, `flower_marigold`. Each grows from its origin (the root) up Blender's z, in
+  `flower_lupine`, `flower_forgetmenot`, `flower_marigold`, and the reeds `reed_pampas`, `reed_cattail` (a whole clump of
+  stems each). Each grows from its origin (the root) up Blender's z, in
   metres; the objects stand side by side only for viewing (the export takes each mesh around its own origin). The
   colours are the colour attribute "Col": Vertex Paint mode, or Edit Mode with face selection and Paint > Set Vertex
   Colors. What the viewport shows is what the game draws.
 - **Changing a flower:** edit its vertices (Edit Mode) or its colours (Vertex Paint), keep the root at the origin and the
-  flower upright, save, then run `.\scripts\arena-flowers.ps1`: it exports every `flower_*` object of the collection to
-  `media/tumbu/arena/flower_<kind>.mesh`. Start a match. Petals and leaves can be single faces (the game draws both
+  flower upright, save, then run `.\scripts\arena-flowers.ps1`: it exports every `flower_*` and `reed_*` object of the
+  collection to `media/tumbu/arena/<name>.mesh`. Start a match. Petals and leaves can be single faces (the game draws both
   sides). Keep a flower to a few hundred vertices; the game copies it once per planted flower.
-- **A new kind:** add an object named `flower_<kind>` to the "Flowers" collection (origin at its root, a "Col" colour
-  attribute), export, and add `flower_<kind>` to `meshes` in `media/configuration/grass.object` ("flowers field").
-- **How many and where:** `flowers field` in `grass.object`: `clumps` (each of one kind, the kinds in turn), `ringFrom` /
+- **A new kind:** add an object named `flower_<kind>` (or `reed_<kind>`) to the "Flowers" collection (origin at its root,
+  a "Col" colour attribute), export, and add its name to `meshes` in `media/configuration/grass.object` ("flowers field"
+  or "reeds field").
+- **How many and where:** `flowers field` and `reeds field` in `grass.object`: `clumps` (each of one kind, the kinds in turn), `ringFrom` /
   `ringTo` (distance from the centre), flowers per clump, size and lean. Restart the match to see a change. The sway and
   the shading are in `media/tumbu/arena/field_flower.material`.
 - **Rules:** `arena-flowers.ps1 -Rebuild` builds every flower again from `scripts/blender/arena_flowers.py` and

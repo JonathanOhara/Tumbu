@@ -55,3 +55,25 @@ flowers field{
 	lean 8
 	seed 77
 }
+
+// The reeds (Grass.cpp): tall clumps of pampas grass and cattails from the same Blender file as the flowers
+// (art/arena/Flowers.blend: reed_<kind>), planted like the flowers but out where the grass is tallest, near the walls.
+// The same keys as "flowers field"; wind: how much of the grass's wind they take (tall and supple: more); retries: see
+// below (0 when missing, as for the flowers).
+reeds field{
+	material Tumbu/FieldFlower
+	meshes reed_pampas reed_cattail
+	clumps 8
+	ringFrom 21
+	ringTo 27
+	perClumpMin 2
+	perClumpMax 3
+	clumpRadius 0.8
+	scale 1.25
+	scaleJitter 0.4
+	lean 6
+	wind 1.3
+	// a clump that finds no ground tries another spot this many times (the walls and seats cover much of this band)
+	retries 8
+	seed 91
+}

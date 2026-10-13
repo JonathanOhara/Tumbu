@@ -862,7 +862,7 @@ bool DevTest::getHeroStart( Ogre::Vector3 &position ){
 }
 //-------------------------------------------------------------------------------------
 // -hide=field,coliseum,...: hides parts of the arena for the run, to find which one draws something. Names: dust, sky,
-// grass (the tall grass and its flowers), flowers, or an entity's name without "Entity" (field, arena, coliseum, torches).
+// grass (the tall grass, its flowers and reeds), flowers, reeds, or an entity's name without "Entity" (field, arena, coliseum, torches).
 void DevTest::hideObjects(void){
 	if( hideList.empty() ){
 		return;
@@ -878,6 +878,9 @@ void DevTest::hideObjects(void){
 			hidden = true;
 		}else if( name == "flowers" && sceneMgr->hasSceneNode( "FlowerNode" ) ){
 			sceneMgr->getSceneNode( "FlowerNode" )->setVisible( false );
+			hidden = true;
+		}else if( name == "reeds" && sceneMgr->hasSceneNode( "ReedNode" ) ){
+			sceneMgr->getSceneNode( "ReedNode" )->setVisible( false );
 			hidden = true;
 		}else if( name == "dust" || name == "sky" ){
 			const Ogre::String type = name == "dust" ? "ParticleSystem" : "ManualObject";

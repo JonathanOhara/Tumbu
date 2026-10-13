@@ -14,9 +14,9 @@ class btCollisionObject;
  *  Every vertex carries its blade's root, height and seed, so the vertex shader (grass.vert) bends each blade: wind gusts
  *  rolling across the field, and pushed aside by the robots' feet and by energy balls flying low over it. The blades are
  *  static ManualObjects in square chunks (culled separately). Tuning in media/configuration/grass.object.
- *  The flowers: a few small models made in Blender (art/arena/Flowers.blend, scripts/arena-flowers.ps1), planted in
- *  clumps among the grass by the same ground rules ("flowers field" in grass.object) and bent by the same motion
- *  (flower.vert, TumbuGrass.h); their chunks hang under their own node. */
+ *  The flowers and the reeds: small models made in Blender (art/arena/Flowers.blend, scripts/arena-flowers.ps1), planted
+ *  in clumps among the grass by the same ground rules ("flowers field" and "reeds field" in grass.object) and bent by the
+ *  same motion (flower.vert, TumbuGrass.h); their chunks hang under their own nodes. */
 class Grass{
 public:
 	/// Builds the grass; `field` is the field's collision object in `world` (the others cover the ground).
@@ -27,6 +27,8 @@ public:
 	Ogre::SceneNode* getNode(void){ return node; }
 	/// The flowers' scene node, "FlowerNode" (DevTest -hide=flowers).
 	Ogre::SceneNode* getFlowerNode(void){ return flowerNode; }
+	/// The reeds' scene node, "ReedNode" (DevTest -hide=reeds).
+	Ogre::SceneNode* getReedNode(void){ return reedNode; }
 
 private:
 	struct Map{
@@ -42,6 +44,7 @@ private:
 	Ogre::SceneManager* mSceneMgr;
 	Ogre::SceneNode* node;
 	Ogre::SceneNode* flowerNode;
+	Ogre::SceneNode* reedNode;
 	std::vector<Ogre::ManualObject*> chunks;
 };
 

@@ -117,8 +117,8 @@ in the way of a run (for example a window behind others that does not render), d
     (the painted sky without / with its clouds), `-hero=robotNNN` (the hero wears all five parts of that set), `-nofx`
     (no special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the
     bloom alone, x3: its shape, and its flicker in a strip), `-hide=a,b` (hides `dust`, `sky`, or an entity without its
-    `Entity` suffix: `field`, `arena`, `coliseum`, `torches`; `grass` the tall grass and its flowers, `flowers` the
-    flowers alone), `-heropos=x,z` (the hero starts
+    `Entity` suffix: `field`, `arena`, `coliseum`, `torches`; `grass` the tall grass with its flowers and reeds,
+    `flowers` or `reeds` those alone), `-heropos=x,z` (the hero starts
     there instead of on the ring, dropped onto the ground: in the tall grass, to see it pushed aside).
   - Shots: `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first),
     `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point), `-fxtest=NAME` / `-fxtime=S` (starts
@@ -503,6 +503,12 @@ materials, textures, GUI) gets a before/after set:
     stiffer (`flowerParams`); `flower.frag` lights the painted colours like the grass, both sides of a petal. Placement:
     `flowers field` in `grass.object`. The grass's log line ends with the flower count, and each clump is logged with
     its kind and position (to aim a `-camera` at it).
+  - **The reeds** (2026-10-13): the same pipeline and code for tall plants: `reed_pampas` (straw stems, cream plumes
+    flagging to one side) and `reed_cattail` (brown heads among arching leaves) in the same `Flowers.blend`, planted by
+    `reeds field` in `grass.object` near the walls (21 to 27 units out), larger (2 to 3 m) and swaying more (`wind`, the
+    set's share of the grass's wind, in uv0.y). `retries` lets a clump that found no ground (the walls and seats cover
+    much of that band) try another spot; the flowers have none, so their layout stays. Chunks `Reeds<key>` under
+    `ReedNode`; DevTest `-hide=reeds`.
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.

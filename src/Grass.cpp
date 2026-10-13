@@ -75,11 +75,17 @@ namespace{
 	struct Chunk{
 		std::vector<float> vertices;    // position 3, normal 3, uv0 4, uv1 4
 		std::vector<Ogre::uint32> indices;
-		std::vector<float> flowerVertices;    // position 3, normal 3, uv0 4, uv1 4, colour 4
-		std::vector<Ogre::uint32> flowerIndices;
+		// per plant set (the flowers, the reeds): position 3, normal 3, uv0 4, uv1 4, colour 4
+		std::vector<float> plantVertices[2];
+		std::vector<Ogre::uint32> plantIndices[2];
 		size_t count( void ) const { return vertices.size() / 14; }
-		size_t flowerCount( void ) const { return flowerVertices.size() / 18; }
+		size_t plantCount( int set ) const { return plantVertices[set].size() / 18; }
 	};
+
+	// The plant sets: their block in grass.object ("<type> field"), the prefix of their chunks' names, their node.
+	const int PLANT_SETS = 2;
+	const char* PLANT_TYPES[PLANT_SETS] = { "flowers", "reeds" };
+	const char* PLANT_OBJECTS[PLANT_SETS] = { "Flowers", "Reeds" };
 
 	// A flower model (media/tumbu/arena/flower_<kind>.mesh): its root at the origin, growing up y.
 	struct FlowerModel{
@@ -197,6 +203,7 @@ Grass::Grass( Ogre::SceneManager* sceneMgr, btCollisionWorld* world, const btCol
 	mSceneMgr = sceneMgr;
 	node = mSceneMgr->getRootSceneNode()->createChildSceneNode( "GrassNode" );
 	flowerNode = node->createChildSceneNode( "FlowerNode" );
+	reedNode = node->createChildSceneNode( "ReedNode" );
 	build( world, field );
 }
 //-------------------------------------------------------------------------------------
@@ -206,6 +213,7 @@ Grass::~Grass(void){
 	}
 	chunks.clear();
 	mSceneMgr->destroySceneNode( flowerNode );
+	mSceneMgr->destroySceneNode( reedNode );
 	mSceneMgr->destroySceneNode( node );
 }
 //-------------------------------------------------------------------------------------
@@ -370,81 +378,94 @@ void Grass::build( btCollisionWorld* world, const btCollisionObject* field ){
 		placed++;
 	}
 
-	// The flowers: clumps of one kind each, spread around the ring between ringFrom and ringTo from the centre, on
-	// ground where the tall grass grows. Each flower is its model turned, scaled and leaning a little, already in world
-	// space, carrying what flower.vert needs to bend it like a blade.
-	int flowers = 0, flowerClumps = 0;
-	ConfigNode* fcfg = ConfigScriptLoader::getSingleton().getConfigScript( "flowers", "field" );
-	std::vector<FlowerModel> models;
-	if( fcfg != NULL && fcfg->findChild( "meshes" ) != NULL ){
-		const std::vector<Ogre::String> &names = fcfg->findChild( "meshes" )->getValues();
-		for( size_t m = 0; m < names.size(); m++ ){
-			FlowerModel model;
-			if( readFlower( names[m], model ) ){
-				models.push_back( model );
+	// The plants (PLANT_SETS: the flowers, the reeds): clumps of one kind each, spread around the ring between ringFrom
+	// and ringTo from the centre, on ground where the tall grass grows. Each plant is its model turned, scaled and leaning
+	// a little, already in world space, carrying what flower.vert needs to bend it like a blade.
+	int plants[PLANT_SETS] = { 0, 0 }, plantClumps[PLANT_SETS] = { 0, 0 }, plantKinds[PLANT_SETS] = { 0, 0 };
+	Ogre::String plantMaterial[PLANT_SETS];
+	for( int set = 0; set < PLANT_SETS; set++ ){
+		ConfigNode* pcfg = ConfigScriptLoader::getSingleton().getConfigScript( PLANT_TYPES[set], "field" );
+		std::vector<FlowerModel> models;
+		if( pcfg != NULL && pcfg->findChild( "meshes" ) != NULL ){
+			const std::vector<Ogre::String> &names = pcfg->findChild( "meshes" )->getValues();
+			for( size_t m = 0; m < names.size(); m++ ){
+				FlowerModel model;
+				if( readFlower( names[m], model ) ){
+					models.push_back( model );
+				}
 			}
 		}
-	}
-	const Ogre::String flowerMaterial = fcfg != NULL && fcfg->findChild( "material" ) != NULL ? fcfg->findChild( "material" )->getValue() : "Tumbu/FieldFlower";
-	if( !models.empty() ){
-		// the flowers sway and part with the grass
-		setVertexParam( flowerMaterial, "windParams", vertexParam( material, "windParams", Ogre::Vector4( 0.8f, 0.6f, 0.35f, 9 ) ) );
-		setVertexParam( flowerMaterial, "pushParams", vertexParam( material, "pushParams", Ogre::Vector4( 1.2f, 1.6f, 1.6f, 1.2f ) ) );
-		const int clumps		= (int)configValue( fcfg, "clumps", 10.0f );
-		const float ringFrom	= configValue( fcfg, "ringFrom", 14.5f );
-		const float ringTo		= configValue( fcfg, "ringTo", 19.0f );
-		const float clumpRadius	= configValue( fcfg, "clumpRadius", 0.6f );
-		const int perClumpMin	= (int)configValue( fcfg, "perClumpMin", 3.0f );
-		const int perClumpMax	= std::max( perClumpMin, (int)configValue( fcfg, "perClumpMax", 6.0f ) );
-		const float scaleMin	= configValue( fcfg, "scale", 0.85f );
-		const float scaleJitter	= configValue( fcfg, "scaleJitter", 0.35f );
-		const float leanMax		= configValue( fcfg, "lean", 8.0f );
-		std::mt19937 frng( (unsigned)configValue( fcfg, "seed", 77.0f ) );
+		plantKinds[set] = (int)models.size();
+		plantMaterial[set] = pcfg != NULL && pcfg->findChild( "material" ) != NULL ? pcfg->findChild( "material" )->getValue() : "Tumbu/FieldFlower";
+		if( models.empty() ){
+			continue;
+		}
+		// the plants sway and part with the grass
+		setVertexParam( plantMaterial[set], "windParams", vertexParam( material, "windParams", Ogre::Vector4( 0.8f, 0.6f, 0.35f, 9 ) ) );
+		setVertexParam( plantMaterial[set], "pushParams", vertexParam( material, "pushParams", Ogre::Vector4( 1.2f, 1.6f, 1.6f, 1.2f ) ) );
+		const int clumps		= (int)configValue( pcfg, "clumps", 10.0f );
+		const float ringFrom	= configValue( pcfg, "ringFrom", 14.5f );
+		const float ringTo		= configValue( pcfg, "ringTo", 19.0f );
+		const float clumpRadius	= configValue( pcfg, "clumpRadius", 0.6f );
+		const int perClumpMin	= (int)configValue( pcfg, "perClumpMin", 3.0f );
+		const int perClumpMax	= std::max( perClumpMin, (int)configValue( pcfg, "perClumpMax", 6.0f ) );
+		const float scaleMin	= configValue( pcfg, "scale", 0.85f );
+		const float scaleJitter	= configValue( pcfg, "scaleJitter", 0.35f );
+		const float leanMax		= configValue( pcfg, "lean", 8.0f );
+		const float wind		= configValue( pcfg, "wind", 1.0f );
+		// a clump that found no ground (all its tries on the earth, the snow or under the walls) tries another spot
+		const int retries		= (int)configValue( pcfg, "retries", 0.0f );
+		std::mt19937 frng( (unsigned)configValue( pcfg, "seed", 77.0f ) );
 		// every kind in turn, from a shuffled start, so a few clumps already show them all
 		const int firstKind = (int)( frng() % models.size() );
 		for( int c = 0; c < clumps; c++ ){
 			const FlowerModel &model = models[( firstKind + c ) % models.size()];
-			const float angle = ( c + 0.2f + 0.6f * U( frng ) ) / clumps * Ogre::Math::TWO_PI;
-			const float radius = ringFrom + U( frng ) * ( ringTo - ringFrom );
-			const float cx = std::cos( angle ) * radius, cz = std::sin( angle ) * radius;
-			const int count = perClumpMin + (int)( frng() % ( perClumpMax - perClumpMin + 1 ) );
 			int grown = 0;
-			for( int f = 0, tries = 0; f < count && tries < count * 6; tries++ ){
-				const float a = U( frng ) * Ogre::Math::TWO_PI, d = std::sqrt( U( frng ) ) * clumpRadius;
-				const float x = cx + std::cos( a ) * d, z = cz + std::sin( a ) * d;
-				Ogre::Vector3 root, normal;
-				float tall;
-				if( ground( x, z, frng, root, normal, tall ) != 0 ){
-					continue;
+			float cx = 0, cz = 0;
+			for( int attempt = 0; attempt <= retries && grown == 0; attempt++ ){
+				const float angle = ( c + 0.2f + 0.6f * U( frng ) ) / clumps * Ogre::Math::TWO_PI;
+				const float radius = ringFrom + U( frng ) * ( ringTo - ringFrom );
+				cx = std::cos( angle ) * radius;
+				cz = std::sin( angle ) * radius;
+				const int count = perClumpMin + (int)( frng() % ( perClumpMax - perClumpMin + 1 ) );
+				for( int f = 0, tries = 0; f < count && tries < count * 6; tries++ ){
+					const float a = U( frng ) * Ogre::Math::TWO_PI, d = std::sqrt( U( frng ) ) * clumpRadius;
+					const float x = cx + std::cos( a ) * d, z = cz + std::sin( a ) * d;
+					Ogre::Vector3 root, normal;
+					float tall;
+					if( ground( x, z, frng, root, normal, tall ) != 0 ){
+						continue;
+					}
+					f++;
+					const float scale = scaleMin + scaleJitter * U( frng );
+					const float yaw = U( frng ) * Ogre::Math::TWO_PI, leanDir = U( frng ) * Ogre::Math::TWO_PI;
+					const Ogre::Quaternion turn = Ogre::Quaternion( Ogre::Degree( leanMax * U( frng ) ), Ogre::Vector3( std::cos( leanDir ), 0, std::sin( leanDir ) ) )
+						* Ogre::Quaternion( Ogre::Radian( yaw ), Ogre::Vector3::UNIT_Y );
+					const float tone = U( frng ), seed = U( frng );
+					const float height = model.height * scale;
+					Chunk &chunk = built[chunkKey( x, z )];
+					const Ogre::uint32 base = (Ogre::uint32)chunk.plantCount( set );
+					for( size_t v = 0; v < model.positions.size(); v++ ){
+						const Ogre::Vector3 p = root + turn * ( model.positions[v] * scale );
+						const Ogre::Vector3 n = turn * model.normals[v];
+						const Ogre::ColourValue &col = model.colours[v];
+						const float t = Ogre::Math::Clamp( model.positions[v].y / model.height, 0.0f, 1.0f );
+						const float data[18] = { p.x, p.y, p.z, n.x, n.y, n.z, t, wind, tone, seed, root.x, root.y, root.z, height,
+							col.r, col.g, col.b, col.a };
+						chunk.plantVertices[set].insert( chunk.plantVertices[set].end(), data, data + 18 );
+					}
+					for( size_t k = 0; k < model.indices.size(); k++ ){
+						chunk.plantIndices[set].push_back( base + model.indices[k] );
+					}
+					grown++;
+					plants[set]++;
 				}
-				f++;
-				const float scale = scaleMin + scaleJitter * U( frng );
-				const float yaw = U( frng ) * Ogre::Math::TWO_PI, leanDir = U( frng ) * Ogre::Math::TWO_PI;
-				const Ogre::Quaternion turn = Ogre::Quaternion( Ogre::Degree( leanMax * U( frng ) ), Ogre::Vector3( std::cos( leanDir ), 0, std::sin( leanDir ) ) )
-					* Ogre::Quaternion( Ogre::Radian( yaw ), Ogre::Vector3::UNIT_Y );
-				const float tone = U( frng ), seed = U( frng );
-				const float height = model.height * scale;
-				Chunk &chunk = built[chunkKey( x, z )];
-				const Ogre::uint32 base = (Ogre::uint32)chunk.flowerCount();
-				for( size_t v = 0; v < model.positions.size(); v++ ){
-					const Ogre::Vector3 p = root + turn * ( model.positions[v] * scale );
-					const Ogre::Vector3 n = turn * model.normals[v];
-					const Ogre::ColourValue &col = model.colours[v];
-					const float t = Ogre::Math::Clamp( model.positions[v].y / model.height, 0.0f, 1.0f );
-					const float data[18] = { p.x, p.y, p.z, n.x, n.y, n.z, t, 0, tone, seed, root.x, root.y, root.z, height,
-						col.r, col.g, col.b, col.a };
-					chunk.flowerVertices.insert( chunk.flowerVertices.end(), data, data + 18 );
-				}
-				for( size_t k = 0; k < model.indices.size(); k++ ){
-					chunk.flowerIndices.push_back( base + model.indices[k] );
-				}
-				grown++;
-				flowers++;
 			}
 			if( grown > 0 ){
-				flowerClumps++;
-				Ogre::LogManager::getSingleton().logMessage( "[Grass] flower clump: " + Ogre::StringConverter::toString( grown ) + " "
-					+ model.name + " at " + Ogre::StringConverter::toString( cx ) + " " + Ogre::StringConverter::toString( cz ) );
+				plantClumps[set]++;
+				Ogre::LogManager::getSingleton().logMessage( "[Grass] " + Ogre::String( PLANT_TYPES[set] ) + " clump: "
+					+ Ogre::StringConverter::toString( grown ) + " " + model.name + " at " + Ogre::StringConverter::toString( cx ) + " "
+					+ Ogre::StringConverter::toString( cz ) );
 			}
 		}
 	}
@@ -452,25 +473,28 @@ void Grass::build( btCollisionWorld* world, const btCollisionObject* field ){
 	size_t vertices = 0, grassChunks = 0;
 	for( std::map<int, Chunk>::iterator c = built.begin(); c != built.end(); c++ ){
 		const Chunk &chunk = c->second;
-		if( chunk.flowerCount() > 0 ){
-			Ogre::ManualObject* fo = mSceneMgr->createManualObject( "Flowers" + Ogre::StringConverter::toString( c->first ) );
+		for( int set = 0; set < PLANT_SETS; set++ ){
+			if( chunk.plantCount( set ) == 0 ){
+				continue;
+			}
+			Ogre::ManualObject* fo = mSceneMgr->createManualObject( PLANT_OBJECTS[set] + Ogre::StringConverter::toString( c->first ) );
 			fo->setCastShadows( false );
-			fo->estimateVertexCount( chunk.flowerCount() );
-			fo->estimateIndexCount( chunk.flowerIndices.size() );
-			fo->begin( flowerMaterial, Ogre::RenderOperation::OT_TRIANGLE_LIST, "Game" );
-			for( size_t v = 0; v < chunk.flowerCount(); v++ ){
-				const float* d = &chunk.flowerVertices[v * 18];
+			fo->estimateVertexCount( chunk.plantCount( set ) );
+			fo->estimateIndexCount( chunk.plantIndices[set].size() );
+			fo->begin( plantMaterial[set], Ogre::RenderOperation::OT_TRIANGLE_LIST, "Game" );
+			for( size_t v = 0; v < chunk.plantCount( set ); v++ ){
+				const float* d = &chunk.plantVertices[set][v * 18];
 				fo->position( d[0], d[1], d[2] );
 				fo->normal( d[3], d[4], d[5] );
 				fo->colour( d[14], d[15], d[16], d[17] );
 				fo->textureCoord( d[6], d[7], d[8], d[9] );
 				fo->textureCoord( d[10], d[11], d[12], d[13] );
 			}
-			for( size_t k = 0; k < chunk.flowerIndices.size(); k++ ){
-				fo->index( chunk.flowerIndices[k] );
+			for( size_t k = 0; k < chunk.plantIndices[set].size(); k++ ){
+				fo->index( chunk.plantIndices[set][k] );
 			}
 			fo->end();
-			flowerNode->attachObject( fo );
+			( set == 0 ? flowerNode : reedNode )->attachObject( fo );
 			chunks.push_back( fo );
 		}
 		if( chunk.count() == 0 ){
@@ -501,7 +525,8 @@ void Grass::build( btCollisionWorld* world, const btCollisionObject* field ){
 		+ Ogre::StringConverter::toString( (int)vertices ) + " vertices in " + Ogre::StringConverter::toString( (int)grassChunks )
 		+ " chunks (" + Ogre::StringConverter::toString( (int)candidates ) + " tried: " + Ogre::StringConverter::toString( (int)onEarth )
 		+ " on earth or snow, " + Ogre::StringConverter::toString( (int)covered ) + " covered) in "
-		+ Ogre::StringConverter::toString( (int)timer.getMilliseconds() ) + " ms; " + Ogre::StringConverter::toString( flowers )
-		+ " flowers in " + Ogre::StringConverter::toString( flowerClumps ) + " clumps of " + Ogre::StringConverter::toString( models.size() )
-		+ " kinds" );
+		+ Ogre::StringConverter::toString( (int)timer.getMilliseconds() ) + " ms; " + Ogre::StringConverter::toString( plants[0] )
+		+ " flowers in " + Ogre::StringConverter::toString( plantClumps[0] ) + " clumps of " + Ogre::StringConverter::toString( plantKinds[0] )
+		+ " kinds; " + Ogre::StringConverter::toString( plants[1] ) + " reeds in " + Ogre::StringConverter::toString( plantClumps[1] )
+		+ " clumps of " + Ogre::StringConverter::toString( plantKinds[1] ) + " kinds" );
 }
