@@ -123,7 +123,9 @@ shadows with normal offset (a single map is right for an arena this small), the 
     Dawn: almost all vegetation placed at run time from density maps). Xenoblade 3 has no public talk; its screenshots
     show the same split (blades, plus clumps of stems with flower heads). For us: a few flower models made in Blender
     (stem, leaves, a toon head), copied into the grass chunks by `Grass` where a field-map channel or a drift noise says
-    so, bent by the same wind and push (root and height in uv1).
+    so, bent by the same wind and push (root and height in uv1). First look done (2026-10-13): five kinds, ten clumps
+    around the ring (CLAUDE.md, "The flowers"); next, after Jonathan's look: how many, where (drifts, or a field-map
+    channel), more kinds.
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first rule in
   CLAUDE.md.

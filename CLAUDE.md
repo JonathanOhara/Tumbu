@@ -93,7 +93,8 @@ in the way of a run (for example a window behind others that does not render), d
 .\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
 .\scripts\devtest.ps1 -VideoMode 1600x900 -NoHud -Name big  # window size (default 1024x768; at most 1600x900), no HUD
 .\scripts\devtest.ps1 -GuiTour [-Hour 22]          # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
-.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # memory check: 40 matches via the real UI (see "Memory check")
+.\scripts\memcheck.ps1                              # memory check, both renderers, judged: one PASS/FAIL line each (~25 min)
+.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # the same run on one renderer, with the full report (see "Memory check")
 .\scripts\devtest.ps1 -Hide field -Name …           # parts of the scene hidden: which one draws something?
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated 8 s runs, D3D11 + OpenGL (~4-7 min)
 .\scripts\bench.ps1 -Quick -Name … -Variants …      # light changes: 1920x1080, exactly 2 rounds (~3 min)
@@ -116,7 +117,8 @@ in the way of a run (for example a window behind others that does not render), d
     (the painted sky without / with its clouds), `-hero=robotNNN` (the hero wears all five parts of that set), `-nofx`
     (no special-attack effects or ki aura, to compare frame rate or memory), `-bloomonly` (the final image shows the
     bloom alone, x3: its shape, and its flicker in a strip), `-hide=a,b` (hides `dust`, `sky`, or an entity without its
-    `Entity` suffix: `field`, `arena`, `coliseum`, `torches`; `grass` the tall grass), `-heropos=x,z` (the hero starts
+    `Entity` suffix: `field`, `arena`, `coliseum`, `torches`; `grass` the tall grass and its flowers, `flowers` the
+    flowers alone), `-heropos=x,z` (the hero starts
     there instead of on the ring, dropped onto the ground: in the tall grass, to see it pushed aside).
   - Shots: `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first),
     `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point), `-fxtest=NAME` / `-fxtime=S` (starts
@@ -138,9 +140,13 @@ in the way of a run (for example a window behind others that does not render), d
     `-Sky 0`, `-FxTest NAME [-FxTime 0.3]`, `-JynHit 6`, `-BloomOnly`, `-Hide …`, `-NoHud`, …).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
-- **Memory check:** `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` runs `TUMBU.exe -cycles=40` (40 matches through
-  the real UI) and prints the heap after each match, the summary, and the heap growth per match in the first and the
-  second half. `heap` is the bytes really in use. The game logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks
+- **Memory check:** `.\scripts\memcheck.ps1` is the routine one: it runs the 40 matches on Direct3D 11 and then OpenGL
+  and checks them against the expected values below (objects flat; OpenGL growth within 30 KB per match; Direct3D 11
+  second-half growth within 300 KB per match and the plateau under 100 MB), printing one PASS/FAIL line per renderer.
+  It keeps each full report in `%USERPROFILE%\Tumbu\memcheck-<renderer>.txt`: read that only on a FAIL (and keep its
+  thresholds in step with this paragraph). Underneath, `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` runs
+  `TUMBU.exe -cycles=40` (40 matches through the real UI) and prints the heap after each match, the summary, and the
+  heap growth per match in the first and the second half. `heap` is the bytes really in use. The game logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks
   nodes=… entities=… materials=…` after each match, `heap growth by block size` and the DLL that owns sample blocks (to
   find what grows), and at the end `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED`, also appended
   to `%USERPROFILE%\Tumbu\memory-history.csv` (date, renderer, driver, Ogre, heap, growth).
@@ -470,6 +476,19 @@ materials, textures, GUI) gets a before/after set:
   and neon. No shadow cast. Tuning: `media/configuration/grass.object` (placement) and
   `media/tumbu/arena/field_grass.material` (`Tumbu/FieldGrass`: wind, push, colours). DevTest `-heropos=x,z` starts the
   hero there (in the grass) to look at the push.
+  - **The flowers** (2026-10-13, after the Xenoblade meadows): the blades are generated, the flowers are made by hand,
+    as in the games that document it (Ghost of Tsushima, Horizon Zero Dawn). Five toon models (daisy, poppy, lupine,
+    forget-me-not, marigold) in `art/arena/Flowers.blend`, built by `scripts/blender/arena_flowers.py` and exported by
+    `.\scripts\arena-flowers.ps1` to `media/tumbu/arena/flower_<kind>.mesh`: root at the origin, colours as Vertex Paint
+    (the colour attribute "Col"; blender2ogre writes linear values, `Grass` turns them back to sRGB), no UVs. `Grass`
+    reads each mesh's triangles (shadow buffers, then removes it), plants `clumps` of one kind each around the ring
+    (`ringFrom` .. `ringTo` units from the centre) with the blades' own ground test, turned, scaled and leaning, and
+    bakes them into per-chunk ManualObjects (`Flowers<key>`, under `FlowerNode`, a child of `GrassNode`; material
+    `Tumbu/FieldFlower`, `media/tumbu/arena/field_flower.material`). `flower.vert` bends them with the grass's motion
+    (`TumbuGrass.h`, shared with `grass.vert`; `Grass` copies `windParams` / `pushParams` from `Tumbu/FieldGrass`),
+    stiffer (`flowerParams`); `flower.frag` lights the painted colours like the grass, both sides of a petal. Placement:
+    `flowers field` in `grass.object`. The grass's log line ends with the flower count, and each clump is logged with
+    its kind and position (to aim a `-camera` at it).
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.
@@ -658,7 +677,8 @@ through a listener registry in `BaseApplication`.
   rope materials to `Arena.blend` (each step once; the object property `tumbu_shapes` records them), and
   `.\scripts\arena-textures.ps1` generates the stone, tile, emblem and meadow textures. `scripts/blender/arena_field.py`
   (`.\scripts\arena-field.ps1`) built the field and its first field map; editing the field (sculpting the ground,
-  painting the map) is DEV_SETUP Part B, "The field".
+  painting the map) is DEV_SETUP Part B, "The field". `art/arena/Flowers.blend` holds the field's flowers
+  (`.\scripts\arena-flowers.ps1`; DEV_SETUP Part B, "The flowers").
   `art/robots/robot00N.blend` are the robots, converted once from 2.49 with Blender 4.5 LTS
   (`scripts/convert-legacy-blend.ps1`, which keeps the animations). They are the source for any robot change.
   `.\scripts\bake-robot-ao.ps1` bakes `media/tumbu/robot00N/AO<part>UV_00N.png` through the texture UVs (each
@@ -678,8 +698,10 @@ through a listener registry in `BaseApplication`.
 
 - **How a piece of work goes:** step by step, and after each step that works: its checks (below and "Automated checks"),
   the docs updated, then commit and **push straight to `master`** (`git -c http.sslBackend=schannel push origin master`;
-  no branches unless Jonathan asks). Run `.\scripts\devtest.ps1 -Cycles 40` on both renderers after a step that adds or
-  changes GPU resources, render targets, materials or objects created per match. Before/after images and bench
+  no branches unless Jonathan asks). Run `.\scripts\memcheck.ps1` (both renderers, about 25 minutes, in the background)
+  after a step that adds or changes GPU resources, render targets, materials or objects created per match: a leak per
+  match shows nowhere else. Not needed for a change of values only (tuning in `*.object` or material parameters,
+  textures replaced at the same size). Before/after images and bench
   results go in `%USERPROFILE%\Tumbu\<feature>\` and are named only in the chat report: **never write those folder
   paths into CLAUDE.md or docs/** (Jonathan cleans the folder up); put the numbers and findings there instead.
 - **Geometry: Blender is the source of truth.** Never edit a `.mesh` (or `.skeleton`) file directly, by hand,

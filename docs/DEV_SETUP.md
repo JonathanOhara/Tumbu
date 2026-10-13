@@ -138,7 +138,9 @@ quit.
 - `.\scripts\devtest.ps1 -GuiTour` (the game switch is `-guitour`) walks through every GUI screen and saves
   `devtest-gui-*.png`: start menu, options, dialogs, HUD, ESC menu, inventory. It then quits to the menu, plays a
   second match and leaves with Exit. Clicks are real mouse events through the game's input dispatch.
-- **Memory leak check:** `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` (the game switch is `-cycles=N`) plays
+- **Memory leak check:** `.\scripts\memcheck.ps1` runs it on both renderers and judges it (one PASS/FAIL line each;
+  the full reports in `%USERPROFILE%\Tumbu\memcheck-<renderer>.txt`). One renderer with the full report:
+  `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` (the game switch is `-cycles=N`) plays
   matches through the menus, with 3 enemy kills each, then Quit, and prints the heap after each match.
   - Healthy: every object count (nodes, entities, materials, textures, meshes, widgets) returns to the same value each
     time, and the heap stops growing: on OpenGL from the second match on; on Direct3D 11 after about 18 matches, when
@@ -342,8 +344,27 @@ The ground around the ring and the hills beyond the walls: `media/tumbu/arena/fi
   `-Rebuild`, which builds the field again from the 2011 terrain, and `-NewMap`, which writes the first map again, discard
   hand work). The field casts no shadow. Its AO uses the scene's `tumbu_ao_distance` like the rest of the arena.
 - **Tuning without Blender:** the meadow's look is in `media/tumbu/arena/field.material` (tile sizes, edge breakup, the
-  earth's rim, the hills' earth, the snow and the earth on its steep faces), the textures in `scripts/blender/arena_textures.py` (`.\scripts\arena-textures.ps1
-  -Only meadow`).
+  earth's rim, the hills' earth, the snow and the earth on its steep faces), the textures in
+  `scripts/blender/arena_textures.py` (`.\scripts\arena-textures.ps1 -Only meadow`).
+
+### The flowers (`art/arena/Flowers.blend`)
+
+- **What is in Flowers.blend:** the collection "Flowers" with one object per kind: `flower_daisy`, `flower_poppy`,
+  `flower_lupine`, `flower_forgetmenot`, `flower_marigold`. Each grows from its origin (the root) up Blender's z, in
+  metres; the objects stand side by side only for viewing (the export takes each mesh around its own origin). The
+  colours are the colour attribute "Col": Vertex Paint mode, or Edit Mode with face selection and Paint > Set Vertex
+  Colors. What the viewport shows is what the game draws.
+- **Changing a flower:** edit its vertices (Edit Mode) or its colours (Vertex Paint), keep the root at the origin and the
+  flower upright, save, then run `.\scripts\arena-flowers.ps1`: it exports every `flower_*` object of the collection to
+  `media/tumbu/arena/flower_<kind>.mesh`. Start a match. Petals and leaves can be single faces (the game draws both
+  sides). Keep a flower to a few hundred vertices; the game copies it once per planted flower.
+- **A new kind:** add an object named `flower_<kind>` to the "Flowers" collection (origin at its root, a "Col" colour
+  attribute), export, and add `flower_<kind>` to `meshes` in `media/configuration/grass.object` ("flowers field").
+- **How many and where:** `flowers field` in `grass.object`: `clumps` (each of one kind, the kinds in turn), `ringFrom` /
+  `ringTo` (distance from the centre), flowers per clump, size and lean. Restart the match to see a change. The sway and
+  the shading are in `media/tumbu/arena/field_flower.material`.
+- **Rules:** `arena-flowers.ps1 -Rebuild` builds every flower again from `scripts/blender/arena_flowers.py` and
+  **discards hand edits**; without it the script only builds the kinds the file does not have yet.
 
 ### Robot export (`art/robots/robot00N.blend` -> `media/tumbu/robot00N/`)
 

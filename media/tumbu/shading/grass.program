@@ -1,4 +1,5 @@
-// The field's tall grass (grass.vert / grass.frag; material Tumbu/FieldGrass in media/tumbu/arena/field_grass.material).
+// The field's tall grass (grass.vert / grass.frag; material Tumbu/FieldGrass in media/tumbu/arena/field_grass.material)
+// and its flowers (below).
 vertex_program grass_vs glsl glsles hlsl
 {
     source grass.vert
@@ -13,6 +14,30 @@ vertex_program grass_vs glsl glsles hlsl
 fragment_program grass_ps glsl glsles hlsl
 {
     source grass.frag
+    target ps_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto camPos camera_position
+        param_named_auto texViewProj texture_viewproj_matrix 0
+    }
+}
+
+// The field's flowers (flower.vert / flower.frag; material Tumbu/FieldFlower in media/tumbu/arena/field_flower.material).
+vertex_program flower_vs glsl glsles hlsl
+{
+    source flower.vert
+    target vs_4_0
+    default_params
+    {
+        shared_params_ref TumbuLighting
+        param_named_auto wvpMat worldviewproj_matrix
+    }
+}
+
+fragment_program flower_ps glsl glsles hlsl
+{
+    source flower.frag
     target ps_4_0
     default_params
     {

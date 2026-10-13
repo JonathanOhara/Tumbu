@@ -1,0 +1,24 @@
+// The field's flowers: the models of art/arena/Flowers.blend (scripts/arena-flowers.ps1), planted among the tall grass by
+// Grass.cpp (media/configuration/grass.object, "flowers field"). The wind and the push are the grass's (Grass.cpp copies
+// windParams and pushParams from Tumbu/FieldGrass). Restart the match to see a change.
+material Tumbu/FieldFlower{
+    receive_shadows on
+    technique{
+        pass{
+            // petals and leaves are single faces, seen from both sides
+            cull_hardware none
+            vertex_program_ref flower_vs{
+                // how much of the grass's wind a flower takes (a stiffer stem), how much of its push
+                param_named flowerParams float4 0.6 0.8 0 0
+            }
+            fragment_program_ref flower_ps{
+                // occlusion at the foot (in the grass), translucency against the sun, tone variation between flowers
+                param_named flowerShade float4 0.6 0.35 0.16 0
+            }
+            texture_unit shadowMap{
+                content_type shadow
+                sampler_ref Tumbu/ShadowSampler
+            }
+        }
+    }
+}

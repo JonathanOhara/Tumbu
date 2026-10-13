@@ -32,3 +32,26 @@ grass field{
 	mapExtent 196
 	seed 1234
 }
+
+// The flowers among the tall grass (Grass.cpp): small models made in Blender (art/arena/Flowers.blend; exported to
+// media/tumbu/arena/<mesh>.mesh by scripts/arena-flowers.ps1), planted in clumps of one kind each, where the tall grass
+// grows (the same ground rules as the blades). They sway and part with the grass; their stiffness and shading are in
+// media/tumbu/arena/field_flower.material.
+flowers field{
+	material Tumbu/FieldFlower
+	// the kinds; the clumps take them in turn
+	meshes flower_daisy flower_poppy flower_lupine flower_forgetmenot flower_marigold
+	// clumps spread around the ring, between these distances from the centre (units)
+	clumps 10
+	ringFrom 14.5
+	ringTo 18
+	// flowers per clump (perClumpMin .. perClumpMax), within this radius of its centre (metres)
+	perClumpMin 3
+	perClumpMax 6
+	clumpRadius 0.6
+	// each flower: its model's size x (scale + scaleJitter x random), leaning up to `lean` degrees
+	scale 1.4
+	scaleJitter 0.4
+	lean 8
+	seed 77
+}

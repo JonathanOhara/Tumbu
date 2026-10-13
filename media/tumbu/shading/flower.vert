@@ -1,0 +1,51 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+// The field's flowers (Grass.cpp plants the models of art/arena/Flowers.blend), vertex stage: each flower bends from its
+// root like a blade of the tall grass (TumbuGrass.h; Grass copies windParams and pushParams from Tumbu/FieldGrass), only
+// stiffer (flowerParams). Each vertex carries its flower's root, height and seed and how far up the flower it is (t), and
+// its colour (Vertex Paint in Blender). The flowers are already in world space.
+#include <OgreUnifiedShader.h>
+#include "TumbuGrass.h"
+
+OGRE_UNIFORMS_BEGIN
+    uniform mat4 wvpMat;
+    uniform vec4 contactShadowA;
+    uniform vec4 contactShadowB;
+    uniform vec4 energyLightPos0;
+    uniform vec4 energyLightPos1;
+    uniform vec4 energyLightPos2;
+    uniform vec4 energyLightPos3;
+    uniform vec4 lampParams;
+    uniform vec4 windParams;    // the grass's (set by Grass.cpp)
+    uniform vec4 pushParams;    // the grass's (set by Grass.cpp)
+    // x how much of the grass's wind a flower takes, y how much of its push
+    uniform vec4 flowerParams;
+OGRE_UNIFORMS_END
+
+MAIN_PARAMETERS
+IN(vec4 vertex, POSITION)
+IN(vec3 normal, NORMAL)
+IN(vec4 colour, COLOR)
+IN(vec4 uv0, TEXCOORD0)     // t, 0, tone, seed
+IN(vec4 uv1, TEXCOORD1)     // root xyz, height
+// Direct3D 11 matches the vertex outputs to the fragment inputs by their order: keep both lists the same
+OUT(vec4 oUv, TEXCOORD0)
+OUT(vec3 oWorldPos, TEXCOORD1)
+OUT(vec3 oNormal, TEXCOORD2)
+OUT(vec4 oExtra, TEXCOORD3)
+OUT(vec4 oColour, TEXCOORD4)
+MAIN_DECLARATION
+{
+    vec4 wind = windParams;
+    wind.z *= flowerParams.x;
+    vec4 push = pushParams;
+    push.z *= flowerParams.y;
+    float pushed;
+    vec4 bent = grassBend(vertex.xyz, uv1.xyz, uv1.w, uv0.x, uv0.w, lampParams.z, wind, push,
+        contactShadowA, contactShadowB, energyLightPos0, energyLightPos1, energyLightPos2, energyLightPos3, pushed);
+    gl_Position = mul(wvpMat, vec4(bent.xyz, 1.0));
+    oWorldPos = bent.xyz;
+    oNormal = normal;
+    oUv = uv0;
+    oExtra = vec4(bent.w, pushed, 0.0, 0.0);
+    oColour = colour;
+}

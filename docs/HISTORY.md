@@ -177,6 +177,21 @@ session; they only mean something against the other variant of the same run.
   much and its round holes read as a pair of eyes on the middle peak. Cost on the peak view at 1920x1080: Direct3D 11
   +0.009 +/- 0.013 ms, OpenGL -0.008 +/- 0.030 ms, both not significant. Memory (40 matches): flat on both renderers (OpenGL 21.5 MB, the
   Direct3D 11 plateau 87 to 93 MB).
+- **Flowers, a first look** (2026-10-13, Jonathan, after Xenoblade 3's meadows: "a very small number, variations, a few
+  around the ring, to validate the look"). The research first: in the games that document it the flowers are not made by
+  the blade generator but are hand-made models placed by the same rules (Ghost of Tsushima: GPU-instanced flowers and
+  pampas grass in its grass tiles; Horizon Zero Dawn: run-time placement from density maps); Xenoblade 3 has no public
+  talk, its screenshots show the same split. Five kinds made in Blender by a script (`arena_flowers.py`), colours as
+  vertex colours so they can be painted by hand: daisy, poppy, lupine, forget-me-not, marigold. Ten clumps of 3 to 6,
+  one kind each, 14.5 to 18 units from the centre (35 flowers in 8 clumps: two clumps found no ground in the grass).
+  - At real flower sizes (0.35 to 0.6 m, 5 mm stems) they were lost among the toon blades (up to 0.9 m and wide): heads
+    35 % bigger and stems 1.6x thicker in Blender, planted 1.4 to 1.8x larger (0.5 to 1.1 m).
+  - The blade layout stays exactly the same (45,204 blades): the ground test became a shared lambda that draws its random
+    number at the same point.
+  - Cost on a close view of a clump at 1920x1080, flowers hidden against shown: Direct3D 11 +0.009 +/- 0.034 ms, OpenGL
+    +0.005 +/- 0.011 ms, both not significant. Memory (40 matches): flat on both renderers; OpenGL 21.6 MB after match 1
+    (about 0.6 MB above the run before the flowers in the same session: their material and programs, made once), the
+    Direct3D 11 plateau 91 MB, second half +54 KB per match.
 
 ## Memory
 
@@ -198,6 +213,10 @@ session; they only mean something against the other variant of the same run.
   (2026-10-10, for the bloom's flicker), `-nofocus` (2026-10-11: the window no longer takes Jonathan's keyboard focus;
   without it the game took the focus as soon as its window appeared), `-hide` (2026-10-11, to find which object draws
   something), `-nohud` (2026-10-11, clean review shots); `devtest.ps1 -GuiTour` (the GUI tour in a dev-size window).
+- **`memcheck.ps1`** (2026-10-13, Jonathan: the 40-match runs recur after every step that adds GPU resources, so make the
+  process a script and spend no tokens on reading 90 lines of numbers): both renderers in a row, judged against the
+  expected values in CLAUDE.md, one PASS/FAIL line each, the full reports kept for a FAIL. The analysis of a FAIL stays
+  by hand.
 - **Throwaway builds in `bin\scratch\`** (2026-10-10): Norton held every `TUMBU.exe` it found in a new place, so each run
   waited for its scan; `bin\` is excluded.
 - **Dev runs at 1600x900 or smaller** (2026-10-10): a window as big as the screen took over Jonathan's work.
