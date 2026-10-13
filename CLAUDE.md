@@ -93,7 +93,7 @@ in the way of a run (for example a window behind others that does not render), d
 .\scripts\devtest.ps1 -Renderer GL -Name gl        # this run on OpenGL (ogre.cfg switched for the run, always restored)
 .\scripts\devtest.ps1 -VideoMode 1600x900 -NoHud -Name big  # window size (default 1024x768; at most 1600x900), no HUD
 .\scripts\devtest.ps1 -GuiTour [-Hour 22]          # every GUI screen, Quit to menu, 2nd match, Exit: devtest-gui-*.png
-.\scripts\memcheck.ps1                              # memory check, both renderers, judged: one PASS/FAIL line each (~25 min)
+.\scripts\memcheck.ps1                              # memory check, both renderers, judged: a PASS/FAIL block with the numbers each (~25 min)
 .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]      # the same run on one renderer, with the full report (see "Memory check")
 .\scripts\devtest.ps1 -Hide field -Name …           # parts of the scene hidden: which one draws something?
 .\scripts\bench.ps1 -Name smaa -Variants "off=-AA 0","on=-AA 1"   # frame rate: alternated 8 s runs, D3D11 + OpenGL (~4-7 min)
@@ -140,13 +140,27 @@ in the way of a run (for example a window behind others that does not render), d
     `-Sky 0`, `-FxTest NAME [-FxTime 0.3]`, `-JynHit 6`, `-BloomOnly`, `-Hide …`, `-NoHud`, …).
 - DevTest clicks and key presses go through the real input dispatch: `BaseApplication`, then every listener,
   then MyGUI. A button the mouse cannot reach logs `click: the mouse cannot reach …`.
-- **Memory check:** `.\scripts\memcheck.ps1` is the routine one: it runs the 40 matches on Direct3D 11 and then OpenGL
-  and checks them against the expected values below (objects flat; OpenGL growth within 30 KB per match; Direct3D 11
-  second-half growth within 300 KB per match and the plateau under 100 MB), printing one PASS/FAIL line per renderer.
-  It keeps each full report in `%USERPROFILE%\Tumbu\memcheck-<renderer>.txt`: read that only on a FAIL (and keep its
-  thresholds in step with this paragraph). Underneath, `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` runs
-  `TUMBU.exe -cycles=40` (40 matches through the real UI) and prints the heap after each match, the summary, and the
-  heap growth per match in the first and the second half. `heap` is the bytes really in use. The game logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks
+- **Memory check: `.\scripts\memcheck.ps1`.**
+  - **When:** after a step that adds or changes GPU resources, render targets, materials, meshes or anything created per
+    match (a leak per match shows nowhere else), before its commit. Not for a change of values only (tuning in
+    `*.object` or material parameters, a texture replaced at the same size).
+  - **How:** start it with `run_in_background` and wait for the notification (about 25 minutes: 40 matches on Direct3D 11,
+    then 40 on OpenGL); do not poll it. `-Renderers GL` for one renderer; `-Cycles N` for a quick look (growth is judged
+    only from 10 matches on OpenGL and 40 on Direct3D 11, so a short run checks the objects and that nothing crashes).
+  - **Reading it:** one block per renderer, `== <renderer>: PASS|FAIL`, then `FAILED` lines (what broke), `heap` (menu,
+    after match 1, last, range over the second half), `growth` (KB per match in each half and overall, with the limit),
+    `objects` (every count, `flat` or which one changed after which match), `previous` (the last run of the same length
+    from `memory-history.csv`, with the differences) and `NOTE` lines (a level that moved more than usual: compare the
+    builds alternately before concluding; not a failure). A FAIL adds the evidence: the block sizes the heap grew by in
+    the last matches, the DLLs that own sample blocks (`nvwgf2umx.dll` = the NVIDIA pool below; `TUMBU.exe` or a game
+    DLL = our code) and where to look. The full per-match report is in `%USERPROFILE%\Tumbu\memcheck-<renderer>.txt`.
+    Report the PASS/FAIL lines and the `heap` / `growth` numbers to Jonathan.
+  - **Its limits are the expected values below** (objects flat; OpenGL growth within 30 KB per match; Direct3D 11
+    second-half growth within 300 KB per match, plateau under 100 MB): keep the script's parameters in step when these
+    change.
+  - Underneath, `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` runs `TUMBU.exe -cycles=40` (40 matches through the
+    real UI) and prints the heap after each match, the summary, and the heap growth per match in the first and the
+    second half. `heap` is the bytes really in use. The game logs `[DEVTEST] memory cycle N menu private=… heap=…KB/blocks
   nodes=… entities=… materials=…` after each match, `heap growth by block size` and the DLL that owns sample blocks (to
   find what grows), and at the end `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED`, also appended
   to `%USERPROFILE%\Tumbu\memory-history.csv` (date, renderer, driver, Ogre, heap, growth).

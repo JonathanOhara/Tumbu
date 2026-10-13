@@ -215,8 +215,11 @@ session; they only mean something against the other variant of the same run.
   something), `-nohud` (2026-10-11, clean review shots); `devtest.ps1 -GuiTour` (the GUI tour in a dev-size window).
 - **`memcheck.ps1`** (2026-10-13, Jonathan: the 40-match runs recur after every step that adds GPU resources, so make the
   process a script and spend no tokens on reading 90 lines of numbers): both renderers in a row, judged against the
-  expected values in CLAUDE.md, one PASS/FAIL line each, the full reports kept for a FAIL. The analysis of a FAIL stays
-  by hand.
+  expected values in CLAUDE.md, a PASS/FAIL block per renderer with the numbers, the comparison with the previous run
+  and, on a FAIL, the evidence (what grew, which DLLs own it). Jonathan then asked for output an agent with no context
+  can debug from, not just true/false. The analysis of a FAIL stays by hand. Its first test caught a false alarm: over 3
+  matches one OpenGL step of 78 KB (OpenGL32 and the Windows text-input DLLs), so OpenGL growth is judged from 10
+  matches on.
 - **Throwaway builds in `bin\scratch\`** (2026-10-10): Norton held every `TUMBU.exe` it found in a new place, so each run
   waited for its scan; `bin\` is excluded.
 - **Dev runs at 1600x900 or smaller** (2026-10-10): a window as big as the screen took over Jonathan's work.

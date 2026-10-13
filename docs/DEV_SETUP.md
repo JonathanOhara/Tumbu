@@ -138,8 +138,8 @@ quit.
 - `.\scripts\devtest.ps1 -GuiTour` (the game switch is `-guitour`) walks through every GUI screen and saves
   `devtest-gui-*.png`: start menu, options, dialogs, HUD, ESC menu, inventory. It then quits to the menu, plays a
   second match and leaves with Exit. Clicks are real mouse events through the game's input dispatch.
-- **Memory leak check:** `.\scripts\memcheck.ps1` runs it on both renderers and judges it (one PASS/FAIL line each;
-  the full reports in `%USERPROFILE%\Tumbu\memcheck-<renderer>.txt`). One renderer with the full report:
+- **Memory leak check:** `.\scripts\memcheck.ps1` runs it on both renderers and judges it (a PASS/FAIL block with the
+  numbers each; the full reports in `%USERPROFILE%\Tumbu\memcheck-<renderer>.txt`). One renderer with the full report:
   `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` (the game switch is `-cycles=N`) plays
   matches through the menus, with 3 enemy kills each, then Quit, and prints the heap after each match.
   - Healthy: every object count (nodes, entities, materials, textures, meshes, widgets) returns to the same value each

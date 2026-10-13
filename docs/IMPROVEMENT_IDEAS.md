@@ -126,6 +126,18 @@ shadows with normal offset (a single map is right for an arena this small), the 
     so, bent by the same wind and push (root and height in uv1). First look done (2026-10-13): five kinds, ten clumps
     around the ring (CLAUDE.md, "The flowers"); next, after Jonathan's look: how many, where (drifts, or a field-map
     channel), more kinds.
+  - Small things seen on the way (2026-10-13):
+    - Two of the ten flower clumps found no ground (all their tries fell on the earth or under the walls): a clump
+      could try another centre.
+    - Where the flowers grow could be painted: the field map's alpha is free (`field_map.png` uses R, G, B). Or the
+      clumps could follow the flower dots painted in `meadow_grass_col`, so the 3D flowers and the painted ones agree.
+    - At night the blue forget-me-nots come out very saturated under the blue moonlight (the white daisies turn blue
+      like the snow); a per-flower cap on the night tint if it bothers.
+    - The flowers' normals do not follow their sway (the light ignores the bend); invisible so far.
+    - The snow's drift texture is projected from above, so on the steepest faces it stretches into streaks; a
+      triplanar lookup on steep faces would keep the drifts round.
+    - `arena_flowers.py` on a new file (no Flowers.blend yet) prints a harmless blender2ogre traceback while the
+      add-on registers after `read_factory_settings` (its preferences are not there yet); the export works.
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first rule in
   CLAUDE.md.
