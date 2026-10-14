@@ -141,9 +141,22 @@ void EffectsManager::burnGrass( const Ogre::Vector3 &position, Ogre::Real radius
 	burn.regrow = std::max<Ogre::Real>( regrow, 0.01f );
 	burn.age = 0;
 	if( (int)grassBurns.size() >= GRASS_BURNS ){
-		grassBurns.erase( grassBurns.begin() );
+		grassBurns.erase( grassBurns.begin() );	// already fading out (below), so it does not vanish at once
 	}
 	grassBurns.push_back( burn );
+	// The shaders take GRASS_BURNS patches: once they are all in use, the oldest grows back over a few seconds from
+	// how burnt it is now, so the next burn finds it (nearly) gone instead of making it disappear.
+	if( (int)grassBurns.size() == GRASS_BURNS ){
+		GrassBurn &oldest = grassBurns.front();
+		const Ogre::Real fade = 3.0f;
+		const Ogre::Real burnt = oldest.age < oldest.hold ? 1 : 1 - ( oldest.age - oldest.hold ) / oldest.regrow;
+		if( burnt > 0.01f && oldest.hold + oldest.regrow - oldest.age > fade ){
+			oldest.regrow = fade / burnt;
+			oldest.hold = oldest.age - ( 1 - burnt ) * oldest.regrow;
+			Ogre::LogManager::getSingleton().logMessage( "[Effects] burn slots full: the oldest, at "
+				+ Ogre::StringConverter::toString( oldest.position ) + ", grows back in " + Ogre::StringConverter::toString( fade ) + " s" );
+		}
+	}
 }
 //-------------------------------------------------------------------------------------
 void EffectsManager::updateGrass( Ogre::Real time ){

@@ -34,6 +34,8 @@ OGRE_UNIFORMS_BEGIN
     uniform vec4 snowTile;      // x the snow's tile size in metres
     // where an impact burnt the field (TUMBU_GRASS_UNIFORMS): rgb the scorched ground, w how dark it gets (0..1)
     uniform vec4 scorchColour;
+    // the glowing embers on it at first: rgb x w (HDR)
+    uniform vec4 emberColour;
     TUMBU_GRASS_UNIFORMS
 OGRE_UNIFORMS_END
 
@@ -76,8 +78,8 @@ MAIN_DECLARATION
     float bare = fieldStep(snowParams.x, 1.0 - n.y + breakup * snowParams.y);
     albedo = mix(albedo, mix(snow, earth, bare), snowMask);
     // scorched where an impact burnt the field, its edge broken up by the noise
-    float burnt = TUMBU_GRASS_BURNT(oWorldPos).x;
-    albedo = mix(albedo, scorchColour.rgb, scorchColour.w * fieldStep(0.35, burnt + breakup * 0.5));
+    vec2 burnt = TUMBU_GRASS_BURNT(oWorldPos);
+    albedo = mix(albedo, scorchColour.rgb, scorchColour.w * fieldStep(0.35, burnt.x + breakup * 0.5));
 
     float ao = texture2D(aoMap, oUv).r;
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(n, sunDirection.xyz), shadowParams);
@@ -90,5 +92,8 @@ MAIN_DECLARATION
         sunDirection, sunColour, skyColour, groundColour, shadowColour, rimColour, toonParams, aoParams);
     colour += albedo * TUMBU_ENERGY_LIGHTS(oWorldPos, n);
     colour += albedo * TUMBU_ARENA_LIGHTS(oWorldPos, n);
+    // embers glowing in the scorch for the first seconds (the plants' tips glow too)
+    if (burnt.y > 0.0)
+        colour += emberColour.rgb * emberColour.w * tumbuGroundEmbers(oWorldPos, burnt);
     gl_FragColor = vec4(colour, 1.0);
 }

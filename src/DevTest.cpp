@@ -50,6 +50,8 @@ bool DevTest::heroStartSet = false;
 Ogre::Vector3 DevTest::heroStart = Ogre::Vector3::ZERO;
 Ogre::Real DevTest::fxTime = 0.3f;
 Ogre::Real DevTest::fxDistance = 4.0f;
+int DevTest::fxRepeat = 1;
+Ogre::Real DevTest::fxEvery = 0.6f;
 Ogre::Real DevTest::jynHit = 0;
 bool DevTest::enemyThrows = false;
 bool DevTest::fixedCamera = false;
@@ -124,6 +126,10 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			fxTest = args[i].substr( 8 );	// effect names keep their case
 		}else if( Ogre::StringUtil::startsWith( arg, "-fxdistance=" ) ){
 			fxDistance = Ogre::StringConverter::parseReal( arg.substr( 12 ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-fxrepeat=" ) ){
+			fxRepeat = std::max( 1, Ogre::StringConverter::parseInt( arg.substr( 10 ) ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-fxevery=" ) ){
+			fxEvery = Ogre::StringConverter::parseReal( arg.substr( 9 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-fxtime=" ) ){
 			fxTime = Ogre::StringConverter::parseReal( arg.substr( 8 ) );
 		}else if( arg == "-jynwalk" ){
@@ -203,6 +209,7 @@ DevTest::DevTest(void){
 	walkDone	= false;
 	faceJynPresses = 0;
 	fxSpawned = false;
+	fxSpawns = 0;
 	fxPresses = 0;
 	throwTime = -1;
 	jynOverLogged = false;
@@ -486,8 +493,11 @@ void DevTest::runFxTest(void){
 			fxSpot = charging->particleList[charging->melhorParticula]->particle->mPosition;	// the ball itself
 		}
 		fxSpawned = true;
-	}else if( !fxSpawned && playTime >= quitAfter - fxTime ){
-		fxSpot = front;
+	}else if( !fxSpawned && playTime >= quitAfter - fxTime + fxSpawns * fxEvery ){
+		// -fxrepeat=N: N times, -fxevery=S seconds apart (0.6), on a grid 4 units apart in front of the hero, three to a row (the eight
+		// burnt patches the shaders take, and a ninth)
+		Ogre::Vector3 right( forward.z, 0, -forward.x );
+		fxSpot = fxRepeat == 1 ? front : front + forward * ( 2.0f + 4.0f * ( fxSpawns / 3 ) ) + right * ( 4.0f * ( fxSpawns % 3 - 1 ) );
 		// move:NAME is held, so it can be moved: it circles the spot (trails and sparks need motion). Otherwise the
 		// effect plays once, as in a match.
 		bool move = Ogre::StringUtil::startsWith( fxTest, "move:", false );
@@ -495,7 +505,7 @@ void DevTest::runFxTest(void){
 		Effect* effect = EffectsManager::getInstance()->spawn( name, fxSpot, Ogre::ColourValue( 1.0f, 0.3f, 0.15f ), move );
 		fxEffect = move ? effect : NULL;
 		log( "fxtest: " + name + ( effect != NULL ? " started at " + Ogre::StringConverter::toString( fxSpot ) : " is not defined" ) );
-		fxSpawned = true;
+		fxSpawned = ++fxSpawns >= fxRepeat;
 	}
 	if( fxEffect != NULL ){
 		Ogre::Real angle = ( playTime - ( quitAfter - fxTime ) ) * 5.0f;

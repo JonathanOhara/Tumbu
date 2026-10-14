@@ -54,6 +54,8 @@ OGRE_UNIFORMS_BEGIN
 #ifdef TUMBU_SCORCH
     // where an impact burnt it (TUMBU_GRASS_UNIFORMS): rgb the scorch, w how far towards it
     uniform vec4 scorchColour;
+    // the glowing embers on it at first: rgb x w (HDR)
+    uniform vec4 emberColour;
     TUMBU_GRASS_UNIFORMS
 #endif
 #if defined(TUMBU_EMBLEM) || defined(TUMBU_NEON)
@@ -122,10 +124,10 @@ MAIN_DECLARATION
     // scorched where an impact's blast reached it, like the field (field_toon.frag), the edge broken up by a noise
     // (the stone's own light and dark show through: soot on the bricks, not a flat stain); the noise only where something
     // is burnt, so a match without burns pays nothing for it
-    float scorch = TUMBU_GRASS_BURNT(oWorldPos).x;
-    if (scorch > 0.0)
+    vec2 burnt = TUMBU_GRASS_BURNT(oWorldPos);
+    if (burnt.x > 0.0)
     {
-        float scorchMask = scorchColour.w * smoothstep(0.3, 0.4, scorch + (tumbuScorchNoise(oWorldPos) - 0.5) * 0.5);
+        float scorchMask = scorchColour.w * smoothstep(0.3, 0.4, burnt.x + (tumbuScorchNoise(oWorldPos) - 0.5) * 0.5);
         albedo = mix(albedo, scorchColour.rgb * (0.5 + 1.2 * dot(albedo, vec3(0.3, 0.5, 0.2))), scorchMask);
     }
 #endif
@@ -164,6 +166,11 @@ MAIN_DECLARATION
 #endif
 #ifdef TUMBU_EMBLEM
     colour = mix(colour, neonColour.rgb * neonParams.y, emblem.g * (1.0 - joint) * neonParams.x);
+#endif
+#ifdef TUMBU_SCORCH
+    // embers glowing in the scorch for the first seconds
+    if (burnt.y > 0.0)
+        colour += emberColour.rgb * emberColour.w * tumbuGroundEmbers(oWorldPos, burnt);
 #endif
 
     gl_FragColor = vec4(colour, 1.0);

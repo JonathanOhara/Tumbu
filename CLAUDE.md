@@ -134,7 +134,8 @@ in the way of a run (for example a window behind others that does not render), d
     `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point), `-fxtest=NAME` / `-fxtime=S` (starts
     `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the side;
     `effect test` is a calibration light + flash; `move:NAME` holds it and circles the spot so trails show;
-    `-fxtest=special:jyn|punch|kick|jynthrow` makes the hero attack instead, `-fxdistance=D` sets the camera distance),
+    `-fxtest=special:jyn|punch|kick|jynthrow` makes the hero attack instead, `-fxdistance=D` sets the camera distance,
+    `-fxrepeat=N` / `-fxevery=S` start the effect N times, S seconds apart, on a grid in front of the hero),
     `-jynhit[=D]` (the enemy stands still D units in front, no AI, and the hero throws a Genki Dama at it: a real hit;
     `-jynhit=enemy`: the enemy throws at the hero), `-strip=N` / `-stripstep=D` (with a fixed camera, `-camera` or
     `-bench`: after the screenshot the camera pans sideways D units per frame, 0.003 by default, about a third of a pixel
@@ -544,14 +545,19 @@ materials, textures, GUI) gets a before/after set:
       `embers` seconds (`emberColour`, HDR, so they bloom), `field_toon.frag` scorches the ground (`scorchColour`, its
       edge broken up by the meadow noise) and `env_toon.frag` the ring floor, the walls and the seats (`TUMBU_SCORCH`:
       every variant but the neon core and the torch iron; `scorchColour` in `shading.program`, the stone's light and
-      dark showing through, the edge broken up by `tumbuScorchNoise`). It stays `burnHold` seconds, then everything grows back over `regrow`
-      (`jyn_impact`: 3.2 units, 4 s of embers, 20 s, 40 s). Cleared when the match ends. `jyn_impact` also lets grey
+      dark showing through, the edge broken up by `tumbuScorchNoise`). On the ground and the stone the embers are small
+      glowing flecks in the patch's middle that shrink and go out (`tumbuGroundEmbers`, `emberColour` in `field.material`
+      and `shading.program`). It stays `burnHold` seconds, then everything grows back over `regrow` (`jyn_impact`: 3.2
+      units, 4 s of embers, 20 s, 40 s). When all eight are in use, the oldest grows back over 3 s (logged `burn slots
+      full`), so the ninth does not make it vanish at once. Cleared when the match ends. `jyn_impact` also lets grey
       toon smoke rise from the patch for 8 s (`Tumbu/Fx/BurnSmoke`, `effects.particle`); with `shade 1` on its layer a
       smoke that starts where the sun does not reach (`Lighting::isSunlit`, one physics ray) takes the keyframe's shadow
       tint, lifted halfway to white. Each burn is logged (`[Effects] burn at …` / `no burn: …`).
     - To look at them: `devtest.ps1 -HeroPos -14,-6 -FxTest jyn_impact -FxTime 0.6 -Camera "-6,5,-1,-15,0,-7"` (the
       impact 2 units in front of the hero, in the grass; `-FxTime 8` the charred patch, `-FxTime 40 -QuitAfter 46` it
       growing back; `-FxTime 0.05 -Strip 30 -StripStep 0.000001 -StripDt 0.0333` the first second as a video).
+      `-FxRepeat 9 -FxEvery 3.5` starts it nine times, 3.5 s apart, on a grid 4 units apart in front of the hero (the
+      eight patches and a ninth: `-HeroPos -14,-6 -Camera "-2,16,-4,-14,0,-14"`; `-FxTime` counts from the first).
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.

@@ -91,6 +91,7 @@ private:
 	void placeCamera( const Ogre::Vector3 &eye, const Ogre::Vector3 &target );
 	void runFxTest(void);
 	bool fxSpawned;
+	int fxSpawns;	// -fxrepeat: how many times the effect has started
 	int fxPresses;
 	Ogre::Real throwTime;
 	bool jynOverLogged;
@@ -178,6 +179,8 @@ private:
 	static Ogre::Vector3 heroStart;
 	static Ogre::Real fxTime;
 	static Ogre::Real fxDistance;
+	static int fxRepeat;
+	static Ogre::Real fxEvery;
 	static Ogre::Real jynHit;
 	static bool enemyThrows;
 	static bool fixedCamera;

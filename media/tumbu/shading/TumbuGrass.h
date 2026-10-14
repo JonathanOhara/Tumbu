@@ -50,6 +50,16 @@ float tumbuScorchNoise(vec3 p)
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
+// Glowing ember spots on a burnt surface without plants (the stone, the field's ground), 0..1: a finer noise above a
+// threshold that rises as the embers die (`burnt` from TUMBU_GRASS_BURNT), so the spots shrink and go out; only in the
+// patch's burnt middle. Add emberColour x it after the lighting (above the bloom threshold, like the plants' tips).
+float tumbuGroundEmbers(vec3 p, vec2 burnt)
+{
+    float n = tumbuScorchNoise(p * 7.0 + vec3(17.0, 0.0, 5.0));
+    float level = 1.0 - 0.22 * burnt.y;
+    return burnt.y * smoothstep(level, level + 0.04, n) * smoothstep(0.8, 1.0, burnt.x);
+}
+
 // How far and which way a shockwave (w: x z centre, front distance, strength) bends a plant rooted at `root`.
 vec2 grassWavePush(vec3 root, vec4 w, float width)
 {

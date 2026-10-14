@@ -21,6 +21,7 @@ material fieldMaterial{
                 param_named snowTile float4 8 0 0 0
                 // where an impact burnt the field (effects.object, "grass" layer): the scorched ground, how far towards it
                 param_named scorchColour float4 0.17 0.13 0.10 0.8
+                param_named emberColour float4 1.0 0.28 0.05 2
             }
             texture_unit fieldMap{
                 texture field_map.dds

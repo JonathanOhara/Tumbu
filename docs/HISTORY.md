@@ -251,6 +251,12 @@ session; they only mean something against the other variant of the same run.
   runs they now last as long as tuned. The smoke then glowed white at night (the smoke shader is unlit): tinted by the
   shared `sunColour`; a warm grey turned tan by day, so it is a cool grey now. Sparks from the embers were lost against
   the glowing embers (same orange, too small); cut grass was not wanted for now.
+- **Burn slots and ground embers** (2026-10-14): with all eight burn slots in use, a ninth burn erased the oldest at
+  once (a fully charred patch vanished in one frame); now the oldest starts growing back over 3 s when the eighth
+  arrives (checked with nine impacts 3.5 s apart, `-FxRepeat`). A ninth within those 3 s still drops a patch that is part
+  way back; nine Genki Dama hits inside a minute do not happen in a real match. The embers glowed only on the plants'
+  tips, so a hit on bare earth or stone had none: small orange flecks now glow in the middle of the scorch for the
+  first seconds (`tumbuGroundEmbers`). A first try (larger noise, `emberColour` x3) gave yellow puddles like lava.
 - **Scorch on the stone** (2026-10-14): only the field drew the scorch, and a burn was a circle on the ground plan. A
   Genki Dama next to the ring scorched the ground up to the ring and left its edge clean; one landing on the seats
   (`groundBelow` found the podium top, within `burnHeight`) burnt the grass below and left smoke over clean stone.
