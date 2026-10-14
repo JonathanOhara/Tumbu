@@ -237,6 +237,14 @@ session; they only mean something against the other variant of the same run.
   can debug from, not just true/false. The analysis of a FAIL stays by hand. Its first test caught a false alarm: over 3
   matches one OpenGL step of 78 KB (OpenGL32 and the Windows text-input DLLs), so OpenGL growth is judged from 10
   matches on.
+- **Smoke over the burnt grass** (2026-10-13; Jonathan picked it of three prototypes: cut grass, smoke, ember sparks).
+  The prototype's smoke was a thin column in screenshots but a thick cloud in a `-stripdt` video of the same moments:
+  Ogre's `ColourFader` loses at least 1/255 of alpha per frame (particle colours are bytes, truncated), so at the 800
+  fps of uncapped test runs the -0.25/s fade ran at 3.1/s (docs/OGRE_BUGS.md, 16). Fixed with our `TumbuFader` for every
+  template; at 144 fps the existing impacts barely change (their fades were close to the floor there), in uncapped test
+  runs they now last as long as tuned. The smoke then glowed white at night (the smoke shader is unlit): tinted by the
+  shared `sunColour`; a warm grey turned tan by day, so it is a cool grey now. Sparks from the embers were lost against
+  the glowing embers (same orange, too small); cut grass was not wanted for now.
 - **Test tools fixed** (2026-10-13, after the grass extras):
   - `-stripdt` / `devtest.ps1 -StripDt`: a strip's frames had been as far apart in game time as saving each took (the
     shockwave and the embers were over a few frames in); BaseApplication now runs Root::startRendering's loop itself

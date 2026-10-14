@@ -51,7 +51,8 @@ Particle Swarm Optimization is kept as an option (`gather pso` in `skill jyn`).
 - **Shaders** (`media/tumbu/effects/`, unified GLSL/HLSL, all procedural, no textures): `energy_orb` (balls),
   `energy_trail` (trails and lightning), `energy_spark`, `energy_crescent`, `energy_burst` (FLASH, RING, DOME, SMOKE,
   DUST, DEBRIS). The particle colour carries the ki colour; its alpha is a random seed (orbs) or the life left
-  (impact pieces, driven by a ColourFader), so the shaders animate without per-particle uniforms.
+  (impact pieces, driven by a `TumbuFader`: Ogre's `ColourFader` fades by the frame rate, docs/OGRE_BUGS.md, 16), so the
+  shaders animate without per-particle uniforms.
 - **Ki aura** (Saint Seiya cosmos with a soft DBZ touch; mock-up: https://claude.ai/artifact/QmnM2nMpBSPzDwqPMEZn6F,
   variant "Soft"): every `Part` builds a hidden twin entity (`Part::auraEntity`, the same mesh with
   `Tumbu/KiAura`) that shares the part's skeleton, so it follows every animation. `Robot::updateAura` (like the eye

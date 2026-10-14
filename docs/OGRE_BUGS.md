@@ -116,6 +116,24 @@ docs/HISTORY.md, "Mip-chain bloom").
 Only groups in the global pool search other groups for resources. The robot shaders `#include <OgreUnifiedShader.h>` from
 `OgreInternal`, so `BaseApplication::locateResources` creates `Game` in the global pool.
 
+### 16. `ColourFader` fades by the frame rate (particle colours are bytes)
+
+Ogre 14 stores a particle's colour as an 8-bit `RGBA` (`Particle::mColour`). `ColourFaderAffector::_affectParticles`
+(PlugIns/ParticleFX) adds `rate x frame time` to it and converts back with `ColourValue::getAsBYTE`, which truncates
+(`static_cast<uint8>(x * 255)`). So every frame a fading particle loses at least one step of 1/255: nothing fades
+slower than fps / 255 per second (800 fps in uncapped test runs: 3.1; 144 fps: 0.56; 60 fps: 0.24), and faster fades
+lose up to one extra step a frame. Our impact pieces read the alpha as "life left", so they played shorter at high frame
+rates, and a slow smoke (-0.25 per second) was gone after 0.3 s in test runs (2026-10-13). `ColourFader2` adds per
+frame the same way (not checked in detail); `ColourInterpolator` sets the colour from the life fraction and is not
+affected, but it replaces the emitter's colour (our layers set the ki colour there).
+
+**Workaround:** our own affector `TumbuFader` (`ParticleFader.h/.cpp`, registered in `BaseApplication::locateResources`
+before the scripts are parsed): the same `red` / `green` / `blue` / `alpha` per second, but it keeps each particle's
+colour at birth (`_initParticle`) and sets birth + rate x age, so it is the same at any frame rate. Every template in
+`effects.particle` uses it. Not yet: `dust.particle`'s `ColourFader2` (its colour is a seed for `dust.vert`, check
+before changing). **Upstream fixed when:** `ColourFaderAffector` keeps float precision (or derives from age); then
+`TumbuFader` can go.
+
 ## Retired: the Ogre terrain (2026-10-12)
 
 The game no longer uses Ogre's Terrain and Paging components: the field around the ring is a mesh modelled in

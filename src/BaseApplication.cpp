@@ -2,6 +2,7 @@
 #include "GUI.h"
 #include "DevTest.h"
 #include "Lighting.h"
+#include "ParticleFader.h"
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -132,6 +133,8 @@ void BaseApplication::locateResources(void){
 	Ogre::ResourceGroupManager::getSingleton().createResourceGroup( "Game", true );
 	// The robot and arena shader scripts reference these shared parameters.
 	Lighting::declareSharedParameters();
+	// The particle scripts use our frame-rate independent fader (ParticleFader.h).
+	ParticleFader::install();
 
 	// resources.cfg (next to the executable) lists the game's resource groups and Ogre's own media.
 	OgreBites::ApplicationContext::locateResources();

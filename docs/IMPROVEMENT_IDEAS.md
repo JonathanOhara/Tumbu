@@ -115,8 +115,9 @@ shadows with normal offset (a single map is right for an arena this small), the 
   - If the cost matters later (+0.15 to +0.24 ms at 1920x1080): thin the far chunks (fewer blades beyond 20 units, wider
     ones), as Ghost of Tsushima does.
   - Extras: flowers, reeds, the impacts' shockwave across the field and burnt grass where a Genki Dama lands — done
-    (2026-10-13; CLAUDE.md, "The tall grass"). Next ideas there: cut grass where a punch or kick ball skims it, the
-    burnt patch smoking for its first seconds, sparks leaving the embers.
+    (2026-10-13; CLAUDE.md, "The tall grass"), and smoke over a fresh burn. Prototyped, not taken for now: cut grass
+    where a punch or kick ball hits near the ground (short stubs with pale cut ends, growing back), sparks leaving the
+    embers (they need to be brighter and yellower than the embers to show).
   - **Flowers** (Jonathan, 2026-10-13, after Xenoblade 3's meadows): in the games that document it, flowers are not
     made by the blade generator but are small artist-made models drawn many at once and placed by the same procedural
     rules as the grass (Ghost of Tsushima: GPU-instanced flowers and pampas grass placed in its grass tiles; Horizon Zero

@@ -533,7 +533,8 @@ materials, textures, GUI) gets a before/after set:
       (`TUMBU_GRASS_BURNT`), the fragment shaders char them (`burntColour`) with glowing ember tips for the first
       `embers` seconds (`emberColour`, HDR, so they bloom), and `field_toon.frag` scorches the ground (`scorchColour`,
       its edge broken up by the noise). It stays `burnHold` seconds, then everything grows back over `regrow`
-      (`jyn_impact`: 3.2 units, 4 s of embers, 20 s, 40 s). Cleared when the match ends.
+      (`jyn_impact`: 3.2 units, 4 s of embers, 20 s, 40 s). Cleared when the match ends. `jyn_impact` also lets grey
+      toon smoke rise from the patch for 8 s (`Tumbu/Fx/BurnSmoke`, `effects.particle`).
     - To look at them: `devtest.ps1 -HeroPos -14,-6 -FxTest jyn_impact -FxTime 0.6 -Camera "-6,5,-1,-15,0,-7"` (the
       impact 2 units in front of the hero, in the grass; `-FxTime 8` the charred patch, `-FxTime 40 -QuitAfter 46` it
       growing back; `-FxTime 0.05 -Strip 30 -StripStep 0.000001 -StripDt 0.0333` the first second as a video).
@@ -699,7 +700,9 @@ through a listener registry in `BaseApplication`.
   (RibbonTrail: **U runs across the ribbon**, V along it) and `Tumbu/EnergySpark` the sparks of `effects.particle`.
   Orbs and trails have an alpha-blended dark underlay pass: additive alone turns white over the sunlit arena.
   Impacts are one-billboard particles drawn by `energy_burst.frag` (FLASH, RING, DOME, SMOKE, DEBRIS): the particle
-  alpha is the life left (ColourFader), so the shader animates without extra uniforms.
+  alpha is the life left (`TumbuFader`, our frame-rate independent replacement for Ogre's `ColourFader`, which fades by
+  the frame rate: docs/OGRE_BUGS.md, 16; use it in every new template), so the shader animates without extra uniforms.
+  The smoke variant is tinted by the shared `sunColour` (white by day, dim blue at night).
   Effect layers: `light`, `screen`, `grass` (shockwave and burnt patch on the field, see "The tall grass"), `trail`,
   `particles`, `converge` (a pool of motes moved in C++: the Genki Dama gathering) and `lightning` (a BillboardChain of
   jagged arcs); `Effect::setScale` gives layers the ball radius.

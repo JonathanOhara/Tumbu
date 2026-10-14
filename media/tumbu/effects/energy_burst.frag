@@ -1,6 +1,6 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 // Impact pieces on one billboard each (effects.particle): the particle colour is the ki colour (rgb) and its alpha is
-// the life left (1 -> 0, a ColourFader), which drives the animation. One source, one variant per define:
+// the life left (1 -> 0, a TumbuFader), which drives the animation. One source, one variant per define:
 //   FLASH  star-shaped hit flash: white-hot core, four long and four short rays, a ki-coloured glow (additive)
 //   RING   shockwave: a ring that thins out as it grows (Scaler affector); UNDERLAY = its dark alpha pass
 //   DOME   toon explosion: a banded ball (white core, ki body) that erodes into holes as it dies; UNDERLAY darkens
@@ -20,6 +20,8 @@ OGRE_UNIFORMS(
     // x = brightness (HDR), y = size of the ring / ball (fraction of the half size), z = width / core size,
     // w = underlay darkness (0..1)
     uniform vec4 burstParams;
+    // the sun's colour now (shared TumbuLighting; only the smoke uses it): smoke is lit by the scene, not glowing
+    uniform vec4 sunColour;
 )
 
 float burstHash(vec2 p)
@@ -94,7 +96,8 @@ MAIN_DECLARATION
     puff *= step((1.0 - life) * 0.9, n);
     // Toon two-tone: lit top-left, shadowed bottom-right.
     float lit = step(0.0, p.y * 0.8 - p.x * 0.3 + (n - 0.5) * 0.4);
-    vec3 colour = mix(ki * 0.62, ki, lit);
+    // tinted by the sun (white by day, dim and blue at night: an unlit grey glowed in the dark)
+    vec3 colour = mix(ki * 0.62, ki, lit) * (sunColour.rgb * 0.8 + 0.2);
     gl_FragColor = vec4(colour, puff * burstParams.w);
 
 #elif defined(DUST)

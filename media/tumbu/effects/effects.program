@@ -137,6 +137,7 @@ fragment_program energy_burst_smoke_ps glsl glsles hlsl
     preprocessor_defines SMOKE=1
     default_params
     {
+        shared_params_ref TumbuLighting
         param_named_auto time time_0_x 1000
         param_named burstParams float4 2 0.85 0.3 0.6
     }

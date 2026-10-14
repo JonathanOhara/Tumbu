@@ -284,6 +284,15 @@ effect jyn_impact
 		burnHold 20
 		regrow 40
 	}
+	// smoke rising from the burnt patch for its first seconds
+	particles
+	{
+		template Tumbu/Fx/BurnSmoke
+		follow 0
+		ground 1
+		offset 0 0.6 0
+		time 8
+	}
 	screen
 	{
 		flash 0.45

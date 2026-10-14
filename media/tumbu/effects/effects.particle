@@ -22,7 +22,7 @@ particle_system Tumbu/Fx/Sparks
         colour 1 1 1 1
     }
 
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -3
     }
@@ -54,7 +54,7 @@ particle_system Tumbu/Fx/SparksBig
         colour 1 1 1 1
     }
 
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -2.4
     }
@@ -65,7 +65,7 @@ particle_system Tumbu/Fx/SparksBig
     }
 }
 
-// ---- Impact pieces. A ColourFader takes alpha from 1 to 0 over the life (the shaders read it as "life left"), and
+// ---- Impact pieces. A TumbuFader takes alpha from 1 to 0 over the life (the shaders read it as "life left"), and
 // one burst of emission (duration) per piece. ----
 
 // Star flash at the hit point: one particle, very short, growing.
@@ -84,7 +84,7 @@ particle_system Tumbu/Fx/HitFlash
         time_to_live 0.16
         colour 1 1 1 1
     }
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -6.25
     }
@@ -110,7 +110,7 @@ particle_system Tumbu/Fx/HitRing
         time_to_live 0.3
         colour 1 1 1 1
     }
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -3.33
     }
@@ -139,7 +139,7 @@ particle_system Tumbu/Fx/GroundRing
         time_to_live 0.55
         colour 1 1 1 1
     }
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -1.82
     }
@@ -169,7 +169,7 @@ particle_system Tumbu/Fx/HitSparks
         time_to_live_max 0.35
         colour 1 1 1 1
     }
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -3
     }
@@ -195,7 +195,7 @@ particle_system Tumbu/Fx/Dome
         time_to_live 0.7
         colour 1 1 1 1
     }
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -1.43
     }
@@ -225,7 +225,7 @@ particle_system Tumbu/Fx/Smoke
         time_to_live_max 1.4
         colour 0.9 0.9 0.95 1
     }
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -0.8
     }
@@ -260,7 +260,7 @@ particle_system Tumbu/Fx/Debris
         time_to_live_max 1
         colour 0.28 0.25 0.24 1
     }
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -1
     }
@@ -286,7 +286,7 @@ particle_system Tumbu/Fx/MuzzleFlash
         time_to_live 0.12
         colour 1 1 1 1
     }
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -8.3
     }
@@ -321,8 +321,45 @@ particle_system Tumbu/Fx/AuraMotes
         colour 1 1 1 1
     }
 
-    affector ColourFader
+    affector TumbuFader
     {
         alpha -0.8
+    }
+}
+
+// Smoke rising from a fresh burnt patch (jyn_impact): toon puffs over the whole patch for a few seconds, drifting with
+// the wind (the grass's windParams direction).
+particle_system Tumbu/Fx/BurnSmoke
+{
+    material Tumbu/Fx/Smoke
+    particle_width 1.1
+    particle_height 1.1
+    quota 60
+    cull_each false
+    emitter Ellipsoid
+    {
+        width 4.2
+        height 0.2
+        depth 4.2
+        angle 15
+        direction 0 1 0
+        emission_rate 5
+        velocity_min 0.4
+        velocity_max 0.9
+        time_to_live_min 2.5
+        time_to_live_max 4
+        colour 0.64 0.65 0.68 1
+    }
+    affector TumbuFader
+    {
+        alpha -0.3
+    }
+    affector Scaler
+    {
+        rate 0.6
+    }
+    affector LinearForce
+    {
+        force_vector 0.16 0.15 0.12
     }
 }
