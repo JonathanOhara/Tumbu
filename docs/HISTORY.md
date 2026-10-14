@@ -223,6 +223,8 @@ session; they only mean something against the other variant of the same run.
   out: the window size (it adds 640x480 17.9 MB, 1024x768 18.1, 1600x900 18.4), the driver (installed 2026-10-06), a
   reboot (17.93 MB before and after one), Windows updates, the NVIDIA OpenGL shader cache, `Separate Shader Objects`, the
   options and DLLs injected into the process. Cause unknown; the level is flat across matches.
+- **Again 2026-10-13 (evening):** the OpenGL menu heap went from 19.1 to 22.5 MB between two runs a few hours apart. Not
+  the game: the build before (cf97aeb) and after (dbf8452), alternated, both measured 22.5 MB, with and without VSync.
 
 ## Tools and test method
 
