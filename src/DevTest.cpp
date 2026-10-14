@@ -494,10 +494,12 @@ void DevTest::runFxTest(void){
 		}
 		fxSpawned = true;
 	}else if( !fxSpawned && playTime >= quitAfter - fxTime + fxSpawns * fxEvery ){
-		// -fxrepeat=N: N times, -fxevery=S seconds apart (0.6), on a grid 4 units apart in front of the hero, three to a row (the eight
-		// burnt patches the shaders take, and a ninth)
+		// -fxrepeat=N: N times, -fxevery=S seconds apart (0.6), on a square grid in front of the hero (3.5 units apart, up
+		// to 3 to a row for 9, 4 for 16: more burnt patches than the shaders take)
 		Ogre::Vector3 right( forward.z, 0, -forward.x );
-		fxSpot = fxRepeat == 1 ? front : front + forward * ( 2.0f + 4.0f * ( fxSpawns / 3 ) ) + right * ( 4.0f * ( fxSpawns % 3 - 1 ) );
+		const int row = (int)Ogre::Math::Ceil( Ogre::Math::Sqrt( (Ogre::Real)fxRepeat ) );
+		fxSpot = fxRepeat == 1 ? front : front + forward * ( 2.0f + 3.5f * ( fxSpawns / row ) )
+			+ right * ( 3.5f * ( fxSpawns % row - ( row - 1 ) * 0.5f ) );
 		// move:NAME is held, so it can be moved: it circles the spot (trails and sparks need motion). Otherwise the
 		// effect plays once, as in a match.
 		bool move = Ogre::StringUtil::startsWith( fxTest, "move:", false );

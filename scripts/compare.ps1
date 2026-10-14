@@ -1,7 +1,8 @@
 # Side-by-side BEFORE | AFTER image of two screenshots, for reviewing a visual change.
-# Usage: .\scripts\compare.ps1 -Before a.png -After b.png -Out c.png [-Crop "x,y,w,h"] [-Zoom 2]
+# Usage: .\scripts\compare.ps1 -Before a.png -After b.png -Out c.png [-Crop "x,y,w,h"] [-Zoom 2] [-BeforeLabel X -AfterLabel Y]
 #   -Crop  the same region of both screenshots (pixels), e.g. the robot: "330,0,380,720"
 #   -Zoom  enlarges the crop (nearest pixel, so edges stay sharp), e.g. 2 or 4 for close-ups of edges
+#   -BeforeLabel / -AfterLabel  the side names when the pair is not a before and an after ('DIRECT3D 11' / 'OPENGL')
 # Typical flow (see CLAUDE.md "Before/after comparisons"): devtest.ps1 -Name feature-before ..., change, devtest.ps1
 # -Name feature-after ..., then compare into %USERPROFILE%\Tumbu\<feature>\.
 # When a screenshot has the frame rate of its run next to it (devtest-<Name>.fps, written by devtest.ps1), the label

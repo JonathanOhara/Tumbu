@@ -22,7 +22,9 @@ class Effect;
 class EffectsManager: public Ogre::FrameListener{
 public:
 	/// The shaders' room for burnt patches (grassBurn[] in TumbuGrass.h) and shockwaves (grassWave0/1).
-	static const int GRASS_BURNS = 8;
+	static const int GRASS_BURNS = 12;
+	/// Burn slots kept free for patches that are fading out to make room (EffectsManager::burnGrass).
+	static const int GRASS_BURNS_SPARE = 2;
 	static const int GRASS_WAVES = 2;
 
 	EffectsManager( Ogre::SceneManager* _sceneMgr );
@@ -80,6 +82,7 @@ private:
 	struct GrassBurn{
 		Ogre::Vector3 position;
 		Ogre::Real radius, embers, hold, regrow, age;
+		bool fading;	// growing back early to make room
 	};
 
 	void updateLights(void);

@@ -14,15 +14,15 @@
     uniform vec4 grassWave0; \
     uniform vec4 grassWave1; \
     uniform vec4 grassWaveWidth; \
-    uniform vec4 grassBurn[8]; \
-    uniform vec4 grassBurnY[8];
+    uniform vec4 grassBurn[12]; \
+    uniform vec4 grassBurnY[12];
 
 // How burnt a point is (x) and how much its embers glow (y), 0..1: full inside 70 % of a patch's radius (3D distance),
 // fading out to its edge.
-vec2 tumbuGrassBurnt(vec3 p, vec4 grassBurn[8], vec4 grassBurnY[8], float count)
+vec2 tumbuGrassBurnt(vec3 p, vec4 grassBurn[12], vec4 grassBurnY[12], float count)
 {
     vec2 b = vec2_splat(0.0);
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 12; i++)
     {
         if (float(i) >= count)
             break;
@@ -35,19 +35,25 @@ vec2 tumbuGrassBurnt(vec3 p, vec4 grassBurn[8], vec4 grassBurnY[8], float count)
 }
 #define TUMBU_GRASS_BURNT(p) tumbuGrassBurnt(p, grassBurn, grassBurnY, grassWaveWidth.z)
 
+float tumbuHash3(vec3 i)
+{
+    return fract(sin(dot(i, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+}
+
 // A cheap value noise (0..1, about one feature per metre) to break up a scorch's edge on surfaces without the meadow's
-// noise texture (the stone).
+// noise texture (the stone). 3D, so it looks the same on the floor and on a wall (a 2D noise of a slanted projection,
+// 2026-10-14, stretched into streaks on the walls).
 float tumbuScorchNoise(vec3 p)
 {
-    vec2 q = vec2(p.x + p.y * 0.7, p.z - p.y * 0.5) * 1.3;
-    vec2 i = floor(q);
-    vec2 f = q - i;
+    vec3 q = p * 1.3;
+    vec3 i = floor(q);
+    vec3 f = q - i;
     f = f * f * (3.0 - 2.0 * f);
-    float a = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453);
-    float b = fract(sin(dot(i + vec2(1.0, 0.0), vec2(127.1, 311.7))) * 43758.5453);
-    float c = fract(sin(dot(i + vec2(0.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
-    float d = fract(sin(dot(i + vec2(1.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    float a = mix(tumbuHash3(i), tumbuHash3(i + vec3(1.0, 0.0, 0.0)), f.x);
+    float b = mix(tumbuHash3(i + vec3(0.0, 1.0, 0.0)), tumbuHash3(i + vec3(1.0, 1.0, 0.0)), f.x);
+    float c = mix(tumbuHash3(i + vec3(0.0, 0.0, 1.0)), tumbuHash3(i + vec3(1.0, 0.0, 1.0)), f.x);
+    float d = mix(tumbuHash3(i + vec3(0.0, 1.0, 1.0)), tumbuHash3(i + vec3(1.0, 1.0, 1.0)), f.x);
+    return mix(mix(a, b, f.y), mix(c, d, f.y), f.z);
 }
 
 // Glowing ember spots on a burnt surface without plants (the stone, the field's ground), 0..1: a finer noise above a
@@ -56,7 +62,7 @@ float tumbuScorchNoise(vec3 p)
 float tumbuGroundEmbers(vec3 p, vec2 burnt)
 {
     float n = tumbuScorchNoise(p * 7.0 + vec3(17.0, 0.0, 5.0));
-    float level = 1.0 - 0.22 * burnt.y;
+    float level = 1.0 - 0.28 * burnt.y;
     return burnt.y * smoothstep(level, level + 0.04, n) * smoothstep(0.8, 1.0, burnt.x);
 }
 

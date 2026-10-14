@@ -252,11 +252,14 @@ session; they only mean something against the other variant of the same run.
   shared `sunColour`; a warm grey turned tan by day, so it is a cool grey now. Sparks from the embers were lost against
   the glowing embers (same orange, too small); cut grass was not wanted for now.
 - **Burn slots and ground embers** (2026-10-14): with all eight burn slots in use, a ninth burn erased the oldest at
-  once (a fully charred patch vanished in one frame); now the oldest starts growing back over 3 s when the eighth
-  arrives (checked with nine impacts 3.5 s apart, `-FxRepeat`). A ninth within those 3 s still drops a patch that is part
-  way back; nine Genki Dama hits inside a minute do not happen in a real match. The embers glowed only on the plants'
+  once (a fully charred patch vanished in one frame). First fix: the oldest grows back over 3 s when the eighth
+  arrives; but a ninth within those 3 s still dropped it part way (13 impacts 1.5 s apart: each drop about half burnt).
+  Now 12 slots, two of them kept for fading (`GRASS_BURNS_SPARE`): the same 13 impacts drop one patch at 0.04 burnt.
+  The shaders' loops stop at the live count, so the larger arrays cost nothing until more than 8 burns are live. The embers glowed only on the plants'
   tips, so a hit on bare earth or stone had none: small orange flecks now glow in the middle of the scorch for the
-  first seconds (`tumbuGroundEmbers`). A first try (larger noise, `emberColour` x3) gave yellow puddles like lava.
+  first seconds (`tumbuGroundEmbers`). A first try (larger noise, `emberColour` x3) gave yellow puddles like lava. The
+  stone's noise was 2D, a slanted projection of the world position, and stretched into thin streaks on the walls (seen
+  with the field hidden); it is a 3D value noise now (less contrast, so the ember threshold went from 0.22 to 0.28).
 - **Scorch on the stone** (2026-10-14): only the field drew the scorch, and a burn was a circle on the ground plan. A
   Genki Dama next to the ring scorched the ground up to the ring and left its edge clean; one landing on the seats
   (`groundBelow` found the podium top, within `burnHeight`) burnt the grass below and left smoke over clean stone.

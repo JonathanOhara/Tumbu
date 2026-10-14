@@ -140,14 +140,30 @@ void EffectsManager::burnGrass( const Ogre::Vector3 &position, Ogre::Real radius
 	burn.hold = hold;
 	burn.regrow = std::max<Ogre::Real>( regrow, 0.01f );
 	burn.age = 0;
+	burn.fading = false;
 	if( (int)grassBurns.size() >= GRASS_BURNS ){
-		grassBurns.erase( grassBurns.begin() );	// already fading out (below), so it does not vanish at once
+		// no free slot: the oldest goes (it has been fading since the slots filled up, below)
+		const GrassBurn &oldest = grassBurns.front();
+		const Ogre::Real burnt = oldest.age < oldest.hold ? 1 : 1 - ( oldest.age - oldest.hold ) / oldest.regrow;
+		Ogre::LogManager::getSingleton().logMessage( "[Effects] burn dropped at " + Ogre::StringConverter::toString( oldest.position )
+			+ " while still " + Ogre::StringConverter::toString( burnt, 2 ) + " burnt" );
+		grassBurns.erase( grassBurns.begin() );
 	}
 	grassBurns.push_back( burn );
-	// The shaders take GRASS_BURNS patches: once they are all in use, the oldest grows back over a few seconds from
-	// how burnt it is now, so the next burn finds it (nearly) gone instead of making it disappear.
-	if( (int)grassBurns.size() == GRASS_BURNS ){
-		GrassBurn &oldest = grassBurns.front();
+	// The shaders take GRASS_BURNS patches. Once all but GRASS_BURNS_SPARE are taken by patches that are not fading,
+	// the oldest of those grows back over a few seconds from how burnt it is now: the spare slots let it fade out while
+	// new burns arrive, so a patch only vanishes at once when more than GRASS_BURNS_SPARE land within those seconds.
+	int steady = 0;
+	for( size_t i = 0; i < grassBurns.size(); i++ ){
+		steady += grassBurns[i].fading ? 0 : 1;
+	}
+	for( size_t i = 0; i < grassBurns.size() && steady > GRASS_BURNS - GRASS_BURNS_SPARE; i++ ){
+		GrassBurn &oldest = grassBurns[i];
+		if( oldest.fading ){
+			continue;
+		}
+		oldest.fading = true;
+		steady--;
 		const Ogre::Real fade = 3.0f;
 		const Ogre::Real burnt = oldest.age < oldest.hold ? 1 : 1 - ( oldest.age - oldest.hold ) / oldest.regrow;
 		if( burnt > 0.01f && oldest.hold + oldest.regrow - oldest.age > fade ){
