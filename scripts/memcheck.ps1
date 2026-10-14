@@ -20,7 +20,7 @@
 #   both    the game exits normally after N matches, no exception; every object count is the same after every match
 #           (objects=flat: a count that climbs is a leak of that kind of object)
 #   OpenGL  the heap flat from match 2 on: growth (matches 2..N) within +/- $GlGrowthKB KB per match (judged from 10 matches)
-#   D3D11   an NVIDIA driver pool fills for about 18 matches and then stays (not a leak): with 40 matches or more, growth
+#   D3D11   an NVIDIA driver pool fills for 9 to 18 matches and then stays (not a leak): with 40 matches or more, growth
 #           over the second half within $D3dSecondHalfKB KB per match and the last heap below $D3dPlateauMB MB; with fewer
 #           matches the heap is still filling and is not judged
 # "previous" is the last run of the same renderer and length in %USERPROFILE%\Tumbu\memory-history.csv (the game
@@ -33,7 +33,7 @@ param(
     [ValidateSet('D3D11', 'GL')] [string[]]$Renderers = @('D3D11', 'GL'),
     [double]$GlGrowthKB = 30,
     [double]$D3dSecondHalfKB = 300,
-    [double]$D3dPlateauMB = 100,
+    [double]$D3dPlateauMB = 105,
     # NOTE when the level after match 1 (OpenGL) or the last heap (D3D11) moved more than this from the previous run
     [double]$GlLevelNoteMB = 1.0,
     [double]$D3dLevelNoteMB = 8.0
@@ -124,7 +124,7 @@ foreach ($r in $Renderers) {
         } elseif ($heaps.Count -ge 41) {
             $growthLine += " (second half limit $D3dSecondHalfKB; the first half fills the driver pool)"
             if ($secondHalf -gt $D3dSecondHalfKB) { $problems += "the heap still grows {0:0} KB per match in the second half (limit $D3dSecondHalfKB): the driver pool fills, then must stay" -f $secondHalf }
-            if ($last / 1024 -gt $D3dPlateauMB) { $problems += "the plateau is $(MB $last), above $D3dPlateauMB MB (expected about 85 to 93 MB)" }
+            if ($last / 1024 -gt $D3dPlateauMB) { $problems += "the plateau is $(MB $last), above $D3dPlateauMB MB (expected about 90 to 97 MB)" }
         } else {
             $growthLine += ' (under 40 matches the driver pool is still filling: growth not judged)'
         }

@@ -225,6 +225,10 @@ session; they only mean something against the other variant of the same run.
   options and DLLs injected into the process. Cause unknown; the level is flat across matches.
 - **Again 2026-10-13 (evening):** the OpenGL menu heap went from 19.1 to 22.5 MB between two runs a few hours apart. Not
   the game: the build before (cf97aeb) and after (dbf8452), alternated, both measured 22.5 MB, with and without VSync.
+- **Expected values updated 2026-10-14** (CLAUDE.md, "Memory check"): after match 1 OpenGL is now about 26 MB (17.9 on
+  2026-10-11, before the grass remake; part of it is the grass, flowers and reeds, part the drift above, not told apart), and the
+  Direct3D 11 plateau is 90 to 97 MB (87 to 92 before), reached after 9 to 18 matches; the 100 MB plateau limit of
+  `memcheck.ps1` left only 3 MB over the highest match of the last run, so it is 105 MB. Neither renderer grows per match.
 
 ## Tools and test method
 

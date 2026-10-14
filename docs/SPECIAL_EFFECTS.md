@@ -94,7 +94,8 @@ full-screen passes (the flash is part of the final pass).
 ## Known issue: NVIDIA driver memory grows per match on Direct3D 11 (until a pool fills)
 
 **It is bounded** (2026-10-09, `.\scripts\devtest.ps1 -Cycles 40`): the heap rises for about 18 matches, to about
-85 MB, and then stays flat (84 to 88 MB over matches 18 to 40; private bytes about 535 MB). It is a driver pool that
+85 MB, and then stays flat (84 to 88 MB over matches 18 to 40; private bytes about 535 MB; 90 to 97 MB on 2026-10-14
+with the grass, flowers and reeds, CLAUDE.md "Memory check" keeps the current values). It is a driver pool that
 fills up, not a leak, and a full 16-enemy game is a single match anyway. The per-match numbers below come from
 12-match runs, which only see the pool filling; they also scatter from 1.5 to 5 MB per match between identical runs.
 

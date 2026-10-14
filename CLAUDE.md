@@ -172,7 +172,7 @@ in the way of a run (for example a window behind others that does not render), d
     DLL = our code) and where to look. The full per-match report is in `%USERPROFILE%\Tumbu\memcheck-<renderer>.txt`.
     Report the PASS/FAIL lines and the `heap` / `growth` numbers to Jonathan.
   - **Its limits are the expected values below** (objects flat; OpenGL growth within 30 KB per match; Direct3D 11
-    second-half growth within 300 KB per match, plateau under 100 MB): keep the script's parameters in step when these
+    second-half growth within 300 KB per match, plateau under 105 MB): keep the script's parameters in step when these
     change.
   - Underneath, `.\scripts\devtest.ps1 -Cycles 40 [-Renderer GL]` runs `TUMBU.exe -cycles=40` (40 matches through the
     real UI) and prints the heap after each match, the summary, and the heap growth per match in the first and the
@@ -180,15 +180,17 @@ in the way of a run (for example a window behind others that does not render), d
   nodes=… entities=… materials=…` after each match, `heap growth by block size` and the DLL that owns sample blocks (to
   find what grows), and at the end `memory summary: … growth=…KB/match (cycles 2..N) objects=flat|CHANGED`, also appended
   to `%USERPROFILE%\Tumbu\memory-history.csv` (date, renderer, driver, Ogre, heap, growth).
-  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0; checked 2026-10-12, with the field from Blender and the tall grass):
+  **Expected** (RTX 3070, driver 617.42 / 32.0.16.1742, Ogre 14.6.0; checked 2026-10-14, with the tall grass, flowers,
+  reeds and the impacts on the field):
   - every object count returns to the same value each match (`objects=flat`) on both renderers;
-  - **OpenGL:** about 16.5 MB in the menu before the first match and 21 MB after it (a little more with a bigger window),
-    flat from match 2 on (within ±30 KB per match). The level itself moves by up to about 1.5 MB between days for
-    reasons outside the game (docs/HISTORY.md, "Memory"), so compare OpenGL levels only between builds alternated in one
-    session; the growth per match is what matters;
-  - **Direct3D 11:** about 21 to 27 MB in the menu and 35 to 41 MB after match 1. Then the heap rises by about 1.5 to 2.5 MB
-    per match for about 18 matches, to about 88 MB, and **stays flat** (87 to 92 MB over matches 18 to 40; private bytes
-    about 500 to 560 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor;
+  - **OpenGL:** about 22.5 MB in the menu before the first match and 26 MB after it (a little more with a bigger window),
+    flat from match 2 on (within ±30 KB per match). **The level is not a measure of the game**: with the same build it has
+    moved by 3.4 MB within one evening (and from 18 to 26 MB after match 1 over 2026-10-11..14, only partly from the
+    new grass) for reasons outside the game (docs/HISTORY.md, "Memory"), so compare OpenGL levels only between builds
+    alternated in one session; the growth per match is what matters;
+  - **Direct3D 11:** about 25 to 30 MB in the menu and 37 to 43 MB after match 1. Then the heap rises by about 1.5 to 5 MB
+    per match for 9 to 18 matches, to about 90 MB, and **stays flat** (90 to 97 MB over matches 18 to 40; private bytes
+    about 500 to 565 MB). That is an NVIDIA driver pool (`nvwgf2umx.dll`, tied to the post-processing compositor;
     docs/SPECIAL_EFFECTS.md, "Known issue") that fills up, not a leak. So the second-half growth of a 40-match run must
     be near 0; a 12- or 21-match run is still filling, and its "per match" number is not a leak rate.
 
