@@ -36,7 +36,7 @@ OUT(vec4 oExtra, TEXCOORD3)
 MAIN_DECLARATION
 {
     // burnt: the blade shrinks to a charred stub (its height and its bend with it)
-    vec2 burnt = TUMBU_GRASS_BURNT(uv1.xz);
+    vec2 burnt = TUMBU_GRASS_BURNT(uv1.xyz);
     float keep = 1.0 - 0.8 * burnt.x;
     vec3 p = vertex.xyz;
     p.y = uv1.y + (p.y - uv1.y) * keep;

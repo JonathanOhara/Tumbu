@@ -137,9 +137,6 @@ shadows with normal offset (a single map is right for an arena this small), the 
     - The flowers' normals do not follow their sway (the light ignores the bend); invisible so far.
     - The snow's drift texture is projected from above, so on the steepest faces it stretches into streaks; a
       triplanar lookup on steep faces would keep the drifts round.
-    - The scorch is drawn by the field shader only: a Genki Dama that lands just outside the ring scorches the earth
-      band and the grass up to the ring, while the ring floor inside the same radius stays clean. Small; the ring
-      floor's shader (`env_stone_floor_ps`) could take the same `TUMBU_GRASS_BURNT` darkening.
 - **The robot textures are plain.** A colour and material pass per robot would fit the anime style.
 - Both are Blender work: `art/arena/Arena.blend` and `art/robots/` are the sources. Follow the Blender-first rule in
   CLAUDE.md.

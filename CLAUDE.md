@@ -535,11 +535,14 @@ materials, textures, GUI) gets a before/after set:
       `grassBend` (`TumbuGrass.h`) bends a plant away from the centre by a gaussian of its distance to the front, for the
       grass, flowers and reeds alike. `jyn_impact` rolls a strong one across the whole field, `blast_hit` a small ripple.
     - **Burnt grass:** `EffectsManager::burnGrass` (only when the effect is within `burnHeight` of the ground below it,
-      `groundBelow`) keeps the newest eight patches (shared array `grassBurn[8]`: x, z, radius, burnt 0..1 + embers 0..1
-      above 1; the size is `EffectsManager::GRASS_BURNS`). Inside a patch the vertex shaders shrink the plants to 20 %
-      (`TUMBU_GRASS_BURNT`), the fragment shaders char them (`burntColour`) with glowing ember tips for the first
-      `embers` seconds (`emberColour`, HDR, so they bloom), and `field_toon.frag` scorches the ground (`scorchColour`,
-      its edge broken up by the noise). It stays `burnHold` seconds, then everything grows back over `regrow`
+      `groundBelow`) keeps the newest eight patches (shared arrays `grassBurn[8]`: x, z, radius, burnt 0..1 + embers
+      0..1 above 1, and `grassBurnY[8]`: the centre's height; the size is `EffectsManager::GRASS_BURNS`). A patch is a
+      sphere (3D distance), so it marks whatever the blast reaches. Inside it the vertex shaders shrink the plants to
+      20 % (`TUMBU_GRASS_BURNT`), the fragment shaders char them (`burntColour`) with glowing ember tips for the first
+      `embers` seconds (`emberColour`, HDR, so they bloom), `field_toon.frag` scorches the ground (`scorchColour`, its
+      edge broken up by the meadow noise) and `env_toon.frag` the ring floor, the walls and the seats (`TUMBU_SCORCH`:
+      every variant but the neon core and the torch iron; `scorchColour` in `shading.program`, the stone's light and
+      dark showing through, the edge broken up by `tumbuScorchNoise`). It stays `burnHold` seconds, then everything grows back over `regrow`
       (`jyn_impact`: 3.2 units, 4 s of embers, 20 s, 40 s). Cleared when the match ends. `jyn_impact` also lets grey
       toon smoke rise from the patch for 8 s (`Tumbu/Fx/BurnSmoke`, `effects.particle`); with `shade 1` on its layer a
       smoke that starts where the sun does not reach (`Lighting::isSunlit`, one physics ray) takes the keyframe's shadow

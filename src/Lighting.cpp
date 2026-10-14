@@ -194,6 +194,7 @@ static void setNeutralValues( Ogre::GpuSharedParametersPtr params ){
 	params->setNamedConstant( "neonSegA", &zeros[0], TUMBU_NEON_SEGMENTS * 4 );
 	params->setNamedConstant( "neonSegB", &zeros[0], TUMBU_NEON_SEGMENTS * 4 );
 	params->setNamedConstant( "grassBurn", &zeros[0], EffectsManager::GRASS_BURNS * 4 );
+	params->setNamedConstant( "grassBurnY", &zeros[0], EffectsManager::GRASS_BURNS * 4 );
 	params->setNamedConstant( "grassWave0", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "grassWave1", Ogre::Vector4( 0, 0, 0, 0 ) );
 	params->setNamedConstant( "grassWaveWidth", Ogre::Vector4( 1, 1, 0, 0 ) );
@@ -294,6 +295,8 @@ void Lighting::declareSharedParameters(void){
 	params->addConstantDefinition( "neonSegB", Ogre::GCT_FLOAT4, TUMBU_NEON_SEGMENTS );
 	// Burnt grass: x z, radius, burnt (0..1) + embers (0..1).
 	params->addConstantDefinition( "grassBurn", Ogre::GCT_FLOAT4, EffectsManager::GRASS_BURNS );
+	// and the heights of their centres (x)
+	params->addConstantDefinition( "grassBurnY", Ogre::GCT_FLOAT4, EffectsManager::GRASS_BURNS );
 	setNeutralValues( params );
 }
 //-------------------------------------------------------------------------------------

@@ -247,6 +247,12 @@ session; they only mean something against the other variant of the same run.
   runs they now last as long as tuned. The smoke then glowed white at night (the smoke shader is unlit): tinted by the
   shared `sunColour`; a warm grey turned tan by day, so it is a cool grey now. Sparks from the embers were lost against
   the glowing embers (same orange, too small); cut grass was not wanted for now.
+- **Scorch on the stone** (2026-10-14): only the field drew the scorch, and a burn was a circle on the ground plan. A
+  Genki Dama next to the ring scorched the ground up to the ring and left its edge clean; one landing on the seats
+  (`groundBelow` found the podium top, within `burnHeight`) burnt the grass below and left smoke over clean stone.
+  "Through the wall" was not real: the ground on the wall's far side is beyond the radius. Now a burn is a sphere
+  around the impact's ground point (its height in `grassBurnY`) and the stone shaders scorch too, the bricks showing
+  through the soot.
 - **Frame-rate checks** (2026-10-13, Jonathan: test with VSync on, uncap only for benchmarks): DevTest logs every
   particle system's mean colour; the dust's mean alpha was 0 uncapped, 0.3 at 144 fps and 0.75 at 60 (Ogre's
   `ColourFader2` loses rises below one byte step a frame): the dust has been invisible in every uncapped test shot and

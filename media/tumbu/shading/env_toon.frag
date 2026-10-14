@@ -8,6 +8,10 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 #ifdef TUMBU_STONE
 #include "TumbuStone.h"
 #endif
+#if !defined(TUMBU_NEON) && !defined(TUMBU_NO_LAMPS)
+#define TUMBU_SCORCH 1
+#include "TumbuGrass.h"
+#endif
 
 SAMPLER2D(diffuseMap, 0);
 SAMPLER2DSHADOW(shadowMap, 1);
@@ -46,6 +50,11 @@ OGRE_UNIFORMS_BEGIN
     uniform vec4 tubeColour;        // the tube by day (rgb)
     uniform vec4 borderTint;        // multiplies the border course
 #endif
+#endif
+#ifdef TUMBU_SCORCH
+    // where an impact burnt it (TUMBU_GRASS_UNIFORMS): rgb the scorch, w how far towards it
+    uniform vec4 scorchColour;
+    TUMBU_GRASS_UNIFORMS
 #endif
 #if defined(TUMBU_EMBLEM) || defined(TUMBU_NEON)
     uniform vec4 neonParams;        // shared: x how much the neon glows (keyframe neon), y brightness of the core
@@ -108,6 +117,17 @@ MAIN_DECLARATION
 #endif
 #else
     vec3 albedo = texture2D(diffuseMap, uv).rgb * matDif.rgb;
+#endif
+#ifdef TUMBU_SCORCH
+    // scorched where an impact's blast reached it, like the field (field_toon.frag), the edge broken up by a noise
+    // (the stone's own light and dark show through: soot on the bricks, not a flat stain); the noise only where something
+    // is burnt, so a match without burns pays nothing for it
+    float scorch = TUMBU_GRASS_BURNT(oWorldPos).x;
+    if (scorch > 0.0)
+    {
+        float scorchMask = scorchColour.w * smoothstep(0.3, 0.4, scorch + (tumbuScorchNoise(oWorldPos) - 0.5) * 0.5);
+        albedo = mix(albedo, scorchColour.rgb * (0.5 + 1.2 * dot(albedo, vec3(0.3, 0.5, 0.2))), scorchMask);
+    }
 #endif
     float ao = texture2D(aoMap, oAoUv).r;
     float shadow = tumbuShadow(shadowMap, oLightSpacePos, dot(n, sunDirection.xyz), shadowParams);

@@ -76,7 +76,7 @@ MAIN_DECLARATION
     float bare = fieldStep(snowParams.x, 1.0 - n.y + breakup * snowParams.y);
     albedo = mix(albedo, mix(snow, earth, bare), snowMask);
     // scorched where an impact burnt the field, its edge broken up by the noise
-    float burnt = TUMBU_GRASS_BURNT(w).x;
+    float burnt = TUMBU_GRASS_BURNT(oWorldPos).x;
     albedo = mix(albedo, scorchColour.rgb, scorchColour.w * fieldStep(0.35, burnt + breakup * 0.5));
 
     float ao = texture2D(aoMap, oUv).r;

@@ -25,6 +25,8 @@ fragment_program env_toon_ps glsl glsles hlsl
         param_named_auto matSpec surface_specular_colour
         param_named_auto matShininess surface_shininess
         param_named_auto camPos camera_position
+        // a scorch where an impact burnt it (TumbuGrass.h; the field's is in field.material)
+        param_named scorchColour float4 0.17 0.13 0.10 0.8
     }
 }
 
@@ -41,6 +43,8 @@ fragment_program env_stone_ps glsl glsles hlsl
         param_named_auto matSpec surface_specular_colour
         param_named_auto matShininess surface_shininess
         param_named_auto camPos camera_position
+        // a scorch where an impact burnt it (TumbuGrass.h; the field's is in field.material)
+        param_named scorchColour float4 0.17 0.13 0.10 0.8
     }
 }
 
@@ -89,6 +93,8 @@ fragment_program env_stone_floor_ps glsl glsles hlsl
         param_named_auto matSpec surface_specular_colour
         param_named_auto matShininess surface_shininess
         param_named_auto camPos camera_position
+        // a scorch where an impact burnt it (TumbuGrass.h; the field's is in field.material)
+        param_named scorchColour float4 0.17 0.13 0.10 0.8
     }
 }
 

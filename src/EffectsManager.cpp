@@ -172,6 +172,7 @@ void EffectsManager::updateGrass( Ogre::Real time ){
 
 	// burnt patches: x z, radius, how burnt (0..1) plus the embers (0..1) above 1; their count goes in grassWaveWidth.z
 	float data[GRASS_BURNS * 4] = { 0 };
+	float heights[GRASS_BURNS * 4] = { 0 };
 	std::vector<GrassBurn>::iterator b = grassBurns.begin();
 	while( b != grassBurns.end() ){
 		b->age += time;
@@ -189,10 +190,12 @@ void EffectsManager::updateGrass( Ogre::Real time ){
 		data[i * 4 + 1] = g.position.z;
 		data[i * 4 + 2] = g.radius;
 		data[i * 4 + 3] = burnt + embers;
+		heights[i * 4] = g.position.y;
 	}
 	width.z = (Ogre::Real)std::min<size_t>( grassBurns.size(), GRASS_BURNS );
 	params->setNamedConstant( "grassWaveWidth", width );
 	params->setNamedConstant( "grassBurn", data, GRASS_BURNS * 4 );
+	params->setNamedConstant( "grassBurnY", heights, GRASS_BURNS * 4 );
 }
 //-------------------------------------------------------------------------------------
 bool EffectsManager::frameRenderingQueued( const Ogre::FrameEvent &evt ){

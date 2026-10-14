@@ -6,17 +6,20 @@
 // What the impacts do to the field (EffectsManager::updateGrass, the "grass" layer of effects.object):
 // grassWave0/1: x z of the centre, the front's distance from it, its strength now (0 = none); grassWaveWidth: their
 // widths (x, y) and how many burnt patches there are (z: the loop below stops there, so a field with none costs
-// nothing); grassBurn[i]: x z, radius, how burnt (0..1) plus the embers (0..1) above 1. The array size must match
-// EffectsManager::GRASS_BURNS. Put TUMBU_GRASS_UNIFORMS in OGRE_UNIFORMS.
+// nothing); grassBurn[i]: x z, radius, how burnt (0..1) plus the embers (0..1) above 1; grassBurnY[i].x: the height of
+// its centre (the ground where the impact landed). A burn is a sphere: it marks the field, the plants, the ring floor,
+// the walls and the seats it reaches (2026-10-14: a hit on the seats burnt the grass below and left the seats clean).
+// The array sizes must match EffectsManager::GRASS_BURNS. Put TUMBU_GRASS_UNIFORMS in OGRE_UNIFORMS.
 #define TUMBU_GRASS_UNIFORMS \
     uniform vec4 grassWave0; \
     uniform vec4 grassWave1; \
     uniform vec4 grassWaveWidth; \
-    uniform vec4 grassBurn[8];
+    uniform vec4 grassBurn[8]; \
+    uniform vec4 grassBurnY[8];
 
-// How burnt the field is at a point (x) and how much its embers glow (y), 0..1: full inside 70 % of a patch's radius,
+// How burnt a point is (x) and how much its embers glow (y), 0..1: full inside 70 % of a patch's radius (3D distance),
 // fading out to its edge.
-vec2 tumbuGrassBurnt(vec2 xz, vec4 grassBurn[8], float count)
+vec2 tumbuGrassBurnt(vec3 p, vec4 grassBurn[8], vec4 grassBurnY[8], float count)
 {
     vec2 b = vec2_splat(0.0);
     for (int i = 0; i < 8; i++)
@@ -24,13 +27,28 @@ vec2 tumbuGrassBurnt(vec2 xz, vec4 grassBurn[8], float count)
         if (float(i) >= count)
             break;
         vec4 g = grassBurn[i];
-        float inside = saturate((g.z - length(xz - g.xy)) / (g.z * 0.3));
+        float inside = saturate((g.z - length(p - vec3(g.x, grassBurnY[i].x, g.y))) / (g.z * 0.3));
         b.x = max(b.x, inside * min(g.w, 1.0));
         b.y = max(b.y, inside * max(g.w - 1.0, 0.0));
     }
     return b;
 }
-#define TUMBU_GRASS_BURNT(xz) tumbuGrassBurnt(xz, grassBurn, grassWaveWidth.z)
+#define TUMBU_GRASS_BURNT(p) tumbuGrassBurnt(p, grassBurn, grassBurnY, grassWaveWidth.z)
+
+// A cheap value noise (0..1, about one feature per metre) to break up a scorch's edge on surfaces without the meadow's
+// noise texture (the stone).
+float tumbuScorchNoise(vec3 p)
+{
+    vec2 q = vec2(p.x + p.y * 0.7, p.z - p.y * 0.5) * 1.3;
+    vec2 i = floor(q);
+    vec2 f = q - i;
+    f = f * f * (3.0 - 2.0 * f);
+    float a = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453);
+    float b = fract(sin(dot(i + vec2(1.0, 0.0), vec2(127.1, 311.7))) * 43758.5453);
+    float c = fract(sin(dot(i + vec2(0.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+    float d = fract(sin(dot(i + vec2(1.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
 
 // How far and which way a shockwave (w: x z centre, front distance, strength) bends a plant rooted at `root`.
 vec2 grassWavePush(vec3 root, vec4 w, float width)

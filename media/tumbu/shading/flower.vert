@@ -42,7 +42,7 @@ MAIN_DECLARATION
     vec4 push = pushParams;
     push.z *= flowerParams.y;
     // burnt: the plant collapses towards its root (flower.frag chars it)
-    vec2 burnt = TUMBU_GRASS_BURNT(uv1.xz);
+    vec2 burnt = TUMBU_GRASS_BURNT(uv1.xyz);
     float keep = 1.0 - 0.8 * burnt.x;
     vec3 p = uv1.xyz + (vertex.xyz - uv1.xyz) * vec3(1.0, keep, 1.0);
     float pushed;
