@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D]]] [-Hero robot005] [-HeroPos "x,z"] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-NoHud] [-Hide field,grass,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D] [-StripDt S]]] [-Hero robot005] [-HeroPos "x,z"] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-NoHud] [-Hide field,grass,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 #        .\scripts\devtest.ps1 -GuiTour [-Hour 22] [-Renderer GL]      # every GUI screen: devtest-gui-*.png
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
@@ -48,6 +48,8 @@ param(
     [ValidatePattern('^\d+x\d+$')] [string]$VideoMode = '1024x768',
     [int]$Strip = 0,
     [double]$StripStep = 0,
+    # each strip frame advances the game by this many seconds (0 = by whatever saving it took): strips of motion
+    [double]$StripDt = 0,
     [int]$Cycles = 0,
     [switch]$GuiTour,
     [switch]$Clean,
@@ -95,6 +97,7 @@ if ($BenchAI)     { $gameArgs += '-benchai' }
 if ($BenchChase)  { $gameArgs += '-benchchase' }
 if ($Strip -gt 0)  { $gameArgs += "-strip=$Strip" }    # needs -Camera or -Bench (a fixed camera)
 if ($StripStep -gt 0) { $gameArgs += "-stripstep=" + $StripStep.ToString([cultureinfo]::InvariantCulture) }
+if ($StripDt -gt 0) { $gameArgs += "-stripdt=" + $StripDt.ToString([cultureinfo]::InvariantCulture) }
 if ($Bench -gt 0)  { $gameArgs += "-bench=" + $Bench.ToString([cultureinfo]::InvariantCulture) }
 if ($Cycles -gt 0) {
     # The memory check drives the game itself (menu, match, kills, back to the menu) and quits when done.

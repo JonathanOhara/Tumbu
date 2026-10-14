@@ -2,14 +2,16 @@
 The field's flowers and reeds: small toon plant models in art/arena/Flowers.blend, exported to
 media/tumbu/arena/flower_<kind>.mesh and reed_<kind>.mesh. Grass.cpp plants them among the tall grass when a match loads
 (media/configuration/grass.object, "flowers field" and "reeds field") and grass.vert's wind and push bend them like the
-blades (flower.vert). After the games that do flowers well (Ghost of
-Tsushima, Horizon Zero Dawn, the Xenoblade meadows): the blades are generated, the flowers are made by hand and placed by
-the same rules.
+blades (flower.vert). After the games that do flowers well (Ghost of Tsushima, Horizon Zero Dawn, the Xenoblade
+meadows): the blades are generated, the flowers are made by hand and placed by the same rules.
 
 Run through scripts/arena-flowers.ps1 (headless Blender 5.2 + blender2ogre):
-  - opens art/arena/Flowers.blend (creates it the first time) and builds each flower of KINDS that is not in it yet
-    (--rebuild: all of them again, which discards hand edits);
-  - exports every mesh object in the "Flowers" collection whose name starts with "flower_" or "reed_".
+  - opens art/arena/Flowers.blend (creates it the first time) and builds each plant of KINDS that is not in it yet
+    (--rebuild: again, which discards hand edits);
+  - exports every mesh object in the "Flowers" collection whose name starts with "flower_" or "reed_";
+  - --only a,b: only those plants (object names) are built, rebuilt or exported, the others are left alone;
+  - --preview <png>: renders the plants (or the --only ones) side by side into <png> instead, without saving the file
+    or exporting anything.
 
 A flower's rules (Grass.cpp reads them):
   - the root is the object's origin and it grows up Blender's z (1 unit = 1 metre); the object's own location only
@@ -29,6 +31,8 @@ from mathutils import Matrix, Vector
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 ROOT = os.path.abspath(ARGS[0])
 REBUILD = "--rebuild" in ARGS
+ONLY = ARGS[ARGS.index("--only") + 1].split(",") if "--only" in ARGS else None
+PREVIEW = ARGS[ARGS.index("--preview") + 1] if "--preview" in ARGS else None
 BLEND = os.path.join(ROOT, "art", "arena", "Flowers.blend")
 MEDIA = os.path.join(ROOT, "media", "tumbu", "arena")
 MATERIAL = "Tumbu/FieldFlower"      # the game's material (media/tumbu/arena/field_flower.material)
@@ -336,11 +340,42 @@ def export(ob):
     log("exported %s.mesh (Blender bounds %s .. %s)" % (ob.name, ["%.3f" % v for v in lo], ["%.3f" % v for v in hi]))
 
 
+def preview(objects, path):
+    """Renders the plants side by side (Workbench, their vertex colours) from the front with an orthographic camera
+    that frames them all."""
+    from mathutils import Vector
+    scene = bpy.context.scene
+    scene.render.engine = 'BLENDER_WORKBENCH'
+    scene.display.shading.light = 'STUDIO'
+    scene.display.shading.color_type = 'VERTEX'
+    scene.display.shading.background_type = 'VIEWPORT'
+    scene.display.shading.background_color = (0.55, 0.70, 0.85)
+    scene.render.resolution_x, scene.render.resolution_y = 1600, 700
+    corners = [ob.matrix_world @ Vector(c) for ob in objects for c in ob.bound_box]
+    lo = Vector([min(c[i] for c in corners) for i in range(3)])
+    hi = Vector([max(c[i] for c in corners) for i in range(3)])
+    centre = (lo + hi) / 2
+    cam = bpy.data.cameras.new("preview")
+    cam.type = 'ORTHO'
+    cam.ortho_scale = max(hi.x - lo.x, (hi.z - lo.z) * 1600 / 700) * 1.1
+    camera = bpy.data.objects.new("preview", cam)
+    scene.collection.objects.link(camera)
+    # from the front (-y), a little above
+    camera.location = centre + Vector((0, -10, 1.5))
+    camera.rotation_euler = (centre - camera.location).to_track_quat('-Z', 'Y').to_euler()
+    scene.camera = camera
+    scene.render.filepath = path
+    bpy.ops.render.render(write_still=True)
+    log("preview of %d plants: %s" % (len(objects), path))
+
+
 def main():
     if os.path.exists(BLEND):
         bpy.ops.wm.open_mainfile(filepath=BLEND)
     else:
-        bpy.ops.wm.read_factory_settings(use_empty=True)
+        # an empty file, keeping the preferences: read_factory_settings would reset them too, which switches the
+        # blender2ogre add-on off and makes enabling it again fail halfway (a KeyError in its register)
+        bpy.ops.wm.read_homefile(use_empty=True)
     if "io_ogre" not in bpy.context.preferences.addons:
         addon_utils.enable("io_ogre")
     collection = bpy.data.collections.get("Flowers")
@@ -348,7 +383,11 @@ def main():
         collection = bpy.data.collections.new("Flowers")
         bpy.context.scene.collection.children.link(collection)
     for i, (name, build) in enumerate(KINDS):
+        if ONLY is not None and name not in ONLY:
+            continue
         ob = bpy.data.objects.get(name)
+        if PREVIEW is not None and ob is not None:
+            continue
         if ob is not None and REBUILD:
             me = ob.data
             bpy.data.objects.remove(ob)
@@ -356,11 +395,16 @@ def main():
             ob = None
         if ob is None:
             make_object(name, build, collection, i * 0.4)
+    plants = [ob for ob in sorted(collection.objects, key=lambda o: o.name)
+              if ob.type == 'MESH' and (ob.name.startswith("flower_") or ob.name.startswith("reed_"))
+              and (ONLY is None or ob.name in ONLY)]
+    if PREVIEW is not None:
+        preview(plants, PREVIEW)
+        return
     bpy.ops.wm.save_as_mainfile(filepath=BLEND)
     log("saved " + BLEND)
-    for ob in sorted(collection.objects, key=lambda o: o.name):
-        if ob.type == 'MESH' and (ob.name.startswith("flower_") or ob.name.startswith("reed_")):
-            export(ob)
+    for ob in plants:
+        export(ob)
 
 
 main()

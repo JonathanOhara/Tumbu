@@ -237,6 +237,16 @@ session; they only mean something against the other variant of the same run.
   can debug from, not just true/false. The analysis of a FAIL stays by hand. Its first test caught a false alarm: over 3
   matches one OpenGL step of 78 KB (OpenGL32 and the Windows text-input DLLs), so OpenGL growth is judged from 10
   matches on.
+- **Test tools fixed** (2026-10-13, after the grass extras):
+  - `-stripdt` / `devtest.ps1 -StripDt`: a strip's frames had been as far apart in game time as saving each took (the
+    shockwave and the embers were over a few frames in); BaseApplication now runs Root::startRendering's loop itself
+    and passes a fixed frame time while such a strip is saved.
+  - `bench.ps1` runs a run with a hitch again (one 1 s window above 1.4x its median): one stalled second (2.95 ms
+    against 1.55) had moved a `-Quick` result by 0.12 ms.
+  - Helper scripts splat switches as a hashtable (an array splat passed `-HeroPos` and the rest positionally, twice).
+  - `arena-flowers.ps1 -Only` and `-Preview`; and on a new Flowers.blend it no longer resets Blender's preferences
+    (`read_factory_settings` switched the blender2ogre add-on off, and enabling it again failed halfway with a
+    KeyError; the export only worked because the module stayed loaded): `read_homefile(use_empty=True)`.
 - **Throwaway builds in `bin\scratch\`** (2026-10-10): Norton held every `TUMBU.exe` it found in a new place, so each run
   waited for its scan; `bin\` is excluded.
 - **Dev runs at 1600x900 or smaller** (2026-10-10): a window as big as the screen took over Jonathan's work.

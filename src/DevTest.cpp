@@ -59,6 +59,8 @@ Ogre::Vector3 DevTest::cameraTarget = Ogre::Vector3::ZERO;
 Ogre::String DevTest::hideList = "";
 int DevTest::stripFrames = 0;
 Ogre::Real DevTest::stripStep = 0.003f;
+Ogre::Real DevTest::stripDt = 0;
+Ogre::Real DevTest::fixedFrameTime = 0;
 //-------------------------------------------------------------------------------------
 void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 	Ogre::StringVector args = Ogre::StringUtil::split( commandLine, " \t" );
@@ -142,6 +144,9 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			stripFrames = Ogre::StringConverter::parseInt( arg.substr( 7 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-stripstep=" ) ){
 			stripStep = Ogre::StringConverter::parseReal( arg.substr( 11 ) );
+		}else if( Ogre::StringUtil::startsWith( arg, "-stripdt=" ) ){
+			// -stripdt=S: each strip frame advances the game by S seconds, whatever saving it took (motion strips)
+			stripDt = Ogre::StringConverter::parseReal( arg.substr( 9 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-cycles=" ) ){
 			cycles = Ogre::StringConverter::parseInt( arg.substr( 8 ) );
 		}else if( Ogre::StringUtil::startsWith( arg, "-heropos=" ) ){
@@ -217,7 +222,8 @@ DevTest::DevTest(void){
 		" fpscap=" + Ogre::StringConverter::toString( fpsCap ) +
 		" quitafter=" + Ogre::StringConverter::toString( quitAfter ) +
 		( fxTest.empty() ? "" : " fxtest=" + fxTest + " fxtime=" + Ogre::StringConverter::toString( fxTime ) + " fxdistance=" + Ogre::StringConverter::toString( fxDistance ) ) +
-		( stripFrames > 0 ? " strip=" + Ogre::StringConverter::toString( stripFrames ) + " stripstep=" + Ogre::StringConverter::toString( stripStep ) : "" ) );
+		( stripFrames > 0 ? " strip=" + Ogre::StringConverter::toString( stripFrames ) + " stripstep=" + Ogre::StringConverter::toString( stripStep )
+			+ ( stripDt > 0 ? " stripdt=" + Ogre::StringConverter::toString( stripDt ) : "" ) : "" ) );
 	if( stripFrames > 0 && !fixedCamera ){
 		log( "strip: ignored, it needs a fixed camera (-camera or -bench)" );
 		stripFrames = 0;
@@ -546,7 +552,9 @@ void DevTest::holdEnemy(void){
 //-------------------------------------------------------------------------------------
 bool DevTest::runStrip(void){
 	// -strip=N: frame k is saved at the start of the next frame (the window then holds it), and the camera moves on by
-	// stripStep to its right. The screenshot was taken first, so it matches the strip's frame 0 view.
+	// stripStep to its right. The screenshot was taken first, so it matches the strip's frame 0 view. Saving a frame
+	// takes far longer than a frame, so without -stripdt the game jumps ahead between strip frames by whatever the save
+	// took; with -stripdt every strip frame advances it by exactly that (BaseApplication::go, getFixedFrameTime).
 	if( stripFrames <= 0 ){
 		return false;
 	}
@@ -556,8 +564,10 @@ bool DevTest::runStrip(void){
 		tumbu->mWindow->writeContentsToFile( file );
 	}
 	stripDone++;
+	fixedFrameTime = stripDone < stripFrames ? stripDt : 0;
 	if( stripDone >= stripFrames ){
-		log( "strip: " + Ogre::StringConverter::toString( stripFrames ) + " frames saved, the camera moved " + Ogre::StringConverter::toString( stripStep ) + " units per frame" );
+		log( "strip: " + Ogre::StringConverter::toString( stripFrames ) + " frames saved, the camera moved " + Ogre::StringConverter::toString( stripStep ) + " units per frame"
+			+ ( stripDt > 0 ? ", the game " + Ogre::StringConverter::toString( stripDt ) + " s per frame" : "" ) );
 		return false;
 	}
 	Ogre::Vector3 back = ( cameraEye - cameraTarget ).normalisedCopy();

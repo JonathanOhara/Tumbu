@@ -50,6 +50,10 @@ from each one you defeat.
 - **`bash` typed in PowerShell starts WSL** (`C:\Windows\System32\bash.exe` comes first on the PATH), not Git Bash: it
   sees another file system and environment, and scripts run that way fail silently. Write helper scripts in PowerShell,
   or call Git Bash by its full path (`C:\Program Files\Git\bin\bash.exe`).
+- **In a PowerShell helper script, pass a set of switches to `devtest.ps1` (or any script) as a hashtable**:
+  `$common = @{ NoWalk = $true; HeroPos = '-14,-6' }; & .\scripts\devtest.ps1 @common -Name x`. An array
+  (`@('-NoWalk', '-HeroPos', '-14,-6')`) splats its items positionally: the run starts without the switches (it bit
+  twice).
 - **Run every game build from inside the repo's `bin\`** (excluded from Norton). Throwaway copies, prototypes and
   worktrees for comparisons go in **`bin\scratch\<name>\`** (git-ignored, kept between Claude sessions), never in
   `%TEMP%`, the session scratchpad or a sibling folder such as `..\Tumbu-before`: Norton holds every `TUMBU.exe` it
@@ -130,6 +134,11 @@ in the way of a run (for example a window behind others that does not render), d
     `-bench`: after the screenshot the camera pans sideways D units per frame, 0.003 by default, about a third of a pixel
     at 15 units, and N consecutive frames are saved; `devtest.ps1 -Strip N` names them `devtest-<Name>-strip-NN.png`).
     Strips show flicker and crawl of small bright details (bloom, sparks, thin neon) that one screenshot cannot.
+    Saving a frame takes far longer than a frame, so the game jumps ahead between strip frames by whatever the save
+    took: `-stripdt=S` (`devtest.ps1 -StripDt 0.0333`) makes every strip frame advance the game by exactly S seconds
+    (BaseApplication's render loop passes `DevTest::getFixedFrameTime` to `Root::renderOneFrame`), so a strip with a
+    still camera (`-StripStep 0.000001`) plays like a video: effects, the shockwave, the wind. Without it, strips keep
+    their old timing (the crawl numbers stay comparable).
   - `-bench=S` (`devtest.ps1 -Bench S`): a steady frame-rate measurement: no AI, the camera fixed from the first frame
     (the standard robot view unless `-camera`), a 3 s warm-up, then S seconds counted with a wall-clock timer; logs
     `[DEVTEST] bench: fps=… ms=… window_min=… window_max=… render_ms=… rest_ms=… render=… size=… aa=… sky=… shadows=…
@@ -240,6 +249,9 @@ materials, textures, GUI) gets a before/after set:
    - How it runs: a thrown-away warm-up run per renderer, 8 s runs, rounds in alternating order (A B, B A, ...), the
      difference taken round by round; at least `-Runs` rounds (3), more up to `-MaxRuns` (6) only while a difference is
      neither clear (3 standard errors) nor known to `-Resolution` (0.02 ms, the noise floor). Each run takes about 15 s.
+     A run with a hitch (one 1 s window more than 1.4x the run's median: another program, a driver stall) is run again,
+     up to 3 times. `-Quick` (2 rounds) is for light changes; measure shader changes with the full rounds, on the
+     renderer in question (`-Renderers D3D11`).
      Why it is built this way: docs/HISTORY.md, "Benchmark method". Call it from PowerShell: through
      `powershell -File` the variant list arrives as one string.
    - It writes `%USERPROFILE%\Tumbu\<feature>\fps.txt` (fps, ms per frame, spread, the difference to the first variant
@@ -524,8 +536,7 @@ materials, textures, GUI) gets a before/after set:
       (`jyn_impact`: 3.2 units, 4 s of embers, 20 s, 40 s). Cleared when the match ends.
     - To look at them: `devtest.ps1 -HeroPos -14,-6 -FxTest jyn_impact -FxTime 0.6 -Camera "-6,5,-1,-15,0,-7"` (the
       impact 2 units in front of the hero, in the grass; `-FxTime 8` the charred patch, `-FxTime 40 -QuitAfter 46` it
-      growing back). A frame strip cannot time a shockwave (saving each frame takes longer than a frame): take one run
-      per moment.
+      growing back; `-FxTime 0.05 -Strip 30 -StripStep 0.000001 -StripDt 0.0333` the first second as a video).
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.

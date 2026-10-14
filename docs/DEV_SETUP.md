@@ -214,7 +214,8 @@ quit.
   version: run `.\scripts\export-robots.ps1 -Blender <new blender.exe>` (no `-Save`/`-Install`, so nothing changes);
   every robot must report "all parts match Blender" and compare at zero with the installed files. Only then switch.
   The blocker is small (`ogre/skeleton.py` reads `action.groups` / `action.fcurves`, removed in Blender 5); a fix could
-  go upstream to OGRECave/blender2ogre.
+  go upstream to OGRECave/blender2ogre. Checked 2026-10-13: `0d094a4` is still the latest master, and no commit or pull
+  request there touches Blender 5's actions.
   - Scripted (headless) use: `blender.exe --background file.blend --python script.py`, then in the script
     `from io_ogre import api; api.dot_mesh(obj, out_dir, overwrite=True)`.
 - **Mesh formats:** the modern build uses Ogre 14 meshes. All 53 meshes and skeletons were upgraded with
@@ -365,8 +366,11 @@ The ground around the ring and the hills beyond the walls: `media/tumbu/arena/fi
 - **How many and where:** `flowers field` and `reeds field` in `grass.object`: `clumps` (each of one kind, the kinds in turn), `ringFrom` /
   `ringTo` (distance from the centre), flowers per clump, size and lean. Restart the match to see a change. The sway and
   the shading are in `media/tumbu/arena/field_flower.material`.
-- **Rules:** `arena-flowers.ps1 -Rebuild` builds every flower again from `scripts/blender/arena_flowers.py` and
-  **discards hand edits**; without it the script only builds the kinds the file does not have yet.
+- **Rules:** `arena-flowers.ps1 -Rebuild` builds the plants again from `scripts/blender/arena_flowers.py` and
+  **discards hand edits**; without it the script only builds the kinds the file does not have yet. `-Only
+  reed_pampas,flower_daisy` limits the build, rebuild and export to those plants (the others keep their hand edits).
+- **A look without the game:** `.\scripts\arena-flowers.ps1 -Preview` renders the plants (or the `-Only` ones) side by
+  side with their colours into `%USERPROFILE%\Tumbu\plants-preview.png`; it saves and exports nothing.
 
 ### Robot export (`art/robots/robot00N.blend` -> `media/tumbu/robot00N/`)
 

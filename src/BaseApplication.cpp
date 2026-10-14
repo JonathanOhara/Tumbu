@@ -67,7 +67,18 @@ BaseApplication::~BaseApplication(void){
 void BaseApplication::go(void){
 	initApp();
 	if( getRoot() != NULL && getRenderWindow() != NULL ){
-		getRoot()->startRendering();
+		// Root::startRendering's loop, with one change: while DevTest saves a -strip with -stripdt, each frame advances
+		// the game by a fixed time instead of the real one (the frame-event time drives everything that moves).
+		Ogre::Root* root = getRoot();
+		root->getRenderSystem()->_initRenderTargets();
+		root->clearEventTimes();
+		root->queueEndRendering( false );
+		while( !root->endRenderingQueued() ){
+			const Ogre::Real fixed = DevTest::getFixedFrameTime();
+			if( !( fixed > 0 ? root->renderOneFrame( fixed ) : root->renderOneFrame() ) ){
+				break;
+			}
+		}
 	}
 
 	// Everything that talks to Ogre is released here, before closeApp() deletes the Root.

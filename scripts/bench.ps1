@@ -20,6 +20,8 @@
 #     GPU warming up), and a fixed order made the second variant look ~0.02 ms slower;
 #   - the difference is taken round by round (each variant against the reference run next to it), so the slow drift
 #     cancels out; "+/-" is 2 standard errors of that mean.
+#   - a run with a hitch (one of its 1 s windows more than 1.4x its median: another program, a driver stall) is run
+#     again, up to 3 times, like a run whose window did not render: one such second moved a -Quick result by 0.12 ms.
 # The table is printed and saved as %USERPROFILE%\Tumbu\<Name>\fps.txt (next to the before/after images). A note follows
 # a renderer's rows when a variant's own runs spread by more than 10 % of its frame time: something else was probably
 # using the PC. ogre.cfg is switched for the runs and always restored. The game runs muted, without the focus.
@@ -75,12 +77,18 @@ function Invoke-BenchRun($v, [string]$renderer, [string]$runName) {
     if ((Get-Command $devtest).Parameters.ContainsKey('VideoMode')) { $splat.VideoMode = $VideoMode }
     $splat.Name = $runName
     $fpsFile = Join-Path $work "devtest-$runName.fps"
-    # A run whose window was hidden or minimised did not render (DevTest marks it invalid): run it again.
+    # A run whose window was hidden or minimised did not render (DevTest marks it invalid), or that had a hitch (one 1 s
+    # window much slower than the others): run it again.
     for ($attempt = 1; $attempt -le 3; $attempt++) {
         & $devtest @splat | Out-Null
         $line = if (Test-Path $fpsFile) { Get-Content $fpsFile -Raw } else { '' }
-        if ($line -notmatch 'invalid=') { break }
-        Write-Warning "$runName : $($Matches[0]) the window did not render (hidden or minimised?), attempt $attempt of 3"
+        if ($line -match 'invalid=') {
+            Write-Warning "$runName : $($Matches[0]) the window did not render (hidden or minimised?), attempt $attempt of 3"
+            continue
+        }
+        $hitch = Get-Hitch $line
+        if ($hitch -eq '' -or $attempt -eq 3) { break }
+        Write-Warning "$runName : a hitch ($hitch), attempt $attempt of 3"
     }
     if ($line -match 'invalid=') { return $null }
     if ($line -notmatch 'avg=[\d.]+ ms=[\d.]+' -or -not $line.Contains("render=$($systems[$renderer] -replace ' ', '_')")) {
@@ -89,6 +97,19 @@ function Invoke-BenchRun($v, [string]$renderer, [string]$runName) {
     }
     if (-not $line.Contains("size=$VideoMode")) { Write-Warning "$runName : the window was not $VideoMode ($line)" }
     return $line
+}
+
+# A hitch in a run: one of its 1 s windows (windows_ms) more than 1.4x their median; '' when there is none.
+function Get-Hitch([string]$line) {
+    $m = [regex]::Match($line, 'windows_ms=([\d.,]+)')
+    if (-not $m.Success) { return '' }
+    $windows = @($m.Groups[1].Value.Split(',') | Where-Object { $_ } | ForEach-Object { [double]::Parse($_, $inv) })
+    if ($windows.Count -lt 3) { return '' }
+    $sorted = $windows | Sort-Object
+    $median = $sorted[[int][math]::Floor($sorted.Count / 2)]
+    $worst = $sorted[$sorted.Count - 1]
+    if ($worst -gt 1.4 * $median) { return [string]::Format($inv, 'one second at {0:0.000} ms, the median {1:0.000} ms', $worst, $median) }
+    return ''
 }
 
 function Get-Number([string]$line, [string]$key) {

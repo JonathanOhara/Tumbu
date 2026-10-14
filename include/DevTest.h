@@ -66,6 +66,9 @@ public:
 	static const Ogre::String &getHeroSet(void){ return heroSet; }
 	/// -heropos=x,z: where the hero starts (true), dropped from 1.5 units above the ground; false = on the ring.
 	static bool getHeroStart( Ogre::Vector3 &position );
+	/// The game time of the next frame while a -strip with -stripdt is being saved (seconds; 0 = the real frame time):
+	/// BaseApplication's render loop passes it to Root::renderOneFrame, so the strip's frames are evenly timed.
+	static Ogre::Real getFixedFrameTime(void){ return fixedFrameTime; }
 
 	DevTest(void);
 	virtual ~DevTest(void);
@@ -178,6 +181,8 @@ private:
 	static Ogre::String hideList;
 	static int stripFrames;
 	static Ogre::Real stripStep;
+	static Ogre::Real stripDt;
+	static Ogre::Real fixedFrameTime;
 };
 
 #endif // #ifndef __DevTest_h_
