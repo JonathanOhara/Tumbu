@@ -42,6 +42,10 @@ public:
 	Ogre::Vector3 getLightDirection(void);
 	Ogre::ColourValue getSunColour(void);
 	Ogre::ColourValue getAmbientColour(void);
+	/// The shadow tint of the current keyframe (the colour the sun's light takes in shade).
+	Ogre::ColourValue getShadowColour(void);
+	/// Whether the sun reaches a point: a physics ray towards the sun (the coliseum, the ring and the robots shade it).
+	bool isSunlit( const Ogre::Vector3 &point );
 
 	bool frameRenderingQueued(const Ogre::FrameEvent &evt);
 	/// Before the god-ray pass: camera and shadow-map matrices, and the shadow map itself.

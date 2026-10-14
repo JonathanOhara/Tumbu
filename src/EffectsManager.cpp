@@ -127,8 +127,12 @@ void EffectsManager::burnGrass( const Ogre::Vector3 &position, Ogre::Real radius
 	// only an impact near the ground burns it (not a ball that bursts high on a wall)
 	const Ogre::Vector3 ground = groundBelow( position );
 	if( ground == position || position.y - ground.y > height ){
+		Ogre::LogManager::getSingleton().logMessage( "[Effects] no burn: the impact at " + Ogre::StringConverter::toString( position )
+			+ " is not within " + Ogre::StringConverter::toString( height ) + " of the ground" );
 		return;
 	}
+	Ogre::LogManager::getSingleton().logMessage( "[Effects] burn at " + Ogre::StringConverter::toString( ground ) + " radius "
+		+ Ogre::StringConverter::toString( radius ) );
 	GrassBurn burn;
 	burn.position = ground;
 	burn.radius = radius;

@@ -50,6 +50,9 @@ class DevTest: public Ogre::FrameListener{
 public:
 	static void parseCommandLine( const Ogre::String &commandLine );
 	static bool isEnabled(void);
+	/// Whether the window waits for the monitor: always outside DevTest; in a DevTest run unless -bench, -fpscap or
+	/// -novsync (test runs see the frame rate the game is played at).
+	static bool useVSync(void);
 	/// Start hour of the in-game clock from -hour=H (fractional: 20.5 = 20:30), or -1 when not given.
 	static float getStartHour(void){ return startHour; }
 	/// -mute: every sound plays at volume 0 (for runs started by tools or while working on something else).
@@ -66,6 +69,8 @@ public:
 	static const Ogre::String &getHeroSet(void){ return heroSet; }
 	/// -heropos=x,z: where the hero starts (true), dropped from 1.5 units above the ground; false = on the ring.
 	static bool getHeroStart( Ogre::Vector3 &position );
+	/// Logs every particle system's live particles and their mean colour (with the screenshot).
+	void logParticleColours(void);
 	/// The game time of the next frame while a -strip with -stripdt is being saved (seconds; 0 = the real frame time):
 	/// BaseApplication's render loop passes it to Root::renderOneFrame, so the strip's frames are evenly timed.
 	static Ogre::Real getFixedFrameTime(void){ return fixedFrameTime; }
@@ -160,6 +165,7 @@ private:
 	static int faceShot;
 	static bool jynWalk;
 	static bool noFx;
+	static bool noVSync;
 	static bool bloomOnly;
 	static bool noHud;
 	static int antiAliasing;

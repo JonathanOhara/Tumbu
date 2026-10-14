@@ -419,6 +419,23 @@ Ogre::ColourValue Lighting::getAmbientColour(void){
 	return ( current.skyColour + current.groundColour ) * 0.5f;
 }
 //-------------------------------------------------------------------------------------
+Ogre::ColourValue Lighting::getShadowColour(void){
+	return current.shadowColour;
+}
+//-------------------------------------------------------------------------------------
+bool Lighting::isSunlit( const Ogre::Vector3 &point ){
+	Demo* demo = TUMBU::getInstance()->getDemo();
+	if( demo == NULL || demo->getPhysicWorld() == NULL || current.sunElevation <= 0 ){
+		return current.sunElevation > 0;
+	}
+	btCollisionWorld* world = demo->getPhysicWorld()->getBulletCollisionWorld();
+	btVector3 from = Physics::OgreBtConverter::to( point + Ogre::Vector3( 0, 0.05f, 0 ) );
+	btVector3 to = Physics::OgreBtConverter::to( point - getLightDirection() * 200.0f );
+	btCollisionWorld::ClosestRayResultCallback hit( from, to );
+	world->rayTest( from, to, hit );
+	return !hit.hasHit();
+}
+//-------------------------------------------------------------------------------------
 void Lighting::apply( const Keyframe &k ){
 	Ogre::Vector3 towardsSun = -getLightDirection();
 

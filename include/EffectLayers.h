@@ -83,6 +83,7 @@ private:
 	bool follow;
 	Ogre::Vector3 offset;
 	bool onGround;
+	bool shade;
 	bool emitting;
 };
 

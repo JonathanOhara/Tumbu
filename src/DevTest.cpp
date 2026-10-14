@@ -36,6 +36,7 @@ bool DevTest::mute = false;
 int DevTest::faceShot = 0;
 bool DevTest::jynWalk = false;
 bool DevTest::noFx = false;
+bool DevTest::noVSync = false;
 bool DevTest::bloomOnly = false;
 bool DevTest::noHud = false;
 int DevTest::antiAliasing = -1;
@@ -84,6 +85,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 			mute = true;
 		}else if( arg == "-nofx" ){
 			noFx = true;
+		}else if( arg == "-novsync" ){
+			noVSync = true;
 		}else if( arg == "-bloomonly" ){
 			bloomOnly = true;
 		}else if( arg == "-nohud" ){
@@ -183,6 +186,12 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 //-------------------------------------------------------------------------------------
 bool DevTest::isEnabled(void){
 	return autoplay || guiTour || cycles > 0 || measureAnims || poseDump || fpsCap > 0;
+}
+//-------------------------------------------------------------------------------------
+bool DevTest::useVSync(void){
+	// test runs wait for the monitor like a game Jonathan plays (frame-rate bugs hide at 800 fps); a frame-rate
+	// measurement (-bench), an explicit -fpscap or -novsync run uncapped
+	return !isEnabled() || ( bench <= 0 && fpsCap <= 0 && !noVSync );
 }
 //-------------------------------------------------------------------------------------
 DevTest::DevTest(void){
@@ -374,6 +383,7 @@ bool DevTest::frameStarted( const Ogre::FrameEvent &evt ){
 				Ogre::String shot = tumbu->workPath + "devtest.png";
 				tumbu->mWindow->writeContentsToFile( shot );
 				log( "screenshot saved to " + shot );
+				logParticleColours();
 			}
 			if( runStrip() ){
 				break;
@@ -547,6 +557,28 @@ void DevTest::holdEnemy(void){
 			enemyPresses++;
 			quitAfter = playTime + fxTime;
 		}
+	}
+}
+//-------------------------------------------------------------------------------------
+// With the screenshot: every particle system's live particles and their mean colour (alpha, and the rgb that dust and
+// impact shaders read as a seed or "life"), to catch fades that depend on the frame rate (docs/OGRE_BUGS.md, 16).
+void DevTest::logParticleColours(void){
+	Ogre::SceneManager* sceneMgr = TUMBU::getInstance()->mSceneMgr;
+	const Ogre::SceneManager::MovableObjectMap &systems = sceneMgr->getMovableObjects( "ParticleSystem" );
+	for( Ogre::SceneManager::MovableObjectMap::const_iterator s = systems.begin(); s != systems.end(); s++ ){
+		Ogre::ParticleSystem* system = static_cast<Ogre::ParticleSystem*>( s->second );
+		const size_t count = system->getNumParticles();
+		if( count == 0 ){
+			continue;
+		}
+		Ogre::ColourValue sum( 0, 0, 0, 0 );
+		for( size_t i = 0; i < count; i++ ){
+			sum += Ogre::ColourValue( (Ogre::uchar*)&system->getParticle( i )->mColour );
+		}
+		sum /= (Ogre::Real)count;
+		log( "particles " + system->getName() + " (" + system->getOrigin() + "): " + Ogre::StringConverter::toString( (int)count )
+			+ " live, mean colour " + Ogre::StringConverter::toString( sum.r, 3 ) + " " + Ogre::StringConverter::toString( sum.g, 3 ) + " "
+			+ Ogre::StringConverter::toString( sum.b, 3 ) + " alpha " + Ogre::StringConverter::toString( sum.a, 3 ) );
 	}
 }
 //-------------------------------------------------------------------------------------

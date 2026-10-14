@@ -130,8 +130,12 @@ affected, but it replaces the emitter's colour (our layers set the ki colour the
 **Workaround:** our own affector `TumbuFader` (`ParticleFader.h/.cpp`, registered in `BaseApplication::locateResources`
 before the scripts are parsed): the same `red` / `green` / `blue` / `alpha` per second, but it keeps each particle's
 colour at birth (`_initParticle`) and sets birth + rate x age, so it is the same at any frame rate. Every template in
-`effects.particle` uses it. Not yet: `dust.particle`'s `ColourFader2` (its colour is a seed for `dust.vert`, check
-before changing). **Upstream fixed when:** `ColourFaderAffector` keeps float precision (or derives from age); then
+`effects.particle` uses it, and the arena dust (`dust.particle`): its `ColourFader2` fade-in of +0.5 per second was
+below one byte step a frame above about 128 fps, so the motes never faded in (measured mean alpha: 0 uncapped, 0.3 at
+144 fps, 0.75 at 60; the design is 0.8): `TumbuFader` with `fade_in 2`, `fade_out 2` keeps their rgb (the seed) and is
+at 0.8 at any frame rate. `DirectionRandomiser` nudges by randomness x frame time, a random walk whose spread per
+second grows with the square root of the frame time (3.7x less wander at 800 fps than at 60): our `TumbuRandomiser`
+nudges by randomness x sqrt(frame time / 60), the same as Ogre's at 60 fps. **Upstream fixed when:** `ColourFaderAffector` keeps float precision (or derives from age); then
 `TumbuFader` can go.
 
 ## Retired: the Ogre terrain (2026-10-12)

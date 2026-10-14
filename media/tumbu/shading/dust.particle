@@ -28,22 +28,18 @@ particle_system Tumbu/ArenaDust
         colour_range_end 1 1 1 0
     }
 
-    // Fade in over 2 s, out over the last 2 s (rgb, the seed, stays the same).
-    affector ColourFader2
+    // Fade in over 2 s, out over the last 2 s (rgb, the seed, stays the same). TumbuFader, not Ogre's ColourFader2:
+    // that one adds per frame to byte colours, so above ~128 fps the motes never faded in (docs/OGRE_BUGS.md, 16).
+    affector TumbuFader
     {
-        red1 0
-        green1 0
-        blue1 0
-        alpha1 0.5
-        state_change 2
-        red2 0
-        green2 0
-        blue2 0
-        alpha2 -0.5
+        fade_in 2
+        fade_out 2
+        peak 1
     }
 
-    // Air currents: the direction keeps changing a little.
-    affector DirectionRandomiser
+    // Air currents: the direction keeps changing a little (TumbuRandomiser: Ogre's DirectionRandomiser wanders less the
+    // higher the frame rate).
+    affector TumbuRandomiser
     {
         randomness 0.25
         scope 1

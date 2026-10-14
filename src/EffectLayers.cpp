@@ -1,6 +1,7 @@
 #include "EffectLayers.h"
 #include "EffectsManager.h"
 #include "ConfigScript.h"
+#include "Lighting.h"
 #include <OgreParticleSystemRenderer.h>
 //-------------------------------------------------------------------------------------
 EffectLayer* createEffectLayer( Effect* effect, ConfigNode* node ){
@@ -200,6 +201,8 @@ EffectParticlesLayer::EffectParticlesLayer( Effect* _effect, ConfigNode* node ):
 	follow = Effect::readReal( node, "follow", 1 ) != 0;
 	offset = Effect::readVector( node, "offset", Ogre::Vector3::ZERO );
 	onGround = Effect::readReal( node, "ground", 0 ) != 0;
+	// "shade 1": unlit particles (smoke) that start where the sun does not reach take the scene's shadow tint
+	shade = Effect::readReal( node, "shade", 0 ) != 0;
 	if( duration <= 0 && effect->isReleased() ){
 		duration = 0.2f;	// one-shot effect: a burst, so the layer always ends
 	}
@@ -219,6 +222,15 @@ EffectParticlesLayer::EffectParticlesLayer( Effect* _effect, ConfigNode* node ):
 		colour.b = std::min<Ogre::Real>( colour.b, 1 );
 		for( unsigned short i = 0; i < system->getNumEmitters(); i++ ){
 			system->getEmitter( i )->setColour( colour );
+		}
+	}
+	if( shade && !Lighting::getInstance()->isSunlit( start + offset ) ){
+		// the shadow tint, lifted halfway to white: lit surfaces in shade also get the sky's light, which smoke has not
+		const Ogre::ColourValue tint = Lighting::getInstance()->getShadowColour() * 0.5f + Ogre::ColourValue::White * 0.5f;
+		for( unsigned short i = 0; i < system->getNumEmitters(); i++ ){
+			Ogre::ParticleEmitter* emitter = system->getEmitter( i );
+			Ogre::ColourValue c = emitter->getColour();
+			emitter->setColour( Ogre::ColourValue( c.r * tint.r, c.g * tint.g, c.b * tint.b, c.a ) );
 		}
 	}
 	this->node->attachObject( system );

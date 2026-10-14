@@ -483,8 +483,8 @@ int TUMBU::getShadowPreset(void){
 void TUMBU::setFrameLimit( int fps ){
 	frameLimit = fps;
 	if( mWindow != NULL ){
-		// DevTest runs never wait for the monitor, so their fps= lines measure the real frame rate.
-		mWindow->setVSyncEnabled( frameLimit == -1 && !DevTest::isEnabled() );
+		// DevTest runs wait for the monitor too, except frame-rate measurements (DevTest::useVSync).
+		mWindow->setVSyncEnabled( DevTest::isEnabled() ? DevTest::useVSync() : frameLimit == -1 );
 	}
 	frameLimitTimer.reset();
 }

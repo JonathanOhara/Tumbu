@@ -53,7 +53,13 @@ from each one you defeat.
 - **In a PowerShell helper script, pass a set of switches to `devtest.ps1` (or any script) as a hashtable**:
   `$common = @{ NoWalk = $true; HeroPos = '-14,-6' }; & .\scripts\devtest.ps1 @common -Name x`. An array
   (`@('-NoWalk', '-HeroPos', '-14,-6')`) splats its items positionally: the run starts without the switches (it bit
-  twice).
+  twice). A parameter both in the hashtable and on the call is an error (the run does not start): vary a parameter per
+  call by leaving it out of the hashtable.
+- **Anything that changes per frame must scale with the frame time, and particle affectors need care**: Ogre's
+  `ColourFader` / `ColourFader2` and `DirectionRandomiser` depend on the frame rate (docs/OGRE_BUGS.md, 16); use our
+  `TumbuFader` (rate per second, or `fade_in` / `fade_out` / `peak`) and `TumbuRandomiser` (`ParticleFader.h`). DevTest
+  logs every particle system's live count and mean colour with the screenshot (`particles <name>: …`): compare a run
+  with `-FpsCap 60` against one with `-NoVSync` when a fade or a drift looks different between tests and play.
 - **Run every game build from inside the repo's `bin\`** (excluded from Norton). Throwaway copies, prototypes and
   worktrees for comparisons go in **`bin\scratch\<name>\`** (git-ignored, kept between Claude sessions), never in
   `%TEMP%`, the session scratchpad or a sibling folder such as `..\Tumbu-before`: Norton holds every `TUMBU.exe` it
@@ -234,10 +240,11 @@ materials, textures, GUI) gets a before/after set:
 4. Read the images before reporting, and tell Jonathan the folder. Each tuning round gets a new folder
    (`<feature>-2`, …) whose "before" is the previous round's "after".
 5. **Track the frame rate too.** Every `devtest.ps1` run ends with `fps: avg=… min=… max=…` and saves it as
-   `devtest-<Name>.fps` (DevTest turns VSync off, so it is not capped by the monitor); `compare.ps1` prints it under each
-   image (`~N fps (1 run)` and `indicative` for a normal run, `(bench)` for a `-Bench` run), with the change in percent
-   on the AFTER side, and how many pixels differ. That per-shot number is only a hint: in a normal run the enemy fights,
-   and identical runs vary by ±15–30 %. **The real number comes from `scripts/bench.ps1`**:
+   `devtest-<Name>.fps`; `compare.ps1` prints it under each image (`~N fps (1 run)` and `indicative` for a normal run,
+   `(bench)` for a `-Bench` run), with the change in percent on the AFTER side, and how many pixels differ. **Test runs
+   wait for the monitor (VSync, 144 fps here) like the game Jonathan plays**: at 800 uncapped fps, Ogre's per-frame
+   particle fades went wrong unseen for weeks (docs/OGRE_BUGS.md, 16). So a normal run's fps only says it kept up with
+   the monitor; `-Bench`, `-FpsCap N` and `-NoVSync` run uncapped. **The real number comes from `scripts/bench.ps1`**:
    - `-bench` runs (no AI, fixed camera), alternating the variants: `-Variants "off=-AA 0","on=-AA 1"` for a DevTest
      switch; otherwise **compare builds run after run**: `git worktree add bin\scratch\before <commit>`, run
      `scripts\build.ps1` there, then `-Variants "before=@bin\scratch\before","after="` (each tree uses its own exe and
@@ -534,7 +541,9 @@ materials, textures, GUI) gets a before/after set:
       `embers` seconds (`emberColour`, HDR, so they bloom), and `field_toon.frag` scorches the ground (`scorchColour`,
       its edge broken up by the noise). It stays `burnHold` seconds, then everything grows back over `regrow`
       (`jyn_impact`: 3.2 units, 4 s of embers, 20 s, 40 s). Cleared when the match ends. `jyn_impact` also lets grey
-      toon smoke rise from the patch for 8 s (`Tumbu/Fx/BurnSmoke`, `effects.particle`).
+      toon smoke rise from the patch for 8 s (`Tumbu/Fx/BurnSmoke`, `effects.particle`); with `shade 1` on its layer a
+      smoke that starts where the sun does not reach (`Lighting::isSunlit`, one physics ray) takes the keyframe's shadow
+      tint, lifted halfway to white. Each burn is logged (`[Effects] burn at …` / `no burn: …`).
     - To look at them: `devtest.ps1 -HeroPos -14,-6 -FxTest jyn_impact -FxTime 0.6 -Camera "-6,5,-1,-15,0,-7"` (the
       impact 2 units in front of the hero, in the grass; `-FxTime 8` the charred patch, `-FxTime 40 -QuitAfter 46` it
       growing back; `-FxTime 0.05 -Strip 30 -StripStep 0.000001 -StripDt 0.0333` the first second as a video).

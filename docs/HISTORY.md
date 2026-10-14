@@ -245,6 +245,12 @@ session; they only mean something against the other variant of the same run.
   runs they now last as long as tuned. The smoke then glowed white at night (the smoke shader is unlit): tinted by the
   shared `sunColour`; a warm grey turned tan by day, so it is a cool grey now. Sparks from the embers were lost against
   the glowing embers (same orange, too small); cut grass was not wanted for now.
+- **Frame-rate checks** (2026-10-13, Jonathan: test with VSync on, uncap only for benchmarks): DevTest logs every
+  particle system's mean colour; the dust's mean alpha was 0 uncapped, 0.3 at 144 fps and 0.75 at 60 (Ogre's
+  `ColourFader2` loses rises below one byte step a frame): the dust has been invisible in every uncapped test shot and
+  about 2.5x fainter than designed in play. Now `TumbuFader` (0.8 at any rate) and `TumbuRandomiser` for its drift. The
+  game code itself scales everything by the frame time (camera, animation, AI, effects; physics at a fixed 120 Hz).
+  Test runs now wait for the monitor (`DevTest::useVSync`); `-bench`, `-fpscap`, `-novsync` run uncapped.
 - **Test tools fixed** (2026-10-13, after the grass extras):
   - `-stripdt` / `devtest.ps1 -StripDt`: a strip's frames had been as far apart in game time as saving each took (the
     shockwave and the embers were over a few frames in); BaseApplication now runs Root::startRendering's loop itself

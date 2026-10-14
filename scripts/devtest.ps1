@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D] [-StripDt S]]] [-Hero robot005] [-HeroPos "x,z"] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-BloomOnly] [-NoHud] [-Hide field,grass,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D] [-StripDt S]]] [-Hero robot005] [-HeroPos "x,z"] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-NoVSync] [-BloomOnly] [-NoHud] [-Hide field,grass,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 #        .\scripts\devtest.ps1 -GuiTour [-Hour 22] [-Renderer GL]      # every GUI screen: devtest-gui-*.png
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
@@ -14,8 +14,9 @@
 # (-nofocus) unless -Focus is given.
 # -Clean moves the old per-run files (devtest-*.png/.log/.fps, also the bench runs') to the Recycle Bin first; given
 # alone (.\scripts\devtest.ps1 -Clean) it only cleans.
-# It ends with the frame rate of the run ("fps: avg=... min=... max=..."; VSync is off under DevTest), also saved as
-# devtest-<Name>.fps, which compare.ps1 prints under each image.
+# It ends with the frame rate of the run ("fps: avg=... min=... max=..."), also saved as devtest-<Name>.fps, which
+# compare.ps1 prints under each image. Runs wait for the monitor (VSync) like a game that is played, so effects and
+# fades are tested at the frame rate they are seen at; -Bench, -FpsCap N and -NoVSync run without VSync.
 param(
     [ValidateSet('Release', 'RelWithDebInfo')] [string]$Configuration = 'Release',
     [int]$FpsCap = 0,
@@ -39,6 +40,8 @@ param(
     [int]$Sky = -1,
     [double]$Bench = 0,
     [switch]$NoFx,
+    # no VSync for this run (frame-rate work: -Bench and -FpsCap already turn it off)
+    [switch]$NoVSync,
     [switch]$BloomOnly,
     [switch]$NoHud,
     [switch]$BenchAI,
@@ -90,6 +93,7 @@ if ($HeroPos)     { $gameArgs += "-heropos=$HeroPos" }
 if ($AA -ge 0)     { $gameArgs += "-aa=$AA" }
 if ($Sky -ge 0)    { $gameArgs += "-sky=$Sky" }
 if ($NoFx)        { $gameArgs += '-nofx' }
+if ($NoVSync)     { $gameArgs += '-novsync' }
 if ($BloomOnly)   { $gameArgs += '-bloomonly' }
 if ($NoHud)       { $gameArgs += '-nohud' }    # no HP/AP bars, log or clock: cleaner review shots
 if ($Hide)        { $gameArgs += "-hide=$Hide" }    # parts hidden for the run: terrain, dust, sky, arena, coliseum, torches    # the final image shows the bloom alone (x3)
