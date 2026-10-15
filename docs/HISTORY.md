@@ -264,7 +264,10 @@ session; they only mean something against the other variant of the same run.
   patches over about 40 % of a 1920x1080 frame, embers glowing (`effect burn_test`), the 2D-noise build (7e20a7f, with
   the same DevTest grid) against the 3D one: Direct3D 11 -0.001 +/- 0.004 ms; OpenGL +0.031 +/- 0.037 and, run again,
   -0.033 +/- 0.057 ms; all not significant. The six patches against no burn at all were not significant either
-  (Direct3D 11 -0.007 +/- 0.019 ms), probably because the charred plants are shorter and cover fewer pixels.
+  (Direct3D 11 -0.007 +/- 0.019 ms), probably because the charred plants are shorter and cover fewer pixels. One
+  OpenGL run of that benchmark was slow all through (2.16 ms against 1.75, every second alike, so not a hitch) and made
+  the first OpenGL result inconclusive: `bench.ps1` now runs such a round again (more than 7 % off the variant's median;
+  10 % missed a run 8.8 % slow on a busy PC).
 - **Scorch on the stone** (2026-10-14): only the field drew the scorch, and a burn was a circle on the ground plan. A
   Genki Dama next to the ring scorched the ground up to the ring and left its edge clean; one landing on the seats
   (`groundBelow` found the podium top, within `burnHeight`) burnt the grass below and left smoke over clean stone.

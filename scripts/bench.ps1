@@ -22,6 +22,8 @@
 #     cancels out; "+/-" is 2 standard errors of that mean.
 #   - a run with a hitch (one of its 1 s windows more than 1.4x its median: another program, a driver stall) is run
 #     again, up to 3 times, like a run whose window did not render: one such second moved a -Quick result by 0.12 ms.
+#   - a run slow all through (more than 7 % off the median of its variant's runs, once it has 3) has its whole round
+#     run again, once per round, since the differences are taken round by round.
 # The table is printed and saved as %USERPROFILE%\Tumbu\<Name>\fps.txt (next to the before/after images). A note follows
 # a renderer's rows when a variant's own runs spread by more than 10 % of its frame time: something else was probably
 # using the PC. ogre.cfg is switched for the runs and always restored. The game runs muted, without the focus.
@@ -112,6 +114,37 @@ function Get-Hitch([string]$line) {
     return ''
 }
 
+# Runs on a renderer whose frame time is more than 7 % off the median of the same variant's runs (needs 3 runs): slow
+# all through, so the hitch check (one slow second) does not see them (another program for the whole run: a GL run at
+# 2.16 ms among runs at 1.75, 2026-10-15). Their round's difference is wrong, so the round is run again.
+function Get-OddRuns([string]$renderer) {
+    foreach ($v in $parsed) {
+        $set = @($results | Where-Object { $_.Renderer -eq $renderer -and $_.Variant -eq $v.Label })
+        if ($set.Count -lt 3) { continue }
+        $sorted = @($set.Ms | Sort-Object)
+        $median = $sorted[[int][math]::Floor($sorted.Count / 2)]
+        $set | Where-Object { [math]::Abs($_.Ms / $median - 1) -gt 0.07 } |
+            ForEach-Object { [pscustomobject]@{ Run = $_.Run; Variant = $_.Variant; Ms = $_.Ms; Median = $median } }
+    }
+}
+
+# One round: every variant once, A B in odd rounds and B A in even ones (a slow drift over the session then weighs on every
+# variant alike). Replaces whatever that round had.
+function Invoke-Round([string]$renderer, [int]$run) {
+    $script:results = @($script:results | Where-Object { -not ($_.Renderer -eq $renderer -and $_.Run -eq $run) })
+    $order = @($parsed)
+    if ($run % 2 -eq 0) { [array]::Reverse($order) }
+    foreach ($v in $order) {
+        $runName = "bench-$Name-$renderer-$($v.Label)-$run"
+        $line = Invoke-BenchRun $v $renderer $runName
+        if (-not $line) { continue }
+        $fps = Get-Number $line 'avg'
+        $ms = Get-Number $line 'ms'
+        Write-Host ([string]::Format($inv, "{0,-6} {1,-12} run {2}: {3,7:0.0} fps  {4,6:0.000} ms", $renderer, $v.Label, $run, $fps, $ms))
+        $script:results += [pscustomobject]@{ Renderer = $renderer; Variant = $v.Label; Run = $run; Fps = $fps; Ms = $ms }
+    }
+}
+
 function Get-Number([string]$line, [string]$key) {
     $m = [regex]::Match($line, "$key=([\d.]+)")
     if ($m.Success) { return [double]::Parse($m.Groups[1].Value, $inv) } else { return 0 }
@@ -164,18 +197,18 @@ try {
             $null = Invoke-BenchRun $parsed[0] $renderer "bench-$Name-$renderer-warmup"
             Write-Host "$renderer warm-up run done (not counted)"
         }
+        $redone = @{}
         for ($run = 1; $run -le $MaxRuns; $run++) {
-            # A B, B A, A B, ...: a slow drift over the session then weighs on every variant alike.
-            $order = @($parsed)
-            if ($run % 2 -eq 0) { [array]::Reverse($order) }
-            foreach ($v in $order) {
-                $runName = "bench-$Name-$renderer-$($v.Label)-$run"
-                $line = Invoke-BenchRun $v $renderer $runName
-                if (-not $line) { continue }
-                $fps = Get-Number $line 'avg'
-                $ms = Get-Number $line 'ms'
-                Write-Host ([string]::Format($inv, "{0,-6} {1,-12} run {2}: {3,7:0.0} fps  {4,6:0.000} ms", $renderer, $v.Label, $run, $fps, $ms))
-                $results += [pscustomobject]@{ Renderer = $renderer; Variant = $v.Label; Run = $run; Fps = $fps; Ms = $ms }
+            Invoke-Round $renderer $run
+            # A run far off its variant's others: its round again (each round once; a second miss stays, with the note).
+            $odd = @(Get-OddRuns $renderer | Where-Object { -not $redone.ContainsKey($_.Run) })
+            foreach ($again in @($odd | ForEach-Object { $_.Run } | Sort-Object -Unique)) {
+                $redone[$again] = $true
+                foreach ($o in @($odd | Where-Object { $_.Run -eq $again })) {
+                    Write-Warning ([string]::Format($inv, '{0} : {1} run {2} at {3:0.000} ms, its median {4:0.000} ms: round {2} again',
+                        $renderer, $o.Variant, $o.Run, $o.Ms, $o.Median))
+                }
+                Invoke-Round $renderer $again
             }
             $rounds[$renderer] = $run
             if ($run -lt $Runs -or $run -eq $MaxRuns) { continue }

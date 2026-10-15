@@ -261,7 +261,8 @@ materials, textures, GUI) gets a before/after set:
      difference taken round by round; at least `-Runs` rounds (3), more up to `-MaxRuns` (6) only while a difference is
      neither clear (3 standard errors) nor known to `-Resolution` (0.02 ms, the noise floor). Each run takes about 15 s.
      A run with a hitch (one 1 s window more than 1.4x the run's median: another program, a driver stall) is run again,
-     up to 3 times. `-Quick` (2 rounds) is for light changes; measure shader changes with the full rounds, on the
+     up to 3 times. A run slow all through (more than 7 % off the median of its variant's runs, once it has three) has
+     its whole round run again, once per round (`WARNING … round N again`). `-Quick` (2 rounds) is for light changes; measure shader changes with the full rounds, on the
      renderer in question (`-Renderers D3D11`).
      Why it is built this way: docs/HISTORY.md, "Benchmark method". Call it from PowerShell: through
      `powershell -File` the variant list arrives as one string.
