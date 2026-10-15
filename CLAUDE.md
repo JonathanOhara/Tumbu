@@ -561,6 +561,10 @@ materials, textures, GUI) gets a before/after set:
       `-FxRepeat 13 -FxEvery 1.5 -FxTime 18.5 -QuitAfter 26` starts it 13 times, 1.5 s apart, on a square grid 3.5 units
       apart in front of the hero (more patches than the slots: `-HeroPos -14,-6 -Camera "-2,18,-4,-14,0,-16"`; `-FxTime`
       counts from the first). With the field hidden (`-Hide field,grass`) only the stone shows its scorch and embers.
+      **What burns cost:** `effect burn_test` is the patch alone, its embers glowing all run (no flash, smoke or wave);
+      `bench.ps1 -VideoMode 1920x1080 -Common '-Hero robot001 -Hour 13 -HeroPos -14,-6 -Camera -8,11,-3,-14,0,-12'
+      -Variants "burns=-FxTest burn_test -FxRepeat 6 -FxEvery 0.01 -FxTime 10.9","none="` puts six patches over about
+      40 % of the screen from the bench's first frame (`-FxTime` = the bench's seconds + 3 - 0.1).
 - **Robots are skinned on the GPU** (`media/tumbu/robots/RobotSkinning.h`, used by `robot_toon.vert`, `robot_outline.vert`,
   `robot_aura.vert` and `robot_shadow_caster.vert`). Every robot vertex program declares `includes_skeletal_animation`, so
   Ogre sends only the bone matrices instead of skinning each animating part on the CPU and re-uploading it every frame.

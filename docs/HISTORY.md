@@ -260,6 +260,11 @@ session; they only mean something against the other variant of the same run.
   first seconds (`tumbuGroundEmbers`). A first try (larger noise, `emberColour` x3) gave yellow puddles like lava. The
   stone's noise was 2D, a slanted projection of the world position, and stretched into thin streaks on the walls (seen
   with the field hidden); it is a 3D value noise now (less contrast, so the ember threshold went from 0.22 to 0.28).
+  **Its cost** (2026-10-15): the first benchmarks had no burn on screen, so they could not see the noise. With six
+  patches over about 40 % of a 1920x1080 frame, embers glowing (`effect burn_test`), the 2D-noise build (7e20a7f, with
+  the same DevTest grid) against the 3D one: Direct3D 11 -0.001 +/- 0.004 ms; OpenGL +0.031 +/- 0.037 and, run again,
+  -0.033 +/- 0.057 ms; all not significant. The six patches against no burn at all were not significant either
+  (Direct3D 11 -0.007 +/- 0.019 ms), probably because the charred plants are shorter and cover fewer pixels.
 - **Scorch on the stone** (2026-10-14): only the field drew the scorch, and a burn was a circle on the ground plan. A
   Genki Dama next to the ring scorched the ground up to the ring and left its edge clean; one landing on the seats
   (`groundBelow` found the podium top, within `burnHeight`) burnt the grass below and left smoke over clean stone.

@@ -74,6 +74,20 @@ effect test
 	}
 }
 
+// DevTest -fxtest=burn_test: only jyn_impact's burnt patch, its embers glowing for the whole run (no flash, smoke or
+// shockwave), to measure what burnt patches cost (bench.ps1 with -Bench, -FxRepeat).
+effect burn_test
+{
+	grass
+	{
+		burn 3.2
+		burnHeight 2.5
+		embers 60
+		burnHold 60
+		regrow 40
+	}
+}
+
 // ---- Energy balls: held effects that follow the ball (SpecialInterface::startBallEffect) ----
 // The light stays while the ball lives ("time 0", times the effect's intensity) and fades when it is let go.
 // Moderate intensities keep the ki colour on the floor and robots; strong ones wash out to white.
