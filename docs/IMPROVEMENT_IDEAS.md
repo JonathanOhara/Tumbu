@@ -22,7 +22,8 @@ the arena remake, the night arena lights, the painted toon sky, the mip-chain bl
    target (a Linux build).
 
 Separate tracks: **gameplay beyond the battle demo** (part shop or loadout screen) is the most important item for the game
-itself (customization is its core), but it is design and code, not visuals; the **Windows installer** comes last, once
+itself (customization is its core), but it is design and code, not visuals; **Blender as the level editor** (Beyond the visuals) comes before any new
+place beyond the arena; the **Windows installer** comes last, once
 the improvements are done (Jonathan, 2026-10-04).
 
 ## Ideas, in order of impact
@@ -157,6 +158,35 @@ shadows with normal offset (a single map is right for an arena this small), the 
 - **Gameplay beyond the battle demo**: customization is the core of the game (ART_AND_DESIGN), but today parts are only
   won from defeated enemies. A part shop or loadout screen to build the robot between fights (buy parts, equip and
   compare them), then more arenas or a mode beyond the 16 fixed fights.
+- **Blender as the level editor, replacing Ogitor** (Jonathan, 2026-10-15; a big feature, needed before the game grows
+  beyond the arena fight: new places must be easy to build).
+  - Today: `media/scenes/arena/Arena.scene` (first made by Ogitor 0.4.4) is edited by hand and places four meshes.
+    `art/arena/Arena.blend` holds the coliseum, the ring, the torches and the field together, and its materials have no
+    textures: the look exists only in the game's shaders (the sandstone, tile and meadow PNGs of `arena-textures.ps1`, the
+    field map, the baked AO), so in Blender everything is plain and placing things is guesswork. Anything new also needs
+    code: `Demo` looks up `arenaEntity` / `coliseumEntity` by name for their physics, `createFieldPhysic` the field, and
+    the torches' lights are generated into `lamps.object` by a script.
+  - Idea:
+    - **One asset file per piece** (`art/assets/coliseum.blend`, `ring.blend`, `torches.blend`, like `Flowers.blend`
+      today, and every new prop or building), each with **preview materials**: the game's own textures (the PNGs in
+      `media/`, on the world-scale UVs the meshes already have) and their AO in plain Blender nodes, not the toon
+      shaders, so the viewport shows roughly what the game shows.
+    - **One level file per level** (`art/levels/arena.blend`): only the terrain (the field mesh, with the field map
+      painted there as now), and the asset files **linked** as collection instances (File > Link): they are moved,
+      turned, scaled and repeated freely, and a change in an asset file shows in every level on reload.
+    - **Export** (`scripts/export-level.ps1`, headless Blender): each asset's meshes once (blender2ogre `dot_mesh`, as
+      `bake-arena-ao.ps1` does), and the level as a `.scene` through blender2ogre's `dot_scene`, which already follows
+      linked collection instances (three levels deep) and writes an object's custom properties as `userData`.
+      `DotSceneLoader` reads nodes, entities, lights and cameras; it skips `userData` today.
+    - **Game data on the objects as custom properties** instead of names in the code: physics (trimesh, box, none),
+      shadow casting, spawn points (empties), lights (Blender lights become torch lamps), where grass may grow. Grass and
+      flowers stay procedural from the field map.
+  - To find out: the AO is baked today with all pieces together in one file (the walls' shade on the ground), so split
+    files need the bake run in the level file (instances made real for the bake) or per asset plus the SSAO; whether
+    `dot_scene` works on Blender 5.2 with linked instances and our `xz-y` axes; unique entity names when one mesh is
+    placed many times; splitting `Arena.blend` into asset files without losing its hand edits (`tumbu_shapes` steps).
+  - First step: the current arena rebuilt this way (asset files with preview materials, a level file linking them, the
+    exported `.scene`), and the game loading it with the same image as today (a diff of the screenshots).
 - **Report our Ogre bugs upstream** (docs/OGRE_BUGS.md): the three patched ones as issues or pull requests to
   OGRECave/ogre, so the patches can go. Jonathan's call (it posts publicly); not started.
 - **One shared robot skeleton (a rig file as the source)**: found while building the robot export (2026-10-05).
