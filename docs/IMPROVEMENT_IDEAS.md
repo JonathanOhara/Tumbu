@@ -213,6 +213,10 @@ shadows with normal offset (a single map is right for an arena this small), the 
       relative to each `.blend`). `dot_mesh` writes the Blender material's own name into the `.mesh` (`coliseumMaterial`,
       no library prefix: that prefix is only for the `.material` files blender2ogre can write, which the export turns
       off), so the game's `.material` scripts apply.
+    - **Blender 4.5.14 is no better**: the same blender2ogre commit, the same `merge_objects` crash, and with the fix
+      or with our own exporter every `.scene` and `.mesh` is byte for byte the one from 5.2. The workaround is
+      blender2ogre's code, not the Blender version, so static levels and assets can stay on 5.2 (4.5 is only needed for
+      animation, as for the robots).
     - Limits seen: the world-scale UVs are in the asset's object space, so a scaled instance stretches its texture
       (fine for small scales, or give such pieces a scale-free projection); a node cannot shear, so a non-uniform scale
       on a turned child is not exact (keep non-uniform scale on the outermost instance only); the `.mesh` of a piece
