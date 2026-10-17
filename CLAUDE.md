@@ -129,7 +129,10 @@ in the way of a run (for example a window behind others that does not render), d
     bloom alone, x3: its shape, and its flicker in a strip), `-hide=a,b` (hides `dust`, `sky`, or an entity without its
     `Entity` suffix: `field`, `arena`, `coliseum`, `torches`; `grass` the tall grass with its flowers and reeds,
     `flowers` or `reeds` those alone), `-heropos=x,z` (the hero starts
-    there instead of on the ring, dropped onto the ground: in the tall grass, to see it pushed aside).
+    there instead of on the ring, dropped onto the ground: in the tall grass, to see it pushed aside), `-scene=PATH`
+    (`devtest.ps1 -Scene`: a `.scene` loaded into the match next to the arena, under the node `DevTestScene`, its folder
+    added to the `Game` group; PATH relative to `bin\<Config>`, no spaces; every node it made is logged with its world
+    transform, entities, materials, bounding box and `userData`: the Blender level-editor test, docs/IMPROVEMENT_IDEAS.md).
   - Shots: `-faceshot` / `-faceshot=jyn` (the final screenshot looks at the hero's face; `=jyn` charges Jyn first),
     `-camera=x,y,z,tx,ty,tz` (the final screenshot looks from a fixed point), `-fxtest=NAME` / `-fxtime=S` (starts
     `effect NAME` of `effects.object` in front of the hero S seconds before the screenshot and looks at it from the side;
@@ -691,7 +694,8 @@ through a listener registry in `BaseApplication`.
 - `ConfigScriptLoader` (`ConfigScript.*`) is an Ogre `ScriptLoader` for `*.object` files:
   `ConfigScriptLoader::getSingleton().getConfigScript("<type>", "<name>")->findChild("key")->getValueI()`.
 - `DotSceneLoader` is the Ogitor dotScene loader (its terrain support is gone with the Ogre terrain). Lights and camera
-  are placed by their nodes, and meshes are loaded with the AUTODETECT group. The 2011 terrain page
+  are placed by their nodes, and meshes are loaded with the AUTODETECT group. `<userData>` properties (blender2ogre's
+  format: `<property name type data>`) are kept as strings in the node's or entity's `UserObjectBindings`. The 2011 terrain page
   (`art/arena/terrain_2011.ogt`, read by `arena-field.ps1` only to build the field or its map again) is Ogre `StreamSerialiser` chunks (id, version,
   length, a SuperFastHash checksum of those three): the heights in `TERR`, then the layers and the blend maps.
 - `DevTest` is the unattended test harness. `Util` handles barrel spawning. `Log` / `LogManager` provide the

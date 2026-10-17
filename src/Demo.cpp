@@ -218,6 +218,14 @@ void Demo::initializeDemo(){
 	tumbu->renderOneFrame();
 	demoScene = mSceneMgr->getSceneNode("demoScene");
 	tumbu->renderOneFrame();
+	// DevTest -scene=PATH: a .scene exported from Blender, loaded next to the arena (the level editor test).
+	if( !DevTest::getExtraScene().empty() ){
+		Ogre::String file, folder;
+		Ogre::StringUtil::splitFilename( DevTest::getExtraScene(), file, folder );
+		Ogre::SceneNode* extraNode = demoScene->createChildSceneNode( "DevTestScene" );
+		mLoader->parseDotScene( file, "Game", mSceneMgr, extraNode );
+		DevTest::logSceneTree( extraNode );
+	}
 	tumbu->setActiveSceneNode( demoScene );
 	tumbu->renderOneFrame();
 

@@ -138,6 +138,13 @@ void BaseApplication::locateResources(void){
 
 	// resources.cfg (next to the executable) lists the game's resource groups and Ogre's own media.
 	OgreBites::ApplicationContext::locateResources();
+
+	// DevTest -scene=PATH: the folder of that .scene (its meshes and materials) joins the Game group.
+	if( !DevTest::getExtraScene().empty() ){
+		Ogre::String file, folder;
+		Ogre::StringUtil::splitFilename( DevTest::getExtraScene(), file, folder );
+		Ogre::ResourceGroupManager::getSingleton().addResourceLocation( folder, "FileSystem", "Game" );
+	}
 }
 //-------------------------------------------------------------------------------------
 void BaseApplication::loadResources(void){

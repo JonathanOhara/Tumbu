@@ -54,6 +54,9 @@ protected:
     void processBlendmaps(rapidxml::xml_node<>* XMLNode);
     void processUserDataReference(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent = 0);
     void processUserDataReference(rapidxml::xml_node<>* XMLNode, Ogre::Entity *pEntity);
+    /// <userData><property name="" type="" data=""/>...: blender2ogre writes an object's custom properties so. Each
+    /// is kept as a string in the bindings (getUserAny( name )).
+    void processUserData(rapidxml::xml_node<>* XMLNode, Ogre::UserObjectBindings &bindings, const Ogre::String &owner);
     void processOctree(rapidxml::xml_node<>* XMLNode);
     void processLight(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent = 0);
     void processCamera(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode *pParent = 0);

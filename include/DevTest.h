@@ -39,6 +39,10 @@
  *   -swaptest        charge Jyn, Esc, Inventory, re-select the head (every part and its aura shell is rebuilt),
  *                    resume, charge Jyn again; logs the aura level after each step (use with -quitafter=9)
  *   -flytest         fly camera check: F, fly, Esc (no pause menu), F again; screenshot while flying
+ *   -scene=PATH      a .scene (PATH relative to bin/<Config>, no spaces) loaded into the match after Arena.scene, under
+ *                    the node DevTestScene; its folder joins the Game group (its meshes and materials). Every node it
+ *                    made is logged with its world transform, entities, materials and userData (the Blender level
+ *                    editor test, docs/IMPROVEMENT_IDEAS.md)
  *   -cycles=N        memory check: play N matches (3 enemy kills each, then Quit to the menu) through the
  *                    real UI, logging memory and Ogre object counts after each one, then Exit
  *
@@ -69,6 +73,11 @@ public:
 	static const Ogre::String &getHeroSet(void){ return heroSet; }
 	/// -heropos=x,z: where the hero starts (true), dropped from 1.5 units above the ground; false = on the ring.
 	static bool getHeroStart( Ogre::Vector3 &position );
+	/// -scene=PATH: a .scene to load next to the arena (empty = none). PATH is relative to the working directory.
+	static const Ogre::String &getExtraScene(void){ return extraScene; }
+	/// Logs a node and everything under it: world position, orientation and scale, entities with their mesh,
+	/// materials and world bounding box, lights, and the userData "physics" the loader kept (-scene).
+	static void logSceneTree( Ogre::SceneNode* node, const Ogre::String &indent = "" );
 	/// Logs every particle system's live particles and their mean colour (with the screenshot).
 	void logParticleColours(void);
 	/// The game time of the next frame while a -strip with -stripdt is being saved (seconds; 0 = the real frame time):
@@ -188,6 +197,7 @@ private:
 	static bool swapTest;
 	static Ogre::Vector3 cameraEye, cameraTarget;
 	static Ogre::String hideList;
+	static Ogre::String extraScene;
 	static int stripFrames;
 	static Ogre::Real stripStep;
 	static Ogre::Real stripDt;

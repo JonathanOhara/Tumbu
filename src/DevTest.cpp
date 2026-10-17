@@ -60,6 +60,7 @@ bool DevTest::swapTest = false;
 Ogre::Vector3 DevTest::cameraEye = Ogre::Vector3::ZERO;
 Ogre::Vector3 DevTest::cameraTarget = Ogre::Vector3::ZERO;
 Ogre::String DevTest::hideList = "";
+Ogre::String DevTest::extraScene = "";
 int DevTest::stripFrames = 0;
 Ogre::Real DevTest::stripStep = 0.003f;
 Ogre::Real DevTest::stripDt = 0;
@@ -147,6 +148,8 @@ void DevTest::parseCommandLine( const Ogre::String &commandLine ){
 				cameraEye = Ogre::Vector3( Ogre::StringConverter::parseReal( v[0] ), Ogre::StringConverter::parseReal( v[1] ), Ogre::StringConverter::parseReal( v[2] ) );
 				cameraTarget = Ogre::Vector3( Ogre::StringConverter::parseReal( v[3] ), Ogre::StringConverter::parseReal( v[4] ), Ogre::StringConverter::parseReal( v[5] ) );
 			}
+		}else if( Ogre::StringUtil::startsWith( arg, "-scene=" ) ){
+			extraScene = args[i].substr( 7 );	// file names keep their case
 		}else if( Ogre::StringUtil::startsWith( arg, "-hide=" ) ){
 			hideList = arg.substr( 6 );
 		}else if( Ogre::StringUtil::startsWith( arg, "-strip=" ) ){
@@ -676,6 +679,40 @@ void DevTest::limitFrameRate(void){
 //-------------------------------------------------------------------------------------
 void DevTest::log( const Ogre::String &message ){
 	Ogre::LogManager::getSingletonPtr()->logMessage( "[DEVTEST] " + message );
+}
+//-------------------------------------------------------------------------------------
+void DevTest::logSceneTree( Ogre::SceneNode* node, const Ogre::String &indent ){
+	using Ogre::StringConverter;
+	const Ogre::Vector3 &p = node->_getDerivedPosition();
+	const Ogre::Quaternion &q = node->_getDerivedOrientation();
+	const Ogre::Vector3 &s = node->_getDerivedScale();
+	Ogre::String line = indent + "node " + node->getName() + " pos=" + StringConverter::toString( p.x ) + "," +
+		StringConverter::toString( p.y ) + "," + StringConverter::toString( p.z ) + " rot(wxyz)=" +
+		StringConverter::toString( q.w ) + "," + StringConverter::toString( q.x ) + "," + StringConverter::toString( q.y ) +
+		"," + StringConverter::toString( q.z ) + " scale=" + StringConverter::toString( s.x ) + "," +
+		StringConverter::toString( s.y ) + "," + StringConverter::toString( s.z );
+	const Ogre::Any &physics = node->getUserObjectBindings().getUserAny( "physics" );
+	if( physics.has_value() ){
+		line += " userData physics=" + Ogre::any_cast<Ogre::String>( physics );
+	}
+	Ogre::LogManager::getSingletonPtr()->logMessage( "[DEVTEST] scene: " + line );
+	for( unsigned short i = 0; i < node->numAttachedObjects(); i++ ){
+		Ogre::MovableObject* object = node->getAttachedObject( i );
+		Ogre::String what = indent + "  " + object->getMovableType() + " " + object->getName();
+		if( object->getMovableType() == "Entity" ){
+			Ogre::Entity* entity = static_cast<Ogre::Entity*>( object );
+			what += " mesh=" + entity->getMesh()->getName() + " materials=";
+			for( size_t m = 0; m < entity->getNumSubEntities(); m++ ){
+				what += ( m ? "," : "" ) + entity->getSubEntity( m )->getMaterialName();
+			}
+			const Ogre::AxisAlignedBox &box = entity->getWorldBoundingBox( true );
+			what += " world box min=" + StringConverter::toString( box.getMinimum() ) + " max=" + StringConverter::toString( box.getMaximum() );
+		}
+		Ogre::LogManager::getSingletonPtr()->logMessage( "[DEVTEST] scene: " + what );
+	}
+	for( unsigned short i = 0; i < node->numChildren(); i++ ){
+		logSceneTree( static_cast<Ogre::SceneNode*>( node->getChild( i ) ), indent + "  " );
+	}
 }
 //-------------------------------------------------------------------------------------
 void DevTest::runGuiTour( const Ogre::FrameEvent &evt ){

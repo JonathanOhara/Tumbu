@@ -175,16 +175,55 @@ shadows with normal offset (a single map is right for an arena this small), the 
       painted there as now), and the asset files **linked** as collection instances (File > Link): they are moved,
       turned, scaled and repeated freely, and a change in an asset file shows in every level on reload.
     - **Export** (`scripts/export-level.ps1`, headless Blender): each asset's meshes once (blender2ogre `dot_mesh`, as
-      `bake-arena-ao.ps1` does), and the level as a `.scene` through blender2ogre's `dot_scene`, which already follows
-      linked collection instances (three levels deep) and writes an object's custom properties as `userData`.
-      `DotSceneLoader` reads nodes, entities, lights and cameras; it skips `userData` today.
+      `bake-arena-ao.ps1` does, run in the asset's own file), and the level as a `.scene` written by **our own small
+      exporter**, not blender2ogre's `dot_scene` (see "Found" below). `DotSceneLoader` reads nodes, entities, lights
+      and, since the test, `userData`.
     - **Game data on the objects as custom properties** instead of names in the code: physics (trimesh, box, none),
       shadow casting, spawn points (empties), lights (Blender lights become torch lamps), where grass may grow. Grass and
       flowers stay procedural from the field map.
-  - To find out: the AO is baked today with all pieces together in one file (the walls' shade on the ground), so split
-    files need the bake run in the level file (instances made real for the bake) or per asset plus the SSAO; whether
-    `dot_scene` works on Blender 5.2 with linked instances and our `xz-y` axes; unique entity names when one mesh is
-    placed many times; splitting `Arena.blend` into asset files without losing its hand edits (`tumbu_shapes` steps).
+  - **Found** (feasibility test, 2026-10-17; Blender 5.2, blender2ogre `0d094a4`): two asset files (a pillar of three
+    objects; a gate that links the pillar twice, a nested link) and a level file with a flat ground, the pillar linked
+    three times (turned 90 degrees and 1.5x high; turned 45, tilted 15 and half size) and the gate once (turned 30),
+    loaded next to the arena with DevTest `-scene=PATH`.
+    - **`dot_scene` as shipped fails on linked collection instances**: its `util.merge_objects` does
+      `o2.data = o2.to_mesh()`, which Blender 2.8+ refuses ("Can only assign evaluated data to evaluated object").
+    - With that one function fixed (in the test's process only), it exports, but **merges each instance into a mesh of
+      its own** (one `.mesh` per placement, `pillar_A.mesh`, `pillar_B.mesh`, ..., the same geometry written again each
+      time and named after the instance, so two levels would overwrite each other's meshes). Node and entity names are
+      unique (`pillar_A.001`: the instance's name plus Blender's suffix, since the empty keeps the name). The node takes
+      the transform of whichever object was joined last (the pillar's arm, not the instance's origin), and its
+      `userData` comes from that object's properties: **the instance empty's own properties are lost**, and so are the
+      other asset objects' (the shaft's `physics`). Each entity gets an empty `<userData/>` (mesh properties are lost in
+      the merge).
+    - **Axes and transforms are right** with `SWAP_AXIS 'xz-y'` set explicitly: every position, rotation and scale
+      in the game matched Blender's to 0.001 (the world positions logged by `-scene` against Blender's instances),
+      and a textured Blender render from the same camera lines up with the game's screenshot.
+    - **`DotSceneLoader` loads either `.scene` as it is** (`formatVersion 1.1`, empty `<environment/>` and
+      `<externals/>`, a point light with `powerScale` and attenuation). It skipped `userData`; reading it took one
+      function (`processUserData`: each `<property name type data>` kept as a string in the node's or entity's
+      `UserObjectBindings`, `getUserAny( name )`). A light gets an extra unnamed child node (the loader places lights by
+      a node of their own).
+    - **Our own exporter** (about 120 lines of Python) did what the design needs: every instance is a node with the
+      empty's transform and properties, every asset object a child node with its own (nested links recurse), names are
+      the instance path (`gate_1/gate_left/pillar_shaft`, unique by construction), and **each asset object's mesh is
+      exported once from its own file and shared** by every placement (5 meshes instead of one per instance). Same
+      image in the game as the patched `dot_scene` export (6 % of the pixels differ, the noise of two runs).
+    - **Preview materials work**: plain nodes (Image Texture on the first UV map, the game's PNG from `media/`, x the
+      tint) show the sandstone and the tiles in Blender's textured viewport, through linked files too (image paths made
+      relative to each `.blend`). `dot_mesh` writes the Blender material's own name into the `.mesh` (`coliseumMaterial`,
+      no library prefix: that prefix is only for the `.material` files blender2ogre can write, which the export turns
+      off), so the game's `.material` scripts apply.
+    - Limits seen: the world-scale UVs are in the asset's object space, so a scaled instance stretches its texture
+      (fine for small scales, or give such pieces a scale-free projection); a node cannot shear, so a non-uniform scale
+      on a turned child is not exact (keep non-uniform scale on the outermost instance only); the `.mesh` of a piece
+      used by a level must not take the level's AO (each asset needs its own AO, below).
+    - Still to find out: the AO is baked today with all pieces together in one file (the walls' shade on the ground), so
+      split files need the bake run in the level file (instances made real for the bake) or per asset plus the SSAO;
+      splitting `Arena.blend` into asset files without losing its hand edits (`tumbu_shapes` steps); physics from
+      `userData` (today `Demo` finds `arenaEntity` / `coliseumEntity` by name).
+  - **Recommendation: write our own small export** (the test's script is the start; `dot_mesh` stays for the meshes).
+    Patching `dot_scene` would still leave one mesh per placement, lost instance properties and odd node origins, and
+    a patch in the add-on is lost when blender2ogre is reinstalled for a new Blender.
   - First step: the current arena rebuilt this way (asset files with preview materials, a level file linking them, the
     exported `.scene`), and the game loading it with the same image as today (a diff of the screenshots).
 - **Report our Ogre bugs upstream** (docs/OGRE_BUGS.md): the three patched ones as issues or pull requests to

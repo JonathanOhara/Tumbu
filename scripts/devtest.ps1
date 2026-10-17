@@ -1,5 +1,5 @@
 # Runs TUMBU unattended with the developer test switches and prints the [DEVTEST] log lines.
-# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4] [-FxRepeat 9 [-FxEvery 0.6]]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D] [-StripDt S]]] [-Hero robot005] [-HeroPos "x,z"] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-NoVSync] [-BloomOnly] [-NoHud] [-Hide field,grass,coliseum] [-Renderer D3D11|GL] [-VideoMode 1024x768]
+# Usage: .\scripts\devtest.ps1 [-Configuration Release] [-FpsCap 60] [-QuitAfter 8] [-NoWalk] [-Hour 22] [-Name run] [-Sound] [-Focus] [-FaceShot [-Jyn]] [-JynWalk] [-FxTest name [-FxTime 0.3] [-FxDistance 4] [-FxRepeat 9 [-FxEvery 0.6]]] [-JynHit 6] [-Camera "x,y,z,tx,ty,tz" [-Strip N [-StripStep D] [-StripDt S]]] [-Hero robot005] [-HeroPos "x,z"] [-AA 0|1] [-Sky 0|1] [-Bench S [-BenchAI] [-BenchChase]] [-NoFx] [-NoVSync] [-BloomOnly] [-NoHud] [-Hide field,grass,coliseum] [-Scene ..\scratch\x\x.scene] [-Renderer D3D11|GL] [-VideoMode 1024x768]
 #        .\scripts\devtest.ps1 -Cycles 40 [-Renderer GL] [-Name mem]   # memory check (CLAUDE.md, -cycles)
 #        .\scripts\devtest.ps1 -GuiTour [-Hour 22] [-Renderer GL]      # every GUI screen: devtest-gui-*.png
 # The screenshot and log copies are left in %USERPROFILE%\Tumbu\devtest-<Name>.png / .log
@@ -25,7 +25,11 @@ param(
     [switch]$NoWalk,
     [switch]$Sound,
     [switch]$Focus,
-    [string]$Hide,
+    # an array: an unquoted -Hide field,grass arrives as two items (a [string] joined them with a space, and the game
+    # splits its command line at spaces, so only the first was hidden)
+    [string[]]$Hide,
+    # a .scene loaded into the match next to the arena (relative to bin\<Configuration>, no spaces): the level editor test
+    [string]$Scene = '',
     [switch]$FaceShot,
     [switch]$Jyn,
     [switch]$JynWalk,
@@ -100,7 +104,8 @@ if ($NoFx)        { $gameArgs += '-nofx' }
 if ($NoVSync)     { $gameArgs += '-novsync' }
 if ($BloomOnly)   { $gameArgs += '-bloomonly' }
 if ($NoHud)       { $gameArgs += '-nohud' }    # no HP/AP bars, log or clock: cleaner review shots
-if ($Hide)        { $gameArgs += "-hide=$Hide" }    # parts hidden for the run: terrain, dust, sky, arena, coliseum, torches    # the final image shows the bloom alone (x3)
+if ($Scene)       { $gameArgs += "-scene=$Scene" }
+if ($Hide)        { $gameArgs += "-hide=" + ($Hide -join ',') }    # parts hidden for the run: field, grass, flowers, reeds, dust, sky, arena, coliseum, torches
 if ($BenchAI)     { $gameArgs += '-benchai' }
 if ($BenchChase)  { $gameArgs += '-benchchase' }
 if ($Strip -gt 0)  { $gameArgs += "-strip=$Strip" }    # needs -Camera or -Bench (a fixed camera)

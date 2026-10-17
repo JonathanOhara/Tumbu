@@ -514,6 +514,11 @@ void DotSceneLoader::processNode(rapidxml::xml_node<>* XMLNode, Ogre::SceneNode 
     if(pElement)
         processUserDataReference(pElement, pNode);
 
+    // Process userData (?)
+    pElement = XMLNode->first_node("userData");
+    if(pElement)
+        processUserData(pElement, pNode->getUserObjectBindings(), "node " + name);
+
     // <pagedgeometry> elements are ignored: PagedGeometry was removed (the arena never used it).
 }
 
@@ -656,8 +661,13 @@ void DotSceneLoader::processEntity(rapidxml::xml_node<>* XMLNode, Ogre::SceneNod
 
     // Process userDataReference (?)
     pElement = XMLNode->first_node("userDataReference");
-    if(pElement)
+    if(pElement && pEntity)
         processUserDataReference(pElement, pEntity);
+
+    // Process userData (?)
+    pElement = XMLNode->first_node("userData");
+    if(pElement && pEntity)
+        processUserData(pElement, pEntity->getUserObjectBindings(), "entity " + name);
 
     
 }
@@ -987,6 +997,17 @@ Ogre::String DotSceneLoader::getProperty(const Ogre::String &ndNm, const Ogre::S
     }
 
     return "";
+}
+
+void DotSceneLoader::processUserData(rapidxml::xml_node<>* XMLNode, Ogre::UserObjectBindings &bindings, const Ogre::String &owner)
+{
+    for(rapidxml::xml_node<>* pElement = XMLNode->first_node("property"); pElement; pElement = pElement->next_sibling("property"))
+    {
+        Ogre::String name = getAttrib(pElement, "name");
+        Ogre::String data = getAttrib(pElement, "data");
+        bindings.setUserAny(name, Ogre::Any(data));
+        Ogre::LogManager::getSingleton().logMessage("[DotSceneLoader] userData " + owner + ": " + name + " = " + data + " (" + getAttrib(pElement, "type") + ")");
+    }
 }
 
 void DotSceneLoader::processUserDataReference(rapidxml::xml_node<>* XMLNode, Ogre::Entity *pEntity)
